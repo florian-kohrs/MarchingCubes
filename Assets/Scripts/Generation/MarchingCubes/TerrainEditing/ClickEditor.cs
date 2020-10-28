@@ -5,8 +5,8 @@ using UnityEngine;
 public class ClickEditor : MonoBehaviour
 {
 
-
     int sign = 1;
+
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.Space))
@@ -26,7 +26,7 @@ public class ClickEditor : MonoBehaviour
 
                 if (chunk != null)
                 {
-                    chunk.EditPointsAroundTriangleIndex(sign,hit.triangleIndex);
+                    chunk.EditPointsAroundTriangleIndex(sign,hit.triangleIndex,0);
                 }
             }
         }

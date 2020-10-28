@@ -63,6 +63,13 @@ public static class VectorExtension
         return v.Map(Mathf.Abs);
     }
 
+    public static IEnumerable<int> Ints(this Vector3Int v)
+    {
+        yield return v.x;
+        yield return v.y;
+        yield return v.z;
+    }
+
     public static Vector3Int Min(this Vector3Int v, int min)
     {
         return v.Map((f) => Mathf.Min(f, min));
@@ -121,6 +128,17 @@ public static class VectorExtension
             (i / (size.x * size.y)
             , (i % (size.x * size.y)) / size.y
             , (i % (size.x * size.y)) % size.y);
+    }
+
+    public static IEnumerable<Vector3Int> GetAllCombination(this Vector3Int v)
+    {
+        yield return new Vector3Int(v.x, int.MinValue, int.MinValue);
+        yield return new Vector3Int(v.x, v.y, int.MinValue);
+        yield return new Vector3Int(v.x, v.y, v.z);
+        yield return new Vector3Int(v.x, int.MinValue, v.z);
+        yield return new Vector3Int(int.MinValue, v.y, v.z);
+        yield return new Vector3Int(int.MinValue, v.y, int.MinValue);
+        yield return new Vector3Int(int.MinValue, int.MinValue, v.z);
     }
 
 }

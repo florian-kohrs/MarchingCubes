@@ -6,7 +6,7 @@ using UnityEngine;
 public class MarchingCubeChunkHandler : MonoBehaviour
 {
 
-    public const int CHUNK_SIZE = 12;
+    public const int CHUNK_SIZE = 8;
 
     public Dictionary<Vector3Int, MarchingCubeChunk> chunks = new Dictionary<Vector3Int, MarchingCubeChunk>();
 
@@ -81,13 +81,52 @@ public class MarchingCubeChunkHandler : MonoBehaviour
 
         MarchingCubeChunk chunk = g.AddComponent<MarchingCubeChunk>();
         chunks.Add(p, chunk);
-
+        chunk.chunkOffset = p;
         UpdateChunk(p, chunk);
     }
 
     protected void UpdateChunk(Vector3Int p,MarchingCubeChunk chunk)
     {
-        chunk.Initialize(chunkMaterial, surfaceLevel, p, offset, noiseFilter);
+        chunk.Initialize(chunkMaterial, surfaceLevel, p, offset, noiseFilter, this);
+    }
+
+    public void EditNeighbourChunksAt(MarchingCubeChunk chunk, Vector3Int p, float delta)
+    {
+        foreach (Vector3Int v in p.GetAllCombination())
+        {
+            bool allActiveIndicesHaveOffset = true;
+            Vector3Int offsetVector = new Vector3Int();
+            for (int i = 0; i < 3 && allActiveIndicesHaveOffset; i++)
+            {
+                if (v[i] != int.MinValue) 
+                { 
+                    //offset is in range -1 to 1
+                    int offset = Mathf.CeilToInt((p[i] / (CHUNK_SIZE - 2f)) - 1);
+                    allActiveIndicesHaveOffset = offset != 0;
+                    offsetVector[i] = offset;
+                }
+                else
+                {
+                    offsetVector[i] = 0;
+                }
+            }
+            if (allActiveIndicesHaveOffset)
+            {
+                Debug.Log("Found neighbour with offset " + offsetVector);
+                MarchingCubeChunk neighbourChunk;
+                if (chunks.TryGetValue(chunk.chunkOffset + offsetVector, out neighbourChunk))
+                {
+                    EditNeighbourChunkAt(neighbourChunk, p, offsetVector, delta);
+                }
+            }
+        }
+    }
+
+    public void EditNeighbourChunkAt(MarchingCubeChunk chunk, Vector3Int original, Vector3Int offset, float delta)
+    {
+        Vector3Int newChunkCubeIndex = (original + offset).Map(f => MathExt.FloorMod(f, CHUNK_SIZE));
+        MarchingCubeEntity e = chunk.CubeEntities[newChunkCubeIndex.x, newChunkCubeIndex.y, newChunkCubeIndex.z];
+        chunk.EditPointsNextToChunk(chunk, e, offset, delta);
     }
 
 }

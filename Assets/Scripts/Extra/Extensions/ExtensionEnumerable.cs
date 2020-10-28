@@ -12,5 +12,7 @@ public static class ExtensionEnumerable
         return ts[Random.Range(0, ts.Count)];
     }
 
+    //public static IEnumerable<T> Combine<T,J>(T t, Func<int, J> getAt, )
+
 }
 
