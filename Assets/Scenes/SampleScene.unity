@@ -726,8 +726,10 @@ MonoBehaviour:
     noiseScale: 1
   offset: {x: 1.84, y: -3.17, z: 0}
   chunkSize: 4
+  deactivateAfterDistance: 40
   chunkMaterial: {fileID: 2100000, guid: 97d2f9aa8d16b8241a90494b8d616c04, type: 2}
   surfaceLevel: 0.511
+  player: {fileID: 1779183453}
 --- !u!54 &1125545289
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -786,6 +788,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1642241350}
+  - component: {fileID: 1642241351}
   m_Layer: 0
   m_Name: YRotator
   m_TagString: Untagged
@@ -808,6 +811,19 @@ Transform:
   m_Father: {fileID: 2047378104}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1642241351
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1642241349}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b22b783f2cc41a34e955a49af38bcfd7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  target: {fileID: 2047378104}
 --- !u!1 &1721435364
 GameObject:
   m_ObjectHideFlags: 0
@@ -1072,7 +1088,7 @@ MonoBehaviour:
   planet: {fileID: 1125545287}
   maxSpeed: 5
   acceleration: 10
-  jumpPower: 9
+  jumpPower: 10
   airTime: 0
 --- !u!54 &2047378100
 Rigidbody:
@@ -1088,7 +1104,7 @@ Rigidbody:
   m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 112
+  m_Constraints: 0
   m_CollisionDetection: 0
 --- !u!136 &2047378101
 CapsuleCollider:
@@ -1097,7 +1113,7 @@ CapsuleCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2047378098}
-  m_Material: {fileID: 13400000, guid: b639f52ca6539ef459458ac1bc564cd1, type: 2}
+  m_Material: {fileID: 0}
   m_IsTrigger: 0
   m_Enabled: 1
   m_Radius: 0.5

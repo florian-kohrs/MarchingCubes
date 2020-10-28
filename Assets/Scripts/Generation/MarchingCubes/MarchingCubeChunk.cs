@@ -321,10 +321,6 @@ public class MarchingCubeChunk : MonoBehaviour
         bool r = p.x % (ChunkSize - 1) == 0
             || p.y % (ChunkSize - 1) == 0
             || p.z % (ChunkSize - 1) == 0;
-        if (r)
-        {
-            Debug.Log("Corner found: " + p);
-        }
         return r;
     }
 
@@ -333,7 +329,7 @@ public class MarchingCubeChunk : MonoBehaviour
         Triangle t = AllTriangles[triIndex];
 
         int[] cornerIndices = GetCubeCornerIndicesForPoint(t.origin);
-        float delta = sign * 0.1f;
+        float delta = sign * 0.15f;
 
         foreach (int i in cornerIndices)
         {

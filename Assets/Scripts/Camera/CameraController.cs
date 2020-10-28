@@ -40,6 +40,7 @@ public class CameraController : MonoBehaviour
 
         mouseLook = new Vector2(xRotator.localEulerAngles.y, startZEuler);
         smoothedMouseLook = mouseLook;
+        lastSmothedMouseLook = smoothedMouseLook;
         OnStart();
     }
 
@@ -112,16 +113,16 @@ public class CameraController : MonoBehaviour
         smoothedMouseLook.y = Mathf.Lerp(smoothedMouseLook.y, mouseLook.y, 1 / smoothing);
         smoothedMouseLook.x = Mathf.Lerp(smoothedMouseLook.x, mouseLook.x, 1 / smoothing);
 
-        yRotator.transform.localEulerAngles = new Vector3(
-            -smoothedMouseLook.y
-            , yRotator.transform.localEulerAngles.y
-             , yRotator.transform.localEulerAngles.z);
+        float yDelta = smoothedMouseLook.y - lastSmothedMouseLook.y;
 
-        xRotator.transform.localEulerAngles = new Vector3(
-            xRotator.transform.localEulerAngles.x
-            , smoothedMouseLook.x
-            , xRotator.transform.localEulerAngles.z);
+        yRotator.transform.Rotate(-yDelta, 0, 0, Space.Self);
+
+        float xDelta = smoothedMouseLook.x - lastSmothedMouseLook.x;
+
+        xRotator.transform.Rotate(0, xDelta, 0, Space.Self);
+
+        lastSmothedMouseLook = smoothedMouseLook;
     }
 
-
+    protected Vector2 lastSmothedMouseLook;
 }

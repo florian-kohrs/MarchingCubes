@@ -56,6 +56,7 @@ namespace SimplexNoise
             return UnityEngine.Mathf.InverseLerp(-1,1,Generate(x , y , z))/* * 128 + 128*/;
         }
 
+
         public static float CalcPixel3D(int x, int y, int z, float scale)
         {
             return CalcPixel3D(x * scale, y * scale, z * scale);

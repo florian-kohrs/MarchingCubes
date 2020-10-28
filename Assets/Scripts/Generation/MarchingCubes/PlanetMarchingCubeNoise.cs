@@ -34,7 +34,7 @@ public class PlanetMarchingCubeNoise
             }
         }
     }
-
+    public static MinMax m = new MinMax();
 
     public float Evaluate(Vector3 p, float noiseScale, Vector3 offset)
     {
@@ -43,11 +43,13 @@ public class PlanetMarchingCubeNoise
         float distance = p.magnitude;
         float progress = Mathf.Clamp01(distance / radius);
 
-        float noise = SimplexNoise.SimplexNoise.CalcPixel3D(p.x, p.y, p.z);
-
+        float noise = SimplexNoise.SimplexNoise.CalcPixel3D(noisePos.x, noisePos.y, noisePos.z);
+        noise = noise * 2 - 1;
+        m.AddValue(noise);
         return progress + noise / 4;
 
         float radiusProgress = distance / radius;
+
 
 
         
