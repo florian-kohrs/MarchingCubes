@@ -199,7 +199,7 @@ public class MarchingCubeChunk : MonoBehaviour
 
     public Vector3Int offset;
 
-    public void Initialize(Material mat, float surfaceLevel, Vector3Int offset, Vector3 noiseOffset, PlanetMarchingCubeNoise noise, MarchingCubeChunkHandler chunkHandler)
+    public void Initialize(Material mat, float surfaceLevel, Vector3Int offset, Vector3 noiseOffset, INoiseBuilder noise, MarchingCubeChunkHandler chunkHandler)
     {
         cubeEntities = new MarchingCubeEntity[ChunkSize, ChunkSize, ChunkSize];
         this.offset = offset;
@@ -305,7 +305,6 @@ public class MarchingCubeChunk : MonoBehaviour
             }
         }
         ApplyChanges();
-
     }
 
     protected bool IsInBounds(Vector3Int v)
@@ -329,7 +328,7 @@ public class MarchingCubeChunk : MonoBehaviour
         Triangle t = AllTriangles[triIndex];
 
         int[] cornerIndices = GetCubeCornerIndicesForPoint(t.origin);
-        float delta = sign * 0.15f;
+        float delta = sign * 0.25f * Time.deltaTime;
 
         foreach (int i in cornerIndices)
         {
@@ -378,6 +377,9 @@ public class MarchingCubeChunk : MonoBehaviour
         }
         RebuildAround(e);
     }
+
+
+
 
 
 }

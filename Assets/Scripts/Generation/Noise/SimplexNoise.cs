@@ -191,7 +191,7 @@ namespace SimplexNoise
         }
 
 
-        private static float Generate(float x, float y, float z)
+        public static float Generate(float x, float y, float z)
         {
             // Simple skewing factors for the 3D case
             const float F3 = 0.333333333f;

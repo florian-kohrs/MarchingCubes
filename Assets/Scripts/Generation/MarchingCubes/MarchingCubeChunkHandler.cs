@@ -27,6 +27,10 @@ public class MarchingCubeChunkHandler : MonoBehaviour
 
     public PlanetMarchingCubeNoise noiseFilter;
 
+    public TerrainNoise terrainNoise;
+
+    public bool useTerrainNoise;
+
     public Vector3 offset;
 
     [Range(2,8)]
@@ -95,7 +99,7 @@ public class MarchingCubeChunkHandler : MonoBehaviour
         for (int x = -NeededChunkAmount / 2; x < NeededChunkAmount / 2 + 1; x++)
         {
             index.x = x;
-            for (int y = Mathf.Max(-2, -NeededChunkAmount / 2); y < NeededChunkAmount / 2 + 1; y++)
+            for (int y = Mathf.Max(-NeededChunkAmount / 2, -NeededChunkAmount / 2); y < NeededChunkAmount / 2 + 1; y++)
             {
                 index.y = y;
                 for (int z = -NeededChunkAmount / 2; z < NeededChunkAmount / 2 + 1; z++)
@@ -132,7 +136,7 @@ public class MarchingCubeChunkHandler : MonoBehaviour
         MarchingCubeChunk chunk = g.AddComponent<MarchingCubeChunk>();
         chunks.Add(p, chunk);
         chunk.chunkOffset = p;
-        UpdateChunk(p, chunk);
+        BuildChunk(p, chunk);
     }
 
 
@@ -148,9 +152,16 @@ public class MarchingCubeChunkHandler : MonoBehaviour
         return result;
     }
 
-    protected void UpdateChunk(Vector3Int p,MarchingCubeChunk chunk)
+    protected void BuildChunk(Vector3Int p, MarchingCubeChunk chunk)
     {
-        chunk.Initialize(chunkMaterial, surfaceLevel, p, offset, noiseFilter, this);
+        if (useTerrainNoise)
+        {
+            chunk.Initialize(chunkMaterial, surfaceLevel, p, offset, terrainNoise, this);
+        }
+        else
+        {
+            chunk.Initialize(chunkMaterial, surfaceLevel, p, offset, noiseFilter, this);
+        }
     }
 
     public void EditNeighbourChunksAt(MarchingCubeChunk chunk, Vector3Int p, float delta)

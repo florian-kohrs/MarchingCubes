@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [System.Serializable]
-public class PlanetMarchingCubeNoise
+public class PlanetMarchingCubeNoise : INoiseBuilder
 {
 
     public int seed;

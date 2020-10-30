@@ -587,7 +587,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 910780109}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.13628896, y: 21.808107, z: 0.7107963}
+  m_LocalPosition: {x: -0.13628896, y: 50.6, z: 0.7107963}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 2047378104}
@@ -719,14 +719,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22f3db87ed53fbc4baac6a5e47c73dd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  blockAroundPlayer: 25
+  blockAroundPlayer: 40
   noiseFilter:
     seed: 0
     radius: 20
     noiseScale: 1
-  offset: {x: 1.84, y: -3.17, z: 0}
+  terrainNoise:
+    amplitude: 25
+    frequency: 0.0075
+    scale: 1
+    octaves: 9
+    persistance: 0.5
+    lacunarity: 3.41
+    seed: 0
+    terrainOffset: {x: 0, y: 0, z: 0}
+  useTerrainNoise: 1
+  offset: {x: 71, y: 0, z: 93}
   chunkSize: 4
-  deactivateAfterDistance: 40
+  deactivateAfterDistance: 400
   chunkMaterial: {fileID: 2100000, guid: 97d2f9aa8d16b8241a90494b8d616c04, type: 2}
   surfaceLevel: 0.511
   player: {fileID: 1779183453}
