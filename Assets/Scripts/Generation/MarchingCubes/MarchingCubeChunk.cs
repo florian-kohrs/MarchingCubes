@@ -7,9 +7,32 @@ using UnityEngine;
 public class MarchingCubeChunk : MonoBehaviour
 {
 
+    public void Initialize(ComputeBuffer noiseBuffer, Material mat, float surfaceLevel, Vector3Int offset, Vector3 noiseOffset, MarchingCubeChunkHandler chunkHandler)
+    {
+        cubeEntities = new MarchingCubeEntity[ChunkSize, ChunkSize, ChunkSize];
+        this.offset = offset;
+        this.chunkHandler = chunkHandler;
+        this.mat = mat;
+        ResetMesh();
+
+        this.surfaceLevel = surfaceLevel;
+        points = new Vector4[VertexSize * VertexSize * VertexSize];
+
+        noiseBuffer.GetData(points, 0, 0, /*sizeof(float) * 4 **/ points.Length);
+        noiseBuffer.Release();
+        Build();
+        //for (int i = 0; i < points.Length; i++)
+        //{
+        //    Vector4 v4 = points[i];
+        //    points[i] = v4;
+        //}
+
+
+    }
+
     public MarchingCubeChunkHandler chunkHandler;
 
-    public int ChunkSize => MarchingCubeChunkHandler.CHUNK_SIZE;
+    public int ChunkSize => MarchingCubeChunkHandler.VoxelsPerChunkAxis;
 
     protected MeshFilter meshFilter;
     protected MeshCollider meshCollider;
@@ -58,8 +81,6 @@ public class MarchingCubeChunk : MonoBehaviour
     public MarchingCubeEntity[,,] CubeEntities => cubeEntities;
 
     protected Mesh mesh;
-
-    protected List<MarchingCubeEntity> cubesEntities;
 
     protected NoiseFilter noiseFilter;
 
@@ -199,27 +220,6 @@ public class MarchingCubeChunk : MonoBehaviour
 
     public Vector3Int offset;
 
-    public void Initialize(Material mat, float surfaceLevel, Vector3Int offset, Vector3 noiseOffset, INoiseBuilder noise, MarchingCubeChunkHandler chunkHandler)
-    {
-        cubeEntities = new MarchingCubeEntity[ChunkSize, ChunkSize, ChunkSize];
-        this.offset = offset;
-        this.chunkHandler = chunkHandler;
-        this.mat = mat;
-        ResetMesh();
-
-        this.surfaceLevel = surfaceLevel;
-        points = new Vector4[VertexSize * VertexSize * VertexSize];
-
-        noise.BuildNoiseArea(points, offset, noiseOffset, ChunkSize, IndexFromCoord);
-        Build();
-        //for (int i = 0; i < points.Length; i++)
-        //{
-        //    Vector4 v4 = points[i];
-        //    points[i] = v4;
-        //}
-
-
-    }
 
     protected void Build()
     {
@@ -310,9 +310,9 @@ public class MarchingCubeChunk : MonoBehaviour
     protected bool IsInBounds(Vector3Int v)
     {
         return
-            v.x >= 0 && v.x < MarchingCubeChunkHandler.CHUNK_SIZE
-            && v.y >= 0 && v.y < MarchingCubeChunkHandler.CHUNK_SIZE
-            && v.z >= 0 && v.z < MarchingCubeChunkHandler.CHUNK_SIZE;
+            v.x >= 0 && v.x < MarchingCubeChunkHandler.VoxelsPerChunkAxis
+            && v.y >= 0 && v.y < MarchingCubeChunkHandler.VoxelsPerChunkAxis
+            && v.z >= 0 && v.z < MarchingCubeChunkHandler.VoxelsPerChunkAxis;
     }
 
     protected bool IsCornerPoint(Vector3 p)
@@ -328,7 +328,7 @@ public class MarchingCubeChunk : MonoBehaviour
         Triangle t = AllTriangles[triIndex];
 
         int[] cornerIndices = GetCubeCornerIndicesForPoint(t.origin);
-        float delta = sign * 0.25f * Time.deltaTime;
+        float delta = sign * 1f;
 
         foreach (int i in cornerIndices)
         {
@@ -363,7 +363,7 @@ public class MarchingCubeChunk : MonoBehaviour
                 }
                 else
                 {
-                    int indexOffset = Mathf.CeilToInt((indexPoint[i] / (MarchingCubeChunkHandler.CHUNK_SIZE - 2f)) - 1);
+                    int indexOffset = Mathf.CeilToInt((indexPoint[i] / (MarchingCubeChunkHandler.VoxelsPerChunkAxis - 2f)) - 1);
                     pointOffset[i] = -indexOffset;
                 }
             }

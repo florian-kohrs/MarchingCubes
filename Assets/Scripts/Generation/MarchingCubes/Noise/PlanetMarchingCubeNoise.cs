@@ -15,7 +15,7 @@ public class PlanetMarchingCubeNoise : INoiseBuilder
 
     public void BuildNoiseArea(Vector4[] points, Vector3Int chunkOffset, Vector3 noiseOffset, int size, Func<Vector3Int, int> CoordToIndex)
     {
-        chunkOffset = chunkOffset * MarchingCubeChunkHandler.CHUNK_SIZE;
+        chunkOffset = chunkOffset * MarchingCubeChunkHandler.VoxelsPerChunkAxis;
         Vector3Int v =  new Vector3Int();
         int shift = Mathf.FloorToInt((size + 1) / 2);
         Vector3Int vShift = new Vector3Int(shift, shift, shift);

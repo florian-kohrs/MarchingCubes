@@ -6,17 +6,29 @@ using UnityEngine;
 public class MarchingCubeChunkHandler : MonoBehaviour
 {
 
-    public const int CHUNK_SIZE = 8;
+
+    public const int VoxelsPerChunkAxis = 8;
+
+    public int PointsPerChunkAxis => VoxelsPerChunkAxis + 1;
 
     public Dictionary<Vector3Int, MarchingCubeChunk> chunks = new Dictionary<Vector3Int, MarchingCubeChunk>();
 
     public int blockAroundPlayer = 16;
 
+
+    [Header("Voxel Settings")]
+    //public float boundsSize = 8;
+    public Vector3 noiseOffset = Vector3.zero;
+
+    //[Range(2, 100)]
+    //public int numPointsPerAxis = 30;
+
+
     protected int NeededChunkAmount 
     {
         get
         {
-            int amount = Mathf.CeilToInt(blockAroundPlayer / CHUNK_SIZE);
+            int amount = Mathf.CeilToInt(blockAroundPlayer / PointsPerChunkAxis);
             if (amount % 2 == 1)
             {
                 amount += 1;
@@ -29,6 +41,8 @@ public class MarchingCubeChunkHandler : MonoBehaviour
 
     public TerrainNoise terrainNoise;
 
+    public BaseDensityGenerator densityGenerator;
+
     public bool useTerrainNoise;
 
     public Vector3 offset;
@@ -38,7 +52,7 @@ public class MarchingCubeChunkHandler : MonoBehaviour
 
     public int deactivateAfterDistance = 40;
 
-    protected int DeactivatedChunkDistance => Mathf.CeilToInt(deactivateAfterDistance / CHUNK_SIZE);
+    protected int DeactivatedChunkDistance => Mathf.CeilToInt(deactivateAfterDistance / PointsPerChunkAxis);
 
     public Material chunkMaterial;
 
@@ -76,14 +90,20 @@ public class MarchingCubeChunkHandler : MonoBehaviour
     private void Start()
     {
         CheckChunksAround(player.position);
-        StartCoroutine(UpdateChunks());
+        //UpdateChunks();
+        //StartCoroutine(UpdateChunks());
+    }
+
+    private void Update()
+    {
+        CheckChunksAround(player.position);
     }
 
     protected IEnumerator UpdateChunks()
     {
-        CheckChunksAround(player.position);
-
         yield return null;
+       
+
         //yield return new WaitForSeconds(3);
 
         yield return UpdateChunks();
@@ -146,23 +166,40 @@ public class MarchingCubeChunkHandler : MonoBehaviour
 
         for (int i = 0; i < 3; i++)
         {
-            result[i] = (int)(pos[i] / CHUNK_SIZE);
+            result[i] = (int)(pos[i] / PointsPerChunkAxis);
         }
 
         return result;
     }
 
+    private ComputeBuffer pointsBuffer;
+
     protected void BuildChunk(Vector3Int p, MarchingCubeChunk chunk)
     {
-        if (useTerrainNoise)
-        {
-            chunk.Initialize(chunkMaterial, surfaceLevel, p, offset, terrainNoise, this);
-        }
-        else
-        {
-            chunk.Initialize(chunkMaterial, surfaceLevel, p, offset, noiseFilter, this);
-        }
+        pointsBuffer = new ComputeBuffer(PointsPerChunkAxis * PointsPerChunkAxis * PointsPerChunkAxis, sizeof(float) * 4);
+        
+        //float pointSpacing = boundsSize / VoxelsPerChunkAxis;
+
+        densityGenerator.Generate(pointsBuffer, PointsPerChunkAxis, VoxelsPerChunkAxis, CenterFromChunkIndex(p), offset, 1);
+
+        chunk.Initialize(pointsBuffer, chunkMaterial, surfaceLevel, p, offset, this);
+       
+        //if (useTerrainNoise)
+        //{
+        //    chunk.Initialize(chunkMaterial, surfaceLevel, p, offset, terrainNoise, this);
+        //}
+        //else
+        //{
+        //    chunk.Initialize(chunkMaterial, surfaceLevel, p, offset, noiseFilter, this);
+        //}
     }
+
+    protected Vector3 CenterFromChunkIndex(Vector3Int v)
+    {
+        return v.Map(i => i * VoxelsPerChunkAxis);
+    }
+
+    protected float PointSpacing => 1;
 
     public void EditNeighbourChunksAt(MarchingCubeChunk chunk, Vector3Int p, float delta)
     {
@@ -175,7 +212,7 @@ public class MarchingCubeChunkHandler : MonoBehaviour
                 if (v[i] != int.MinValue) 
                 { 
                     //offset is in range -1 to 1
-                    int offset = Mathf.CeilToInt((p[i] / (CHUNK_SIZE - 2f)) - 1);
+                    int offset = Mathf.CeilToInt((p[i] / (VoxelsPerChunkAxis - 2f)) - 1);
                     allActiveIndicesHaveOffset = offset != 0;
                     offsetVector[i] = offset;
                 }
@@ -198,7 +235,7 @@ public class MarchingCubeChunkHandler : MonoBehaviour
 
     public void EditNeighbourChunkAt(MarchingCubeChunk chunk, Vector3Int original, Vector3Int offset, float delta)
     {
-        Vector3Int newChunkCubeIndex = (original + offset).Map(f => MathExt.FloorMod(f, CHUNK_SIZE));
+        Vector3Int newChunkCubeIndex = (original + offset).Map(f => MathExt.FloorMod(f, VoxelsPerChunkAxis));
         MarchingCubeEntity e = chunk.CubeEntities[newChunkCubeIndex.x, newChunkCubeIndex.y, newChunkCubeIndex.z];
         chunk.EditPointsNextToChunk(chunk, e, offset, delta);
     }

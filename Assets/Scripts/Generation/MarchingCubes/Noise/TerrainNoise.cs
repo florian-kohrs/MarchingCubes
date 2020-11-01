@@ -31,17 +31,6 @@ public class TerrainNoise : INoiseBuilder
 
     protected Vector2 terrrain2DOffset => new Vector2(terrainOffset.x, terrainOffset.z);
 
-    protected virtual void OnValidate()
-    {
-        if (lacunarity < 1)
-        {
-            lacunarity = 1;
-        }
-        if (octaves < 0)
-        {
-            octaves = 0;
-        }
-    }
 
     protected Vector2[] octaveOffsets;
 
@@ -68,7 +57,7 @@ public class TerrainNoise : INoiseBuilder
 
     public void BuildNoiseAreaUnderWater(Vector4[] points, Vector3Int chunkOffset, Vector3 noiseOffset, int size, Func<Vector3Int, int> CoordToIndex)
     {
-        chunkOffset = chunkOffset * MarchingCubeChunkHandler.CHUNK_SIZE;
+        chunkOffset = chunkOffset * MarchingCubeChunkHandler.VoxelsPerChunkAxis;
         Vector3Int v = new Vector3Int();
         int shift = Mathf.FloorToInt((size + 1) / 2);
         Vector3Int vShift = new Vector3Int(shift, shift, shift);
@@ -109,7 +98,7 @@ public class TerrainNoise : INoiseBuilder
 
     public void BuildNoiseAreaLand(Vector4[] points, Vector3Int chunkOffset, Vector3 noiseOffset, int size, Func<Vector3Int, int> CoordToIndex)
     {
-        chunkOffset = chunkOffset * MarchingCubeChunkHandler.CHUNK_SIZE;
+        chunkOffset = chunkOffset * MarchingCubeChunkHandler.VoxelsPerChunkAxis;
         Vector3Int v = new Vector3Int();
         int shift = Mathf.FloorToInt((size + 1) / 2);
         Vector3Int vShift = new Vector3Int(shift, shift, shift);

@@ -1,0 +1,39 @@
+﻿#pragma kernel Density
+#include "/Includes/Density.compute"
+#include "/Includes/Noise.compute"
+
+// Noise settings
+StructuredBuffer<float3> octaveOffsets;
+int octaves;
+float lacunarity;
+float persistence;
+float noiseScale;
+float amplitude;
+
+[numthreads(numThreads,numThreads,numThreads)]
+void Density (int3 id : SV_DispatchThreadID)
+{
+    if (id.x >= numPointsPerAxis || id.y >= numPointsPerAxis || id.z >= numPointsPerAxis) {
+        return;
+    }
+    //center is center of chunk, bound size is terrain size
+    float3 pos = centre + id * spacing; /* -boundsSize / 2;*/
+    float noise = -pos.y;
+
+    float frequency = noiseScale/100;
+    float localAmplitude = amplitude;
+
+    for (int j =0; j < octaves; j ++) {
+        float n = snoise(pos * frequency + octaveOffsets[j] + offset);
+        n *= localAmplitude;
+
+        noise += n;
+
+        localAmplitude *= persistence;
+        frequency *= lacunarity;
+    }
+
+    int index = indexFromCoord(id.x, id.y, id.z);
+    points[index] = float4(pos, -noise);
+    
+}
