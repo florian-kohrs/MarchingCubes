@@ -5,9 +5,12 @@ using UnityEngine;
 
 public class MarchingCubeChunkHandler : MonoBehaviour
 {
+   
+    protected int kernelId;
 
+    protected const int threadGroupSize = 8;
 
-    public const int VoxelsPerChunkAxis = 8;
+    public const int VoxelsPerChunkAxis = 30;
 
     public int PointsPerChunkAxis => VoxelsPerChunkAxis + 1;
 
@@ -15,6 +18,7 @@ public class MarchingCubeChunkHandler : MonoBehaviour
 
     public int blockAroundPlayer = 16;
 
+    public ComputeShader marshShader;
 
     [Header("Voxel Settings")]
     //public float boundsSize = 8;
@@ -46,9 +50,6 @@ public class MarchingCubeChunkHandler : MonoBehaviour
     public bool useTerrainNoise;
 
     public Vector3 offset;
-
-    [Range(2,8)]
-    public int chunkSize = 2;
 
     public int deactivateAfterDistance = 40;
 
@@ -89,6 +90,7 @@ public class MarchingCubeChunkHandler : MonoBehaviour
 
     private void Start()
     {
+        kernelId = marshShader.FindKernel("March");
         CheckChunksAround(player.position);
         //UpdateChunks();
         //StartCoroutine(UpdateChunks());
@@ -111,6 +113,8 @@ public class MarchingCubeChunkHandler : MonoBehaviour
 
     public void CheckChunksAround(Vector3 v)
     {
+        CreateBuffers();
+
         Vector3Int chunkIndex = PositionToCoord(v);
 
         SetActivationOfChunks(chunkIndex);
@@ -134,6 +138,8 @@ public class MarchingCubeChunkHandler : MonoBehaviour
                 }
             }
         }
+
+        ReleaseBuffers();
     }
 
     protected void SetActivationOfChunks(Vector3Int center)
@@ -172,26 +178,71 @@ public class MarchingCubeChunkHandler : MonoBehaviour
         return result;
     }
 
+    private ComputeBuffer triangleBuffer;
     private ComputeBuffer pointsBuffer;
+    private ComputeBuffer triCountBuffer;
 
     protected void BuildChunk(Vector3Int p, MarchingCubeChunk chunk)
     {
         pointsBuffer = new ComputeBuffer(PointsPerChunkAxis * PointsPerChunkAxis * PointsPerChunkAxis, sizeof(float) * 4);
-        
-        //float pointSpacing = boundsSize / VoxelsPerChunkAxis;
 
-        densityGenerator.Generate(pointsBuffer, PointsPerChunkAxis, VoxelsPerChunkAxis, CenterFromChunkIndex(p), offset, 1);
+        densityGenerator.Generate(pointsBuffer, PointsPerChunkAxis, 0, CenterFromChunkIndex(p), offset, 1);
 
-        chunk.Initialize(pointsBuffer, chunkMaterial, surfaceLevel, p, offset, this);
-       
-        //if (useTerrainNoise)
+        int numVoxelsPerAxis = VoxelsPerChunkAxis;
+        int numThreadsPerAxis = Mathf.CeilToInt(numVoxelsPerAxis / (float)threadGroupSize);
+
+        triangleBuffer.SetCounterValue(0);
+        marshShader.SetBuffer(0, "points", pointsBuffer);
+        marshShader.SetBuffer(0, "triangles", triangleBuffer);
+        marshShader.SetInt("numPointsPerAxis", PointsPerChunkAxis);
+        marshShader.SetFloat("surfaceLevel", surfaceLevel);
+
+        marshShader.Dispatch(0, numThreadsPerAxis, numThreadsPerAxis, numThreadsPerAxis);
+
+        // Get number of triangles in the triangle buffer
+        ComputeBuffer.CopyCount(triangleBuffer, triCountBuffer, 0);
+        int[] triCountArray = { 0 };
+        triCountBuffer.GetData(triCountArray);
+        int numTris = triCountArray[0];
+
+        // Get triangle data from shader
+        Triangle[] tris = new Triangle[numTris];
+        triangleBuffer.GetData(tris, 0, 0, numTris);
+
+        chunk.InitializeWithMeshData(chunkMaterial, tris, pointsBuffer, this, surfaceLevel);
+
+    }
+
+    void CreateBuffers()
+    {
+        int numPoints = PointsPerChunkAxis * PointsPerChunkAxis * PointsPerChunkAxis;
+        int numVoxelsPerAxis = VoxelsPerChunkAxis - 1;
+        int numVoxels = numVoxelsPerAxis * numVoxelsPerAxis * numVoxelsPerAxis;
+        int maxTriangleCount = numVoxels * 5;
+
+        // Always create buffers in editor (since buffers are released immediately to prevent memory leak)
+        // Otherwise, only create if null or if size has changed
+        //if (!Application.isPlaying || (pointsBuffer == null || numPoints != pointsBuffer.count))
         //{
-        //    chunk.Initialize(chunkMaterial, surfaceLevel, p, offset, terrainNoise, this);
+        //    if (Application.isPlaying)
+        //    {
+        //        ReleaseBuffers();
+        //    }
+            triangleBuffer = new ComputeBuffer(maxTriangleCount, sizeof(float) * 3 * 3 + sizeof(int) * 3, ComputeBufferType.Append);
+            pointsBuffer = new ComputeBuffer(numPoints, sizeof(float) * 4);
+            triCountBuffer = new ComputeBuffer(1, sizeof(int), ComputeBufferType.Raw);
+
         //}
-        //else
-        //{
-        //    chunk.Initialize(chunkMaterial, surfaceLevel, p, offset, noiseFilter, this);
-        //}
+    }
+
+    void ReleaseBuffers()
+    {
+        if (triangleBuffer != null)
+        {
+            triangleBuffer.Release();
+            pointsBuffer.Release();
+            triCountBuffer.Release();
+        }
     }
 
     protected Vector3 CenterFromChunkIndex(Vector3Int v)
@@ -238,6 +289,14 @@ public class MarchingCubeChunkHandler : MonoBehaviour
         Vector3Int newChunkCubeIndex = (original + offset).Map(f => MathExt.FloorMod(f, VoxelsPerChunkAxis));
         MarchingCubeEntity e = chunk.CubeEntities[newChunkCubeIndex.x, newChunkCubeIndex.y, newChunkCubeIndex.z];
         chunk.EditPointsNextToChunk(chunk, e, offset, delta);
+    }
+
+    void OnDestroy()
+    {
+        if (Application.isPlaying)
+        {
+            ReleaseBuffers();
+        }
     }
 
 }

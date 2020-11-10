@@ -66,6 +66,8 @@ public class BaseDensityGenerator : MonoBehaviour
         densityShader.SetBuffer(0, "octaveOffsets", octaveOffsetsBuffer);
         densityShader.SetFloat("amplitude", amplitude);
         densityShader.SetFloat("spacing", spacing);
+
+        //buffersToRelease.Add(pointsBuffer);
     }
 
 

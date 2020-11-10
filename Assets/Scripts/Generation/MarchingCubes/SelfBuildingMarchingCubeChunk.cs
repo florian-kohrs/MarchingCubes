@@ -1,34 +1,31 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
 public class MarchingCubeChunk : MonoBehaviour
 {
 
-    public void Initialize(ComputeBuffer noiseBuffer, Material mat, float surfaceLevel, Vector3Int offset, Vector3 noiseOffset, MarchingCubeChunkHandler chunkHandler)
+    public void InitializeWithMeshData(Material mat, Triangle[] tris, ComputeBuffer noiseBuffer, MarchingCubeChunkHandler handler, float surfaceLevel)
     {
-        cubeEntities = new MarchingCubeEntity[ChunkSize, ChunkSize, ChunkSize];
-        this.offset = offset;
-        this.chunkHandler = chunkHandler;
-        this.mat = mat;
-        ResetMesh();
-
         this.surfaceLevel = surfaceLevel;
+        chunkHandler = handler;
+
+        cubeEntities = new MarchingCubeEntity[ChunkSize, ChunkSize, ChunkSize];
         points = new Vector4[VertexSize * VertexSize * VertexSize];
 
-        noiseBuffer.GetData(points, 0, 0, /*sizeof(float) * 4 **/ points.Length);
+        noiseBuffer.GetData(points, 0, 0, points.Length);
         noiseBuffer.Release();
-        Build();
-        //for (int i = 0; i < points.Length; i++)
-        //{
-        //    Vector4 v4 = points[i];
-        //    points[i] = v4;
-        //}
 
-
+        this.mat = mat;
+        triCount = tris.Length;
+        BuildFromTriangleArray(tris);
+        ApplyChanges();
     }
+
+
 
     public MarchingCubeChunkHandler chunkHandler;
 
@@ -55,22 +52,27 @@ public class MarchingCubeChunk : MonoBehaviour
         {
             if (allTriangles == null)
             {
-                allTriangles = new List<Triangle>();
-                for (int x = 0; x < ChunkSize; x++)
+                BuildAllTriangles();
+            }
+            return allTriangles;
+        }
+    }
+
+    protected void BuildAllTriangles()
+    {
+        allTriangles = new List<Triangle>();
+        for (int x = 0; x < ChunkSize; x++)
+        {
+            for (int y = 0; y < ChunkSize; y++)
+            {
+                for (int z = 0; z < ChunkSize; z++)
                 {
-                    for (int y = 0; y < ChunkSize; y++)
+                    foreach (Triangle t in cubeEntities[x, y, z].triangles)
                     {
-                        for (int z = 0; z < ChunkSize; z++)
-                        {
-                            foreach (Triangle t in cubeEntities[x, y, z].triangles)
-                            {
-                                allTriangles.Add(t);
-                            }
-                        }
+                        allTriangles.Add(t);
                     }
                 }
             }
-            return allTriangles;
         }
     }
 
@@ -145,20 +147,11 @@ public class MarchingCubeChunk : MonoBehaviour
 
             Triangle tri = new Triangle();
 
-            tri.a0Index = a0;
-            tri.a1Index = a1;
-            tri.a2Index = a2;
-            tri.b0Index = b0;
-            tri.b1Index = b1;
-            tri.b2Index = b2;
-            tri.configIndex = cubeIndex;
-            tri.configIndexIndex = i;
-
             tri.origin = p;
 
-            tri.a = InterpolateVerts(cubeCorners[a0], cubeCorners[b0]);
+            tri.c = InterpolateVerts(cubeCorners[a0], cubeCorners[b0]);
             tri.b = InterpolateVerts(cubeCorners[a1], cubeCorners[b1]);
-            tri.c = InterpolateVerts(cubeCorners[a2], cubeCorners[b2]);
+            tri.a = InterpolateVerts(cubeCorners[a2], cubeCorners[b2]);
             e.triangles.Add(tri);
             triCount++;
 
@@ -168,6 +161,7 @@ public class MarchingCubeChunk : MonoBehaviour
 
     protected virtual Vector3 InterpolateVerts(Vector4 v1, Vector4 v2)
     {
+        //return v2.GetXYZ() + (v1.GetXYZ()-v2.GetXYZ()) / 2;
         Vector3 v = v1.GetXYZ();
         float t = (surfaceLevel - v1.w) / (v2.w - v1.w);
         return v + t * (v2.GetXYZ() - v);
@@ -193,7 +187,7 @@ public class MarchingCubeChunk : MonoBehaviour
         return IndexFromCoord(v.x, v.y, v.z);
     }
 
-    protected Mesh Mesh
+    public Mesh Mesh
     {
         get
         {
@@ -241,8 +235,40 @@ public class MarchingCubeChunk : MonoBehaviour
         ApplyChanges();
     }
 
+    public void BuildFromTriangleArray(Triangle[] ts)
+    {
+        Vector3Int v = new Vector3Int();
+        MarchingCubeEntity cube;
+        cubeEntities = new MarchingCubeEntity[ChunkSize, ChunkSize, ChunkSize];
+        for (int x = 0; x < ChunkSize; x++)
+        {
+            v.x = x;
+            for (int y = 0; y < ChunkSize; y++)
+            {
+                v.y = y;
+                for (int z = 0; z < ChunkSize; z++)
+                {
+                    v.z = z;
+                    cube = new MarchingCubeEntity();
+                    cube.origin = v;
+                    CubeEntities[x, y, z] = cube;
+                }
+            }
+        }
+
+        foreach (Triangle t in ts)
+        {
+            cube = cubeEntities[t.origin.x, t.origin.y, t.origin.z];
+            cube.triangles.Add(t);
+        }
+
+        ///rebuild all triangles
+        BuildAllTriangles();
+    }
+
     protected void ApplyChanges()
     {
+
         Vector3[] vertices = new Vector3[triCount * 3];
         int[] meshTriangles = new int[triCount * 3];
         colorData = new Color[triCount * 3];
@@ -328,14 +354,21 @@ public class MarchingCubeChunk : MonoBehaviour
         Triangle t = AllTriangles[triIndex];
 
         int[] cornerIndices = GetCubeCornerIndicesForPoint(t.origin);
-        float delta = sign * 1f;
+        float delta = sign * 0.8f /** Time.deltaTime*/;
 
         foreach (int i in cornerIndices)
         {
             Vector4 newV4 = points[i];
-            newV4.w += delta;
+            newV4.w = Mathf.Clamp01(newV4.w) + delta;
             points[i] = newV4;
         }
+
+        //for (int i = 0; i < points.Length; i++)
+        //{
+        //    Vector4 newV4 = points[i];
+        //    newV4.w += delta;
+        //    points[i] = newV4;
+        //}
 
         Vector3 p = CoordFromIndex(triIndex);
 
@@ -343,6 +376,7 @@ public class MarchingCubeChunk : MonoBehaviour
         {
             chunkHandler.EditNeighbourChunksAt(this, t.origin, delta);
         }
+        //Rebuild();
         RebuildAround(CubeEntities[t.origin.x, t.origin.y, t.origin.z]);
     }
 
