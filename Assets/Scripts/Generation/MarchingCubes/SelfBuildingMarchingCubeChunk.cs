@@ -25,8 +25,6 @@ public class MarchingCubeChunk : MonoBehaviour
         ApplyChanges();
     }
 
-
-
     public MarchingCubeChunkHandler chunkHandler;
 
     public int ChunkSize => MarchingCubeChunkHandler.VoxelsPerChunkAxis;
@@ -67,14 +65,15 @@ public class MarchingCubeChunk : MonoBehaviour
             {
                 for (int z = 0; z < ChunkSize; z++)
                 {
-                    foreach (Triangle t in cubeEntities[x, y, z].triangles)
+                    foreach (PathTriangle t in cubeEntities[x, y, z].triangles)
                     {
-                        allTriangles.Add(t);
+                        allTriangles.Add(t.tri);
                     }
                 }
             }
         }
     }
+
 
     protected int triCount;
 
@@ -148,11 +147,11 @@ public class MarchingCubeChunk : MonoBehaviour
             Triangle tri = new Triangle();
 
             tri.origin = p;
-
+            tri.triangulationIndex = cubeIndex;
             tri.c = InterpolateVerts(cubeCorners[a0], cubeCorners[b0]);
             tri.b = InterpolateVerts(cubeCorners[a1], cubeCorners[b1]);
             tri.a = InterpolateVerts(cubeCorners[a2], cubeCorners[b2]);
-            e.triangles.Add(tri);
+            e.triangles.Add(new PathTriangle(tri));
             triCount++;
 
         }
@@ -259,9 +258,23 @@ public class MarchingCubeChunk : MonoBehaviour
         foreach (Triangle t in ts)
         {
             cube = cubeEntities[t.origin.x, t.origin.y, t.origin.z];
-            cube.triangles.Add(t);
+            cube.triangles.Add(new PathTriangle(t));
         }
 
+        for (int x = 0; x < ChunkSize; x+=2)
+        {
+            v.x = x;
+            for (int y = 0; y < ChunkSize; y++)
+            {
+                v.y = y;
+                for (int z = 0; z < ChunkSize; z++)
+                {
+                    v.z = z;
+                    cube = CubeEntities[x, y, z];
+                    cube.BuildInternNeighbours();
+                }
+            }
+        }
         ///rebuild all triangles
         BuildAllTriangles();
     }
@@ -354,12 +367,12 @@ public class MarchingCubeChunk : MonoBehaviour
         Triangle t = AllTriangles[triIndex];
 
         int[] cornerIndices = GetCubeCornerIndicesForPoint(t.origin);
-        float delta = sign * 0.8f /** Time.deltaTime*/;
+        float delta = sign * 1f /** Time.deltaTime*/;
 
         foreach (int i in cornerIndices)
         {
             Vector4 newV4 = points[i];
-            newV4.w = Mathf.Clamp01(newV4.w) + delta;
+            newV4.w += delta;
             points[i] = newV4;
         }
 
@@ -376,7 +389,6 @@ public class MarchingCubeChunk : MonoBehaviour
         {
             chunkHandler.EditNeighbourChunksAt(this, t.origin, delta);
         }
-        //Rebuild();
         RebuildAround(CubeEntities[t.origin.x, t.origin.y, t.origin.z]);
     }
 

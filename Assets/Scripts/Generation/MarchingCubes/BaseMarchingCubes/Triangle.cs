@@ -10,6 +10,7 @@ public struct Triangle
     public Vector3 c;
 
     public Vector3Int origin;
+    public int triangulationIndex;
 
     public Vector3 this[int i]
     {
@@ -27,5 +28,9 @@ public struct Triangle
         }
     }
 
+    public bool Contains(Vector3 v)
+    {
+        return this[0] == v || this[1] == v || this[2] == v;
+    }
 
 }

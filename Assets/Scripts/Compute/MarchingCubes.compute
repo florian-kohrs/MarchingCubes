@@ -9,6 +9,7 @@ struct Triangle
     float3 vertexB;
     float3 vertexA;
     int3 origin;
+    int triangulationIndex;
 };
 
 AppendStructuredBuffer<Triangle> triangles;
@@ -80,6 +81,7 @@ void March(int3 id : SV_DispatchThreadID)
         int b2 = cornerIndexBFromEdge[triangulation[cubeIndex][i + 2]];
 
         Triangle tri;
+        tri.triangulationIndex = cubeIndex;
         tri.origin = id;
         tri.vertexA = interpolateVerts(cubeCorners[a0], cubeCorners[b0]);
         tri.vertexB = interpolateVerts(cubeCorners[a1], cubeCorners[b1]);

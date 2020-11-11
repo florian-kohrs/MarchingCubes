@@ -228,7 +228,7 @@ public class MarchingCubeChunkHandler : MonoBehaviour
         //    {
         //        ReleaseBuffers();
         //    }
-            triangleBuffer = new ComputeBuffer(maxTriangleCount, sizeof(float) * 3 * 3 + sizeof(int) * 3, ComputeBufferType.Append);
+            triangleBuffer = new ComputeBuffer(maxTriangleCount, sizeof(float) * 3 * 3 + sizeof(int) * 3 + sizeof(int), ComputeBufferType.Append);
             pointsBuffer = new ComputeBuffer(numPoints, sizeof(float) * 4);
             triCountBuffer = new ComputeBuffer(1, sizeof(int), ComputeBufferType.Raw);
 

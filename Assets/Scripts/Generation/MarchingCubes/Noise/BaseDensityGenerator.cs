@@ -67,7 +67,6 @@ public class BaseDensityGenerator : MonoBehaviour
         densityShader.SetFloat("amplitude", amplitude);
         densityShader.SetFloat("spacing", spacing);
 
-        //buffersToRelease.Add(pointsBuffer);
     }
 
 
