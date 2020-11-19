@@ -23,6 +23,7 @@ public class MarchingCubeChunk : MonoBehaviour
         triCount = tris.Length;
         BuildFromTriangleArray(tris);
         ApplyChanges();
+        BuildChunkEdges();
     }
 
     public MarchingCubeChunkHandler chunkHandler;
@@ -131,6 +132,8 @@ public class MarchingCubeChunk : MonoBehaviour
         if (cubeCorners[6].w < surfaceLevel) cubeIndex |= 64;
         if (cubeCorners[7].w < surfaceLevel) cubeIndex |= 128;
 
+        e.triangulationIndex = cubeIndex;
+
         for (int i = 0; TriangulationTable.triangulation[cubeIndex][i] != -1; i += 3)
         {
             // Get indices of corner points A and B for each of the three edges
@@ -155,12 +158,98 @@ public class MarchingCubeChunk : MonoBehaviour
             triCount++;
 
         }
+        e.BuildInternNeighbours();
         cubeEntities[p.x, p.y, p.z] = e;
+    }
+
+    protected void BuildChunkEdges()
+    {
+        for (int x = 0; x < ChunkSize; x++)
+        {
+            for (int y = 0; y < ChunkSize; y++)
+            {
+                for (int z = 0; z < ChunkSize; z++)
+                {
+                    if((x+y+z) % 2 == 0)
+                    {
+                        foreach (Vector3Int v3 in GetValidIndicesAround(CubeEntities[x, y, z]))
+                        {
+                            CubeEntities[x, y, z].BuildExternalNeighboursWith(CubeEntities[v3.x, v3.y, v3.z]);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public void ConnectWithNeighbour(MarchingCubeChunk neighbour)
+    {
+        TriangulationTable.MirrorAxis axis;
+        Vector3Int diff = chunkOffset - neighbour.chunkOffset;
+        if (diff.x != 0)
+        {
+            axis = TriangulationTable.MirrorAxis.X;
+            int x;
+            if(Mathf.Sign(diff.x) == -1)
+            {
+                x = 0;
+            }
+            else
+            {
+                x = ChunkSize - 1;
+            }
+            for (int y = 0; y < ChunkSize; y++)
+            {
+                for (int z = 0; z < ChunkSize; z++)
+                {
+                    CubeEntities[x, y, z].BuildExternalNeighboursWith(neighbour.CubeEntities[ChunkSize-x - 1,y,z], axis);
+                }
+            }
+        }
+        else if (diff.y != 0)
+        {
+            axis = TriangulationTable.MirrorAxis.Y;
+            int y;
+            if (Mathf.Sign(diff.y) == -1)
+            {
+                y = 0;
+            }
+            else
+            {
+                y = ChunkSize - 1;
+            }
+            for (int x = 0; y < ChunkSize; y++)
+            {
+                for (int z = 0; z < ChunkSize; z++)
+                {
+                    CubeEntities[x, y, z].BuildExternalNeighboursWith(neighbour.CubeEntities[x, ChunkSize - y - 1, z], axis);
+                }
+            }
+        }
+        else
+        {
+            axis = TriangulationTable.MirrorAxis.Z;
+            int z;
+            if (Mathf.Sign(diff.z) == -1)
+            {
+                z = 0;
+            }
+            else
+            {
+                z = ChunkSize - 1;
+            }
+            for (int x = 0; x < ChunkSize; x++)
+            {
+                for (int y = 0; y < ChunkSize; y++)
+                {
+                    CubeEntities[x, y, z].BuildExternalNeighboursWith(neighbour.CubeEntities[x, y, ChunkSize - z - 1], axis);
+                }
+            }
+        }
     }
 
     protected virtual Vector3 InterpolateVerts(Vector4 v1, Vector4 v2)
     {
-        //return v2.GetXYZ() + (v1.GetXYZ()-v2.GetXYZ()) / 2;
         Vector3 v = v1.GetXYZ();
         float t = (surfaceLevel - v1.w) / (v2.w - v1.w);
         return v + t * (v2.GetXYZ() - v);
@@ -211,8 +300,6 @@ public class MarchingCubeChunk : MonoBehaviour
 
     protected Material mat;
 
-    public Vector3Int offset;
-
 
     protected void Build()
     {
@@ -258,6 +345,7 @@ public class MarchingCubeChunk : MonoBehaviour
         foreach (Triangle t in ts)
         {
             cube = cubeEntities[t.origin.x, t.origin.y, t.origin.z];
+            cube.triangulationIndex = t.triangulationIndex;
             cube.triangles.Add(new PathTriangle(t));
         }
 
@@ -339,11 +427,34 @@ public class MarchingCubeChunk : MonoBehaviour
                     if (IsInBounds(v))
                     {
                         March(v, points);
+                        ///inform neighbours about eventuell change!
                     }
                 }
             }
         }
         ApplyChanges();
+    }
+
+    protected IEnumerable<Vector3Int> GetIndicesAround(MarchingCubeEntity e)
+    {
+        Vector3Int r = e.origin;
+        yield return new Vector3Int(r.x - 1, r.y, r.z);
+        yield return new Vector3Int(r.x + 1, r.y, r.z);
+        yield return new Vector3Int(r.x, r.y - 1, r.z);
+        yield return new Vector3Int(r.x, r.y + 1, r.z);
+        yield return new Vector3Int(r.x, r.y, r.z - 1);
+        yield return new Vector3Int(r.x, r.y, r.z + 1);
+    }
+
+    protected IEnumerable<Vector3Int> GetValidIndicesAround(MarchingCubeEntity e)
+    {
+        foreach(Vector3Int v3 in GetIndicesAround(e))
+        {
+            if (IsInBounds(v3))
+            {
+                yield return v3;
+            }
+        }
     }
 
     protected bool IsInBounds(Vector3Int v)

@@ -163,8 +163,31 @@ public class MarchingCubeChunkHandler : MonoBehaviour
         chunks.Add(p, chunk);
         chunk.chunkOffset = p;
         BuildChunk(p, chunk);
+        ConnectNeighboursAround(chunk);
     }
 
+    protected void ConnectNeighboursAround(MarchingCubeChunk chunk)
+    {
+        foreach (Vector3Int v3 in GetNeighbourPositionsOf(chunk))
+        {
+            MarchingCubeChunk neighbour;
+            if (chunks.TryGetValue(v3, out neighbour))
+            {
+                chunk.ConnectWithNeighbour(neighbour);
+            }
+        }
+    }
+
+    protected IEnumerable<Vector3Int> GetNeighbourPositionsOf(MarchingCubeChunk chunk)
+    {
+        Vector3Int r = chunk.chunkOffset;
+        yield return new Vector3Int(r.x - 1, r.y, r.z);
+        yield return new Vector3Int(r.x + 1, r.y, r.z);
+        yield return new Vector3Int(r.x, r.y - 1, r.z);
+        yield return new Vector3Int(r.x, r.y + 1, r.z);
+        yield return new Vector3Int(r.x, r.y, r.z - 1);
+        yield return new Vector3Int(r.x, r.y, r.z + 1);
+    }
 
     protected Vector3Int PositionToCoord(Vector3 pos)
     {

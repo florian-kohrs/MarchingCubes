@@ -19,25 +19,44 @@ public class MarchingCubeEntity : ICubeEntity
     /// </summary>
     public void BuildInternNeighbours()
     {
-        for (int i = 0; i < triangles.Count-1; i++)
+        int count = 0;
+        foreach (PathTriangle tri in triangles)
         {
-            for (int x = i + 1; x < triangles.Count; x++)
+            List<int> neighbourIndices = TriangulationTable.GetInternNeighbourIndiceces(triangulationIndex, count);
+            if (neighbourIndices != null)
             {
-                triangles[i].BuildNeighboursIn(triangles[x]);
+                foreach (int  i in neighbourIndices)
+                {
+                    triangles[count].BuildNeighboursIn(triangles[i]);
+                }
+            }
+            count++;
+        }
+    }
+
+    public void BuildExternalNeighboursWith(MarchingCubeEntity e, TriangulationTable.MirrorAxis axis)
+    {
+        for (int i = 0; i < triangles.Count; i++)
+        {
+            int? neighbourIndex = TriangulationTable.GetNeighbourIndicesIn(triangulationIndex, i, e.triangulationIndex, axis);
+            if(neighbourIndex != null && neighbourIndex.HasValue)
+            {
+                triangles[i].AddNeighbourTwoWay(triangles[neighbourIndex.Value]);
             }
         }
     }
 
     public void BuildExternalNeighboursWith(MarchingCubeEntity e)
     {
-        ///maybe stop after finding one neighbour, because it can only have one neighbour?
-        foreach (PathTriangle t1 in triangles)
-        {
-            foreach (PathTriangle t2 in e.triangles)
-            {
-                t1.BuildNeighboursIn(t2);
-            }
-        }
+        TriangulationTable.MirrorAxis axis;
+        if (e.origin.x != origin.x)
+            axis = TriangulationTable.MirrorAxis.X;
+        else if (e.origin.y != origin.y)
+            axis = TriangulationTable.MirrorAxis.Y;
+        else
+            axis = TriangulationTable.MirrorAxis.Z;
+
+        BuildExternalNeighboursWith(e, axis);
     }
 
     public IList<ICubeEntity> Neighbours

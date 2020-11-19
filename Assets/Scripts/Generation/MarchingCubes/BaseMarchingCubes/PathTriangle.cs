@@ -5,11 +5,6 @@ using UnityEngine;
 public class PathTriangle
 {
 
-    /// <summary>
-    /// look edges up in triangulation table
-    /// </summary>
-    public const int PRECONDITIONED_SHARED_EDGES = 2;
-
     public PathTriangle(Triangle t)
     {
         tri = t;
@@ -22,11 +17,12 @@ public class PathTriangle
 
     public void BuildNeighboursIn(PathTriangle t)
     {
-        if (!neighbours.Contains(t) && HasSufficientConnectedTriangles(t.tri))
+        //if (!neighbours.Contains(t))
         {
-            AddNeighbourTwoWay(t);
+            neighbours.Add(t);
         }
     }
+
 
     /// <summary>
     /// doesnt check if the neighbour is already registered
@@ -38,19 +34,5 @@ public class PathTriangle
         p.neighbours.Add(this);
     }
 
-    protected bool HasSufficientConnectedTriangles(Triangle t)
-    {
-        int count = 0;
-
-        for (int i = 0; i < 3 && count < PRECONDITIONED_SHARED_EDGES; i++)
-        {
-            if (tri.Contains(t[i]))
-            {
-                count++;
-            }
-        }
-
-        return count >= PRECONDITIONED_SHARED_EDGES;
-    }
 
 }

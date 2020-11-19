@@ -43,7 +43,6 @@ public class BaseDensityGenerator : MonoBehaviour
             }
             buffersToRelease.Clear();
         }
-
         // Return voxel data buffer so it can be used to generate mesh
         return pointsBuffer;
     }

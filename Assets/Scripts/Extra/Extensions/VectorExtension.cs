@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public static class VectorExtension
@@ -16,12 +17,12 @@ public static class VectorExtension
         result.y = (sin * (rotateCenter.x) + cos * rotateCenter.y) + offset.y;
         return result;
     }
-    
+
     public static Vector3 RotateTowardsAngle(this Vector3 from, Vector3 to, float speed)
     {
         return new Vector3(
-            TowardsAngle(from.x,to.x,speed), 
-            TowardsAngle(from.y, to.y, speed), 
+            TowardsAngle(from.x, to.x, speed),
+            TowardsAngle(from.y, to.y, speed),
             TowardsAngle(from.z, to.z, speed)
         );
     }
@@ -52,8 +53,8 @@ public static class VectorExtension
     public static Vector3 LerpAngle(this Vector3 a, Vector3 b, float t)
     {
         return new Vector3(
-            Mathf.LerpAngle(a.x, b.x, t), 
-            Mathf.LerpAngle(a.y, b.y, t), 
+            Mathf.LerpAngle(a.x, b.x, t),
+            Mathf.LerpAngle(a.y, b.y, t),
             Mathf.LerpAngle(a.z, b.z, t)
         );
     }
@@ -68,6 +69,77 @@ public static class VectorExtension
         yield return v.x;
         yield return v.y;
         yield return v.z;
+    }
+
+    public static IEnumerable<float> Values(this Vector3 v)
+    {
+        yield return v.x;
+        yield return v.y;
+        yield return v.z;
+    }
+
+    public static bool SharesExactNValuesWith(this Vector3 v1, Vector3 v2, int n)
+    {
+        int sameValues = 0;
+
+        for (int i = 0; i < 3; i++)
+        {
+            bool found = false; ;
+            for (int x = 0; x < 3 && !found; x++)
+            {
+                if (v1[i] == v2[x])
+                {
+                    found = true;
+                    sameValues++;
+                }
+            }
+        }
+
+        return sameValues == n;
+    }
+
+    public static bool SharesAnyNValuesWith(this Vector3 v1, Vector3 v2, int n)
+    {
+        int sameValues = 0;
+
+        for (int i = 0; i < 3 && sameValues < n; i++)
+        {
+            if (v2.Values().Contains(v1[i]))
+            {
+                sameValues++;
+            }
+        }
+        return sameValues >= n;
+    }
+
+    public static bool SharesNValuesWith(this Vector3 v1, Vector3 v2, int n)
+    {
+        int sameValues = 0;
+
+        for (int i = 0; i < 3 && sameValues < n; i++)
+        {
+                if (v1[i] == v2[i])
+                {
+                    sameValues++;
+                }
+        }
+        return sameValues >= n;
+    }
+
+    public static bool SharesNValuesInOrderWith(this Vector3 v1, Vector3 v2, int n)
+    {
+        int sameValues = 0;
+
+        int start = v2.Values().ToList().IndexOf(v1.x);
+
+        for (int i = 0; i < 3 && sameValues < n && start != -1; i++)
+        {
+            if (v1[i] == v2[(i + start) % 3])
+            {
+                sameValues++;
+            }
+        }
+        return sameValues >= n;
     }
 
     public static Vector3Int Min(this Vector3Int v, int min)
@@ -91,7 +163,7 @@ public static class VectorExtension
         return new Vector3Int(f(v.x), f(v.y), f(v.z));
     }
 
-    public static Vector3 Min(this Vector3 v, float  min)
+    public static Vector3 Min(this Vector3 v, float min)
     {
         return v.Map((f) => Mathf.Min(f, min));
     }
@@ -102,7 +174,7 @@ public static class VectorExtension
     /// <param name="v"></param>
     /// <param name="f"></param>
     /// <returns></returns>
-    public static Vector3 Map(this Vector3 v, Func<float,float> f)
+    public static Vector3 Map(this Vector3 v, Func<float, float> f)
     {
         return new Vector3(f(v.x), f(v.y), f(v.z));
     }
@@ -117,7 +189,7 @@ public static class VectorExtension
         return (int)(v.x * size.x * size.y + v.y * size.y + v.z);
     }
 
-    public static int ToInt(int x, int y,  int z, Vector3Int size)
+    public static int ToInt(int x, int y, int z, Vector3Int size)
     {
         return (x * size.x * size.y + y * size.y + z);
     }
