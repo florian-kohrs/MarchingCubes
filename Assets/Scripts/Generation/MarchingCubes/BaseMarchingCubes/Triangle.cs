@@ -28,6 +28,11 @@ public struct Triangle
         }
     }
 
+    public bool Equals(Triangle tri)
+    {
+        return a == tri.a && b == tri.b && c == tri.c;
+    }
+
     public bool Contains(Vector3 v)
     {
         return this[0] == v || this[1] == v || this[2] == v;

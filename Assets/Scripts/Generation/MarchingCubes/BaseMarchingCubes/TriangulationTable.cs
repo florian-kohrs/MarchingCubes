@@ -8,20 +8,24 @@ public class TriangulationTable : MonoBehaviour
 {
 
 
-    public class CubeRepresentation
+    private class CubeRepresentation
     {
 
         public CubeRepresentation(int index)
         {
             int count = index;
-            for (int i = 0; i < Length && count > 0; i++)
+            for (int i = Length - 1; i >= 0 && count > 0; i--)
             {
                 int currentValue = (int)Mathf.Pow(2, i);
-                if (count >= currentValue) 
+                if (count >= currentValue)
                 {
                     this[i] = true;
                     count -= currentValue;
                 }
+            }
+            if (count > 0)
+            {
+                throw new Exception("Index breakdown didnt work");
             }
         }
 
@@ -48,7 +52,7 @@ public class TriangulationTable : MonoBehaviour
             {
                 Swap(RotateOnX);
             }
-            else if(axis == MirrorAxis.Y)
+            else if (axis == MirrorAxis.Y)
             {
                 Swap(RotateOnY);
             }
@@ -69,7 +73,7 @@ public class TriangulationTable : MonoBehaviour
 
         int Length => 8;
 
-       
+
         public void Swap(Func<int, int> f)
         {
             Dictionary<int, bool> changes = new Dictionary<int, bool>();
@@ -89,9 +93,9 @@ public class TriangulationTable : MonoBehaviour
             }
         }
 
-        private int RotateOnX(int i) 
+        public static int RotateOnX(int i)
         {
-            if(i == 1 || i == 5 || i == 3 ||i == 7)
+            if (i == 1 || i == 5 || i == 3 || i == 7)
             {
                 return i - 1;
             }
@@ -101,9 +105,9 @@ public class TriangulationTable : MonoBehaviour
             }
         }
 
-        private int RotateOnY(int i)
+        public static int RotateOnY(int i)
         {
-            if (i >= 4 )
+            if (i >= 4)
             {
                 return i - 4;
             }
@@ -113,7 +117,7 @@ public class TriangulationTable : MonoBehaviour
             }
         }
 
-        private int RotateOnZ(int i)
+        public static int RotateOnZ(int i)
         {
             if (i == 1 || i == 5)
             {
@@ -162,7 +166,7 @@ public class TriangulationTable : MonoBehaviour
                 switch (i)
                 {
                     case 0:
-                         v0 = value;
+                        v0 = value;
                         break;
                     case 1:
                         v1 = value;
@@ -191,21 +195,75 @@ public class TriangulationTable : MonoBehaviour
 
     }
 
-    public enum MirrorAxis { X = 1,Y = 255,Z = 6500}
-
-    public static int? GetNeighbourIndicesIn(int fromIndex, int fromTriIndex, int toIndex, MirrorAxis shiftedOnAxis)
+    public static Vector2Int RotateEdgeOn(Vector2Int edge, MirrorAxis axis)
     {
-        CubeRepresentation cube = new CubeRepresentation(toIndex);
-        cube.MirrorRepresentation(shiftedOnAxis);
-        return GetNeighbourIndicexIn(fromIndex, fromTriIndex, cube.CubeIndex);
+        return new Vector2Int(RotateEdgeIndexOn(edge.x, axis), RotateEdgeIndexOn(edge.y, axis));
+    }
+
+    public static int RotateEdgeIndexOn(int edgeIndex, MirrorAxis axis)
+    {
+        int result = edgeIndex;
+        if (axis == MirrorAxis.X)
+        {
+            if (edgeIndex == 1 || edgeIndex == 5)
+                result = edgeIndex + 2;
+            else if (edgeIndex == 10)
+                result = 11;
+            else if (edgeIndex == 9)
+                result = 8;
+            else if (edgeIndex == 3 || edgeIndex == 7)
+                result = edgeIndex - 2;
+            else if (edgeIndex == 11)
+                result = 10;
+            else if (edgeIndex == 8)
+                result = 9;
+        }
+        else if (axis == MirrorAxis.Y)
+        {
+            if (edgeIndex >= 0 && edgeIndex < 4)
+                result = edgeIndex + 4;
+            else if (edgeIndex < 8)
+                result = edgeIndex - 4;
+        }
+        else
+        {
+            if (edgeIndex == 2 || edgeIndex == 6)
+                result = edgeIndex - 2;
+            else if (edgeIndex == 11)
+                result = 8;
+            else if (edgeIndex == 10)
+                result = 9;
+            else if (edgeIndex == 0 || edgeIndex == 4)
+                result = edgeIndex + 2;
+            else if (edgeIndex == 8)
+                result = 11;
+            else if (edgeIndex == 9)
+                result = 10;
+        }
+        return result;
     }
 
 
-    public static int? GetNeighbourIndicexIn(int fromIndex, int fromTriIndex, int toIndex)
+    public enum MirrorAxis { X = 1, Y = 255, Z = 6500 }
+
+    public static bool GetNeighbourIndexIn(int fromIndex, int fromTriIndex, int toIndex, out int result, MirrorAxis shiftedOnAxis)
     {
-        int? neighbour;
-        NeighbourTable.TryGetValue(new NeighbourKey(fromIndex, fromTriIndex, toIndex), out neighbour);
-        return neighbour;
+        CubeRepresentation cube = new CubeRepresentation(toIndex);
+        cube.MirrorRepresentation(shiftedOnAxis);
+        return GetNeighbourIndexIn(fromIndex, fromTriIndex, cube.CubeIndex, out result);
+    }
+
+
+    public static int RotateIndex(int triangulationIndex, MirrorAxis axis)
+    {
+        CubeRepresentation cube = new CubeRepresentation(triangulationIndex);
+        cube.MirrorRepresentation(axis);
+        return cube.CubeIndex;
+    }
+
+    public static bool GetNeighbourIndexIn(int fromIndex, int fromTriIndex, int toIndex, out int result)
+    {
+        return NeighbourTable.TryGetValue(new NeighbourKey(fromIndex, fromTriIndex, toIndex), out result);
     }
 
     public static List<int> GetInternNeighbourIndiceces(int fromIndex, int fromTriIndex)
@@ -236,11 +294,144 @@ public class TriangulationTable : MonoBehaviour
 
     private const int SAME_VERTICES_TO_BE_NEIGHBOURS = 2;
 
-    protected static Dictionary<NeighbourKey, int?> neighbourTable;
+    protected static Dictionary<NeighbourKey, int> neighbourTable;
     protected static Dictionary<long, List<int>> internNeighbours;
 
 
-    public static Dictionary<NeighbourKey, int?> NeighbourTable
+    public static List<Tuple<Vector2Int, Vector3Int>> GetNeighbourOffsetForTriangle(MarchingCubeEntity e, int triIndex)
+    {
+        List<Tuple<Vector2Int, Vector3Int>> result = new List<Tuple<Vector2Int, Vector3Int>>();
+        int index = triIndex * 3;
+
+        for (int i = 0; i < 3; i++)
+        {
+            Vector3Int r = Vector3Int.zero;
+            Vector2Int edgeIndex = new Vector2Int(triangulation[e.triangulationIndex][index + i], triangulation[e.triangulationIndex][index + ((i + 1) % 3)]);
+            GetEdgeAxisDirection(ref r, edgeIndex.x);
+            GetEdgeAxisDirection(ref r, edgeIndex.y);
+            r = r.Map(f => { if (Mathf.Abs(f) == 2) { return (int)Mathf.Sign(f) * 1; } else { return 0; } });
+            if (r != Vector3.zero)
+            {
+                result.Add(Tuple.Create(edgeIndex, r));
+            }
+        }
+        return result;
+    }
+    protected const int TRIANGULATION_ENTRY_SIZE = 15;
+
+    public static Vector2Int RotateVector2OnDelta(Vector3Int delta, Vector2Int v2)
+    {
+        IEnumerable<int> r = RotateValuesOnDelta(delta, v2.x, v2.y);
+        return new Vector2Int(r.First(), r.Last());
+    }
+
+
+    public static IEnumerable<int> RotateValuesOnDelta(Vector3Int delta, params int[] @is)
+    {
+        if (delta.x != 0)
+        {
+            return RotateValuesOnAxis(@is, MirrorAxis.X);
+        }
+        else if (delta.y != 0)
+        {
+
+            return RotateValuesOnAxis(@is, MirrorAxis.Y);
+        }
+        else if (delta.z != 0)
+        {
+
+            return RotateValuesOnAxis(@is, MirrorAxis.Z);
+        }
+        else
+        {
+            return @is;
+        }
+    }
+
+    public static MirrorAxis GetAxisFromDelta(Vector3Int delta)
+    {
+        if (delta.x != 0)
+        {
+            return MirrorAxis.X;
+        }
+        else if (delta.y != 0)
+        {
+            return MirrorAxis.Y;
+        }
+        else
+        {
+            return MirrorAxis.Z;
+        }
+    }
+
+    public static IEnumerable<int> RotateValuesOnAxis(IEnumerable<int> @is, MirrorAxis axis)
+    {
+        System.Func<int, int> f;
+        if (axis == MirrorAxis.X)
+        {
+            f = CubeRepresentation.RotateOnX;
+        }
+        else if (axis == MirrorAxis.Y)
+        {
+            f = CubeRepresentation.RotateOnY;
+        }
+        else
+        {
+            f = CubeRepresentation.RotateOnZ;
+        }
+        return @is.Select(f);
+    }
+
+    public static int GetIndexWithEdges(int index, Vector2Int edge)
+    {
+        int result = -1;
+        Vector3 v = new Vector3Int();
+        for (int i = 0; i < TRIANGULATION_ENTRY_SIZE && result < 0; i += 3)
+        {
+            v.x = triangulation[index][i];
+            v.y = triangulation[index][i + 1];
+            v.z = triangulation[index][i + 2];
+            if (v.SharesExactNValuesWith(new Vector3(edge.x, edge.y,-1), 2))
+            {
+                result = i / 3;
+            }
+        }
+        if (result == -1)
+        {
+            throw new Exception("no triangle found in " + index + " with the edges " + edge.x + "," + edge.y);
+        }
+        return result;
+    }
+
+    protected static void GetEdgeAxisDirection(ref Vector3Int v3, int edge)
+    {
+        if (edge < 4 && edge > 0)
+        {
+            v3.y--;
+        }
+        else if (edge >= 4 && edge < 8)
+        {
+            v3.y++;
+        }
+        if (edge == 7 || edge == 8 || edge == 11 || edge == 3)
+        {
+            v3.x--;
+        }
+        else if (edge == 5 || edge == 1 || edge == 10 || edge == 9)
+        {
+            v3.x++;
+        }
+        if (edge == 11 || edge == 10 || edge == 6 || edge == 2)
+        {
+            v3.z++;
+        }
+        else if (edge == 4 || edge == 8 || edge == 0 || edge == 9)
+        {
+            v3.z--;
+        }
+    }
+
+    public static Dictionary<NeighbourKey, int> NeighbourTable
     {
         get
         {
@@ -267,27 +458,29 @@ public class TriangulationTable : MonoBehaviour
     protected static void BuildInternNeighbours()
     {
         internNeighbours = new Dictionary<long, List<int>>();
-        for (int i = 0; i < triangulation.Count - 1; i++)
+        for (int i = 1; i < triangulation.Count - 1; i++)
         {
-            for (int triIndex1 = 0; triIndex1 < triangulation[i].Length-1; triIndex1 += 3)
+            for (int triIndex1 = 0; triIndex1 < triangulation[i].Length - 1; triIndex1 += 3)
             {
+                int firstIndex = triIndex1 / 3;
                 Vector3 v1 = new Vector3(
                        triangulation[i][triIndex1],
                        triangulation[i][triIndex1 + 1],
                        triangulation[i][triIndex1 + 2]);
-                for (int triIndex2 = triIndex1+1; triIndex2 < triangulation[i].Length; triIndex2 += 3)
+                for (int triIndex2 = triIndex1 + 3; triIndex2 < triangulation[i].Length - 1; triIndex2 += 3)
                 {
+                    int secondIndex = triIndex2 / 3;
                     Vector3 v2 = new Vector3(
                          triangulation[i][triIndex2],
                          triangulation[i][triIndex2 + 1],
                          triangulation[i][triIndex2 + 2]);
 
-                    if (v2.SharesExactNValuesWith(v1, SAME_VERTICES_TO_BE_NEIGHBOURS))
+                    if (v2.SharesAnyNValuesWith(v1, SAME_VERTICES_TO_BE_NEIGHBOURS))
                     {
-                        long key1 = BuildLong(i, triIndex1);
-                        long key2 = BuildLong(i, triIndex2);
-                        AddInternNeighbour(key1, triIndex2);
-                        AddInternNeighbour(key2, triIndex1);
+                        long key1 = BuildLong(i, firstIndex);
+                        long key2 = BuildLong(i, secondIndex);
+                        AddInternNeighbour(key1, secondIndex);
+                        AddInternNeighbour(key2, firstIndex);
                     }
                 }
             }
@@ -298,7 +491,7 @@ public class TriangulationTable : MonoBehaviour
     protected static void AddInternNeighbour(long key, int value)
     {
         List<int> neighbours;
-        if(!internNeighbours.TryGetValue(key, out neighbours))
+        if (!internNeighbours.TryGetValue(key, out neighbours))
         {
             neighbours = new List<int>();
             internNeighbours[key] = neighbours;
@@ -308,8 +501,7 @@ public class TriangulationTable : MonoBehaviour
 
     protected static void BuildNeighbourTable()
     {
-        neighbourTable = new Dictionary<NeighbourKey, int?>(50000);
-        bool breakeOuter = false;
+        neighbourTable = new Dictionary<NeighbourKey, int>();
         NeighbourKey key1;
         NeighbourKey key2;
 
@@ -319,20 +511,14 @@ public class TriangulationTable : MonoBehaviour
             key2.toIndex = x;
             for (int y = x + 1; y < triangulation.Count; y++)
             {
-                if (breakeOuter)
-                {
-                    breakeOuter = false;
-                    break;
-                }
                 key1.toIndex = y;
                 key2.fromIndex = y;
-                for (int i1 = 0; i1 < triangulation[x].Length; i1 += 3)
+                for (int i1 = 0; i1 < triangulation[x].Length - 1; i1 += 3)
                 {
                     key1.fromTriIndex = i1 / 3;
 
                     if (triangulation[x][i1] == -1)
                     {
-                        breakeOuter = true;
                         break;
                     }
 
@@ -341,7 +527,7 @@ public class TriangulationTable : MonoBehaviour
                        triangulation[x][i1 + 1],
                        triangulation[x][i1 + 2]);
 
-                    for (int i2 = 0; i2 < triangulation[y].Length; i2 += 3)
+                    for (int i2 = 0; i2 < triangulation[y].Length - 1; i2 += 3)
                     {
                         if (triangulation[y][i2] == -1)
                         {
@@ -351,14 +537,14 @@ public class TriangulationTable : MonoBehaviour
                             triangulation[y][i2],
                             triangulation[y][i2 + 1],
                             triangulation[y][i2 + 2]);
-                       
 
-                        if (v2.SharesExactNValuesWith(v1, SAME_VERTICES_TO_BE_NEIGHBOURS))
+
+                        if (v2.SharesAnyNValuesWith(v1, SAME_VERTICES_TO_BE_NEIGHBOURS))
                         {
                             key1.fromTriIndex = i1 / 3;
                             key2.fromTriIndex = i2 / 3;
                             Add(key2, key1.fromTriIndex);
-                            Add(key1, key2.fromIndex);
+                            Add(key1, key2.fromTriIndex);
                         }
                     }
                 }

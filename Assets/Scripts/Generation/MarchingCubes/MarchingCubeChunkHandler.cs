@@ -10,8 +10,8 @@ public class MarchingCubeChunkHandler : MonoBehaviour
 
     protected const int threadGroupSize = 8;
 
-    public const int VoxelsPerChunkAxis = 30;
-
+    public const int VoxelsPerChunkAxis = 12;
+    
     public int PointsPerChunkAxis => VoxelsPerChunkAxis + 1;
 
     public Dictionary<Vector3Int, MarchingCubeChunk> chunks = new Dictionary<Vector3Int, MarchingCubeChunk>();

@@ -82,7 +82,7 @@ public static class VectorExtension
     {
         int sameValues = 0;
 
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 3 && sameValues <= n; i++)
         {
             bool found = false; ;
             for (int x = 0; x < 3 && !found; x++)
