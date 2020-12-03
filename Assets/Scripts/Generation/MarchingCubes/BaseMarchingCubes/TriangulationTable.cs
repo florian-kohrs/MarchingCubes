@@ -297,6 +297,20 @@ public class TriangulationTable : MonoBehaviour
     protected static Dictionary<NeighbourKey, int> neighbourTable;
     protected static Dictionary<long, List<int>> internNeighbours;
 
+    public static Vector3Int GetTriangleAt(int trianuglationIndex, int triIndex)
+    {
+        return new Vector3Int(
+            triangulation[trianuglationIndex][triIndex * 3], 
+            triangulation[trianuglationIndex][triIndex * 3 + 1], 
+            triangulation[trianuglationIndex][triIndex * 3 + 2]);
+    }
+
+    public static IEnumerable<Vector2Int> GetEdges(Vector3Int v3)
+    {
+        yield return new Vector2Int(v3.x, v3.y);
+        yield return new Vector2Int(v3.y, v3.z);
+        yield return new Vector2Int(v3.z, v3.x);
+    }
 
     public static List<Tuple<Vector2Int, Vector3Int>> GetNeighbourOffsetForTriangle(MarchingCubeEntity e, int triIndex)
     {
@@ -364,6 +378,7 @@ public class TriangulationTable : MonoBehaviour
         }
     }
 
+    
     public static IEnumerable<int> RotateValuesOnAxis(IEnumerable<int> @is, MirrorAxis axis)
     {
         System.Func<int, int> f;
@@ -403,9 +418,26 @@ public class TriangulationTable : MonoBehaviour
         return result;
     }
 
+    public static bool TryGetIndexWithEdges(int index, Vector2Int edge, out int result)
+    {
+        result = -1;
+        Vector3 v = new Vector3Int();
+        for (int i = 0; i < TRIANGULATION_ENTRY_SIZE && result < 0; i += 3)
+        {
+            v.x = triangulation[index][i];
+            v.y = triangulation[index][i + 1];
+            v.z = triangulation[index][i + 2];
+            if (v.SharesExactNValuesWith(new Vector3(edge.x, edge.y, -1), 2))
+            {
+                result = i / 3;
+            }
+        }
+        return result >= 0;
+    }
+
     protected static void GetEdgeAxisDirection(ref Vector3Int v3, int edge)
     {
-        if (edge < 4 && edge > 0)
+        if (edge < 4 && edge >= 0)
         {
             v3.y--;
         }

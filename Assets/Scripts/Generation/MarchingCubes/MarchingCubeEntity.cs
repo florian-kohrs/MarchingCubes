@@ -12,6 +12,7 @@ public class MarchingCubeEntity : ICubeEntity
 
     public int triangulationIndex;
 
+    public bool hasBuildIntern;
 
     /// <summary>
     /// generate a matrix in the beginning, saying which triangulation has neighbours in which triangulation,
@@ -20,6 +21,7 @@ public class MarchingCubeEntity : ICubeEntity
     /// </summary>
     public void BuildInternNeighbours()
     {
+        hasBuildIntern = true;
         int count = 0;
         foreach (PathTriangle tri in triangles)
         {
@@ -38,6 +40,10 @@ public class MarchingCubeEntity : ICubeEntity
 
     public void BuildExternalNeighbours(MarchingCubeEntity[,,] cubes, System.Func<Vector3Int, bool> IsInBounds)
     {
+        if (!hasBuildIntern)
+        {
+            BuildInternNeighbours();
+        }
         int count = 0;
         foreach (PathTriangle tri in triangles)
         {
@@ -48,7 +54,7 @@ public class MarchingCubeEntity : ICubeEntity
                 if (IsInBounds(newPos))
                 {
                     Vector2Int rotatedEdge = TriangulationTable.RotateEdgeOn(
-                        t.Item1, 
+                        t.Item1,
                         TriangulationTable.GetAxisFromDelta(t.Item2));
                     MarchingCubeEntity neighbourCube = cubes[newPos.x, newPos.y, newPos.z];
 
@@ -62,30 +68,26 @@ public class MarchingCubeEntity : ICubeEntity
 
     public void BuildExternalNeighboursWith(MarchingCubeEntity e, TriangulationTable.MirrorAxis axis)
     {
+        bool found = false;
+        for (int i = 0; i < triangles.Count && !found; i++)
+        {
+            PathTriangle tri = triangles[i];
+            if (tri.neighbours.Count < 3)
+            {
+                foreach (Vector2Int v2 in TriangulationTable.GetEdges(TriangulationTable.GetTriangleAt(triangulationIndex, i)))
+                {
+                    Vector2Int rotatedEdge = TriangulationTable.RotateEdgeOn(v2, axis);
 
-        //int rotateIndex = TriangulationTable.RotateIndex(e.triangulationIndex, axis);
-        //for (int i = 0; i < triangles.Count; i++)
-        //{
-        //    if (rotateIndex == triangulationIndex)
-        //    {
-        //        List<int> neighbourIndices = TriangulationTable.GetInternNeighbourIndiceces(triangulationIndex, i);
-        //        if (neighbourIndices != null)
-        //        {
-        //            foreach (int index in neighbourIndices)
-        //            {
-        //                triangles[i].AddNeighbourTwoWay(triangles[index]);
-        //            }
-        //        }
-        //    }
-        //    else
-        //    {
-        //        int neighbourIndex;
-        //        if (TriangulationTable.GetNeighbourIndexIn(triangulationIndex, i, rotateIndex, out neighbourIndex))
-        //        {
-        //            triangles[i].AddNeighbourTwoWay(e.triangles[neighbourIndex]);
-        //        }
-        //    }
-        //}
+                    int neighbourIndex;
+                    if(TriangulationTable.TryGetIndexWithEdges(e.triangulationIndex, rotatedEdge, out neighbourIndex))
+                    {
+                        tri.AddNeighbourTwoWay(e.triangles[neighbourIndex]);
+                        found = true;
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     public void BuildExternalNeighboursWith(MarchingCubeEntity e)

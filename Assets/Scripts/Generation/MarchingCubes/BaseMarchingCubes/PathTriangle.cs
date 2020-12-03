@@ -16,7 +16,7 @@ public class PathTriangle : INavigatable<PathTriangle, PathTriangle>
 
     public Triangle tri;
 
-    public List<PathTriangle> neighbours = new List<PathTriangle>();
+    public List<PathTriangle> neighbours = new List<PathTriangle>(3);
 
 
     public void BuildNeighboursIn(PathTriangle t)
