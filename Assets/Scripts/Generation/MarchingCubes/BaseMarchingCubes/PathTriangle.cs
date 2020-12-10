@@ -19,6 +19,20 @@ public class PathTriangle : INavigatable<PathTriangle, PathTriangle>
     public List<PathTriangle> neighbours = new List<PathTriangle>(3);
 
 
+    public List<Vector2> edgesWithoutNeighbour = null;
+    public List<Vector2> EdgesWithoutNeighbour
+    {
+        get
+        {
+            if(edgesWithoutNeighbour == null)
+            {
+                edgesWithoutNeighbour = new List<Vector2>();
+            }
+            return edgesWithoutNeighbour;
+        }
+    }
+
+
     public void BuildNeighboursIn(PathTriangle t)
     {
         //if (!neighbours.Contains(t))
@@ -85,12 +99,12 @@ public class PathTriangle : INavigatable<PathTriangle, PathTriangle>
 
     public float DistanceToTarget(PathTriangle from, PathTriangle to)
     {
-        return (to.middlePointOfTriangle - from.middlePointOfTriangle).magnitude;
+        return (to.UnrotatedMiddlePointOfTriangle - from.UnrotatedMiddlePointOfTriangle).magnitude;
     }
 
     public float DistanceToField(PathTriangle from, PathTriangle to)
     {
-        return (to.middlePointOfTriangle - from.middlePointOfTriangle).magnitude;
+        return (to.UnrotatedMiddlePointOfTriangle - from.UnrotatedMiddlePointOfTriangle).magnitude;
     }
 
     public bool ReachedTarget(PathTriangle current, PathTriangle destination)

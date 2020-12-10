@@ -158,125 +158,43 @@ public class MarchingCubeChunk : MonoBehaviour
             triCount++;
 
         }
-        e.BuildInternNeighbours();
+        //e.BuildInternNeighbours();
         cubeEntities[p.x, p.y, p.z] = e;
     }
 
     protected void BuildChunkEdges()
     {
-        int count = 0;
         for (int x = 0; x < ChunkSize; x++)
         {
             for (int y = 0; y < ChunkSize; y++)
             {
                 for (int z = 0; z < ChunkSize; z++)
                 {
-                    if ((x + y + z) % 2 == 0)
+                    //if ((x + y + z) % 2 == 0)
+
+                    List<Tuple<PathTriangle, Vector2Int, Vector3Int>> trisWithNeighboursOutOfBounds
+                        = CubeEntities[x, y, z].BuildNeighbours(CubeEntities, IsInBounds);
+
+                    if (trisWithNeighboursOutOfBounds != null)
                     {
-                        CubeEntities[x, y, z].BuildExternalNeighbours(CubeEntities, IsInBounds);
-                        //foreach (Vector3Int v3 in GetValidIndicesAround(CubeEntities[x, y, z]))
-                        //{
-                        //    if (CubeEntities[v3.x, v3.y, v3.z].triangles.Count > 0)
-                        //    {
-                        //        //CubeEntities[x, y, z].BuildExternalNeighboursWith(CubeEntities[v3.x, v3.y, v3.z]);
-                        //    }
-                        //}
-                        if (!IsCornerPoint(new Vector3Int(x, y, z)) && !CubeEntities[x, y, z].triangles.TrueForAll(t => t.neighbours.Count == 3))
+                        foreach (Tuple<PathTriangle, Vector2Int, Vector3Int> t in trisWithNeighboursOutOfBounds)
                         {
-                            Debug.Log(CubeEntities[x, y, z].triangulationIndex + " doesnt have right neighbours");
-                            List<MarchingCubeEntity> neighbours = new List<MarchingCubeEntity>();
-                            foreach (Vector3Int v3 in GetValidIndicesAround(CubeEntities[x, y, z]))
+                            Vector3Int v3 = t.Item3.Map(Math.Sign);
+                            MarchingCubeChunk c;
+
+                            if (chunkHandler.chunks.TryGetValue(chunkOffset + v3, out c))
                             {
-                                if (CubeEntities[v3.x, v3.y, v3.z].triangles.Count > 0)
-                                {
-                                    neighbours.Add(CubeEntities[v3.x, v3.y, v3.z]);
-                                }
+                                v3 = (new Vector3Int(x, y, z) + t.Item3).Map(i => i.FloorMod(ChunkSize));
+                                MarchingCubeEntity e = c.CubeEntities[v3.x, v3.y, v3.z];
+                                CubeEntities[x, y, z].BuildSpecificNeighbourInNeighbour(e, t.Item1, t.Item2);
                             }
-                            MarchingCubeEntity e = CubeEntities[x, y, z];
-                            count++;
-                            foreach (Vector3Int v3 in GetValidIndicesAround(CubeEntities[x, y, z]))
-                            {
-                                if (CubeEntities[v3.x, v3.y, v3.z].triangles.Count > 0)
-                                {
-                                    CubeEntities[x, y, z].BuildExternalNeighboursWith(CubeEntities[v3.x, v3.y, v3.z]);
-                                }
-                            }
-                        }//else if (!IsCornerPoint(new Vector3Int(x, y, z)) && !CubeEntities[x, y, z].triangles.TrueForAll(t => t.neighbours.Count <= 3))
-                        {
-                            //count--;
                         }
                     }
                 }
             }
         }
-        Debug.LogWarning(count + " triangles dont have enough neighbours!" + count * 100 / (64 * 8f) + "%");
     }
 
-    public void ConnectWithNeighbour(MarchingCubeChunk neighbour)
-    {
-        TriangulationTable.MirrorAxis axis;
-        Vector3Int diff = chunkOffset - neighbour.chunkOffset;
-        if (diff.x != 0)
-        {
-            axis = TriangulationTable.MirrorAxis.X;
-            int x;
-            if (Mathf.Sign(diff.x) == -1)
-            {
-                x = 0;
-            }
-            else
-            {
-                x = ChunkSize - 1;
-            }
-            for (int y = 0; y < ChunkSize; y++)
-            {
-                for (int z = 0; z < ChunkSize; z++)
-                {
-                    CubeEntities[x, y, z].BuildExternalNeighboursWith(neighbour.CubeEntities[ChunkSize - x - 1, y, z], axis);
-                }
-            }
-        }
-        else if (diff.y != 0)
-        {
-            axis = TriangulationTable.MirrorAxis.Y;
-            int y;
-            if (Mathf.Sign(diff.y) == -1)
-            {
-                y = 0;
-            }
-            else
-            {
-                y = ChunkSize - 1;
-            }
-            for (int x = 0; y < ChunkSize; y++)
-            {
-                for (int z = 0; z < ChunkSize; z++)
-                {
-                    CubeEntities[x, y, z].BuildExternalNeighboursWith(neighbour.CubeEntities[x, ChunkSize - y - 1, z], axis);
-                }
-            }
-        }
-        else
-        {
-            axis = TriangulationTable.MirrorAxis.Z;
-            int z;
-            if (Mathf.Sign(diff.z) == -1)
-            {
-                z = 0;
-            }
-            else
-            {
-                z = ChunkSize - 1;
-            }
-            for (int x = 0; x < ChunkSize; x++)
-            {
-                for (int y = 0; y < ChunkSize; y++)
-                {
-                    CubeEntities[x, y, z].BuildExternalNeighboursWith(neighbour.CubeEntities[x, y, ChunkSize - z - 1], axis);
-                }
-            }
-        }
-    }
 
     protected virtual Vector3 InterpolateVerts(Vector4 v1, Vector4 v2)
     {
@@ -389,7 +307,7 @@ public class MarchingCubeChunk : MonoBehaviour
                 {
                     v.z = z;
                     cube = CubeEntities[x, y, z];
-                    cube.BuildInternNeighbours();
+                    //cube.BuildInternNeighbours();
                 }
             }
         }

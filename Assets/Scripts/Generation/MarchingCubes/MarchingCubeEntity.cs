@@ -14,12 +14,13 @@ public class MarchingCubeEntity : ICubeEntity
 
     public bool hasBuildIntern;
 
+
     /// <summary>
     /// generate a matrix in the beginning, saying which triangulation has neighbours in which triangulation,
     /// also with offsets at exactly one difference with the abs value of 1 in a single axis 
     /// (see for edgeindex reference:http://paulbourke.net/geometry/polygonise/)
     /// </summary>
-    public void BuildInternNeighbours()
+    private void BuildInternNeighbours()
     {
         hasBuildIntern = true;
         int count = 0;
@@ -38,8 +39,9 @@ public class MarchingCubeEntity : ICubeEntity
     }
 
 
-    public void BuildExternalNeighbours(MarchingCubeEntity[,,] cubes, System.Func<Vector3Int, bool> IsInBounds)
+    public List<System.Tuple<PathTriangle, Vector2Int, Vector3Int>> BuildNeighbours(MarchingCubeEntity[,,] cubes, System.Func<Vector3Int, bool> IsInBounds)
     {
+        List<System.Tuple<PathTriangle, Vector2Int, Vector3Int>> missingNeighbours = null;
         if (!hasBuildIntern)
         {
             BuildInternNeighbours();
@@ -51,19 +53,29 @@ public class MarchingCubeEntity : ICubeEntity
             {
                 Vector3Int newPos = origin + t.Item2;
 
-                if (IsInBounds(newPos))
-                {
-                    Vector2Int rotatedEdge = TriangulationTable.RotateEdgeOn(
+                Vector2Int rotatedEdge = TriangulationTable.RotateEdgeOn(
                         t.Item1,
                         TriangulationTable.GetAxisFromDelta(t.Item2));
+
+                if (IsInBounds(newPos))
+                {
                     MarchingCubeEntity neighbourCube = cubes[newPos.x, newPos.y, newPos.z];
 
                     int i = TriangulationTable.GetIndexWithEdges(neighbourCube.triangulationIndex, rotatedEdge);
                     tri.AddNeighbourTwoWay(neighbourCube.triangles[i]);
                 }
+                else
+                {
+                    if(missingNeighbours == null)
+                    {
+                        missingNeighbours = new List<System.Tuple<PathTriangle, Vector2Int, Vector3Int>>();
+                    }
+                    missingNeighbours.Add(System.Tuple.Create(tri, rotatedEdge, t.Item2));
+                }
             }
             count++;
         }
+        return missingNeighbours;
     }
 
     public void BuildExternalNeighboursWith(MarchingCubeEntity e, TriangulationTable.MirrorAxis axis)
@@ -81,12 +93,22 @@ public class MarchingCubeEntity : ICubeEntity
                     int neighbourIndex;
                     if(TriangulationTable.TryGetIndexWithEdges(e.triangulationIndex, rotatedEdge, out neighbourIndex))
                     {
+                        Debug.Log("FoundNeighbourAcross in " + origin + " to " + e.origin);
                         tri.AddNeighbourTwoWay(e.triangles[neighbourIndex]);
                         found = true;
                         break;
                     }
                 }
             }
+        }
+    }
+
+    public void BuildSpecificNeighbourInNeighbour(MarchingCubeEntity e, PathTriangle tri, Vector2Int rotatedEdge)
+    {
+        int neighbourIndex;
+        if (TriangulationTable.TryGetIndexWithEdges(e.triangulationIndex, rotatedEdge, out neighbourIndex))
+        {
+            tri.AddNeighbourTwoWay(e.triangles[neighbourIndex]);
         }
     }
 
@@ -102,6 +124,8 @@ public class MarchingCubeEntity : ICubeEntity
 
         BuildExternalNeighboursWith(e, axis);
     }
+
+
 
     public IList<ICubeEntity> Neighbours
     {

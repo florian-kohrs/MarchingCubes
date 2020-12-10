@@ -163,20 +163,8 @@ public class MarchingCubeChunkHandler : MonoBehaviour
         chunks.Add(p, chunk);
         chunk.chunkOffset = p;
         BuildChunk(p, chunk);
-        ConnectNeighboursAround(chunk);
     }
 
-    protected void ConnectNeighboursAround(MarchingCubeChunk chunk)
-    {
-        foreach (Vector3Int v3 in GetNeighbourPositionsOf(chunk))
-        {
-            MarchingCubeChunk neighbour;
-            if (chunks.TryGetValue(v3, out neighbour))
-            {
-                chunk.ConnectWithNeighbour(neighbour);
-            }
-        }
-    }
 
     protected IEnumerable<Vector3Int> GetNeighbourPositionsOf(MarchingCubeChunk chunk)
     {

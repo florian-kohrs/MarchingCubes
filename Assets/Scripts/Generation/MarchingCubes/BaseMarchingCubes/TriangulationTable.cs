@@ -331,6 +331,9 @@ public class TriangulationTable : MonoBehaviour
         }
         return result;
     }
+
+
+
     protected const int TRIANGULATION_ENTRY_SIZE = 15;
 
     public static Vector2Int RotateVector2OnDelta(Vector3Int delta, Vector2Int v2)
