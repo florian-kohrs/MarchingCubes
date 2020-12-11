@@ -111,6 +111,8 @@ public class MarchingCubeChunkHandler : MonoBehaviour
         yield return UpdateChunks();
     }
 
+
+
     public void CheckChunksAround(Vector3 v)
     {
         CreateBuffers();
@@ -258,7 +260,7 @@ public class MarchingCubeChunkHandler : MonoBehaviour
 
     protected Vector3 CenterFromChunkIndex(Vector3Int v)
     {
-        return v.Map(i => i * VoxelsPerChunkAxis);
+        return new Vector3(v.x * VoxelsPerChunkAxis, v.y * VoxelsPerChunkAxis, v.z * VoxelsPerChunkAxis);
     }
 
     protected float PointSpacing => 1;

@@ -20,18 +20,18 @@ public class MarchingCubeEntity : ICubeEntity
     /// also with offsets at exactly one difference with the abs value of 1 in a single axis 
     /// (see for edgeindex reference:http://paulbourke.net/geometry/polygonise/)
     /// </summary>
-    private void BuildInternNeighbours()
+    public void BuildInternNeighbours()
     {
         hasBuildIntern = true;
         int count = 0;
         foreach (PathTriangle tri in triangles)
         {
-            List<int> neighbourIndices = TriangulationTable.GetInternNeighbourIndiceces(triangulationIndex, count);
+            List<System.Tuple<int, Vector2Int>> neighbourIndices = TriangulationTable.GetInternNeighbourIndiceces(triangulationIndex, count);
             if (neighbourIndices != null)
             {
-                foreach (int i in neighbourIndices)
+                foreach (System.Tuple<int, Vector2Int> t in neighbourIndices)
                 {
-                    triangles[count].BuildNeighboursIn(triangles[i]);
+                    triangles[count].AddNeighbourTwoWay(triangles[t.Item1], t.Item2);
                 }
             }
             count++;
@@ -62,7 +62,7 @@ public class MarchingCubeEntity : ICubeEntity
                     MarchingCubeEntity neighbourCube = cubes[newPos.x, newPos.y, newPos.z];
 
                     int i = TriangulationTable.GetIndexWithEdges(neighbourCube.triangulationIndex, rotatedEdge);
-                    tri.AddNeighbourTwoWay(neighbourCube.triangles[i]);
+                    tri.AddNeighbourTwoWay(neighbourCube.triangles[i], count, t.Item1);
                 }
                 else
                 {
@@ -78,53 +78,15 @@ public class MarchingCubeEntity : ICubeEntity
         return missingNeighbours;
     }
 
-    public void BuildExternalNeighboursWith(MarchingCubeEntity e, TriangulationTable.MirrorAxis axis)
-    {
-        bool found = false;
-        for (int i = 0; i < triangles.Count && !found; i++)
-        {
-            PathTriangle tri = triangles[i];
-            if (tri.neighbours.Count < 3)
-            {
-                foreach (Vector2Int v2 in TriangulationTable.GetEdges(TriangulationTable.GetTriangleAt(triangulationIndex, i)))
-                {
-                    Vector2Int rotatedEdge = TriangulationTable.RotateEdgeOn(v2, axis);
-
-                    int neighbourIndex;
-                    if(TriangulationTable.TryGetIndexWithEdges(e.triangulationIndex, rotatedEdge, out neighbourIndex))
-                    {
-                        Debug.Log("FoundNeighbourAcross in " + origin + " to " + e.origin);
-                        tri.AddNeighbourTwoWay(e.triangles[neighbourIndex]);
-                        found = true;
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
+ 
     public void BuildSpecificNeighbourInNeighbour(MarchingCubeEntity e, PathTriangle tri, Vector2Int rotatedEdge)
     {
         int neighbourIndex;
         if (TriangulationTable.TryGetIndexWithEdges(e.triangulationIndex, rotatedEdge, out neighbourIndex))
         {
-            tri.AddNeighbourTwoWay(e.triangles[neighbourIndex]);
+            e.triangles[neighbourIndex].AddNeighbourTwoWay(tri, neighbourIndex, rotatedEdge);
         }
     }
-
-    public void BuildExternalNeighboursWith(MarchingCubeEntity e)
-    {
-        TriangulationTable.MirrorAxis axis;
-        if (e.origin.x != origin.x)
-            axis = TriangulationTable.MirrorAxis.X;
-        else if (e.origin.y != origin.y)
-            axis = TriangulationTable.MirrorAxis.Y;
-        else
-            axis = TriangulationTable.MirrorAxis.Z;
-
-        BuildExternalNeighboursWith(e, axis);
-    }
-
 
 
     public IList<ICubeEntity> Neighbours

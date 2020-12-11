@@ -78,6 +78,11 @@ public static class VectorExtension
         yield return v.z;
     }
 
+    public static List<float> ValueList(this Vector3 v)
+    {
+        return new List<float>() { v.x, v.y, v.z };
+    }
+
     public static bool SharesExactNValuesWith(this Vector3 v1, Vector3 v2, int n)
     {
         int sameValues = 0;
@@ -110,6 +115,45 @@ public static class VectorExtension
             }
         }
         return sameValues >= n;
+    }
+
+    public static int CountAndMapIndiciesWithSameValues(this Vector3 v1, Vector3 v2, out Vector3Int v3First, out Vector3Int v3Second)
+    {
+        int sameValues = 0;
+        v3First = new Vector3Int();
+        v3Second = new Vector3Int(-1,-1,-1);
+        List<float> list = v2.ValueList();
+        for (int i = 0; i < 3; i++)
+        {
+            v3First[i] = list.IndexOf(v1[i]);
+            
+            if (v3First[i] >= 0)
+            {
+                sameValues++;
+                v3Second[v3First[i]] = i;
+            }
+        }
+        return sameValues;
+    }
+
+    /// <summary>
+    /// creates a vector 2 by filtering values using p
+    /// </summary>
+    /// <param name="v3"></param>
+    /// <returns></returns>
+    public static Vector2Int ReduceToVector2(this Vector3Int v3, Func<int, bool> p)
+    {
+        Vector2Int r = new Vector2Int();
+        int used = 0;
+        for (int i = 0; i < 3; i++)
+        {
+            if (p(v3[i]))
+            {
+                r[used] = v3[i];
+                used++;
+            }
+        }
+        return r;
     }
 
     public static bool SharesNValuesWith(this Vector3 v1, Vector3 v2, int n)

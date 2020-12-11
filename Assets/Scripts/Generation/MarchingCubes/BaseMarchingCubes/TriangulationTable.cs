@@ -117,6 +117,8 @@ public class TriangulationTable : MonoBehaviour
             }
         }
 
+
+
         public static int RotateOnZ(int i)
         {
             if (i == 1 || i == 5)
@@ -195,6 +197,22 @@ public class TriangulationTable : MonoBehaviour
 
     }
 
+    public static int GetEdgeIndex(int triangulationIndex, int triIndex, int edgeValue)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            if (triangulation[triangulationIndex][triIndex * 3 + i] == edgeValue)
+                return i;
+
+        }
+        throw new Exception("Edge value "
+            + edgeValue
+            + " not found in triangulation index "
+            + triangulationIndex
+            + " at triangle number "
+            + triIndex);
+    }
+
     public static Vector2Int RotateEdgeOn(Vector2Int edge, MirrorAxis axis)
     {
         return new Vector2Int(RotateEdgeIndexOn(edge.x, axis), RotateEdgeIndexOn(edge.y, axis));
@@ -266,9 +284,9 @@ public class TriangulationTable : MonoBehaviour
         return NeighbourTable.TryGetValue(new NeighbourKey(fromIndex, fromTriIndex, toIndex), out result);
     }
 
-    public static List<int> GetInternNeighbourIndiceces(int fromIndex, int fromTriIndex)
+    public static List<Tuple<int, Vector2Int>> GetInternNeighbourIndiceces(int fromIndex, int fromTriIndex)
     {
-        List<int> neighbours;
+        List<Tuple<int, Vector2Int>> neighbours;
         InternNeighbours.TryGetValue(BuildLong(fromIndex, fromTriIndex), out neighbours);
         return neighbours;
     }
@@ -295,13 +313,13 @@ public class TriangulationTable : MonoBehaviour
     private const int SAME_VERTICES_TO_BE_NEIGHBOURS = 2;
 
     protected static Dictionary<NeighbourKey, int> neighbourTable;
-    protected static Dictionary<long, List<int>> internNeighbours;
+    protected static Dictionary<long, List<Tuple<int, Vector2Int>>> internNeighbours;
 
     public static Vector3Int GetTriangleAt(int trianuglationIndex, int triIndex)
     {
         return new Vector3Int(
-            triangulation[trianuglationIndex][triIndex * 3], 
-            triangulation[trianuglationIndex][triIndex * 3 + 1], 
+            triangulation[trianuglationIndex][triIndex * 3],
+            triangulation[trianuglationIndex][triIndex * 3 + 1],
             triangulation[trianuglationIndex][triIndex * 3 + 2]);
     }
 
@@ -381,7 +399,7 @@ public class TriangulationTable : MonoBehaviour
         }
     }
 
-    
+
     public static IEnumerable<int> RotateValuesOnAxis(IEnumerable<int> @is, MirrorAxis axis)
     {
         System.Func<int, int> f;
@@ -409,7 +427,7 @@ public class TriangulationTable : MonoBehaviour
             v.x = triangulation[index][i];
             v.y = triangulation[index][i + 1];
             v.z = triangulation[index][i + 2];
-            if (v.SharesExactNValuesWith(new Vector3(edge.x, edge.y,-1), 2))
+            if (v.SharesExactNValuesWith(new Vector3(edge.x, edge.y, -1), 2))
             {
                 result = i / 3;
             }
@@ -478,7 +496,7 @@ public class TriangulationTable : MonoBehaviour
         }
     }
 
-    public static Dictionary<long, List<int>> InternNeighbours
+    public static Dictionary<long, List<Tuple<int, Vector2Int>>> InternNeighbours
     {
         get
         {
@@ -492,17 +510,17 @@ public class TriangulationTable : MonoBehaviour
 
     protected static void BuildInternNeighbours()
     {
-        internNeighbours = new Dictionary<long, List<int>>();
+        internNeighbours = new Dictionary<long, List<Tuple<int, Vector2Int>>>();
         for (int i = 1; i < triangulation.Count - 1; i++)
         {
-            for (int triIndex1 = 0; triIndex1 < triangulation[i].Length - 1; triIndex1 += 3)
+            for (int triIndex1 = 0; triIndex1 < triangulation[i].Length - 1 && triangulation[i][triIndex1] >= 0; triIndex1 += 3)
             {
                 int firstIndex = triIndex1 / 3;
                 Vector3 v1 = new Vector3(
                        triangulation[i][triIndex1],
                        triangulation[i][triIndex1 + 1],
                        triangulation[i][triIndex1 + 2]);
-                for (int triIndex2 = triIndex1 + 3; triIndex2 < triangulation[i].Length - 1; triIndex2 += 3)
+                for (int triIndex2 = triIndex1 + 3; triIndex2 < triangulation[i].Length - 1 && triangulation[i][triIndex2] >= 0; triIndex2 += 3)
                 {
                     int secondIndex = triIndex2 / 3;
                     Vector3 v2 = new Vector3(
@@ -510,12 +528,15 @@ public class TriangulationTable : MonoBehaviour
                          triangulation[i][triIndex2 + 1],
                          triangulation[i][triIndex2 + 2]);
 
-                    if (v2.SharesAnyNValuesWith(v1, SAME_VERTICES_TO_BE_NEIGHBOURS))
+                    Vector3Int v3_1;
+                    Vector3Int v3_2;
+
+                    if (v2.CountAndMapIndiciesWithSameValues(v1, out v3_1,out v3_2) >= SAME_VERTICES_TO_BE_NEIGHBOURS)
                     {
                         long key1 = BuildLong(i, firstIndex);
                         long key2 = BuildLong(i, secondIndex);
-                        AddInternNeighbour(key1, secondIndex);
-                        AddInternNeighbour(key2, firstIndex);
+                        AddInternNeighbour(key1, secondIndex, v3_2.ReduceToVector2(f=>f>0));
+                        AddInternNeighbour(key2, firstIndex, v3_1.ReduceToVector2(f => f > 0));
                     }
                 }
             }
@@ -523,15 +544,15 @@ public class TriangulationTable : MonoBehaviour
     }
 
 
-    protected static void AddInternNeighbour(long key, int value)
+    protected static void AddInternNeighbour(long key, int value, Vector2Int edge)
     {
-        List<int> neighbours;
+        List<Tuple<int, Vector2Int>> neighbours;
         if (!internNeighbours.TryGetValue(key, out neighbours))
         {
-            neighbours = new List<int>();
+            neighbours = new List<Tuple<int, Vector2Int>>();
             internNeighbours[key] = neighbours;
         }
-        neighbours.Add(value);
+        neighbours.Add(Tuple.Create(value, edge));
     }
 
     protected static void BuildNeighbourTable()

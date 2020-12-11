@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -18,8 +19,55 @@ public class PathTriangle : INavigatable<PathTriangle, PathTriangle>
 
     public List<PathTriangle> neighbours = new List<PathTriangle>(3);
 
+    protected Dictionary<PathTriangle, Ray> neighbourTransitionRayMapping;
+
+    protected Dictionary<PathTriangle, Ray> NeighbourTransitionRayMapping
+    {
+        get
+        {
+            if(neighbourTransitionRayMapping == null)
+            {
+                neighbourTransitionRayMapping = new Dictionary<PathTriangle, Ray>(3);
+            }
+            return neighbourTransitionRayMapping;
+        }
+    }
+
+    protected Dictionary<PathTriangle, int> neighbourSharedIndexMapping;
+
+    protected Dictionary<PathTriangle, float> neighbourDistanceMapping;
+
+    protected Dictionary<PathTriangle, float> NeighbourDistanceMapping
+    {
+        get
+        {
+            if (neighbourDistanceMapping == null)
+            {
+                neighbourDistanceMapping = new Dictionary<PathTriangle, float>(3);
+            }
+            return neighbourDistanceMapping;
+        }
+    }
+
+    public float GetDistanceToNeighbour(PathTriangle neighbour)
+    {
+        float distance;
+        if (!NeighbourDistanceMapping.TryGetValue(neighbour, out distance))
+        {
+            Ray r = NeighbourTransitionRayMapping[neighbour];
+            NeighbourTransitionRayMapping.Remove(neighbour);
+            neighbour.NeighbourTransitionRayMapping.Remove(this);
+            distance = Vector3.Cross(r.direction, UnrotatedMiddlePointOfTriangle - r.origin).magnitude;
+            distance += Vector3.Cross(r.direction, neighbour.UnrotatedMiddlePointOfTriangle - r.origin).magnitude;
+            NeighbourDistanceMapping[neighbour] = distance;
+            neighbour.NeighbourDistanceMapping[this] = distance;
+        }
+        return distance;
+    }
+
 
     public List<Vector2> edgesWithoutNeighbour = null;
+
     public List<Vector2> EdgesWithoutNeighbour
     {
         get
@@ -33,62 +81,55 @@ public class PathTriangle : INavigatable<PathTriangle, PathTriangle>
     }
 
 
-    public void BuildNeighboursIn(PathTriangle t)
-    {
-        //if (!neighbours.Contains(t))
-        {
-            neighbours.Add(t);
-        }
-    }
+    //public void BuildNeighboursIn(PathTriangle t, int index, Vector2Int edges)
+    //{
+    //    Ray r = new Ray();
+    //    int firstEdge = TriangulationTable.GetEdgeIndex(tri.triangulationIndex, index, edges.x);
+    //    int secondEdge = TriangulationTable.GetEdgeIndex(tri.triangulationIndex, index, edges.y);
+    //    r.origin = tri[firstEdge];
+    //    r.direction = tri[secondEdge] - tri[firstEdge];
+
+    //    neighbours.Add(t);
+        
+    //}
 
 
     /// <summary>
     /// doesnt check if the neighbour is already registered
     /// </summary>
     /// <param name="p"></param>
-    public void AddNeighbourTwoWay(PathTriangle p)
+    public void AddNeighbourTwoWay(PathTriangle p, int index, Vector2Int edges)
     {
         if (!neighbours.Contains(p))
         {
+            Ray r = new Ray();
+            int firstEdge = TriangulationTable.GetEdgeIndex(tri.triangulationIndex, index, edges.x);
+            int secondEdge = TriangulationTable.GetEdgeIndex(tri.triangulationIndex, index, edges.y);
+            r.origin = tri[firstEdge];
+            r.direction = tri[secondEdge] - tri[firstEdge];
+
+            NeighbourTransitionRayMapping[p] = r;
             neighbours.Add(p);
-        }
-        if (!p.neighbours.Contains(this))
-        {
             p.neighbours.Add(this);
+            p.NeighbourTransitionRayMapping[this] = r;
         }
-        if (p.neighbours.Count > 3 || neighbours.Count > 3)
+    }
+
+    public void AddNeighbourTwoWay(PathTriangle p, Vector2Int edgeIndices)
+    {
+        if (!neighbours.Contains(p))
         {
-            List<System.Tuple<TriangulationTable.MirrorAxis, List<int>, List<int>, int, int>> triNeighbours = new List<System.Tuple<TriangulationTable.MirrorAxis, List<int>, List<int>, int, int>>();
-            foreach (PathTriangle tri in neighbours)
-            {
-                int pos = tri.chunk.CubeEntities[tri.tri.origin.x, tri.tri.origin.y, tri.tri.origin.z].triangles.IndexOf(tri);
+            Ray r = new Ray();
+            int firstEdge = edgeIndices.x;
+            int secondEdge = edgeIndices.y;
 
-                List<int> i = TriangulationTable.triangulation[tri.tri.triangulationIndex]
-                    .Skip(pos * 3)
-                    .Take(3)
-                    .ToList();
+            r.origin = tri[firstEdge];
+            r.direction = tri[secondEdge] - tri[firstEdge];
 
-                TriangulationTable.MirrorAxis axis;
-                if (tri.tri.origin.x != this.tri.origin.x)
-                    axis = TriangulationTable.MirrorAxis.X;
-                else if (tri.tri.origin.y != this.tri.origin.y)
-                    axis = TriangulationTable.MirrorAxis.Y;
-                else
-                    axis = TriangulationTable.MirrorAxis.Z;
-
-                int rotatedstuff = TriangulationTable.RotateIndex(tri.tri.triangulationIndex, axis);
-                List<int> i2 = TriangulationTable.triangulation[rotatedstuff]
-                    .ToList();
-
-                triNeighbours.Add(System.Tuple.Create(axis, i, i2, rotatedstuff, pos));
-            }
-
-            List<List<int>> triNeighbours2 = new List<List<int>>();
-            foreach (PathTriangle tri in p.neighbours)
-            {
-                triNeighbours2.Add(TriangulationTable.triangulation[tri.tri.triangulationIndex].Skip(tri.chunk.CubeEntities[tri.tri.origin.x, tri.tri.origin.y, tri.tri.origin.z].triangles.IndexOf(tri) * 3).Take(3).ToList());
-            }
-            int[] tris = TriangulationTable.triangulation[tri.triangulationIndex];
+            NeighbourTransitionRayMapping[p] = r;
+            neighbours.Add(p);
+            p.neighbours.Add(this);
+            p.NeighbourTransitionRayMapping[this] = r;
         }
     }
 
@@ -104,7 +145,7 @@ public class PathTriangle : INavigatable<PathTriangle, PathTriangle>
 
     public float DistanceToField(PathTriangle from, PathTriangle to)
     {
-        return (to.UnrotatedMiddlePointOfTriangle - from.UnrotatedMiddlePointOfTriangle).magnitude;
+        return from.GetDistanceToNeighbour(to);
     }
 
     public bool ReachedTarget(PathTriangle current, PathTriangle destination)
@@ -118,6 +159,7 @@ public class PathTriangle : INavigatable<PathTriangle, PathTriangle>
     }
 
     private Vector3 middlePointOfTriangle;
+
 
 
     public Vector3 UnrotatedMiddlePointOfTriangle

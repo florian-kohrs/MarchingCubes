@@ -26,6 +26,8 @@ public class MarchingCubeChunk : MonoBehaviour
         BuildChunkEdges();
     }
 
+    public bool IsEmpty => AllTriangles.Count <= 0;
+
     public MarchingCubeChunkHandler chunkHandler;
 
     public int ChunkSize => MarchingCubeChunkHandler.VoxelsPerChunkAxis;
@@ -164,29 +166,42 @@ public class MarchingCubeChunk : MonoBehaviour
 
     protected void BuildChunkEdges()
     {
+        if (IsEmpty) 
+        {
+            return;
+        }
+
+        Vector3Int v3 = new Vector3Int();
         for (int x = 0; x < ChunkSize; x++)
         {
+            v3.x = x;
             for (int y = 0; y < ChunkSize; y++)
             {
+                v3.y = y;
                 for (int z = 0; z < ChunkSize; z++)
                 {
-                    //if ((x + y + z) % 2 == 0)
+                    v3.z = z;
 
-                    List<Tuple<PathTriangle, Vector2Int, Vector3Int>> trisWithNeighboursOutOfBounds
-                        = CubeEntities[x, y, z].BuildNeighbours(CubeEntities, IsInBounds);
+                    CubeEntities[x, y, z].BuildInternNeighbours();
 
-                    if (trisWithNeighboursOutOfBounds != null)
+                    if ((x + y + z) % 2 == 0 || IsBorderPoint(v3))
                     {
-                        foreach (Tuple<PathTriangle, Vector2Int, Vector3Int> t in trisWithNeighboursOutOfBounds)
-                        {
-                            Vector3Int v3 = t.Item3.Map(Math.Sign);
-                            MarchingCubeChunk c;
+                        List<Tuple<PathTriangle, Vector2Int, Vector3Int>> trisWithNeighboursOutOfBounds
+                           = CubeEntities[x, y, z].BuildNeighbours(CubeEntities, IsInBounds);
 
-                            if (chunkHandler.chunks.TryGetValue(chunkOffset + v3, out c))
+                        if (trisWithNeighboursOutOfBounds != null)
+                        {
+                            foreach (Tuple<PathTriangle, Vector2Int, Vector3Int> t in trisWithNeighboursOutOfBounds)
                             {
-                                v3 = (new Vector3Int(x, y, z) + t.Item3).Map(i => i.FloorMod(ChunkSize));
-                                MarchingCubeEntity e = c.CubeEntities[v3.x, v3.y, v3.z];
-                                CubeEntities[x, y, z].BuildSpecificNeighbourInNeighbour(e, t.Item1, t.Item2);
+                                Vector3Int offset = t.Item3.Map(Math.Sign);
+                                MarchingCubeChunk c;
+
+                                if (chunkHandler.chunks.TryGetValue(chunkOffset + offset, out c))
+                                {
+                                    Vector3Int pos = (v3 + t.Item3).Map(i => i.FloorMod(ChunkSize));
+                                    MarchingCubeEntity e = c.CubeEntities[pos.x, pos.y, pos.z];
+                                    CubeEntities[x, y, z].BuildSpecificNeighbourInNeighbour(e, t.Item1, t.Item2);
+                                }
                             }
                         }
                     }
@@ -413,12 +428,11 @@ public class MarchingCubeChunk : MonoBehaviour
             && v.z >= 0 && v.z < MarchingCubeChunkHandler.VoxelsPerChunkAxis;
     }
 
-    protected bool IsCornerPoint(Vector3 p)
+    protected bool IsBorderPoint(Vector3 p)
     {
-        bool r = p.x % (ChunkSize - 1) == 0
+        return p.x % (ChunkSize - 1) == 0
             || p.y % (ChunkSize - 1) == 0
             || p.z % (ChunkSize - 1) == 0;
-        return r;
     }
 
     public PathTriangle GetTriangleAt(int index)
@@ -451,7 +465,7 @@ public class MarchingCubeChunk : MonoBehaviour
 
         Vector3 p = CoordFromIndex(triIndex);
 
-        if (IsCornerPoint(t.origin))
+        if (IsBorderPoint(t.origin))
         {
             chunkHandler.EditNeighbourChunksAt(this, t.origin, delta);
         }
