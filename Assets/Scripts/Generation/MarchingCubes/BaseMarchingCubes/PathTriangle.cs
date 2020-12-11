@@ -112,6 +112,7 @@ public class PathTriangle : INavigatable<PathTriangle, PathTriangle>
             neighbours.Add(p);
             p.neighbours.Add(this);
             p.NeighbourTransitionRayMapping[this] = r;
+            GetDistanceToNeighbour(p);
         }
     }
 
@@ -130,6 +131,7 @@ public class PathTriangle : INavigatable<PathTriangle, PathTriangle>
             neighbours.Add(p);
             p.neighbours.Add(this);
             p.NeighbourTransitionRayMapping[this] = r;
+            GetDistanceToNeighbour(p);
         }
     }
 

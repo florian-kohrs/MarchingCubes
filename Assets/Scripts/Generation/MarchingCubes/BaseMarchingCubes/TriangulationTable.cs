@@ -555,6 +555,9 @@ public class TriangulationTable : MonoBehaviour
         neighbours.Add(Tuple.Create(value, edge));
     }
 
+    /// <summary>
+    /// unfinished and unused however could potentially speed up finding neighbours a lot
+    /// </summary>
     protected static void BuildNeighbourTable()
     {
         neighbourTable = new Dictionary<NeighbourKey, int>();
@@ -565,42 +568,37 @@ public class TriangulationTable : MonoBehaviour
         {
             key1.fromIndex = x;
             key2.toIndex = x;
-            for (int y = x + 1; y < triangulation.Count; y++)
+            for (int y = x; y < triangulation.Count; y++)
             {
                 key1.toIndex = y;
                 key2.fromIndex = y;
-                for (int i1 = 0; i1 < triangulation[x].Length - 1; i1 += 3)
+                for (int i1 = 0; triangulation[y][i1] != -1; i1 += 3)
                 {
                     key1.fromTriIndex = i1 / 3;
-
-                    if (triangulation[x][i1] == -1)
-                    {
-                        break;
-                    }
 
                     Vector3 v1 = new Vector3(
                        triangulation[x][i1],
                        triangulation[x][i1 + 1],
                        triangulation[x][i1 + 2]);
 
-                    for (int i2 = 0; i2 < triangulation[y].Length - 1; i2 += 3)
+                    for (int i2 = 0; triangulation[y][i2] != -1; i2 += 3)
                     {
-                        if (triangulation[y][i2] == -1)
-                        {
-                            break;
-                        }
                         Vector3 v2 = new Vector3(
                             triangulation[y][i2],
                             triangulation[y][i2 + 1],
                             triangulation[y][i2 + 2]);
 
+                        Vector3Int v3_1;
+                        Vector3Int v3_2;
 
-                        if (v2.SharesAnyNValuesWith(v1, SAME_VERTICES_TO_BE_NEIGHBOURS))
+                        if (v2.CountAndMapIndiciesWithSameValues(v1, out v3_1, out v3_2) >= SAME_VERTICES_TO_BE_NEIGHBOURS)
                         {
                             key1.fromTriIndex = i1 / 3;
                             key2.fromTriIndex = i2 / 3;
+
                             Add(key2, key1.fromTriIndex);
                             Add(key1, key2.fromTriIndex);
+                            
                         }
                     }
                 }

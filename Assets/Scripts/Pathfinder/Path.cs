@@ -5,14 +5,20 @@ using UnityEngine;
 public class Path<T, J>
 {
 
-    public Path(INavigatable<T, J> assistant, T current, J target, Path<T, J> parent) : this(assistant, current, target, parent, 0) { }
-
-    public Path(INavigatable<T, J> assistant, T current, J target, Path<T, J> parent, float distanceToNode)
+    public Path(INavigatable<T, J> assistant, T current, J target)
     {
+        nav = assistant;
+        parent = null;
         this.current = current;
         this.target = target;
+    }
+
+    public Path(T current, Path<T, J> parent, float distanceToNode)
+    {
+        this.current = current;
+        target = parent.target;
         this.parent = parent;
-        nav = assistant;
+        nav = parent.nav;
         previousDistance = distanceToNode;
         distance = nav.DistanceToTarget(current, target);
     }
@@ -23,7 +29,12 @@ public class Path<T, J>
         return circumjacent
             .Where(c => parent == null || !nav.IsEqual(c, parent.current))
             .Select(c => new Path<T, J>(
-                nav, c, target, this, previousDistance + nav.DistanceToField(current, c)));
+                 c, this, previousDistance + nav.DistanceToField(current, c)));
+    }
+
+    public Path<T, J> Advance(T t)
+    {
+        return new Path<T, J>(t, this, previousDistance + nav.DistanceToField(current, t));
     }
 
     public INavigatable<T, J> nav;
