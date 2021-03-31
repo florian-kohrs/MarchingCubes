@@ -722,26 +722,13 @@ MonoBehaviour:
   blockAroundPlayer: 40
   marshShader: {fileID: 7200000, guid: 85821faa1826fb64b8a447b36cf4fae9, type: 3}
   noiseOffset: {x: 0, y: 0, z: 0}
-  noiseFilter:
-    seed: 0
-    radius: 20
-    noiseScale: 1
-  terrainNoise:
-    amplitude: 25
-    frequency: 0.0075
-    scale: 1
-    octaves: 9
-    persistance: 0.5
-    lacunarity: 3.41
-    seed: 0
-    terrainOffset: {x: 0, y: 0, z: 0}
   densityGenerator: {fileID: 1484889474}
   useTerrainNoise: 1
-  offset: {x: 71, y: 0, z: 93}
   deactivateAfterDistance: 400
   chunkMaterial: {fileID: 2100000, guid: 97d2f9aa8d16b8241a90494b8d616c04, type: 2}
   surfaceLevel: 0.511
   player: {fileID: 1779183453}
+  buildAroundDistance: 125
 --- !u!54 &1125545289
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -835,13 +822,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   densityShader: {fileID: 7200000, guid: 2dd2295c8799c9a4297e6c83b1fc4a4b, type: 3}
-  amplitude: 32
-  frequency: 1.89
-  scale: 0.7
+  amplitude: 50.18
+  frequency: 1.2
+  scale: 12
   octaves: 9
-  persistence: 0.219
-  lacunarity: 3.81
+  persistence: 0.518
+  lacunarity: 2.77
   seed: 4
+  offset: {x: 0, y: 0, z: 0}
 --- !u!1 &1642241349
 GameObject:
   m_ObjectHideFlags: 0

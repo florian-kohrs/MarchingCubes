@@ -2,32 +2,35 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MarchingCubeTriangle : ITriangle
+namespace MarchingCubes
 {
-
-    public  MarchingCubeTriangle (Vector3Int triIndices)
+    public class MarchingCubeTriangle : ITriangle
     {
-        this.triIndices = triIndices;
-    }
 
-    public int V1 => TriIndices.x;
-
-    public int V2 => TriIndices.y;
-
-    public int V3 => TriIndices.z;
-
-    public IEnumerable<int> Corners
-    {
-        get
+        public MarchingCubeTriangle(Vector3Int triIndices)
         {
-            yield return V1;
-            yield return V2;
-            yield return V3;
+            this.triIndices = triIndices;
         }
+
+        public int V1 => TriIndices.x;
+
+        public int V2 => TriIndices.y;
+
+        public int V3 => TriIndices.z;
+
+        public IEnumerable<int> Corners
+        {
+            get
+            {
+                yield return V1;
+                yield return V2;
+                yield return V3;
+            }
+        }
+
+        protected Vector3Int triIndices;
+
+        public Vector3Int TriIndices => triIndices;
+
     }
-
-    protected Vector3Int triIndices;
-
-    public Vector3Int TriIndices => triIndices;
-
 }

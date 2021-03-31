@@ -2,16 +2,19 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[System.Serializable]
-public class NoiseLayer
+namespace MarchingCubes
 {
+    [System.Serializable]
+    public class NoiseLayer
+    {
 
-    public bool enabled = true;
+        public bool enabled = true;
 
-    public UseFirstLayerAs useFirstLayerAs;
-    
-    public NoiseSettings noiseSettings;
+        public UseFirstLayerAs useFirstLayerAs;
 
-    public enum UseFirstLayerAs { Mask, InverseMask, Nothing}
+        public NoiseSettings noiseSettings;
 
+        public enum UseFirstLayerAs { Mask, InverseMask, Nothing }
+
+    }
 }

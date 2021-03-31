@@ -2,20 +2,23 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MarchingCubeVertex : IVertex
+namespace MarchingCubes
 {
-
-    protected Vector3 vertex;
-
-    public Vector3 Vertex
+    public class MarchingCubeVertex : IVertex
     {
-        get
+
+        protected Vector3 vertex;
+
+        public Vector3 Vertex
         {
-            return vertex;
-        }
-        set
-        {
-            vertex = value;
+            get
+            {
+                return vertex;
+            }
+            set
+            {
+                vertex = value;
+            }
         }
     }
 }

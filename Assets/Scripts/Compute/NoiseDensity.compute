@@ -9,6 +9,7 @@ float lacunarity;
 float persistence;
 float noiseScale;
 float amplitude;
+float scale;
 
 [numthreads(numThreads,numThreads,numThreads)]
 void Density (int3 id : SV_DispatchThreadID)
@@ -24,7 +25,7 @@ void Density (int3 id : SV_DispatchThreadID)
     float localAmplitude = amplitude;
 
     for (int j =0; j < octaves; j ++) {
-        float n = snoise(pos * frequency + octaveOffsets[j] + offset);
+        float n = snoise((pos * frequency) / scale + octaveOffsets[j] + offset);
         n *= localAmplitude;
 
         noise += n;

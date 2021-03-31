@@ -2,30 +2,33 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[System.Serializable]
-public class NoiseSettings
+namespace MarchingCubes
 {
-    
-    public enum FilterType { Simple, Rigid };
+    [System.Serializable]
+    public class NoiseSettings
+    {
 
-    public FilterType filtertype;
+        public enum FilterType { Simple, Rigid };
 
-    public float strength = 1;
-    
-    public float roughness = 1;
+        public FilterType filtertype;
 
-    public float baseRoughness = 1;
+        public float strength = 1;
 
-    public float weightMultiplier = 0.8f;
+        public float roughness = 1;
 
-    public Vector3 centre;
+        public float baseRoughness = 1;
 
-    [Range(1,8)]
-    public int layers = 1;
+        public float weightMultiplier = 0.8f;
 
-    [Range(0.01f,1)]
-    public float persitence = .5f;
+        public Vector3 centre;
 
-    public float minValue;
-    
+        [Range(1, 8)]
+        public int layers = 1;
+
+        [Range(0.01f, 1)]
+        public float persitence = .5f;
+
+        public float minValue;
+
+    }
 }

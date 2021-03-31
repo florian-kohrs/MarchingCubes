@@ -2,105 +2,111 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ClickEditor : MonoBehaviour
+namespace MarchingCubes
 {
-
-    int sign = 1;
-
-    protected PathTriangle firstTriIndex;
-    protected PathTriangle secondTriIndex;
-    protected int clickCount = 0;
-
-    protected IList<PathTriangle> ps;
-
-    private void OnDrawGizmos()
+    public class ClickEditor : MonoBehaviour
     {
-        if (ps != null)
+
+        int sign = 1;
+
+        protected PathTriangle firstTriIndex;
+        protected PathTriangle secondTriIndex;
+        protected int clickCount = 0;
+        MarchingCubeEntity e;
+        protected IList<PathTriangle> ps;
+
+        private void OnDrawGizmos()
         {
-            foreach (PathTriangle p in ps)
+            if (ps != null)
             {
-                Gizmos.DrawSphere(p.UnrotatedMiddlePointOfTriangle, 0.4f);
+                foreach (PathTriangle p in ps)
+                {
+                    Gizmos.DrawSphere(p.UnrotatedMiddlePointOfTriangle, 0.4f);
+
+                }
             }
         }
-    }
 
-    void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Space))
+        void Update()
         {
-            sign *= -1;
-        }
-        if (Input.GetMouseButtonDown(0))
-        {
-            RaycastHit hit;
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            Debug.DrawRay(ray.origin, ray.direction * 10, Color.red, 0.1f);
-            if (Physics.Raycast(ray, out hit, 2000))
+            if (Input.GetKeyDown(KeyCode.Space))
             {
-                Transform currentHitObject = hit.collider.transform;
-
-                MarchingCubeChunk chunk = currentHitObject.GetComponent<MarchingCubeChunk>();
-
-                if (chunk != null)
+                sign *= -1;
+            }
+            if (Input.GetMouseButtonDown(0))
+            {
+                RaycastHit hit;
+                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                Debug.DrawRay(ray.origin, ray.direction * 10, Color.red, 0.1f);
+                if (Physics.Raycast(ray, out hit, 2000))
                 {
-                    if (clickCount == 0)
+                    Transform currentHitObject = hit.collider.transform;
+
+                    MarchingCubeChunk chunk = currentHitObject.GetComponent<MarchingCubeChunk>();
+
+                    if (chunk != null)
                     {
-                        firstTriIndex = chunk.GetTriangleAt(hit.triangleIndex);
+                        if (clickCount == 0)
+                        {
+                            firstTriIndex = chunk.GetTriangleAt(hit.triangleIndex);
+                        }
+                        else
+                        {
+                            secondTriIndex = chunk.GetTriangleAt(hit.triangleIndex);
+
+                            BuildPath(firstTriIndex, secondTriIndex);
+                        }
+                        clickCount++;
+                        clickCount = clickCount % 2;
                     }
-                    else
+                }
+
+            }
+            else if (Input.GetMouseButtonDown(1))
+            {
+                RaycastHit hit;
+                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                Debug.DrawRay(ray.origin, ray.direction * 10, Color.red, 0.1f);
+                if (Physics.Raycast(ray, out hit, 2000))
+                {
+                    Transform currentHitObject = hit.collider.transform;
+
+                    MarchingCubeChunk chunk = currentHitObject.GetComponent<MarchingCubeChunk>();
+
+                    if (chunk != null)
                     {
-                        secondTriIndex = chunk.GetTriangleAt(hit.triangleIndex);
-
-                        BuildPath(firstTriIndex, secondTriIndex);
+                        ps = chunk.GetTriangleAt(hit.triangleIndex).neighbours;
+                        e = chunk.GetCubeAtTriangleIndex(hit.triangleIndex);
+                        Debug.Log("NeighboursCount:" + e.neighbours.Count);
                     }
-                    clickCount++;
-                    clickCount = clickCount % 2;
                 }
-            }
 
-        }
-        else if (Input.GetMouseButtonDown(1))
-        {
-            RaycastHit hit;
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            Debug.DrawRay(ray.origin, ray.direction * 10, Color.red, 0.1f);
-            if (Physics.Raycast(ray, out hit, 2000))
+            }
+            else if (Input.GetMouseButtonDown(2))
             {
-                Transform currentHitObject = hit.collider.transform;
-
-                MarchingCubeChunk chunk = currentHitObject.GetComponent<MarchingCubeChunk>();
-
-                if (chunk != null)
+                RaycastHit hit;
+                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                Debug.DrawRay(ray.origin, ray.direction * 10, Color.red, 0.1f);
+                if (Physics.Raycast(ray, out hit, 2000))
                 {
-                    ps = chunk.GetTriangleAt(hit.triangleIndex).neighbours;
+                    Transform currentHitObject = hit.collider.transform;
+
+                    MarchingCubeChunk chunk = currentHitObject.GetComponent<MarchingCubeChunk>();
+
+                    if (chunk != null)
+                    {
+                        chunk.EditPointsAroundTriangleIndex(sign, hit.triangleIndex, 0);
+                    }
                 }
             }
-
         }
-        else if (Input.GetMouseButtonDown(2))
+
+
+
+        public void BuildPath(PathTriangle from, PathTriangle to)
         {
-            RaycastHit hit;
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            Debug.DrawRay(ray.origin, ray.direction * 10, Color.red, 0.1f);
-            if (Physics.Raycast(ray, out hit, 2000))
-            {
-                Transform currentHitObject = hit.collider.transform;
-
-                MarchingCubeChunk chunk = currentHitObject.GetComponent<MarchingCubeChunk>();
-
-                if (chunk != null)
-                {
-                    chunk.EditPointsAroundTriangleIndex(sign, hit.triangleIndex, 0);
-                }
-            }
+            ps = Pathfinder<PathTriangle, PathTriangle>.FindPath(from, from, to, PathAccuracy.NotSoGoodAnymore);
         }
+
     }
-
-
-
-    public void BuildPath(PathTriangle from, PathTriangle to)
-    {
-        ps = Pathfinder<PathTriangle, PathTriangle>.FindPath(from, from, to, PathAccuracy.NotSoGoodAnymore);
-    }
-
 }

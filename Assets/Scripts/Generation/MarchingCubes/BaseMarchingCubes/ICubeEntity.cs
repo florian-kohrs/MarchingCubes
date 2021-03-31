@@ -2,11 +2,15 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public interface ICubeEntity
+
+namespace MarchingCubes
 {
+    public interface ICubeEntity
+    {
 
-    void UpdateMesh();
+        void UpdateMesh();
 
-    IList<ICubeEntity> Neighbours { get; set; }
+        IList<ICubeEntity> Neighbours { get; }
 
+    }
 }

@@ -2,9 +2,12 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public interface INoiseFilter
+namespace MarchingCubes
 {
+    public interface INoiseFilter
+    {
 
-    float Evaluate(Vector3 point);
+        float Evaluate(Vector3 point);
 
+    }
 }

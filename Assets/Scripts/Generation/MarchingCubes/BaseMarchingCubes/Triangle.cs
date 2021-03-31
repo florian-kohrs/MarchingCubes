@@ -2,40 +2,43 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public struct Triangle
+namespace MarchingCubes
 {
-
-    public Vector3 a;
-    public Vector3 b;
-    public Vector3 c;
-
-    public Vector3Int origin;
-    public int triangulationIndex;
-
-    public Vector3 this[int i]
+    public struct Triangle
     {
-        get
+
+        public Vector3 a;
+        public Vector3 b;
+        public Vector3 c;
+
+        public Vector3Int origin;
+        public int triangulationIndex;
+
+        public Vector3 this[int i]
         {
-            switch (i)
+            get
             {
-                case 0:
-                    return a;
-                case 1:
-                    return b;
-                default:
-                    return c;
+                switch (i)
+                {
+                    case 0:
+                        return a;
+                    case 1:
+                        return b;
+                    default:
+                        return c;
+                }
             }
         }
-    }
 
-    public bool Equals(Triangle tri)
-    {
-        return a == tri.a && b == tri.b && c == tri.c;
-    }
+        public bool Equals(Triangle tri)
+        {
+            return a == tri.a && b == tri.b && c == tri.c;
+        }
 
-    public bool Contains(Vector3 v)
-    {
-        return this[0] == v || this[1] == v || this[2] == v;
-    }
+        public bool Contains(Vector3 v)
+        {
+            return this[0] == v || this[1] == v || this[2] == v;
+        }
 
+    }
 }
