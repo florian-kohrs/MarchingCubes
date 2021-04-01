@@ -21,51 +21,35 @@ namespace MarchingCubes
 
         public List<PathTriangle> neighbours = new List<PathTriangle>(3);
 
-        protected Dictionary<PathTriangle, Ray> neighbourTransitionRayMapping;
+        protected List<float> neighbourDistanceMapping;
 
-        protected Dictionary<PathTriangle, Ray> NeighbourTransitionRayMapping
-        {
-            get
-            {
-                if (neighbourTransitionRayMapping == null)
-                {
-                    neighbourTransitionRayMapping = new Dictionary<PathTriangle, Ray>(3);
-                }
-                return neighbourTransitionRayMapping;
-            }
-        }
-
-        protected Dictionary<PathTriangle, int> neighbourSharedIndexMapping;
-
-        protected Dictionary<PathTriangle, float> neighbourDistanceMapping;
-
-        protected Dictionary<PathTriangle, float> NeighbourDistanceMapping
+        protected List<float> NeighbourDistanceMapping
         {
             get
             {
                 if (neighbourDistanceMapping == null)
                 {
-                    neighbourDistanceMapping = new Dictionary<PathTriangle, float>(3);
+                    neighbourDistanceMapping = new List<float> (3);
                 }
                 return neighbourDistanceMapping;
             }
         }
 
-        public float GetDistanceToNeighbour(PathTriangle neighbour)
-        {
-            float distance;
-            if (!NeighbourDistanceMapping.TryGetValue(neighbour, out distance))
-            {
-                Ray r = NeighbourTransitionRayMapping[neighbour];
-                NeighbourTransitionRayMapping.Remove(neighbour);
-                neighbour.NeighbourTransitionRayMapping.Remove(this);
-                distance = Vector3.Cross(r.direction, UnrotatedMiddlePointOfTriangle - r.origin).magnitude;
-                distance += Vector3.Cross(r.direction, neighbour.UnrotatedMiddlePointOfTriangle - r.origin).magnitude;
-                NeighbourDistanceMapping[neighbour] = distance;
-                neighbour.NeighbourDistanceMapping[this] = distance;
-            }
-            return distance;
-        }
+        //public float GetDistanceToNeighbour(PathTriangle neighbour)
+        //{
+        //    float distance;
+        //    if (!NeighbourDistanceMapping.TryGetValue(neighbour, out distance))
+        //    {
+        //        Ray r = NeighbourTransitionRayMapping[neighbour];
+        //        NeighbourTransitionRayMapping.Remove(neighbour);
+        //        neighbour.NeighbourTransitionRayMapping.Remove(this);
+        //        distance = Vector3.Cross(r.direction, UnrotatedMiddlePointOfTriangle - r.origin).magnitude;
+        //        distance += Vector3.Cross(r.direction, neighbour.UnrotatedMiddlePointOfTriangle - r.origin).magnitude;
+        //        NeighbourDistanceMapping[neighbour] = distance;
+        //        neighbour.NeighbourDistanceMapping[this] = distance;
+        //    }
+        //    return distance;
+        //}
 
 
         public List<Vector2> edgesWithoutNeighbour = null;
@@ -100,37 +84,33 @@ namespace MarchingCubes
             bool result = !neighbours.Contains(p);
             if (result)
             {
-                Ray r = new Ray();
-                int firstEdge = TriangulationTable.GetEdgeIndex(tri.triangulationIndex, index, edges.x);
-                int secondEdge = TriangulationTable.GetEdgeIndex(tri.triangulationIndex, index, edges.y);
-                r.origin = tri[firstEdge];
-                r.direction = tri[secondEdge] - tri[firstEdge];
-
-                NeighbourTransitionRayMapping[p] = r;
                 neighbours.Add(p);
                 p.neighbours.Add(this);
-                p.NeighbourTransitionRayMapping[this] = r;
-                GetDistanceToNeighbour(p);
+
+                int firstEdge = TriangulationTable.GetEdgeIndex(tri.triangulationIndex, index, edges.x);
+                int secondEdge = TriangulationTable.GetEdgeIndex(tri.triangulationIndex, index, edges.y);
+
+                BuildDistance(p, new Vector2Int(firstEdge,secondEdge));
             }
             return result;
+        }
+
+        public void BuildDistance(PathTriangle p, Vector2Int edgeIndices)
+        {
+            Vector3 middleEdgePoint = tri[edgeIndices.x] + (tri[edgeIndices.y] - tri[edgeIndices.x] / 2);
+            float distance = (UnrotatedMiddlePointOfTriangle - middleEdgePoint).magnitude;
+            distance += (UnrotatedMiddlePointOfTriangle - p.UnrotatedMiddlePointOfTriangle).magnitude;
+            NeighbourDistanceMapping.Add(distance);
+            p.NeighbourDistanceMapping.Add(distance);
         }
 
         public void AddNeighbourTwoWay(PathTriangle p, Vector2Int edgeIndices)
         {
             if (!neighbours.Contains(p))
             {
-                Ray r = new Ray();
-                int firstEdge = edgeIndices.x;
-                int secondEdge = edgeIndices.y;
-
-                r.origin = tri[firstEdge];
-                r.direction = tri[secondEdge] - tri[firstEdge];
-
-                NeighbourTransitionRayMapping[p] = r;
                 neighbours.Add(p);
                 p.neighbours.Add(this);
-                p.NeighbourTransitionRayMapping[this] = r;
-                GetDistanceToNeighbour(p);
+                BuildDistance(p, edgeIndices);
             }
         }
 
@@ -146,7 +126,7 @@ namespace MarchingCubes
 
         public float DistanceToField(PathTriangle from, PathTriangle to)
         {
-            return from.GetDistanceToNeighbour(to);
+            return from.NeighbourDistanceMapping[neighbours.IndexOf(to)];
         }
 
         public bool ReachedTarget(PathTriangle current, PathTriangle destination)
@@ -172,7 +152,8 @@ namespace MarchingCubes
                     middlePointOfTriangle = (tri.a + tri.b + tri.c) / 3;
                 }
 
-                return Vector3.Scale(middlePointOfTriangle + chunk.transform.position, chunk.transform.lossyScale);
+                //return Vector3.Scale(middlePointOfTriangle + chunk.transform.position, chunk.transform.lossyScale);
+                return middlePointOfTriangle + chunk.transform.position;
             }
         }
 

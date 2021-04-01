@@ -51,7 +51,7 @@ namespace MarchingCubes
         public void AddNeighbourFromEntity(Vector3Int v3, MarchingCubeEntity from)
         {
             HashSet<MarchingCubeEntity> r;
-            if(!NeighboursReachableFrom.TryGetValue(v3,out r))
+            if (!NeighboursReachableFrom.TryGetValue(v3, out r))
             {
                 r = new HashSet<MarchingCubeEntity>();
                 NeighboursReachableFrom.Add(v3, r);
@@ -65,7 +65,7 @@ namespace MarchingCubes
             if (NeighboursReachableFrom.TryGetValue(v3, out r))
             {
                 r.Remove(from);
-                if(r.Count == 0)
+                if (r.Count == 0)
                 {
                     NeighboursReachableFrom.Remove(v3);
                 }
@@ -221,27 +221,30 @@ namespace MarchingCubes
                     for (int z = 0; z < ChunkSize; z++)
                     {
                         v3.z = z;
-
-                        CubeEntities[x, y, z].BuildInternNeighbours();
-
-                        if ((x + y + z) % 2 == 0 || IsBorderPoint(v3))
+                        if (CubeEntities[x, y, z] != null)
                         {
-                            List<Tuple<PathTriangle, Vector2Int, Vector3Int>> trisWithNeighboursOutOfBounds
-                               = CubeEntities[x, y, z].BuildNeighbours(CubeEntities, IsInBounds);
 
-                            if (trisWithNeighboursOutOfBounds != null)
+                            CubeEntities[x, y, z].BuildInternNeighbours();
+
+                            if ((x + y + z) % 2 == 0 || IsBorderPoint(v3))
                             {
-                                foreach (Tuple<PathTriangle, Vector2Int, Vector3Int> t in trisWithNeighboursOutOfBounds)
+                                List<Tuple<PathTriangle, Vector2Int, Vector3Int>> trisWithNeighboursOutOfBounds
+                                   = CubeEntities[x, y, z].BuildNeighbours(CubeEntities, IsInBounds);
+
+                                if (trisWithNeighboursOutOfBounds != null)
                                 {
-                                    Vector3Int offset = t.Item3.Map(Math.Sign);
-                                    Vector3Int target = chunkOffset + offset;
-                                    MarchingCubeChunk c;
-                                    AddNeighbourFromEntity(target, CubeEntities[x, y, z]);
-                                    if (chunkHandler.Chunks.TryGetValue(target, out c))
+                                    foreach (Tuple<PathTriangle, Vector2Int, Vector3Int> t in trisWithNeighboursOutOfBounds)
                                     {
-                                        Vector3Int pos = (v3 + t.Item3).Map(i => i.FloorMod(ChunkSize));
-                                        MarchingCubeEntity e = c.CubeEntities[pos.x, pos.y, pos.z];
-                                        CubeEntities[x, y, z].BuildSpecificNeighbourInNeighbour(e, t.Item1, t.Item2);
+                                        Vector3Int offset = t.Item3.Map(Math.Sign);
+                                        Vector3Int target = chunkOffset + offset;
+                                        MarchingCubeChunk c;
+                                        AddNeighbourFromEntity(target, CubeEntities[x, y, z]);
+                                        if (chunkHandler.Chunks.TryGetValue(target, out c))
+                                        {
+                                            Vector3Int pos = (v3 + t.Item3).Map(i => i.FloorMod(ChunkSize));
+                                            MarchingCubeEntity e = c.CubeEntities[pos.x, pos.y, pos.z];
+                                            CubeEntities[x, y, z].BuildSpecificNeighbourInNeighbour(e, t.Item1, t.Item2);
+                                        }
                                     }
                                 }
                             }
@@ -326,50 +329,62 @@ namespace MarchingCubes
             ApplyChanges();
         }
 
+        protected MarchingCubeEntity GetEntityAt(int x, int y, int z)
+        {
+            MarchingCubeEntity result = CubeEntities[x, y, z];
+            if (result == null)
+            {
+                result = new MarchingCubeEntity();
+                result.origin = new Vector3Int(x, y, z);
+                CubeEntities[x, y, z] = result;
+            }
+            return result;
+        }
+
         public void BuildFromTriangleArray(Triangle[] ts)
         {
+            allTriangles = new List<Triangle>();
             Vector3Int v = new Vector3Int();
             MarchingCubeEntity cube;
             cubeEntities = new MarchingCubeEntity[ChunkSize, ChunkSize, ChunkSize];
-            for (int x = 0; x < ChunkSize; x++)
-            {
-                v.x = x;
-                for (int y = 0; y < ChunkSize; y++)
-                {
-                    v.y = y;
-                    for (int z = 0; z < ChunkSize; z++)
-                    {
-                        v.z = z;
-                        cube = new MarchingCubeEntity();
-                        cube.origin = v;
-                        CubeEntities[x, y, z] = cube;
-                    }
-                }
-            }
+            //for (int x = 0; x < ChunkSize; x++)
+            //{
+            //    v.x = x;
+            //    for (int y = 0; y < ChunkSize; y++)
+            //    {
+            //        v.y = y;
+            //        for (int z = 0; z < ChunkSize; z++)
+            //        {
+            //            v.z = z;
+            //            cube = new MarchingCubeEntity();
+            //            cube.origin = v;
+            //            CubeEntities[x, y, z] = cube;
+            //        }
+            //    }
+            //}
 
             foreach (Triangle t in ts)
             {
-                cube = cubeEntities[t.origin.x, t.origin.y, t.origin.z];
+                cube = GetEntityAt(t.origin.x, t.origin.y, t.origin.z);
                 cube.triangulationIndex = t.triangulationIndex;
                 cube.triangles.Add(new PathTriangle(this, t));
+                allTriangles.Add(t);
             }
 
-            for (int x = 0; x < ChunkSize; x += 2)
-            {
-                v.x = x;
-                for (int y = 0; y < ChunkSize; y++)
-                {
-                    v.y = y;
-                    for (int z = 0; z < ChunkSize; z++)
-                    {
-                        v.z = z;
-                        cube = CubeEntities[x, y, z];
-                        //cube.BuildInternNeighbours();
-                    }
-                }
-            }
-            ///rebuild all triangles
-            BuildAllTriangles();
+            //for (int x = 0; x < ChunkSize; x += 2)
+            //{
+            //    v.x = x;
+            //    for (int y = 0; y < ChunkSize; y++)
+            //    {
+            //        v.y = y;
+            //        for (int z = 0; z < ChunkSize; z++)
+            //        {
+            //            v.z = z;
+            //            cube = CubeEntities[x, y, z];
+            //            //cube.BuildInternNeighbours();
+            //        }
+            //    }
+            //}
         }
 
         protected void ApplyChanges()

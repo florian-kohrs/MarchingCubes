@@ -343,7 +343,11 @@ namespace MarchingCubes
                 Vector2Int edgeIndex = new Vector2Int(triangulation[e.triangulationIndex][index + i], triangulation[e.triangulationIndex][index + ((i + 1) % 3)]);
                 GetEdgeAxisDirection(ref r, edgeIndex.x);
                 GetEdgeAxisDirection(ref r, edgeIndex.y);
-                r = r.Map(f => { if (Mathf.Abs(f) == 2) { return (int)Mathf.Sign(f) * 1; } else { return 0; } });
+                //r = r.Map(f => { if (Mathf.Abs(f) == 2)  return (int)Mathf.Sign(f) * 1;  else  return 0;  });
+                r = new Vector3Int(
+                    Mathf.Abs(r.x) == 2 ? (int)Mathf.Sign(r.x) : 0,
+                     Mathf.Abs(r.y) == 2 ? (int)Mathf.Sign(r.y) : 0,
+                      Mathf.Abs(r.z) == 2 ? (int)Mathf.Sign(r.z) : 0);
                 if (r != Vector3.zero)
                 {
                     result.Add(Tuple.Create(edgeIndex, r));
