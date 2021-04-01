@@ -13,6 +13,18 @@ namespace MarchingCubes
         {
             this.chunk = chunk;
             tri = t;
+            middlePointOfTriangle = (tri.a + tri.b + tri.c) / 3;
+            normal = Vector3.Cross(tri.b - tri.a, tri.c - tri.a).normalized;
+            //Quaternion inverse = Quaternion.Inverse(Quaternion.Euler(normal));
+            //Vector3 a1 = Vector3.ProjectOnPlane(t.a, normal);
+            //Vector3 a2 = Vector3.ProjectOnPlane(t.b, normal);
+            //Vector3 a3= Vector3.ProjectOnPlane(t.c, normal);
+        }
+
+        public bool HasSameNormalWithPoint(Vector3 p)
+        {
+            Vector3 normal = Vector3.Cross(p - tri.a, tri.c - tri.a).normalized;
+            return this.normal == normal;
         }
 
         MarchingCubeChunk chunk;
@@ -34,6 +46,22 @@ namespace MarchingCubes
                 return neighbourDistanceMapping;
             }
         }
+
+
+        public bool IsInTriangle(Vector3 point)
+        {
+            float a = AreaOfTriangle(tri.a, tri.b,tri.c);
+            float a1 = AreaOfTriangle(point,tri.a, tri.b);
+            float a2 = AreaOfTriangle(point, tri.b, tri.c);
+            float a3 = AreaOfTriangle(point,tri.a, tri.c)  ;
+            return a == a1 + a2 + a3;
+        }
+
+        protected float AreaOfTriangle(Vector3 a, Vector3 b, Vector3 c)
+        {
+            return default;
+        }
+
 
         //public float GetDistanceToNeighbour(PathTriangle neighbour)
         //{
@@ -139,8 +167,8 @@ namespace MarchingCubes
         public void BuildDistance(PathTriangle p, int edge1, int edge2)
         {
             Vector3 middleEdgePoint = tri[edge1] + ((tri[edge2] - tri[edge1]) / 2);
-            float distance = (UnrotatedMiddlePointOfTriangle - middleEdgePoint).magnitude;
-            distance += (UnrotatedMiddlePointOfTriangle - p.UnrotatedMiddlePointOfTriangle).magnitude;
+            float distance = (OriginalMiddlePointOfTriangle - middleEdgePoint).magnitude;
+            distance += (OriginalMiddlePointOfTriangle - p.OriginalMiddlePointOfTriangle).magnitude;
             NeighbourDistanceMapping.Add(distance);
             p.NeighbourDistanceMapping.Add(distance);
         }
@@ -151,7 +179,7 @@ namespace MarchingCubes
 
         public float DistanceToTarget(PathTriangle from, PathTriangle to)
         {
-            return (to.UnrotatedMiddlePointOfTriangle - from.UnrotatedMiddlePointOfTriangle).magnitude;
+            return (to.OriginalMiddlePointOfTriangle - from.OriginalMiddlePointOfTriangle).magnitude;
         }
 
         public float DistanceToField(PathTriangle from, PathTriangle to)
@@ -169,19 +197,16 @@ namespace MarchingCubes
             return t1 == t2;
         }
 
+        private Vector3 normal;
+
+        public Vector3 Normal => normal;
+
         private Vector3 middlePointOfTriangle;
 
-
-
-        public Vector3 UnrotatedMiddlePointOfTriangle
+        public Vector3 OriginalMiddlePointOfTriangle
         {
             get
             {
-                if (middlePointOfTriangle == default)
-                {
-                    middlePointOfTriangle = (tri.a + tri.b + tri.c) / 3;
-                }
-
                 //return Vector3.Scale(middlePointOfTriangle + chunk.transform.position, chunk.transform.lossyScale);
                 return middlePointOfTriangle + chunk.transform.position;
             }

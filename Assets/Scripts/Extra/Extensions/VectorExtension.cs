@@ -207,6 +207,17 @@ public static class VectorExtension
         return new Vector3Int(f(v.x), f(v.y), f(v.z));
     }
 
+    /// <summary>
+    /// applies Function f to all three coordinates
+    /// </summary>
+    /// <param name="v"></param>
+    /// <param name="f"></param>
+    /// <returns></returns>
+    public static Vector3 Map(this Vector3Int v, Func<int, float> f)
+    {
+        return new Vector3(f(v.x), f(v.y), f(v.z));
+    }
+
     public static Vector3 Min(this Vector3 v, float min)
     {
         return v.Map((f) => Mathf.Min(f, min));

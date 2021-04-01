@@ -10,6 +10,7 @@ struct Triangle
     float3 vertexA;
     int3 origin;
     int triangulationIndex;
+    //Vector3 normal (cross-function)
 };
 
 AppendStructuredBuffer<Triangle> triangles;

@@ -8,6 +8,18 @@ namespace MarchingCubes
     public class MarchingCubeEntity //: ICubeEntity
     {
 
+        public PathTriangle GetTriangleWithNormal(Vector3 normal)
+        {
+            for (int i = 0; i < triangles.Count; i++)
+            {
+                if(triangles[i].Normal == normal)
+                {
+                    return triangles[i];
+                }
+            }
+            throw new System.Exception("No triangle with same normal found!");
+            //return best;
+        }
 
         public List<PathTriangle> triangles = new List<PathTriangle>();
 

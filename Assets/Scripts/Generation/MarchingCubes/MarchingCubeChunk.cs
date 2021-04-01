@@ -42,7 +42,7 @@ namespace MarchingCubes
 
         public IMarchingCubeChunkHandler chunkHandler;
 
-        public int ChunkSize => MarchingCubeChunkHandler.VoxelsPerChunkAxis;
+        public static int ChunkSize => MarchingCubeChunkHandler.VoxelsPerChunkAxis;
 
         public Dictionary<Vector3Int, HashSet<MarchingCubeEntity>> NeighboursReachableFrom = new Dictionary<Vector3Int, HashSet<MarchingCubeEntity>>();
 
@@ -85,6 +85,9 @@ namespace MarchingCubes
 
         protected Color[] colorData;
 
+        /// <summary>
+        /// maybe reference to pathtriangles instead?
+        /// </summary>
         protected List<Triangle> allTriangles;
 
         protected List<Triangle> AllTriangles
@@ -503,6 +506,12 @@ namespace MarchingCubes
             return CubeEntities[p.x, p.y, p.z].triangles.Where(tri => tri.tri.Equals(t)).FirstOrDefault();
         }
 
+        public PathTriangle GetClosestTriangleFromRayHit(RaycastHit hit)
+        {
+            MarchingCubeEntity cube = GetClosestEntity(hit.point);
+            return cube.GetTriangleWithNormal(hit.normal);
+        }
+
         public MarchingCubeEntity GetCubeAtTriangleIndex(int index)
         {
             Triangle t = AllTriangles[index];
@@ -541,6 +550,17 @@ namespace MarchingCubes
         }
 
 
+        public MarchingCubeEntity GetClosestEntity(Vector3 v3)
+        {
+            Vector3 rest = v3 - GetAnchorPosition();
+            return CubeEntities[(int)rest.x, (int)rest.y, (int)rest.z];
+        }
+
+        public Vector3 GetAnchorPosition()
+        {
+            return transform.position + chunkOffset * ChunkSize;
+        }
+
         public void EditPointsNextToChunk(MarchingCubeChunk chunk, MarchingCubeEntity e, Vector3Int offset, float delta)
         {
             int[] cornerIndices = GetCubeCornerIndicesForPoint(e.origin);
@@ -571,8 +591,6 @@ namespace MarchingCubes
             }
             RebuildAround(e);
         }
-
-
 
     }
 }
