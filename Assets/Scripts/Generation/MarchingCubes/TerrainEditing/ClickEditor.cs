@@ -77,7 +77,7 @@ namespace MarchingCubes
                     {
                         ps = chunk.GetTriangleAt(hit.triangleIndex).neighbours;
                         e = chunk.GetCubeAtTriangleIndex(hit.triangleIndex);
-                        Debug.Log("NeighboursCount:" + e.neighbours.Count);
+                       // Debug.Log("NeighboursCount:" + e.neighbours.Count);
                     }
                 }
 

@@ -29,7 +29,7 @@ namespace MarchingCubes
             {
                 if (neighbourDistanceMapping == null)
                 {
-                    neighbourDistanceMapping = new List<float> (3);
+                    neighbourDistanceMapping = new List<float>(3);
                 }
                 return neighbourDistanceMapping;
             }
@@ -79,7 +79,7 @@ namespace MarchingCubes
 
         //}
 
-        public bool AddNeighbourTwoWay(PathTriangle p, int index, Vector2Int edges)
+        public bool AddNeighbourTwoWay(PathTriangle p, int index, int edge1, int edge2)
         {
             bool result = !neighbours.Contains(p);
             if (result)
@@ -87,33 +87,63 @@ namespace MarchingCubes
                 neighbours.Add(p);
                 p.neighbours.Add(this);
 
-                int firstEdge = TriangulationTable.GetEdgeIndex(tri.triangulationIndex, index, edges.x);
-                int secondEdge = TriangulationTable.GetEdgeIndex(tri.triangulationIndex, index, edges.y);
+                int firstEdge = TriangulationTableStaticData.GetEdgeIndex(tri.triangulationIndex, index, edge1);
+                int secondEdge = TriangulationTableStaticData.GetEdgeIndex(tri.triangulationIndex, index, edge2);
 
-                BuildDistance(p, new Vector2Int(firstEdge,secondEdge));
+                BuildDistance(p, firstEdge, secondEdge);
             }
             return result;
         }
 
-        public void BuildDistance(PathTriangle p, Vector2Int edgeIndices)
+        public bool AddNeighbourTwoWay(PathTriangle p, int index, Vector2Int edges)
         {
-            Vector3 middleEdgePoint = tri[edgeIndices.x] + (tri[edgeIndices.y] - tri[edgeIndices.x] / 2);
+            return AddNeighbourTwoWay(p, index, edges.x, edges.y);
+        }
+
+        public void AddNeighbourTwoWay(PathTriangle p, int edge1, int edge2)
+        {
+            if (!neighbours.Contains(p))
+            {
+                AddNeighbourTwoWayUnchecked(p, edge1, edge2);
+            }
+        }
+
+        public void AddNeighbourTwoWayUnchecked(PathTriangle p, int edge1, int edge2)
+        {
+                neighbours.Add(p);
+                p.neighbours.Add(this);
+                BuildDistance(p, edge1, edge2);
+            
+        }
+
+        public void AddNeighbourTwoWayUnchecked(PathTriangle p, byte edge1, byte edge2)
+        {
+            AddNeighbourTwoWayUnchecked(p, (int)edge1, (int)edge2);
+        }
+
+        public void AddNeighbourTwoWayUnchecked(PathTriangle p, EdgePair edges)
+        {
+            AddNeighbourTwoWayUnchecked(p, (int)edges.edge1, (int)edges.edge2);
+        }
+
+        public void AddNeighbourTwoWay(PathTriangle p, byte edge1, byte edge2)
+        {
+            AddNeighbourTwoWay(p, (int)edge1, (int)edge2);
+        }
+
+        public void AddNeighbourTwoWay(PathTriangle p, Vector2Int edgeIndices)
+        {
+            AddNeighbourTwoWay(p, edgeIndices.x, edgeIndices);
+        }
+
+        public void BuildDistance(PathTriangle p, int edge1, int edge2)
+        {
+            Vector3 middleEdgePoint = tri[edge1] + ((tri[edge2] - tri[edge1]) / 2);
             float distance = (UnrotatedMiddlePointOfTriangle - middleEdgePoint).magnitude;
             distance += (UnrotatedMiddlePointOfTriangle - p.UnrotatedMiddlePointOfTriangle).magnitude;
             NeighbourDistanceMapping.Add(distance);
             p.NeighbourDistanceMapping.Add(distance);
         }
-
-        public void AddNeighbourTwoWay(PathTriangle p, Vector2Int edgeIndices)
-        {
-            if (!neighbours.Contains(p))
-            {
-                neighbours.Add(p);
-                p.neighbours.Add(this);
-                BuildDistance(p, edgeIndices);
-            }
-        }
-
         public IEnumerable<PathTriangle> GetCircumjacent(PathTriangle field)
         {
             return field.neighbours;
@@ -126,7 +156,7 @@ namespace MarchingCubes
 
         public float DistanceToField(PathTriangle from, PathTriangle to)
         {
-            return from.NeighbourDistanceMapping[neighbours.IndexOf(to)];
+            return from.NeighbourDistanceMapping[from.neighbours.IndexOf(to)];
         }
 
         public bool ReachedTarget(PathTriangle current, PathTriangle destination)

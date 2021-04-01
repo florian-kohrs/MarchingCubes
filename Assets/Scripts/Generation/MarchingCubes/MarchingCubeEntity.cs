@@ -5,18 +5,34 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public class MarchingCubeEntity : ICubeEntity
+    public class MarchingCubeEntity //: ICubeEntity
     {
+
 
         public List<PathTriangle> triangles = new List<PathTriangle>();
 
         public Vector3Int origin;
 
-        public int triangulationIndex;
+        public short triangulationIndex;
 
         public bool hasBuildIntern;
 
-        public List<MarchingCubeEntity> neighbours = new List<MarchingCubeEntity>();
+        protected TriangulationNeighbours neighbourData;
+        protected TriangulationNeighbours NeighbourData
+        {
+            get
+            {
+                if (neighbourData == null)
+                {
+                    neighbourData = TriangulationTableStaticData.GetNeighbourData(triangulationIndex);
+                }
+                return neighbourData;
+            }
+        }
+
+        protected bool buildInternNeighbours;
+
+        //public List<MarchingCubeEntity> neighbours = new List<MarchingCubeEntity>();
 
         /// <summary>
         /// generate a matrix in the beginning, saying which triangulation has neighbours in which triangulation,
@@ -25,107 +41,101 @@ namespace MarchingCubes
         /// </summary>
         public void BuildInternNeighbours()
         {
-            hasBuildIntern = true;
-            int count = 0;
-            foreach (PathTriangle tri in triangles)
+            if (buildInternNeighbours)
+                return;
+
+            buildInternNeighbours = true;
+            foreach (var item in NeighbourData.InternNeighbourPairs)
             {
-                List<System.Tuple<int, Vector2Int>> neighbourIndices = TriangulationTable.GetInternNeighbourIndiceces(triangulationIndex, count);
-                if (neighbourIndices != null)
-                {
-                    foreach (System.Tuple<int, Vector2Int> t in neighbourIndices)
-                    {
-                        triangles[count].AddNeighbourTwoWay(triangles[t.Item1], t.Item2);
-                    }
-                }
-                count++;
+                triangles[item.first].AddNeighbourTwoWayUnchecked(triangles[item.second], item.edge.edge1, item.edge.edge2);
             }
         }
 
-
-        public List<System.Tuple<PathTriangle, Vector2Int, Vector3Int>> BuildNeighbours(MarchingCubeEntity[,,] cubes, System.Func<Vector3Int, bool> IsInBounds)
+        public List<MissingNeighbourData> BuildNeighbours(MarchingCubeEntity[,,] cubes, System.Func<Vector3Int, bool> IsInBounds)
         {
-            List<System.Tuple<PathTriangle, Vector2Int, Vector3Int>> missingNeighbours = null;
-            if (!hasBuildIntern)
-            {
+            if (!buildInternNeighbours)
                 BuildInternNeighbours();
-            }
-            int count = 0;
-            foreach (PathTriangle tri in triangles)
+
+            List<MissingNeighbourData> missingNeighbours = null;
+            foreach (OutsideEdgeNeighbourDirection neighbour in NeighbourData.OutsideNeighbours)
             {
-                foreach (System.Tuple<Vector2Int, Vector3Int> t in TriangulationTable.GetNeighbourOffsetForTriangle(this, count))
+                Vector3Int newPos = origin + neighbour.offset;
+
+                if (IsInBounds(newPos))
                 {
-                    Vector3Int newPos = origin + t.Item2;
+                    MarchingCubeEntity neighbourCube = cubes[newPos.x, newPos.y, newPos.z];
 
-                    Vector2Int rotatedEdge = TriangulationTable.RotateEdgeOn(
-                            t.Item1,
-                            TriangulationTable.GetAxisFromDelta(t.Item2));
-
-                    if (IsInBounds(newPos))
-                    {
-                        MarchingCubeEntity neighbourCube = cubes[newPos.x, newPos.y, newPos.z];
-
-                        int i = TriangulationTable.GetIndexWithEdges(neighbourCube.triangulationIndex, rotatedEdge);
-                        AddNeighboursTwoWay(neighbourCube, tri, neighbourCube.triangles[i], count, t.Item1);
-                    }
-                    else
-                    {
-                        if (missingNeighbours == null)
-                        {
-                            missingNeighbours = new List<System.Tuple<PathTriangle, Vector2Int, Vector3Int>>();
-                        }
-                        missingNeighbours.Add(System.Tuple.Create(tri, rotatedEdge, t.Item2));
-                    }
+                    int i = TriangulationTableStaticData.GetIndexWithEdges(neighbourCube.triangulationIndex, neighbour.rotatedEdgePair);
+                    triangles[neighbour.triangleIndex].AddNeighbourTwoWay(neighbourCube.triangles[i], neighbour.edgePair.edge1, neighbour.edgePair.edge2);
                 }
-                count++;
+                else
+                {
+                    if (missingNeighbours == null)
+                    {
+                        missingNeighbours = new List<MissingNeighbourData>();
+                    }
+                    missingNeighbours.Add(new MissingNeighbourData(neighbour, newPos));
+                }
             }
+
+            neighbourData = null;
             return missingNeighbours;
         }
 
 
-        public void BuildSpecificNeighbourInNeighbour(MarchingCubeEntity e, PathTriangle tri, Vector2Int rotatedEdge)
+        public void BuildSpecificNeighbourInNeighbour(MarchingCubeEntity e, PathTriangle tri, EdgePair rotatedEdge)
         {
             int neighbourIndex;
-            if (TriangulationTable.TryGetIndexWithEdges(e.triangulationIndex, rotatedEdge, out neighbourIndex))
+            if (TriangulationTableStaticData.TryGetIndexWithEdges(e.triangulationIndex, rotatedEdge, out neighbourIndex))
             {
-                AddNeighboursTwoWay(e, neighbourIndex, tri, rotatedEdge);
+                tri.AddNeighbourTwoWay(e.triangles[neighbourIndex], rotatedEdge.edge1, rotatedEdge.edge1);
+            }
+            else
+            {
+                throw new System.Exception("Index was not found!");
             }
         }
 
 
-        void AddNeighboursTwoWay(MarchingCubeEntity e, PathTriangle addHere, PathTriangle add, int neighbourIndex, Vector2Int rotatedEdge)
-        {
-            bool wasNewNeighbour = addHere.AddNeighbourTwoWay(add, neighbourIndex, rotatedEdge);
-            if (wasNewNeighbour)
-            {
-                AddNeighboursTwoWay(e);
-            }
-        }
+        //void AddNeighboursTwoWay(MarchingCubeEntity e, PathTriangle addHere, PathTriangle add, int neighbourIndex, Vector2Int rotatedEdge)
+        //{
+        //    AddNeighboursTwoWay(e, addHere, add, neighbourIndex, rotatedEdge.x, rotatedEdge.y);
+        //}
 
-        void AddNeighboursTwoWay(MarchingCubeEntity e, int neighbourIndex, PathTriangle tri, Vector2Int rotatedEdge)
-        {
-            bool wasNewNeighbour = e.triangles[neighbourIndex].AddNeighbourTwoWay(tri, neighbourIndex, rotatedEdge);
-            if (wasNewNeighbour)
-            {
-                AddNeighboursTwoWay(e);
-            }
-        }
+        //void AddNeighboursTwoWay(MarchingCubeEntity e, PathTriangle addHere, PathTriangle add, int neighbourIndex, int rotatedEdge1, int rotatedEdge2)
+        //{
+        //    bool wasNewNeighbour = addHere.AddNeighbourTwoWay(add, neighbourIndex, rotatedEdge1, rotatedEdge2);
+        //    if (wasNewNeighbour)
+        //    {
+        //        AddNeighboursTwoWay(e);
+        //    }
+        //}
 
-        void AddNeighboursTwoWay(MarchingCubeEntity e)
-        {
-             if(!neighbours.Contains(e))
-            {
-                neighbours.Add(e);
-                e.neighbours.Add(this);
-            }
-        }
+        //void AddNeighboursTwoWay(MarchingCubeEntity e, int neighbourIndex, PathTriangle tri, Vector2Int rotatedEdge)
+        //{
+        //    bool wasNewNeighbour = e.triangles[neighbourIndex].AddNeighbourTwoWay(tri, neighbourIndex, rotatedEdge);
+        //    if (wasNewNeighbour)
+        //    {
+        //        AddNeighboursTwoWay(e);
+        //    }
+        //}
 
-        public IList<ICubeEntity> Neighbours
-        {
-            get
-            {
-                throw new System.NotImplementedException();
-            }
-        }
+        //void AddNeighboursTwoWay(MarchingCubeEntity e)
+        //{
+        //     if(!neighbours.Contains(e))
+        //    {
+        //        neighbours.Add(e);
+        //        e.neighbours.Add(this);
+        //    }
+        //}
+
+        //public IList<ICubeEntity> Neighbours
+        //{
+        //    get
+        //    {
+        //        throw new System.NotImplementedException();
+        //    }
+        //}
 
         public void UpdateMesh()
         {

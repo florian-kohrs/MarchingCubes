@@ -108,9 +108,13 @@ namespace MarchingCubes
                 {
                     for (int z = 0; z < ChunkSize; z++)
                     {
-                        foreach (PathTriangle t in cubeEntities[x, y, z].triangles)
+                        MarchingCubeEntity e = cubeEntities[x, y, z];
+                        if (e != null)
                         {
-                            allTriangles.Add(t.tri);
+                            foreach (PathTriangle t in e.triangles)
+                            {
+                                allTriangles.Add(t.tri);
+                            }
                         }
                     }
                 }
@@ -164,7 +168,7 @@ namespace MarchingCubes
             e.origin = p;
             Vector4[] cubeCorners = GetCubeCornersForPoint(p);
 
-            int cubeIndex = 0;
+            short cubeIndex = 0;
             if (cubeCorners[0].w < surfaceLevel) cubeIndex |= 1;
             if (cubeCorners[1].w < surfaceLevel) cubeIndex |= 2;
             if (cubeCorners[2].w < surfaceLevel) cubeIndex |= 4;
@@ -228,22 +232,22 @@ namespace MarchingCubes
 
                             if ((x + y + z) % 2 == 0 || IsBorderPoint(v3))
                             {
-                                List<Tuple<PathTriangle, Vector2Int, Vector3Int>> trisWithNeighboursOutOfBounds
+                                List<MissingNeighbourData> trisWithNeighboursOutOfBounds
                                    = CubeEntities[x, y, z].BuildNeighbours(CubeEntities, IsInBounds);
 
                                 if (trisWithNeighboursOutOfBounds != null)
                                 {
-                                    foreach (Tuple<PathTriangle, Vector2Int, Vector3Int> t in trisWithNeighboursOutOfBounds)
+                                    foreach (MissingNeighbourData t in trisWithNeighboursOutOfBounds)
                                     {
-                                        Vector3Int offset = t.Item3.Map(Math.Sign);
-                                        Vector3Int target = chunkOffset + offset;
+                                        //Vector3Int offset = t.neighbour.offset.Map(Math.Sign);
+                                        Vector3Int target = chunkOffset + t.neighbour.offset;
                                         MarchingCubeChunk c;
                                         AddNeighbourFromEntity(target, CubeEntities[x, y, z]);
                                         if (chunkHandler.Chunks.TryGetValue(target, out c))
                                         {
-                                            Vector3Int pos = (v3 + t.Item3).Map(i => i.FloorMod(ChunkSize));
+                                            Vector3Int pos = (v3 + t.neighbour.offset).Map(i => i.FloorMod(ChunkSize));
                                             MarchingCubeEntity e = c.CubeEntities[pos.x, pos.y, pos.z];
-                                            CubeEntities[x, y, z].BuildSpecificNeighbourInNeighbour(e, t.Item1, t.Item2);
+                                            CubeEntities[x, y, z].BuildSpecificNeighbourInNeighbour(e, CubeEntities[x, y, z].triangles[t.neighbour.triangleIndex], t.neighbour.rotatedEdgePair);
                                         }
                                     }
                                 }
@@ -366,7 +370,7 @@ namespace MarchingCubes
             foreach (Triangle t in ts)
             {
                 cube = GetEntityAt(t.origin.x, t.origin.y, t.origin.z);
-                cube.triangulationIndex = t.triangulationIndex;
+                cube.triangulationIndex = (short)t.triangulationIndex;
                 cube.triangles.Add(new PathTriangle(this, t));
                 allTriangles.Add(t);
             }
