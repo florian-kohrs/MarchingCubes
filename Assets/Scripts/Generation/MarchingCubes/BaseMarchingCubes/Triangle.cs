@@ -11,8 +11,9 @@ namespace MarchingCubes
         public Vector3 b;
         public Vector3 c;
 
-        public Vector3Int origin;
-        public int triangulationIndex;
+        //remove tomorrow
+        //public Vector3Int origin;
+        //public int triangulationIndex;
 
         public Vector3 this[int i]
         {

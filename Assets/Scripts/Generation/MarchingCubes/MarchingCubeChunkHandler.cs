@@ -12,9 +12,9 @@ namespace MarchingCubes
 
         protected const int threadGroupSize = 8;
 
-        public const int VoxelsPerChunkAxis = 16;
+        public const int ChunkSize = 50;
 
-        public int PointsPerChunkAxis => VoxelsPerChunkAxis + 1;
+        public int PointsPerChunkAxis => ChunkSize + 1;
 
         public Dictionary<Vector3Int, MarchingCubeChunk> chunks = new Dictionary<Vector3Int, MarchingCubeChunk>();
 
@@ -93,7 +93,7 @@ namespace MarchingCubes
 
         public void BuildRelevantChunksAround(MarchingCubeChunk chunk, Vector3Int startPos, int radius)
         {
-            BuildRelevantChunksAround(chunk, startPos * VoxelsPerChunkAxis, radius * radius, new Queue<Vector3Int>());
+            BuildRelevantChunksAround(chunk, startPos * ChunkSize, radius * radius, new Queue<Vector3Int>());
         }
 
         public void BuildRelevantChunksAround(MarchingCubeChunk chunk, Vector3Int startPos, int sqrRadius, Queue<Vector3Int> neighbours)
@@ -105,7 +105,7 @@ namespace MarchingCubes
 
                 foreach (Vector3Int v3 in chunk.NeighbourIndices)
                 {
-                    if (!Chunks.ContainsKey(v3) && (startPos - v3 * VoxelsPerChunkAxis).sqrMagnitude < sqrRadius)
+                    if (!Chunks.ContainsKey(v3) && (startPos - v3 * ChunkSize).sqrMagnitude < sqrRadius)
                     {
                         MarchingCubeChunk newChunk = CreateChunkAt(v3);
                         foreach (Vector3Int newV3 in newChunk.NeighbourIndices)
@@ -182,7 +182,7 @@ namespace MarchingCubes
                 isEmpty = chunk.IsEmpty;
                 if (chunk.IsEmpty)
                 {
-                    if (chunk.IsDense)
+                    if (chunk.IsCompletlySolid)
                     {
                         chunkIndex.y += 1;
                     }
@@ -245,7 +245,7 @@ namespace MarchingCubes
 
             densityGenerator.Generate(pointsBuffer, PointsPerChunkAxis, 0, CenterFromChunkIndex(p), 1);
 
-            int numVoxelsPerAxis = VoxelsPerChunkAxis;
+            int numVoxelsPerAxis = ChunkSize;
             int numThreadsPerAxis = Mathf.CeilToInt(numVoxelsPerAxis / (float)threadGroupSize);
 
             triangleBuffer.SetCounterValue(0);
@@ -263,7 +263,7 @@ namespace MarchingCubes
             int numTris = triCountArray[0];
 
             // Get triangle data from shader
-            Triangle[] tris = new Triangle[numTris];
+            TriangleBuilder[] tris = new TriangleBuilder[numTris];
             triangleBuffer.GetData(tris, 0, 0, numTris);
 
             chunk.InitializeWithMeshData(chunkMaterial, tris, pointsBuffer, this, surfaceLevel);
@@ -278,7 +278,7 @@ namespace MarchingCubes
             if (buffersCreated > 1)
                 return;
             int numPoints = PointsPerChunkAxis * PointsPerChunkAxis * PointsPerChunkAxis;
-            int numVoxelsPerAxis = VoxelsPerChunkAxis - 1;
+            int numVoxelsPerAxis = ChunkSize - 1;
             int numVoxels = numVoxelsPerAxis * numVoxelsPerAxis * numVoxelsPerAxis;
             int maxTriangleCount = numVoxels * 5;
 
@@ -313,7 +313,7 @@ namespace MarchingCubes
 
         protected Vector3 CenterFromChunkIndex(Vector3Int v)
         {
-            return new Vector3(v.x * VoxelsPerChunkAxis, v.y * VoxelsPerChunkAxis, v.z * VoxelsPerChunkAxis);
+            return new Vector3(v.x * ChunkSize, v.y * ChunkSize, v.z * ChunkSize);
         }
 
         protected float PointSpacing => 1;
@@ -331,7 +331,7 @@ namespace MarchingCubes
                     if (v[i] != int.MinValue)
                     {
                         //offset is in range -1 to 1
-                        int offset = Mathf.CeilToInt((p[i] / (VoxelsPerChunkAxis - 2f)) - 1);
+                        int offset = Mathf.CeilToInt((p[i] / (ChunkSize - 2f)) - 1);
                         allActiveIndicesHaveOffset = offset != 0;
                         offsetVector[i] = offset;
                     }
@@ -354,8 +354,8 @@ namespace MarchingCubes
 
         public void EditNeighbourChunkAt(MarchingCubeChunk chunk, Vector3Int original, Vector3Int offset, float delta)
         {
-            Vector3Int newChunkCubeIndex = (original + offset).Map(f => MathExt.FloorMod(f, VoxelsPerChunkAxis));
-            MarchingCubeEntity e = chunk.CubeEntities[newChunkCubeIndex.x, newChunkCubeIndex.y, newChunkCubeIndex.z];
+            Vector3Int newChunkCubeIndex = (original + offset).Map(f => MathExt.FloorMod(f, ChunkSize));
+            MarchingCubeEntity e = chunk.GetEntityAt(newChunkCubeIndex);
             chunk.EditPointsNextToChunk(chunk, e, offset, delta);
         }
 

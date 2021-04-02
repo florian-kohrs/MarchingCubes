@@ -13,6 +13,7 @@ struct Triangle
     //Vector3 normal (cross-function)
 };
 
+
 AppendStructuredBuffer<Triangle> triangles;
 RWStructuredBuffer<float4> points;
 

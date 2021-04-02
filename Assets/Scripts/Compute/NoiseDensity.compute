@@ -10,6 +10,7 @@ float persistence;
 float noiseScale;
 float amplitude;
 float scale;
+float radius;
 
 [numthreads(numThreads,numThreads,numThreads)]
 void Density (int3 id : SV_DispatchThreadID)
@@ -19,7 +20,7 @@ void Density (int3 id : SV_DispatchThreadID)
     }
     //center is center of chunk, bound size is terrain size
     float3 pos = centre + id * spacing; /* -boundsSize / 2;*/
-    float noise = -pos.y;
+    float noise = radius -length(pos);
 
     float frequency = noiseScale/100;
     float localAmplitude = amplitude;

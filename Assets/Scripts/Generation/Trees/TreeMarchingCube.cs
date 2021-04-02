@@ -205,7 +205,7 @@ public class TreeMarchingCube : IMarchingCubeChunkHandler
         int numTris = triCountArray[0];
 
         // Get triangle data from shader
-        Triangle[] tris = new Triangle[numTris];
+        TriangleBuilder[] tris = new TriangleBuilder[numTris];
         triangleBuffer.GetData(tris, 0, 0, numTris);
 
         chunk.InitializeWithMeshData(chunkMaterial, tris, pointsBuffer, this, surfaceLevel);
@@ -288,7 +288,7 @@ public class TreeMarchingCube : IMarchingCubeChunkHandler
     public void EditNeighbourChunkAt(MarchingCubeChunk chunk, Vector3Int original, Vector3Int offset, float delta)
     {
         Vector3Int newChunkCubeIndex = (original + offset).Map(f => MathExt.FloorMod(f, VoxelsPerChunkAxis));
-        MarchingCubeEntity e = chunk.CubeEntities[newChunkCubeIndex.x, newChunkCubeIndex.y, newChunkCubeIndex.z];
+        MarchingCubeEntity e = chunk.GetEntityAt(newChunkCubeIndex.x, newChunkCubeIndex.y, newChunkCubeIndex.z);
         chunk.EditPointsNextToChunk(chunk, e, offset, delta);
     }
 

@@ -20,6 +20,8 @@ namespace MarchingCubes
         [Range(0.001f, 100)]
         public float scale = 1;
 
+        public float radius = 1000;
+
         public int octaves = 9;
 
         [Range(0, 1)]
@@ -63,6 +65,7 @@ namespace MarchingCubes
             densityShader.SetVector("offset", new Vector4(offset.x, offset.y, offset.z));
 
             densityShader.SetInt("octaves", Mathf.Max(1, octaves));
+            densityShader.SetFloat("radius", radius);
             densityShader.SetFloat("lacunarity", lacunarity);
             densityShader.SetFloat("persistence", persistence);
             densityShader.SetFloat("noiseScale", frequency);

@@ -42,17 +42,17 @@ namespace MarchingCubes
                 {
                     Transform currentHitObject = hit.collider.transform;
 
-                    MarchingCubeChunk chunk = currentHitObject.GetComponent<MarchingCubeChunk>();
+                    MarchingCubeChunk chunk = currentHitObject.GetComponent<IHasMarchingCubeChunk>()?.GetChunk;
 
                     if (chunk != null)
                     {
                         if (clickCount == 0)
                         {
-                            firstTriIndex = chunk.GetTriangleAt(hit.triangleIndex);
+                            firstTriIndex = chunk.GetTriangleFromRayHit(hit);
                         }
                         else
                         {
-                            secondTriIndex = chunk.GetTriangleAt(hit.triangleIndex);
+                            secondTriIndex = chunk.GetTriangleFromRayHit(hit);
 
                             BuildPath(firstTriIndex, secondTriIndex);
                         }
@@ -71,35 +71,14 @@ namespace MarchingCubes
                 {
                     Transform currentHitObject = hit.collider.transform;
 
-                    MarchingCubeChunk chunk = currentHitObject.GetComponent<MarchingCubeChunk>();
+                    MarchingCubeChunk chunk = currentHitObject.GetComponent<IHasMarchingCubeChunk>()?.GetChunk;
 
                     if (chunk != null)
                     {
-                        MarchingCubeEntity e1 = chunk.GetCubeAtTriangleIndex(hit.triangleIndex);
                         MarchingCubeEntity e2 = chunk.GetClosestEntity(hit.point);
-                        if (e1 != e2)
-                        {
-                            Debug.LogError("Wrong cube detected!");
-                        }
-                        else
-                        {
-                           // Debug.Log("Right Cube detected");
-                            PathTriangle t1 = chunk.GetTriangleAt(hit.triangleIndex);
-                            PathTriangle t2 = chunk.GetClosestTriangleFromRayHit(hit);
-                            if (t1 != t2)
-                            {
-                                Debug.LogError("Wrong triangle detected!");
-                                float rightMinDistance = (t1.OriginalMiddlePointOfTriangle - hit.point).sqrMagnitude;
-                                float wrongMinDistance = (t2.OriginalMiddlePointOfTriangle - hit.point).sqrMagnitude;
-                                PathTriangle t3 = chunk.GetClosestTriangleFromRayHit(hit);
-                            }
-                            else
-                            {
-                                Debug.Log("Right triangle detected");
-                            }
-                        }
-                        ps = chunk.GetTriangleAt(hit.triangleIndex).neighbours;
-                        e = chunk.GetCubeAtTriangleIndex(hit.triangleIndex);
+                        
+                        ps = chunk.GetTriangleFromRayHit(hit).neighbours;
+                        e = chunk.GetClosestEntity(hit.point);
                        // Debug.Log("NeighboursCount:" + e.neighbours.Count);
                     }
                 }
@@ -114,11 +93,11 @@ namespace MarchingCubes
                 {
                     Transform currentHitObject = hit.collider.transform;
 
-                    MarchingCubeChunk chunk = currentHitObject.GetComponent<MarchingCubeChunk>();
+                    MarchingCubeChunk chunk = currentHitObject.GetComponent<IHasMarchingCubeChunk>()?.GetChunk;
 
                     if (chunk != null)
                     {
-                        chunk.EditPointsAroundTriangleIndex(sign, hit.triangleIndex, 0);
+                        chunk.EditPointsAroundRayHit(sign, hit, 0);
                     }
                 }
             }

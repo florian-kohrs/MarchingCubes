@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -63,7 +64,7 @@ namespace MarchingCubes
             }
         }
 
-        public List<MissingNeighbourData> BuildNeighbours(MarchingCubeEntity[,,] cubes, System.Func<Vector3Int, bool> IsInBounds)
+        public List<MissingNeighbourData> BuildNeighbours(Func<Vector3Int, MarchingCubeEntity> GetCube, Func<Vector3Int, bool> IsInBounds)
         {
             if (!buildInternNeighbours)
                 BuildInternNeighbours();
@@ -75,7 +76,7 @@ namespace MarchingCubes
 
                 if (IsInBounds(newPos))
                 {
-                    MarchingCubeEntity neighbourCube = cubes[newPos.x, newPos.y, newPos.z];
+                    MarchingCubeEntity neighbourCube = GetCube(newPos);
 
                     int i = TriangulationTableStaticData.GetIndexWithEdges(neighbourCube.triangulationIndex, neighbour.rotatedEdgePair);
                     triangles[neighbour.triangleIndex].AddNeighbourTwoWay(neighbourCube.triangles[i], neighbour.edgePair.edge1, neighbour.edgePair.edge2);

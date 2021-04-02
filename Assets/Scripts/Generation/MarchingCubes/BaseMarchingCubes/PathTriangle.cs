@@ -13,8 +13,6 @@ namespace MarchingCubes
         {
             this.chunk = chunk;
             tri = t;
-            middlePointOfTriangle = (tri.a + tri.b + tri.c) / 3;
-            normal = Vector3.Cross(tri.b - tri.a, tri.c - tri.a).normalized;
             //Quaternion inverse = Quaternion.Inverse(Quaternion.Euler(normal));
             //Vector3 a1 = Vector3.ProjectOnPlane(t.a, normal);
             //Vector3 a2 = Vector3.ProjectOnPlane(t.b, normal);
@@ -107,26 +105,26 @@ namespace MarchingCubes
 
         //}
 
-        public bool AddNeighbourTwoWay(PathTriangle p, int index, int edge1, int edge2)
-        {
-            bool result = !neighbours.Contains(p);
-            if (result)
-            {
-                neighbours.Add(p);
-                p.neighbours.Add(this);
+        //public bool AddNeighbourTwoWay(PathTriangle p, int index, int edge1, int edge2)
+        //{
+        //    bool result = !neighbours.Contains(p);
+        //    if (result)
+        //    {
+        //        neighbours.Add(p);
+        //        p.neighbours.Add(this);
 
-                int firstEdge = TriangulationTableStaticData.GetEdgeIndex(tri.triangulationIndex, index, edge1);
-                int secondEdge = TriangulationTableStaticData.GetEdgeIndex(tri.triangulationIndex, index, edge2);
+        //        int firstEdge = TriangulationTableStaticData.GetEdgeIndex(tri.triangulationIndex, index, edge1);
+        //        int secondEdge = TriangulationTableStaticData.GetEdgeIndex(tri.triangulationIndex, index, edge2);
 
-                BuildDistance(p, firstEdge, secondEdge);
-            }
-            return result;
-        }
+        //        BuildDistance(p, firstEdge, secondEdge);
+        //    }
+        //    return result;
+        //}
 
-        public bool AddNeighbourTwoWay(PathTriangle p, int index, Vector2Int edges)
-        {
-            return AddNeighbourTwoWay(p, index, edges.x, edges.y);
-        }
+        //public bool AddNeighbourTwoWay(PathTriangle p, int index, Vector2Int edges)
+        //{
+        //    return AddNeighbourTwoWay(p, index, edges.x, edges.y);
+        //}
 
         public void AddNeighbourTwoWay(PathTriangle p, int edge1, int edge2)
         {
@@ -159,10 +157,10 @@ namespace MarchingCubes
             AddNeighbourTwoWay(p, (int)edge1, (int)edge2);
         }
 
-        public void AddNeighbourTwoWay(PathTriangle p, Vector2Int edgeIndices)
-        {
-            AddNeighbourTwoWay(p, edgeIndices.x, edgeIndices);
-        }
+        //public void AddNeighbourTwoWay(PathTriangle p, Vector2Int edgeIndices)
+        //{
+        //    AddNeighbourTwoWay(p, edgeIndices.x, edgeIndices);
+        //}
 
         public void BuildDistance(PathTriangle p, int edge1, int edge2)
         {
@@ -199,7 +197,17 @@ namespace MarchingCubes
 
         private Vector3 normal;
 
-        public Vector3 Normal => normal;
+        public Vector3 Normal
+        {
+            get
+            {
+                if(normal == default)
+                {
+                    normal = Vector3.Cross(tri.b - tri.a, tri.c - tri.a).normalized;
+                }
+                return normal;
+            }
+        }
 
         private Vector3 middlePointOfTriangle;
 
@@ -207,6 +215,10 @@ namespace MarchingCubes
         {
             get
             {
+                if (middlePointOfTriangle == default)
+                {
+                    middlePointOfTriangle = (tri.a + tri.b + tri.c) / 3;
+                }
                 //return Vector3.Scale(middlePointOfTriangle + chunk.transform.position, chunk.transform.lossyScale);
                 return middlePointOfTriangle + chunk.transform.position;
             }
