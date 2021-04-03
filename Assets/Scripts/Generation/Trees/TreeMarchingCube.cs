@@ -208,7 +208,7 @@ public class TreeMarchingCube : IMarchingCubeChunkHandler
         TriangleBuilder[] tris = new TriangleBuilder[numTris];
         triangleBuffer.GetData(tris, 0, 0, numTris);
 
-        chunk.InitializeWithMeshData(chunkMaterial, tris, pointsBuffer, this, surfaceLevel);
+        //chunk.InitializeWithMeshData(chunkMaterial, tris, pointsBuffer, this, surfaceLevel);
 
     }
 

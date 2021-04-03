@@ -10,7 +10,7 @@ namespace MarchingCubes
     public class MarchingCubeChunk : MonoBehaviour, IHasMarchingCubeChunk
     {
 
-        public void InitializeWithMeshData(Material mat, TriangleBuilder[] tris, ComputeBuffer noiseBuffer, IMarchingCubeChunkHandler handler, float surfaceLevel)
+        public void InitializeWithMeshData(Material mat, TriangleBuilder[] tris, int activeTris, ComputeBuffer noiseBuffer, IMarchingCubeChunkHandler handler, float surfaceLevel)
         {
             this.surfaceLevel = surfaceLevel;
             chunkHandler = handler;
@@ -19,10 +19,9 @@ namespace MarchingCubes
             noiseBuffer.GetData(points, 0, 0, points.Length);
             //firstPoint = new Vector4[1];
             //noiseBuffer.GetData(firstPoint, 0, 0, firstPoint.Length);
-            noiseBuffer.Release();
             children.Add(new BaseMeshChild(GetComponent<MeshFilter>(), GetComponent<MeshRenderer>(), GetComponent<MeshCollider>(), new Mesh()));
             this.mat = mat;
-            BuildFromTriangleArray(tris);
+            BuildFromTriangleArray(tris, activeTris);
             BuildChunkEdges();
         }
 
@@ -92,9 +91,9 @@ namespace MarchingCubes
 
         protected float surfaceLevel;
 
-        public Color[] colorData;
-        public Vector3[] vertices;
-        public int[] meshTriangles;
+        protected Color[] colorData;
+        protected Vector3[] vertices;
+        protected int[] meshTriangles;
 
 
         /// <summary>
@@ -347,15 +346,21 @@ namespace MarchingCubes
             return result;
         }
 
+        protected MarchingCubeEntity GetOrAddEntityAt(Vector3Int v3)
+        {
+            return GetOrAddEntityAt(v3.x, v3.y, v3.z);
+        }
+
         protected Color triColor = new Color(0f, 0.5471698f, 0.1f, 1);
 
-        public void BuildFromTriangleArray(TriangleBuilder[] ts)
+        public void BuildFromTriangleArray(TriangleBuilder[] ts, int activeTris)
         {
-            triCount = ts.Length * 3;
+            triCount = activeTris * 3;
             trisLeft = triCount;
 
             ResetArrayData();
 
+            int totalTreeCount = 0;
             int usedTriCount = 0;
 
             MarchingCubeEntity cube;
@@ -363,8 +368,16 @@ namespace MarchingCubes
             cubeEntities = new Dictionary<int, MarchingCubeEntity>(chunksize * chunksize * chunksize / 15);
             foreach (TriangleBuilder t in ts)
             {
-                cube = GetOrAddEntityAt(t.origin.x, t.origin.y, t.origin.z);
-                cube.triangulationIndex = (short)t.triangulationIndex;
+                if(totalTreeCount >= activeTris)
+                {
+                    if(usedTriCount > 0)
+                    {
+                        ApplyChangesToMesh();
+                    }
+                    break;
+                }
+                cube = GetOrAddEntityAt(t.Origin);
+                cube.triangulationIndex = (short)t.TriIndex;
                 cube.triangles.Add(new PathTriangle(this, t.tri));
                 for (int i = 0; i < 3; i++)
                 {
@@ -373,6 +386,7 @@ namespace MarchingCubes
                     colorData[usedTriCount + i] = triColor;
                 }
                 usedTriCount += 3;
+                totalTreeCount++;
                 if (usedTriCount >= MAX_TRIANGLES_PER_MESH || usedTriCount >= trisLeft)
                 {
                     ApplyChangesToMesh();

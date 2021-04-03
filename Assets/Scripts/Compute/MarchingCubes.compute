@@ -1,5 +1,6 @@
 ﻿#pragma kernel March
 #include "/Includes/MarchTables.compute"
+#define PI 3.14159265358979323846
 
 static const int numThreads = 8;
 
@@ -8,9 +9,10 @@ struct Triangle
     float3 vertexC;
     float3 vertexB;
     float3 vertexA;
-    int3 origin;
-    int triangulationIndex;
-    //Vector3 normal (cross-function)
+    float3 normal;
+    float3 middlePoint;
+    uint data;
+    float angleFromCenter;
 };
 
 
@@ -31,6 +33,16 @@ int indexFromCoord(int x, int y, int z)
 {
     return z * numPointsPerAxis * numPointsPerAxis + y * numPointsPerAxis + x;
 }
+
+
+int zipData(int x, int y, int z, int triIndex) {
+    return (triIndex << 24) + (x << 16) + (y << 8) + z;
+}
+
+//int angle(int3 a, int3 b) 
+//{
+//    return acos(dot(a, b)) * 180 / PI
+//}
 
 [numthreads(numThreads, numThreads, numThreads)]
 void March(int3 id : SV_DispatchThreadID)
@@ -83,11 +95,15 @@ void March(int3 id : SV_DispatchThreadID)
         int b2 = cornerIndexBFromEdge[triangulation[cubeIndex][i + 2]];
 
         Triangle tri;
-        tri.triangulationIndex = cubeIndex;
-        tri.origin = id;
+        tri.data = zipData(id.x, id.y, id.z, cubeIndex);
         tri.vertexA = interpolateVerts(cubeCorners[a0], cubeCorners[b0]);
         tri.vertexB = interpolateVerts(cubeCorners[a1], cubeCorners[b1]);
         tri.vertexC = interpolateVerts(cubeCorners[a2], cubeCorners[b2]);
+
+        float3 f = normalize(cross(tri.vertexB - tri.vertexA, tri.vertexC - tri.vertexA));
+        float3 f2 = (tri.vertexA + tri.vertexB + tri.vertexC) / 3;
+        float f3 = acos(dot(f, normalize(f2))) * 180 / PI;
+
         triangles.Append(tri);
     }
 

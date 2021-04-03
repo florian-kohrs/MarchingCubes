@@ -50,15 +50,15 @@ namespace MarchingCubes
             m.AddValue(noise);
             return progress + noise / 4;
 
-            float radiusProgress = distance / radius;
+            //float radiusProgress = distance / radius;
 
 
 
 
-            //float extra = Mathf.Cos(Mathf.PI * radiusProgress / 2);
-            //noise = (noise + extra / 5) * (extra + 1);
+            ////float extra = Mathf.Cos(Mathf.PI * radiusProgress / 2);
+            ////noise = (noise + extra / 5) * (extra + 1);
 
-            return noise;
+            //return noise;
         }
 
     }

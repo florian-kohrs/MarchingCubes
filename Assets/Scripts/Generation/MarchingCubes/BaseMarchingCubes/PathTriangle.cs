@@ -19,16 +19,12 @@ namespace MarchingCubes
             //Vector3 a3= Vector3.ProjectOnPlane(t.c, normal);
         }
 
-        public bool HasSameNormalWithPoint(Vector3 p)
-        {
-            Vector3 normal = Vector3.Cross(p - tri.a, tri.c - tri.a).normalized;
-            return this.normal == normal;
-        }
 
         MarchingCubeChunk chunk;
 
         public Triangle tri;
 
+        ///replace with array
         public List<PathTriangle> neighbours = new List<PathTriangle>(3);
 
         protected List<float> neighbourDistanceMapping;
@@ -60,24 +56,6 @@ namespace MarchingCubes
             return default;
         }
 
-
-        //public float GetDistanceToNeighbour(PathTriangle neighbour)
-        //{
-        //    float distance;
-        //    if (!NeighbourDistanceMapping.TryGetValue(neighbour, out distance))
-        //    {
-        //        Ray r = NeighbourTransitionRayMapping[neighbour];
-        //        NeighbourTransitionRayMapping.Remove(neighbour);
-        //        neighbour.NeighbourTransitionRayMapping.Remove(this);
-        //        distance = Vector3.Cross(r.direction, UnrotatedMiddlePointOfTriangle - r.origin).magnitude;
-        //        distance += Vector3.Cross(r.direction, neighbour.UnrotatedMiddlePointOfTriangle - r.origin).magnitude;
-        //        NeighbourDistanceMapping[neighbour] = distance;
-        //        neighbour.NeighbourDistanceMapping[this] = distance;
-        //    }
-        //    return distance;
-        //}
-
-
         public List<Vector2> edgesWithoutNeighbour = null;
 
         public List<Vector2> EdgesWithoutNeighbour
@@ -92,39 +70,6 @@ namespace MarchingCubes
             }
         }
 
-
-        //public void BuildNeighboursIn(PathTriangle t, int index, Vector2Int edges)
-        //{
-        //    Ray r = new Ray();
-        //    int firstEdge = TriangulationTable.GetEdgeIndex(tri.triangulationIndex, index, edges.x);
-        //    int secondEdge = TriangulationTable.GetEdgeIndex(tri.triangulationIndex, index, edges.y);
-        //    r.origin = tri[firstEdge];
-        //    r.direction = tri[secondEdge] - tri[firstEdge];
-
-        //    neighbours.Add(t);
-
-        //}
-
-        //public bool AddNeighbourTwoWay(PathTriangle p, int index, int edge1, int edge2)
-        //{
-        //    bool result = !neighbours.Contains(p);
-        //    if (result)
-        //    {
-        //        neighbours.Add(p);
-        //        p.neighbours.Add(this);
-
-        //        int firstEdge = TriangulationTableStaticData.GetEdgeIndex(tri.triangulationIndex, index, edge1);
-        //        int secondEdge = TriangulationTableStaticData.GetEdgeIndex(tri.triangulationIndex, index, edge2);
-
-        //        BuildDistance(p, firstEdge, secondEdge);
-        //    }
-        //    return result;
-        //}
-
-        //public bool AddNeighbourTwoWay(PathTriangle p, int index, Vector2Int edges)
-        //{
-        //    return AddNeighbourTwoWay(p, index, edges.x, edges.y);
-        //}
 
         public void AddNeighbourTwoWay(PathTriangle p, int edge1, int edge2)
         {
@@ -195,35 +140,10 @@ namespace MarchingCubes
             return t1 == t2;
         }
 
-        private Vector3 normal;
+        public Vector3 Normal => Vector3.zero;// tri.normal;
 
-        public Vector3 Normal
-        {
-            get
-            {
-                if(normal == default)
-                {
-                    normal = Vector3.Cross(tri.b - tri.a, tri.c - tri.a).normalized;
-                }
-                return normal;
-            }
-        }
-
-        private Vector3 middlePointOfTriangle;
-
-        public Vector3 OriginalMiddlePointOfTriangle
-        {
-            get
-            {
-                if (middlePointOfTriangle == default)
-                {
-                    middlePointOfTriangle = (tri.a + tri.b + tri.c) / 3;
-                }
-                //return Vector3.Scale(middlePointOfTriangle + chunk.transform.position, chunk.transform.lossyScale);
-                return middlePointOfTriangle + chunk.transform.position;
-            }
-        }
-
+        public Vector3 OriginalMiddlePointOfTriangle => Vector3.zero;// tri.middlePoint + chunk.transform.position;
+       
     }
 
 }

@@ -12,7 +12,7 @@ namespace MarchingCubes
 
         protected const int threadGroupSize = 8;
 
-        public const int ChunkSize = 50;
+        public const int ChunkSize = 33;
 
         public int PointsPerChunkAxis => ChunkSize + 1;
 
@@ -235,14 +235,14 @@ namespace MarchingCubes
             return result;
         }
 
+        TriangleBuilder[] tris = new TriangleBuilder[ChunkSize * ChunkSize * ChunkSize * 5];
+
         private ComputeBuffer triangleBuffer;
         private ComputeBuffer pointsBuffer;
         private ComputeBuffer triCountBuffer;
 
         protected void BuildChunk(Vector3Int p, MarchingCubeChunk chunk)
         {
-            pointsBuffer = new ComputeBuffer(PointsPerChunkAxis * PointsPerChunkAxis * PointsPerChunkAxis, sizeof(float) * 4);
-
             densityGenerator.Generate(pointsBuffer, PointsPerChunkAxis, 0, CenterFromChunkIndex(p), 1);
 
             int numVoxelsPerAxis = ChunkSize;
@@ -263,10 +263,10 @@ namespace MarchingCubes
             int numTris = triCountArray[0];
 
             // Get triangle data from shader
-            TriangleBuilder[] tris = new TriangleBuilder[numTris];
+            
             triangleBuffer.GetData(tris, 0, 0, numTris);
 
-            chunk.InitializeWithMeshData(chunkMaterial, tris, pointsBuffer, this, surfaceLevel);
+            chunk.InitializeWithMeshData(chunkMaterial, tris, numTris, pointsBuffer, this, surfaceLevel);
 
         }
 
@@ -290,7 +290,7 @@ namespace MarchingCubes
             //    {
             //        ReleaseBuffers();
             //    }
-            triangleBuffer = new ComputeBuffer(maxTriangleCount, sizeof(float) * 3 * 3 + sizeof(int) * 3 + sizeof(int), ComputeBufferType.Append);
+            triangleBuffer = new ComputeBuffer(maxTriangleCount, TriangleBuilder.SIZE_OF_TRI_BUILD, ComputeBufferType.Append);
             pointsBuffer = new ComputeBuffer(numPoints, sizeof(float) * 4);
             triCountBuffer = new ComputeBuffer(1, sizeof(int), ComputeBufferType.Raw);
 

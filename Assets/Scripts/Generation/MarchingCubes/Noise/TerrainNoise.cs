@@ -116,7 +116,6 @@ namespace MarchingCubes
                         Vector3 offsetV = (v - vShift) + chunkOffset;
 
                         ///closes on top
-                        float height = 30;
                         //float density = -(height + (-Mathf.Abs(offsetV.y - height))); 
 
                         ///buildsPlanet
