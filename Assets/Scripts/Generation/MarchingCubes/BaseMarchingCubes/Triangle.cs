@@ -13,14 +13,6 @@ namespace MarchingCubes
         public Vector3 b;
         public Vector3 c;
 
-     //   public Vector3 normal;
-
-       // public Vector3 middlePoint;
-
-        //remove tomorrow
-        //public Vector3Int origin;
-        //public int triangulationIndex;
-
         public Vector3 this[int i]
         {
             get

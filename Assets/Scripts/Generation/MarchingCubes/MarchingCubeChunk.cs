@@ -333,23 +333,24 @@ namespace MarchingCubes
             ApplyChanges();
         }
 
-        protected MarchingCubeEntity GetOrAddEntityAt(int x, int y, int z)
+        protected bool GetOrAddEntityAt(int x, int y, int z, out MarchingCubeEntity e)
         {
             int key = IndexFromCoord(x, y, z);
-            MarchingCubeEntity result;
-            if (!cubeEntities.TryGetValue(key, out result))
+            if (!cubeEntities.TryGetValue(key, out e))
             {
-                result = new MarchingCubeEntity();
-                result.origin = new Vector3Int(x, y, z);
-                cubeEntities[key] = result;
+                e = new MarchingCubeEntity();
+                e.origin = new Vector3Int(x, y, z);
+                cubeEntities[key] = e;
+                return false;
             }
-            return result;
+            return true;
         }
 
-        protected MarchingCubeEntity GetOrAddEntityAt(Vector3Int v3)
+        protected bool GetOrAddEntityAt(Vector3Int v3, out MarchingCubeEntity e)
         {
-            return GetOrAddEntityAt(v3.x, v3.y, v3.z);
+            return GetOrAddEntityAt(v3.x, v3.y, v3.z, out e);
         }
+
 
         protected Color triColor = new Color(0f, 0.5471698f, 0.1f, 1);
 
@@ -376,8 +377,10 @@ namespace MarchingCubes
                     }
                     break;
                 }
-                cube = GetOrAddEntityAt(t.Origin);
-                cube.triangulationIndex = (short)t.TriIndex;
+                if(!GetOrAddEntityAt(t.Origin,out cube))
+                {
+                    cube.triangulationIndex = t.TriIndex;
+                }
                 cube.triangles.Add(new PathTriangle(this, t.tri));
                 for (int i = 0; i < 3; i++)
                 {

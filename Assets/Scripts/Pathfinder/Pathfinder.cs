@@ -91,9 +91,14 @@ public class Pathfinder<T, J>
         }
         IList<T> result = new List<T>();
         pathTails.Peek().BuildPath(ref result);
-
-        Debug.Log("found path after: " + count + " iterations of length " + result.Count);
-
+        if (ReachedTarget)
+        {
+            Debug.Log("found path after: " + count + " iterations of length " + result.Count);
+        }
+        else
+        {
+            Debug.Log("no valid path found");
+        }
         return result;
     }
 

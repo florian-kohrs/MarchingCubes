@@ -14,6 +14,7 @@ namespace MarchingCubes
         protected int clickCount = 0;
         MarchingCubeEntity e;
         protected IList<PathTriangle> ps;
+        protected PathTriangle p;
 
         private void OnDrawGizmos()
         {
@@ -21,9 +22,13 @@ namespace MarchingCubes
             {
                 foreach (PathTriangle p in ps)
                 {
-                    Gizmos.DrawSphere(p.OriginalMiddlePointOfTriangle, 0.4f);
+                    Gizmos.DrawSphere(p.OriginalLOcalMiddlePointOfTriangle, 0.4f);
 
                 }
+            }
+            if(p != null)
+            {
+                Gizmos.DrawCube(p.OriginalLOcalMiddlePointOfTriangle, Vector3.one * 0.4f);
             }
         }
 
@@ -77,9 +82,11 @@ namespace MarchingCubes
                     {
                         MarchingCubeEntity e2 = chunk.GetClosestEntity(hit.point);
                         
-                        ps = chunk.GetTriangleFromRayHit(hit).neighbours;
-                        e = chunk.GetClosestEntity(hit.point);
-                       // Debug.Log("NeighboursCount:" + e.neighbours.Count);
+                        PathTriangle tri = chunk.GetTriangleFromRayHit(hit);
+                        ps = tri.neighbours;
+                        p = tri;
+                        //e = chunk.GetClosestEntity(hit.point);
+                        Debug.Log("NeighboursCount:" + tri.neighbours.Count + "tri index: " + e2.triangulationIndex + "interns" + e2.triangles.Count);
                     }
                 }
 

@@ -12,13 +12,16 @@ namespace MarchingCubes
 
         protected const int threadGroupSize = 8;
 
-        public const int ChunkSize = 33;
+        public const int ChunkSize = 16;
 
         public int PointsPerChunkAxis => ChunkSize + 1;
 
         public Dictionary<Vector3Int, MarchingCubeChunk> chunks = new Dictionary<Vector3Int, MarchingCubeChunk>();
 
+        [Range(1,253)]
         public int blockAroundPlayer = 16;
+
+        private int maxTrianglesLeft = 10000000;
 
         public ComputeShader marshShader;
 
@@ -133,7 +136,11 @@ namespace MarchingCubes
                         chunk = CreateChunkAt(next);
                     }
                 }
-            } while (chunk != null);
+            } while (chunk != null && maxTrianglesLeft > 0);
+            if(maxTrianglesLeft <= 0)
+            {
+                Debug.Log("Aborted");
+            }
         }
 
 
@@ -265,6 +272,7 @@ namespace MarchingCubes
             // Get triangle data from shader
             
             triangleBuffer.GetData(tris, 0, 0, numTris);
+            maxTrianglesLeft -= numTris;
 
             chunk.InitializeWithMeshData(chunkMaterial, tris, numTris, pointsBuffer, this, surfaceLevel);
 
@@ -355,7 +363,7 @@ namespace MarchingCubes
         public void EditNeighbourChunkAt(MarchingCubeChunk chunk, Vector3Int original, Vector3Int offset, float delta)
         {
             Vector3Int newChunkCubeIndex = (original + offset).Map(f => MathExt.FloorMod(f, ChunkSize));
-            MarchingCubeEntity e = chunk.GetEntityAt(newChunkCubeIndex);
+            MarchingCubeEntity e = chunk.GetEntityAt(newChunkCubeIndex.x, newChunkCubeIndex.y, newChunkCubeIndex.z);
             chunk.EditPointsNextToChunk(chunk, e, offset, delta);
         }
 

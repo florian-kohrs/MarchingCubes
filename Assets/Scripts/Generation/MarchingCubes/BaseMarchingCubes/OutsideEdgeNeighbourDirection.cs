@@ -5,7 +5,7 @@ using UnityEngine;
 public struct OutsideEdgeNeighbourDirection
 {
 
-    public byte triangleIndex;
+    public int triangleIndex;
 
     public EdgePair edgePair;
 
@@ -14,14 +14,12 @@ public struct OutsideEdgeNeighbourDirection
     public Vector3Int offset;
 
 
-    public OutsideEdgeNeighbourDirection(byte triangleIndex, byte edgeIndex1, byte edgeIndex2, Vector3Int offset) : this(triangleIndex, new EdgePair(edgeIndex1, edgeIndex2), offset)
-    {
-    }
-    public OutsideEdgeNeighbourDirection(int triangleIndex, int edgeIndex1, int edgeIndex2, Vector3Int offset) : this((byte)triangleIndex, new EdgePair(edgeIndex1, edgeIndex2), offset)
+
+    public OutsideEdgeNeighbourDirection(int triangleIndex, int edgeIndex1, int edgeIndex2, Vector3Int offset) : this(triangleIndex, new EdgePair(edgeIndex1, edgeIndex2), offset)
     {
     }
 
-    public OutsideEdgeNeighbourDirection(byte triangleIndex, EdgePair edgePair, Vector3Int offset)
+    public OutsideEdgeNeighbourDirection(int triangleIndex, EdgePair edgePair, Vector3Int offset)
     {
         this.triangleIndex = triangleIndex;
         this.edgePair = edgePair;

@@ -289,7 +289,7 @@ public class TriangulationTableStaticData : MonoBehaviour
         return NeighbourTable.TryGetValue(new NeighbourKey(fromIndex, fromTriIndex, toIndex), out result);
     }
 
-    public static TriangulationNeighbours GetNeighbourData(short triangulationIndex)
+    public static TriangulationNeighbours GetNeighbourData(int triangulationIndex)
     {
         TriangulationNeighbours neighbours;
         NeigbourInformation.TryGetValue(triangulationIndex, out neighbours);
@@ -321,7 +321,7 @@ public class TriangulationTableStaticData : MonoBehaviour
     /// <summary>
     /// key is combination of triiangulationindex and triangleindex
     /// </summary>
-    protected static Dictionary<short, TriangulationNeighbours> internNeighbours;
+    protected static Dictionary<int, TriangulationNeighbours> internNeighbours;
 
     public static Vector3Int GetTriangleAt(int trianuglationIndex, int triIndex)
     {
@@ -338,7 +338,7 @@ public class TriangulationTableStaticData : MonoBehaviour
         yield return new Vector2Int(v3.z, v3.x);
     }
 
-    private static void GetNeighbourOffsetForTriangle(int triangulationIndex, byte index, List<OutsideEdgeNeighbourDirection> addResult)
+    private static void GetNeighbourOffsetForTriangle(int triangulationIndex, int index, List<OutsideEdgeNeighbourDirection> addResult)
     {
         for (int i = 0; i < 3; i++)
         {
@@ -426,7 +426,7 @@ public class TriangulationTableStaticData : MonoBehaviour
 
     public static int GetIndexWithEdges(int index, Vector2Int edge)
     {
-        return GetIndexWithEdges(index, (byte)edge.x, (byte)edge.y);
+        return GetIndexWithEdges(index, edge.x, edge.y);
     }
 
 
@@ -435,7 +435,7 @@ public class TriangulationTableStaticData : MonoBehaviour
         return GetIndexWithEdges(index, pair.edge1, pair.edge2);
     }
 
-    public static int GetIndexWithEdges(int index, byte edge1, byte edge2)
+    public static int GetIndexWithEdges(int index, int edge1, int edge2)
     {
         int result = -1;
         Vector3 v = new Vector3Int();
@@ -458,7 +458,7 @@ public class TriangulationTableStaticData : MonoBehaviour
 
     public static bool TryGetIndexWithEdges(int index, Vector2Int edge, out int result)
     {
-        return TryGetIndexWithEdges(index, (byte)edge.x, (byte)edge.y, out result);
+        return TryGetIndexWithEdges(index, edge.x, edge.y, out result);
     }
 
     public static bool TryGetIndexWithEdges(int index, EdgePair edge, out int result)
@@ -466,7 +466,7 @@ public class TriangulationTableStaticData : MonoBehaviour
         return TryGetIndexWithEdges(index, edge.edge1, edge.edge2, out result);
     }
 
-    public static bool TryGetIndexWithEdges(int index, byte edge1, byte edge2, out int result)
+    public static bool TryGetIndexWithEdges(int index, int edge1, int edge2, out int result)
     {
         result = -1;
         Vector3 v = new Vector3Int();
@@ -523,7 +523,7 @@ public class TriangulationTableStaticData : MonoBehaviour
         }
     }
 
-    public static Dictionary<short, TriangulationNeighbours> NeigbourInformation
+    public static Dictionary<int, TriangulationNeighbours> NeigbourInformation
     {
         get
         {
@@ -537,14 +537,15 @@ public class TriangulationTableStaticData : MonoBehaviour
 
     protected static void BuildInternNeighbours()
     {
-        internNeighbours = new Dictionary<short, TriangulationNeighbours>();
-        for (short i = 1; i < TriangulationTable.triangulation.Count - 1; i++)
+        internNeighbours = new Dictionary<int, TriangulationNeighbours>();
+        for (int i = 1; i < TriangulationTable.triangulation.Count - 1; i++)
         {
             TriangulationNeighbours currentNeighbours = new TriangulationNeighbours();
-            internNeighbours.Add(i,currentNeighbours);
-            for (byte triIndex1 = 0; triIndex1 < TriangulationTable.triangulation[i].Length - 1 && TriangulationTable.triangulation[i][triIndex1] >= 0; triIndex1 += 3)
+            internNeighbours.Add(i, currentNeighbours);
+            //also stop when 3 neighbours are found
+            for (int triIndex1 = 0; triIndex1 < 15 && TriangulationTable.triangulation[i][triIndex1] >= 0; triIndex1 += 3)
             {
-                byte firstIndex = (byte)(triIndex1 / 3);
+                int firstIndex = triIndex1 / 3;
 
                 GetNeighbourOffsetForTriangle(i, triIndex1, currentNeighbours.OutsideNeighbours);
 
@@ -552,9 +553,9 @@ public class TriangulationTableStaticData : MonoBehaviour
                        TriangulationTable.triangulation[i][triIndex1],
                        TriangulationTable.triangulation[i][triIndex1 + 1],
                        TriangulationTable.triangulation[i][triIndex1 + 2]);
-                for (byte triIndex2 = (byte)(triIndex1 + 3); triIndex2 < TriangulationTable.triangulation[i].Length - 1 && TriangulationTable.triangulation[i][triIndex2] >= 0; triIndex2 += 3)
+                for (int triIndex2 = triIndex1 + 3; triIndex2 < 15 && TriangulationTable.triangulation[i][triIndex2] >= 0; triIndex2 += 3)
                 {
-                    byte secondIndex = (byte)(triIndex2 / 3);
+                    int secondIndex = triIndex2 / 3;
                     Vector3 v2 = new Vector3(
                          TriangulationTable.triangulation[i][triIndex2],
                          TriangulationTable.triangulation[i][triIndex2 + 1],
@@ -568,12 +569,24 @@ public class TriangulationTableStaticData : MonoBehaviour
                         AddInternNeighbour(firstIndex, secondIndex, v3_2.ReduceToVector2(f => f > 0), currentNeighbours.InternNeighbourPairs);
                     }
                 }
+
             }
+
+
         }
     }
 
+    public static int ActiveTrianglesAt(int i)
+    {
+        int result = 0;
+        for (; result < 15 && TriangulationTable.triangulation[i][result] >= 0; result += 3)
+        {
+        }
+        return result;
+    } 
 
-    protected static void AddInternNeighbour(byte first, byte snd, Vector2Int edge, HashSet<IndexNeighbourPair> addHere)
+
+    protected static void AddInternNeighbour(int first, int snd, Vector2Int edge, List<IndexNeighbourPair> addHere)
     {
         IndexNeighbourPair newPair = new IndexNeighbourPair(first, snd, edge);
         addHere.Add(newPair);

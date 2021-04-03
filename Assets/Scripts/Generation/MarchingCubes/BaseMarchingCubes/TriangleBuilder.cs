@@ -11,6 +11,8 @@ namespace MarchingCubes
 
         public uint data;
 
+        //public int colorData;
+
         public Vector3Int Origin
         {
             get
@@ -18,13 +20,28 @@ namespace MarchingCubes
                 Vector3Int r = new Vector3Int();
                 int step = 1 << 8;
                 r.z = (int)(data % step);
-                r.y = (int)(data >> 8) % step;
-                r.x = (int)(data >> 16) % step;
+                r.y = (int)((data >> 8) % step);
+                r.x = (int)((data >> 16) % step);
                 return r;
             }
         }
 
         public int TriIndex => (int)(data >> 24);
+
+        //public Color Color
+        //{
+        //    get
+        //    {
+        //        Color c = new Color();
+        //        float step = 1 << 8;
+        //        c.a = 1;
+        //        c.b = (colorData % step) / step;
+        //        c.g = ((colorData >> 8) % step) / step;
+        //        c.r = ((colorData >> 16) % step) / step;
+        //        //c = Color.yellow;
+        //        return c;
+        //    }
+        //}
 
     //    public float angleFromCenter;
 

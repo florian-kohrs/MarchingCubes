@@ -5,7 +5,7 @@ using UnityEngine;
 public class TriangulationNeighbours
 {
 
-    public HashSet<IndexNeighbourPair> InternNeighbourPairs = new HashSet<IndexNeighbourPair>();
+    public List<IndexNeighbourPair> InternNeighbourPairs = new List<IndexNeighbourPair>();
 
     public List<OutsideEdgeNeighbourDirection> OutsideNeighbours = new List<OutsideEdgeNeighbourDirection>();
 

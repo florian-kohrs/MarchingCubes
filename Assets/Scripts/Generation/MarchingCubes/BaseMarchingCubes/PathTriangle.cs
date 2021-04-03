@@ -13,18 +13,23 @@ namespace MarchingCubes
         {
             this.chunk = chunk;
             tri = t;
+            normal = (Vector3.Cross(tri.b - tri.a, tri.c - tri.a)).normalized;
+            slope = Mathf.Acos(Vector3.Dot(normal, OriginalLOcalMiddlePointOfTriangle.normalized)) * 180 / Mathf.PI;
             //Quaternion inverse = Quaternion.Inverse(Quaternion.Euler(normal));
             //Vector3 a1 = Vector3.ProjectOnPlane(t.a, normal);
             //Vector3 a2 = Vector3.ProjectOnPlane(t.b, normal);
             //Vector3 a3= Vector3.ProjectOnPlane(t.c, normal);
         }
 
+        public Vector3 normal;
+
+
+        protected float slope;
 
         MarchingCubeChunk chunk;
 
         public Triangle tri;
 
-        ///replace with array
         public List<PathTriangle> neighbours = new List<PathTriangle>(3);
 
         protected List<float> neighbourDistanceMapping;
@@ -44,10 +49,10 @@ namespace MarchingCubes
 
         public bool IsInTriangle(Vector3 point)
         {
-            float a = AreaOfTriangle(tri.a, tri.b,tri.c);
-            float a1 = AreaOfTriangle(point,tri.a, tri.b);
+            float a = AreaOfTriangle(tri.a, tri.b, tri.c);
+            float a1 = AreaOfTriangle(point, tri.a, tri.b);
             float a2 = AreaOfTriangle(point, tri.b, tri.c);
-            float a3 = AreaOfTriangle(point,tri.a, tri.c)  ;
+            float a3 = AreaOfTriangle(point, tri.a, tri.c);
             return a == a1 + a2 + a3;
         }
 
@@ -55,21 +60,6 @@ namespace MarchingCubes
         {
             return default;
         }
-
-        public List<Vector2> edgesWithoutNeighbour = null;
-
-        public List<Vector2> EdgesWithoutNeighbour
-        {
-            get
-            {
-                if (edgesWithoutNeighbour == null)
-                {
-                    edgesWithoutNeighbour = new List<Vector2>();
-                }
-                return edgesWithoutNeighbour;
-            }
-        }
-
 
         public void AddNeighbourTwoWay(PathTriangle p, int edge1, int edge2)
         {
@@ -81,26 +71,17 @@ namespace MarchingCubes
 
         public void AddNeighbourTwoWayUnchecked(PathTriangle p, int edge1, int edge2)
         {
-                neighbours.Add(p);
-                p.neighbours.Add(this);
-                BuildDistance(p, edge1, edge2);
-            
+            neighbours.Add(p);
+            p.neighbours.Add(this);
+            BuildDistance(p, edge1, edge2);
         }
 
-        public void AddNeighbourTwoWayUnchecked(PathTriangle p, byte edge1, byte edge2)
-        {
-            AddNeighbourTwoWayUnchecked(p, (int)edge1, (int)edge2);
-        }
 
         public void AddNeighbourTwoWayUnchecked(PathTriangle p, EdgePair edges)
         {
-            AddNeighbourTwoWayUnchecked(p, (int)edges.edge1, (int)edges.edge2);
+            AddNeighbourTwoWayUnchecked(p, edges.edge1, edges.edge2);
         }
 
-        public void AddNeighbourTwoWay(PathTriangle p, byte edge1, byte edge2)
-        {
-            AddNeighbourTwoWay(p, (int)edge1, (int)edge2);
-        }
 
         //public void AddNeighbourTwoWay(PathTriangle p, Vector2Int edgeIndices)
         //{
@@ -110,8 +91,8 @@ namespace MarchingCubes
         public void BuildDistance(PathTriangle p, int edge1, int edge2)
         {
             Vector3 middleEdgePoint = tri[edge1] + ((tri[edge2] - tri[edge1]) / 2);
-            float distance = (OriginalMiddlePointOfTriangle - middleEdgePoint).magnitude;
-            distance += (OriginalMiddlePointOfTriangle - p.OriginalMiddlePointOfTriangle).magnitude;
+            float distance = (OriginalLOcalMiddlePointOfTriangle - middleEdgePoint).magnitude;
+            distance += (OriginalLOcalMiddlePointOfTriangle - p.OriginalLOcalMiddlePointOfTriangle).magnitude;
             NeighbourDistanceMapping.Add(distance);
             p.NeighbourDistanceMapping.Add(distance);
         }
@@ -122,7 +103,7 @@ namespace MarchingCubes
 
         public float DistanceToTarget(PathTriangle from, PathTriangle to)
         {
-            return (to.OriginalMiddlePointOfTriangle - from.OriginalMiddlePointOfTriangle).magnitude;
+            return (to.OriginalLOcalMiddlePointOfTriangle - from.OriginalLOcalMiddlePointOfTriangle).magnitude;
         }
 
         public float DistanceToField(PathTriangle from, PathTriangle to)
@@ -140,10 +121,13 @@ namespace MarchingCubes
             return t1 == t2;
         }
 
-        public Vector3 Normal => Vector3.zero;// tri.normal;
+        public Vector3 Normal => normal;
 
-        public Vector3 OriginalMiddlePointOfTriangle => Vector3.zero;// tri.middlePoint + chunk.transform.position;
-       
+        public float Slope => slope;
+
+
+        public Vector3 OriginalLOcalMiddlePointOfTriangle => (tri.a + tri.b + tri.c) / 3;
+
     }
 
 }

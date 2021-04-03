@@ -26,11 +26,10 @@ namespace MarchingCubes
 
         public Vector3Int origin;
 
-        public short triangulationIndex;
-
-        public bool hasBuildIntern;
+        public int triangulationIndex;
 
         protected TriangulationNeighbours neighbourData;
+
         protected TriangulationNeighbours NeighbourData
         {
             get
@@ -43,8 +42,6 @@ namespace MarchingCubes
             }
         }
 
-        protected bool buildInternNeighbours;
-
         //public List<MarchingCubeEntity> neighbours = new List<MarchingCubeEntity>();
 
         /// <summary>
@@ -54,10 +51,6 @@ namespace MarchingCubes
         /// </summary>
         public void BuildInternNeighbours()
         {
-            if (buildInternNeighbours)
-                return;
-
-            buildInternNeighbours = true;
             foreach (var item in NeighbourData.InternNeighbourPairs)
             {
                 triangles[item.first].AddNeighbourTwoWayUnchecked(triangles[item.second], item.edge.edge1, item.edge.edge2);
@@ -66,9 +59,6 @@ namespace MarchingCubes
 
         public List<MissingNeighbourData> BuildNeighbours(Func<Vector3Int, MarchingCubeEntity> GetCube, Func<Vector3Int, bool> IsInBounds)
         {
-            if (!buildInternNeighbours)
-                BuildInternNeighbours();
-
             List<MissingNeighbourData> missingNeighbours = null;
             foreach (OutsideEdgeNeighbourDirection neighbour in NeighbourData.OutsideNeighbours)
             {
