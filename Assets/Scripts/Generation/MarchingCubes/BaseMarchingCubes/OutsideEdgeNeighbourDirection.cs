@@ -7,26 +7,28 @@ public struct OutsideEdgeNeighbourDirection
 
     public int triangleIndex;
 
-    public EdgePair edgePair;
+    public Vector2Int edgePair;
 
-    public EdgePair rotatedEdgePair;
+    public Vector2Int rotatedEdgePair;
+
+    public Vector2Int relevantVertexIndices;
 
     public Vector3Int offset;
 
-
-
-    public OutsideEdgeNeighbourDirection(int triangleIndex, int edgeIndex1, int edgeIndex2, Vector3Int offset) : this(triangleIndex, new EdgePair(edgeIndex1, edgeIndex2), offset)
+    public OutsideEdgeNeighbourDirection(int triangleIndex, int edgeIndex1, int edgeIndex2, int vertexEdge1, int vertexEdge2, Vector3Int offset) 
+        : this(triangleIndex, new Vector2Int(edgeIndex1, edgeIndex2), new Vector2Int(vertexEdge1, vertexEdge2), offset)
     {
     }
 
-    public OutsideEdgeNeighbourDirection(int triangleIndex, EdgePair edgePair, Vector3Int offset)
+    public OutsideEdgeNeighbourDirection(int triangleIndex, Vector2Int edgePair, Vector2Int relevantVertexIndices, Vector3Int offset)
     {
         this.triangleIndex = triangleIndex;
         this.edgePair = edgePair;
         this.offset = offset;
-        rotatedEdgePair = new EdgePair(TriangulationTableStaticData.RotateEdgeOn(
-                        edgePair.edge1, edgePair.edge2,
-                        TriangulationTableStaticData.GetAxisFromDelta(offset)));
+        this.relevantVertexIndices = relevantVertexIndices;
+        rotatedEdgePair = TriangulationTableStaticData.RotateEdgeOn(
+                        edgePair.x, edgePair.y,
+                        TriangulationTableStaticData.GetAxisFromDelta(offset));
     }
 
 

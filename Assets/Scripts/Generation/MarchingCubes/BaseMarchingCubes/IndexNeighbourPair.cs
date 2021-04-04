@@ -9,17 +9,16 @@ public struct IndexNeighbourPair
 
     public int second;
 
-    public EdgePair edge;
+    public Vector2Int firstEdgeIndices;
+    public Vector2Int sndEdgeIndice;
 
-    public IndexNeighbourPair(int first, int second, EdgePair edge)
+    public IndexNeighbourPair(int first, int second, Vector2Int firstEdgeIndices, Vector2Int sndEdgeIndice)
     {
         this.first = first;
         this.second = second;
-        this.edge = edge;
+        this.firstEdgeIndices = firstEdgeIndices;
+        this.sndEdgeIndice = sndEdgeIndice;
     }
 
-    public IndexNeighbourPair(int first, int second, Vector2Int edge) : this(first, second, new EdgePair(edge))
-    {
-    }
 
 }

@@ -53,7 +53,7 @@ namespace MarchingCubes
         {
             foreach (var item in NeighbourData.InternNeighbourPairs)
             {
-                triangles[item.first].AddNeighbourTwoWayUnchecked(triangles[item.second], item.edge.edge1, item.edge.edge2);
+                triangles[item.first].SoftSetNeighbourTwoWay(triangles[item.second], item.firstEdgeIndices, item.sndEdgeIndice);
             }
         }
 
@@ -68,8 +68,9 @@ namespace MarchingCubes
                 {
                     MarchingCubeEntity neighbourCube = GetCube(newPos);
 
-                    int i = TriangulationTableStaticData.GetIndexWithEdges(neighbourCube.triangulationIndex, neighbour.rotatedEdgePair);
-                    triangles[neighbour.triangleIndex].AddNeighbourTwoWay(neighbourCube.triangles[i], neighbour.edgePair.edge1, neighbour.edgePair.edge2);
+                    OutsideNeighbourConnectionInfo info = TriangulationTableStaticData.GetIndexWithEdges(neighbourCube.triangulationIndex, neighbour.rotatedEdgePair);
+                    triangles[neighbour.triangleIndex].SoftSetNeighbourTwoWay(neighbourCube.triangles[info.otherTriangleIndex], 
+                        neighbour.relevantVertexIndices, info.outsideNeighbourEdgeIndices);
                 }
                 else
                 {
@@ -86,17 +87,10 @@ namespace MarchingCubes
         }
 
 
-        public void BuildSpecificNeighbourInNeighbour(MarchingCubeEntity e, PathTriangle tri, EdgePair rotatedEdge)
+        public void BuildSpecificNeighbourInNeighbour(MarchingCubeEntity e, PathTriangle tri, Vector2Int myEdgeIndices, Vector2Int rotatedEdge)
         {
-            int neighbourIndex;
-            if (TriangulationTableStaticData.TryGetIndexWithEdges(e.triangulationIndex, rotatedEdge, out neighbourIndex))
-            {
-                tri.AddNeighbourTwoWay(e.triangles[neighbourIndex], rotatedEdge.edge1, rotatedEdge.edge1);
-            }
-            else
-            {
-                throw new System.Exception("Index was not found!");
-            }
+            OutsideNeighbourConnectionInfo info = TriangulationTableStaticData.GetIndexWithEdges(e.triangulationIndex, rotatedEdge);
+            tri.SoftSetNeighbourTwoWay(e.triangles[info.otherTriangleIndex], myEdgeIndices, info.outsideNeighbourEdgeIndices);
         }
 
 

@@ -23,24 +23,23 @@ namespace MarchingCubes
 
         public Vector3 normal;
 
-
         protected float slope;
 
         MarchingCubeChunk chunk;
 
         public Triangle tri;
 
-        public List<PathTriangle> neighbours = new List<PathTriangle>(3);
+        public PathTriangle[] neighbours = new PathTriangle[3];
 
-        protected List<float> neighbourDistanceMapping;
+        protected float[] neighbourDistanceMapping;
 
-        protected List<float> NeighbourDistanceMapping
+        protected float[] NeighbourDistanceMapping
         {
             get
             {
                 if (neighbourDistanceMapping == null)
                 {
-                    neighbourDistanceMapping = new List<float>(3);
+                    neighbourDistanceMapping = new float[3];
                 }
                 return neighbourDistanceMapping;
             }
@@ -61,25 +60,32 @@ namespace MarchingCubes
             return default;
         }
 
-        public void AddNeighbourTwoWay(PathTriangle p, int edge1, int edge2)
+
+        //public void AddNeighbourTwoWay(PathTriangle p, int myEdge1, int myEdge2, int otherEdge1, int otherEdge2)
+        //{
+        //    if (!neighbours.Contains(p))
+        //    {
+        //        AddNeighbourTwoWayUnchecked(p, myEdge1, myEdge2, otherEdge1, otherEdge2);
+        //    }
+        //}
+
+        public void SoftSetNeighbourTwoWay(PathTriangle p, int myEdge1, int myEdge2, int otherEdge1, int otherEdge2)
         {
-            if (!neighbours.Contains(p))
-            {
-                AddNeighbourTwoWayUnchecked(p, edge1, edge2);
-            }
+            int myKey = (myEdge1 + myEdge2) % 3;
+
+            if (neighbours[myKey] != null)
+                return;
+
+            int otherKey = (otherEdge1 + otherEdge2) % 3;
+            neighbours[myKey] = p;
+            p.neighbours[otherKey] = this;
+            BuildDistance(p, myEdge1, myEdge2, myKey, otherKey);
         }
 
-        public void AddNeighbourTwoWayUnchecked(PathTriangle p, int edge1, int edge2)
-        {
-            neighbours.Add(p);
-            p.neighbours.Add(this);
-            BuildDistance(p, edge1, edge2);
-        }
 
-
-        public void AddNeighbourTwoWayUnchecked(PathTriangle p, EdgePair edges)
+        public void SoftSetNeighbourTwoWay(PathTriangle p, Vector2Int myEdges, Vector2Int otherEdges)
         {
-            AddNeighbourTwoWayUnchecked(p, edges.edge1, edges.edge2);
+            SoftSetNeighbourTwoWay(p, myEdges.x, myEdges.y, otherEdges.x, otherEdges.y);
         }
 
 
@@ -88,14 +94,15 @@ namespace MarchingCubes
         //    AddNeighbourTwoWay(p, edgeIndices.x, edgeIndices);
         //}
 
-        public void BuildDistance(PathTriangle p, int edge1, int edge2)
+        public void BuildDistance(PathTriangle p, int edge1, int edge2, int myKey, int otherKey)
         {
             Vector3 middleEdgePoint = tri[edge1] + ((tri[edge2] - tri[edge1]) / 2);
             float distance = (OriginalLOcalMiddlePointOfTriangle - middleEdgePoint).magnitude;
             distance += (OriginalLOcalMiddlePointOfTriangle - p.OriginalLOcalMiddlePointOfTriangle).magnitude;
-            NeighbourDistanceMapping.Add(distance);
-            p.NeighbourDistanceMapping.Add(distance);
+            NeighbourDistanceMapping[myKey] = distance;
+            p.NeighbourDistanceMapping[otherKey] = distance;
         }
+
         public IEnumerable<PathTriangle> GetCircumjacent(PathTriangle field)
         {
             return field.neighbours;
@@ -108,7 +115,7 @@ namespace MarchingCubes
 
         public float DistanceToField(PathTriangle from, PathTriangle to)
         {
-            return from.NeighbourDistanceMapping[from.neighbours.IndexOf(to)];
+            return from.NeighbourDistanceMapping[Array.IndexOf(from.neighbours, to)];
         }
 
         public bool ReachedTarget(PathTriangle current, PathTriangle destination)

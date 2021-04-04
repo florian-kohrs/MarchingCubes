@@ -86,7 +86,7 @@ namespace MarchingCubes
                         ps = tri.neighbours;
                         p = tri;
                         //e = chunk.GetClosestEntity(hit.point);
-                        Debug.Log("NeighboursCount:" + tri.neighbours.Count + "tri index: " + e2.triangulationIndex + "interns" + e2.triangles.Count);
+                        //Debug.Log("NeighboursCount:" + tri.neighbours.Count + "tri index: " + e2.triangulationIndex + "interns" + e2.triangles.Count);
                     }
                 }
 

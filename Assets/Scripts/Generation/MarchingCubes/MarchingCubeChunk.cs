@@ -281,7 +281,7 @@ namespace MarchingCubes
                             {
                                 Vector3Int pos = (e.origin + t.neighbour.offset).Map(i => i.FloorMod(MarchingCubeChunkHandler.ChunkSize));
                                 MarchingCubeEntity cube = c.GetEntityAt(pos);
-                                e.BuildSpecificNeighbourInNeighbour(cube, e.triangles[t.neighbour.triangleIndex], t.neighbour.rotatedEdgePair);
+                                e.BuildSpecificNeighbourInNeighbour(cube, e.triangles[t.neighbour.triangleIndex],t.neighbour.relevantVertexIndices, t.neighbour.rotatedEdgePair);
                             }
                         }
                     }

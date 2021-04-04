@@ -87,20 +87,45 @@ public static class VectorExtension
     {
         int sameValues = 0;
 
-        for (int i = 0; i < 3 && sameValues <= n; i++)
+        for (int i = 0; i < 3; i++)
         {
-            bool found = false; ;
-            for (int x = 0; x < 3 && !found; x++)
+            for (int x = 0; x < 3; x++)
             {
                 if (v1[i] == v2[x])
                 {
-                    found = true;
                     sameValues++;
+                    if(sameValues == n)
+                    {
+                        return true;
+                    }
+                    break;
                 }
             }
         }
+        return false;
+    }
 
-        return sameValues == n;
+    public static bool SharesExactThisNValuesWith(this Vector3 v1, Vector3 v2, out Vector2Int sharedIndices, int n)
+    {
+        int sameValues = 0;
+        sharedIndices = new Vector2Int();
+        for (int i = 0; i < 3; i++)
+        {
+            for (int x = 0; x < 3; x++)
+            {
+                if (v1[i] == v2[x])
+                {
+                    sharedIndices[sameValues] = i;
+                    sameValues++;
+                    if (sameValues == n)
+                    {
+                        return true;
+                    }
+                    break;
+                }
+            }
+        }
+        return false;
     }
 
     public static bool SharesAnyNValuesWith(this Vector3 v1, Vector3 v2, int n)
@@ -117,20 +142,20 @@ public static class VectorExtension
         return sameValues >= n;
     }
 
-    public static int CountAndMapIndiciesWithSameValues(this Vector3 v1, Vector3 v2, out Vector3Int v3First, out Vector3Int v3Second)
+    public static int CountAndMapIndiciesWithSameValues(this Vector3 v1, Vector3 v2, out Vector3Int v1ConnectedVertices, out Vector3Int v2ConnectedVertices)
     {
         int sameValues = 0;
-        v3First = new Vector3Int();
-        v3Second = new Vector3Int(-1,-1,-1);
+        v1ConnectedVertices = new Vector3Int();
+        v2ConnectedVertices = new Vector3Int(-1, -1, -1);
         List<float> list = v2.ValueList();
         for (int i = 0; i < 3; i++)
         {
-            v3First[i] = list.IndexOf(v1[i]);
+            v1ConnectedVertices[i] = list.IndexOf(v1[i]);
             
-            if (v3First[i] >= 0)
+            if (v1ConnectedVertices[i] >= 0)
             {
+                v2ConnectedVertices[v1ConnectedVertices[i]] = i;
                 sameValues++;
-                v3Second[v3First[i]] = i;
             }
         }
         return sameValues;
