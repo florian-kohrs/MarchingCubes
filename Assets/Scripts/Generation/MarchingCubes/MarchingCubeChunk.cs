@@ -14,20 +14,22 @@ namespace MarchingCubes
         {
             this.surfaceLevel = surfaceLevel;
             chunkHandler = handler;
-            points = new Vector4[VertexSize * VertexSize * VertexSize];
+            points = new float[VertexSize * VertexSize * VertexSize];
 
             noiseBuffer.GetData(points, 0, 0, points.Length);
-            //firstPoint = new Vector4[1];
-            //noiseBuffer.GetData(firstPoint, 0, 0, firstPoint.Length);
             children.Add(new BaseMeshChild(GetComponent<MeshFilter>(), GetComponent<MeshRenderer>(), GetComponent<MeshCollider>(), new Mesh()));
             this.mat = mat;
             BuildFromTriangleArray(tris, activeTris);
             BuildChunkEdges();
         }
 
-       // protected Vector4[] firstPoint;
+        // protected Vector4[] firstPoint;
 
         protected List<BaseMeshChild> children = new List<BaseMeshChild>();
+
+        protected Material mat;
+
+        protected const int MAX_TRIANGLES_PER_MESH = 65000;
 
         protected void AddCurrentMeshDataChild()
         {
@@ -41,12 +43,12 @@ namespace MarchingCubes
         /// <summary>
         /// chunk is completly underground
         /// </summary>
-        public bool IsCompletlySolid => IsEmpty && points[0].w >= surfaceLevel;
+        public bool IsCompletlySolid => IsEmpty && points[0] >= surfaceLevel;
 
         /// <summary>
         /// chunk is completly air
         /// </summary>
-        public bool IsCompletlyAir => IsEmpty && points[0].w < surfaceLevel;
+        public bool IsCompletlyAir => IsEmpty && points[0] < surfaceLevel;
 
         public IMarchingCubeChunkHandler chunkHandler;
 
@@ -78,10 +80,7 @@ namespace MarchingCubes
             }
         }
 
-        protected MeshFilter meshFilter;
-        protected MeshCollider meshCollider;
-
-        protected Vector4[] points;
+        protected float[] points;
 
         public Vector3Int chunkOffset;
 
@@ -162,22 +161,37 @@ namespace MarchingCubes
         }
 
 
-        protected Mesh mesh;
-
         protected NoiseFilter noiseFilter;
+
+        protected Vector4 GetHeightDataFrom(int x, int y, int z)
+        {
+            Vector3 v3 = MarchingCubeChunkHandler.CenterFromChunkIndex(chunkOffset);
+            return BuildVector4(v3, points[IndexFromCoord(x, y, z)]);
+        }
+
+        protected Vector4 BuildVector4(Vector3 v3, float w)
+        {
+            return new Vector4(v3.x, v3.y, v3.z, w);
+        }
+
+        protected Vector4 BuildVector4FromCoord(Vector3 v3, int x, int y, int z)
+        {
+            return new Vector4(v3.x, v3.y, v3.z, points[IndexFromCoord(x, y, z)]);
+        }
 
         protected Vector4[] GetCubeCornersForPoint(Vector3Int p)
         {
+            Vector3 v3 = MarchingCubeChunkHandler.CenterFromChunkIndex(chunkOffset);
             return new Vector4[]
             {
-            points[IndexFromCoord(p.x, p.y, p.z)],
-            points[IndexFromCoord(p.x + 1, p.y, p.z)],
-            points[IndexFromCoord(p.x + 1, p.y, p.z + 1)],
-            points[IndexFromCoord(p.x, p.y, p.z + 1)],
-            points[IndexFromCoord(p.x, p.y + 1, p.z)],
-            points[IndexFromCoord(p.x + 1, p.y + 1, p.z)],
-            points[IndexFromCoord(p.x + 1, p.y + 1, p.z + 1)],
-            points[IndexFromCoord(p.x, p.y + 1, p.z + 1)]
+                BuildVector4FromCoord(v3,p.x, p.y, p.z),
+                BuildVector4FromCoord(v3,p.x + 1, p.y, p.z),
+                BuildVector4FromCoord(v3,p.x + 1, p.y, p.z + 1),
+                BuildVector4FromCoord(v3,p.x, p.y, p.z + 1),
+                BuildVector4FromCoord(v3,p.x, p.y + 1, p.z),
+                BuildVector4FromCoord(v3,p.x + 1, p.y + 1, p.z),
+                BuildVector4FromCoord(v3,p.x + 1, p.y + 1, p.z + 1),
+                BuildVector4FromCoord(v3,p.x, p.y + 1, p.z + 1)
             };
         }
 
@@ -196,7 +210,7 @@ namespace MarchingCubes
             };
         }
 
-        public virtual void March(Vector3Int p, Vector4[] points)
+        public virtual void March(Vector3Int p, float[] points)
         {
             MarchingCubeEntity e = new MarchingCubeEntity();
             e.origin = p;
@@ -310,7 +324,6 @@ namespace MarchingCubes
             triCount = 0;
         }
 
-        protected Material mat;
 
 
         protected void Build()
@@ -351,9 +364,6 @@ namespace MarchingCubes
             return GetOrAddEntityAt(v3.x, v3.y, v3.z, out e);
         }
 
-
-        protected Color triColor = new Color(0f, 0.5471698f, 0.1f, 1);
-
         public void BuildFromTriangleArray(TriangleBuilder[] ts, int activeTris)
         {
             triCount = activeTris * 3;
@@ -369,15 +379,15 @@ namespace MarchingCubes
             cubeEntities = new Dictionary<int, MarchingCubeEntity>(chunksize * chunksize * chunksize / 15);
             foreach (TriangleBuilder t in ts)
             {
-                if(totalTreeCount >= activeTris)
+                if (totalTreeCount >= activeTris)
                 {
-                    if(usedTriCount > 0)
+                    if (usedTriCount > 0)
                     {
                         ApplyChangesToMesh();
                     }
                     break;
                 }
-                if(!GetOrAddEntityAt(t.Origin,out cube))
+                if (!GetOrAddEntityAt(t.Origin, out cube))
                 {
                     cube.triangulationIndex = t.TriIndex;
                 }
@@ -386,7 +396,7 @@ namespace MarchingCubes
                 {
                     meshTriangles[usedTriCount + i] = usedTriCount + i;
                     vertices[usedTriCount + i] = t.tri[i];
-                    colorData[usedTriCount + i] = triColor;
+                    colorData[usedTriCount + i] = Color.yellow;
                 }
                 usedTriCount += 3;
                 totalTreeCount++;
@@ -396,9 +406,7 @@ namespace MarchingCubes
                     usedTriCount = 0;
                 }
             }
-
         }
-
 
         protected void ApplyChanges()
         {
@@ -416,9 +424,9 @@ namespace MarchingCubes
                     {
                         meshTriangles[count + i] = count + i;
                         vertices[count + i] = t.tri[i];
-                        colorData[count + i] = triColor;
+                        colorData[count + i] = Color.yellow;
                     }
-                    count+=3;
+                    count += 3;
                 }
             }
 
@@ -439,14 +447,13 @@ namespace MarchingCubes
             }
         }
 
-        protected const int MAX_TRIANGLES_PER_MESH = 65000;
 
         protected void ApplyChangesToMesh()
         {
             BaseMeshChild displayer = GetNextMeshDisplayer();
-            displayer.ApplyMesh(colorData, vertices, meshTriangles,  mat);
+            displayer.ApplyMesh(colorData, vertices, meshTriangles, mat);
             trisLeft -= meshTriangles.Length;
-            if(trisLeft > 0)
+            if (trisLeft > 0)
             {
                 ResetArrayData();
             }
@@ -545,16 +552,12 @@ namespace MarchingCubes
 
             foreach (int i in cornerIndices)
             {
-                Vector4 newV4 = points[i];
-                newV4.w += delta;
-                points[i] = newV4;
+                points[i] += delta;
             }
 
             for (int i = 0; i < points.Length; i++)
             {
-                Vector4 newV4 = points[i];
-                newV4.w += delta;
-                points[i] = newV4;
+                points[i] += delta;
             }
 
             if (IsBorderPoint(e.origin))
@@ -604,9 +607,7 @@ namespace MarchingCubes
 
                 if (pointOffset == offset)
                 {
-                    Vector4 newV4 = points[index];
-                    newV4.w += delta;
-                    points[index] = newV4;
+                    points[index] += delta;
                 }
             }
             RebuildAround(e);

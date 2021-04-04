@@ -24,14 +24,14 @@ namespace MarchingCubes
 
         public int octaves = 9;
 
+        public Vector3 offset;
+
         [Range(0, 1)]
         public float persistence = 0.5f;
 
         public float lacunarity = 3.41f;
 
         public int seed;
-
-        public Vector3 offset;
 
         public virtual ComputeBuffer Generate(ComputeBuffer pointsBuffer, int numPointsPerAxis, float boundsSize, Vector3 centre, float spacing)
         {
@@ -61,6 +61,7 @@ namespace MarchingCubes
             densityShader.SetBuffer(0, "points", pointsBuffer);
             densityShader.SetInt("numPointsPerAxis", numPointsPerAxis);
             densityShader.SetFloat("boundsSize", boundsSize);
+            densityShader.SetFloat("spacing", spacing);
             densityShader.SetVector("centre", new Vector4(centre.x, centre.y, centre.z));
             densityShader.SetVector("offset", new Vector4(offset.x, offset.y, offset.z));
 
@@ -72,7 +73,6 @@ namespace MarchingCubes
             densityShader.SetFloat("scale", scale);
             densityShader.SetBuffer(0, "octaveOffsets", octaveOffsetsBuffer);
             densityShader.SetFloat("amplitude", amplitude);
-            densityShader.SetFloat("spacing", spacing);
 
         }
 

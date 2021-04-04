@@ -18,8 +18,10 @@ struct Triangle
 
 
 AppendStructuredBuffer<Triangle> triangles;
-RWStructuredBuffer<float4> points;
+RWStructuredBuffer<float> points;
 
+float3 centre;
+float spacing;
 int numPointsPerAxis;
 float surfaceLevel;
 
@@ -50,6 +52,13 @@ int zipData(int x, int y, int z, int triIndex) {
 //    return acos(dot(a, b)) * 180 / PI
 //}
 
+float4 GetHeightDataFrom(int x, int y, int z) {
+	
+	float3 f3 = float3(x, y, z);
+	float3 pos = centre + f3 * spacing;
+	return float4(pos.x,pos.y,pos.z, points[indexFromCoord(x, y, z)]);
+}
+
 [numthreads(numThreads, numThreads, numThreads)]
 void March(int3 id : SV_DispatchThreadID)
 {
@@ -62,14 +71,14 @@ void March(int3 id : SV_DispatchThreadID)
 	// 8 corners of the current cube
 	float4 cubeCorners[8] =
 	{
-		points[indexFromCoord(id.x, id.y, id.z)],
-		points[indexFromCoord(id.x + 1, id.y, id.z)],
-		points[indexFromCoord(id.x + 1, id.y, id.z + 1)],
-		points[indexFromCoord(id.x, id.y, id.z + 1)],
-		points[indexFromCoord(id.x, id.y + 1, id.z)],
-		points[indexFromCoord(id.x + 1, id.y + 1, id.z)],
-		points[indexFromCoord(id.x + 1, id.y + 1, id.z + 1)],
-		points[indexFromCoord(id.x, id.y + 1, id.z + 1)]
+		GetHeightDataFrom(id.x, id.y, id.z),
+		GetHeightDataFrom(id.x + 1, id.y, id.z),
+		GetHeightDataFrom(id.x + 1, id.y, id.z + 1),
+		GetHeightDataFrom(id.x, id.y, id.z + 1),
+		GetHeightDataFrom(id.x, id.y + 1, id.z),
+		GetHeightDataFrom(id.x + 1, id.y + 1, id.z),
+		GetHeightDataFrom(id.x + 1, id.y + 1, id.z + 1),
+		GetHeightDataFrom(id.x, id.y + 1, id.z + 1)
 	};
 
 	// Calculate unique index for each cube configuration.
@@ -77,6 +86,7 @@ void March(int3 id : SV_DispatchThreadID)
 	// A value of 0 means cube is entirely inside surface; 255 entirely outside.
 	// The value is used to look up the edge table, which indicates which edges of the cube are cut by the isosurface.
 	int cubeIndex = 0;
+	//use this later
 	if (cubeCorners[0].w < surfaceLevel) cubeIndex |= 1;
 	if (cubeCorners[1].w < surfaceLevel) cubeIndex |= 2;
 	if (cubeCorners[2].w < surfaceLevel) cubeIndex |= 4;
@@ -106,28 +116,9 @@ void March(int3 id : SV_DispatchThreadID)
 		tri.vertexB = interpolateVerts(cubeCorners[a1], cubeCorners[b1]);
 		tri.vertexC = interpolateVerts(cubeCorners[a2], cubeCorners[b2]);
 
-		float3 normal = normalize(cross(tri.vertexB - tri.vertexA, tri.vertexC - tri.vertexA));
+		/*float3 normal = normalize(cross(tri.vertexB - tri.vertexA, tri.vertexC - tri.vertexA));
 		float3 middlePoint = (tri.vertexA + tri.vertexB + tri.vertexC) / 3;
-		float angleFromCenter = acos(dot(normal, normalize(middlePoint))) * 180 / PI;
-
-		//int red;
-		//int green;
-		//int blue;
-
-		//if (angleFromCenter < 145) 
-		//{
-		//	red = 77;
-		//	green = 74;
-		//	blue = 70;
-		//}
-		//else 
-		//{
-		//	red = 116;
-		//	green = 182;
-		//	blue = 100;
-		//}
-
-		//tri.colorData = combine(red, green, blue);
+		float angleFromCenter = acos(dot(normal, normalize(middlePoint))) * 180 / PI;*/
 
 		triangles.Append(tri);
 	}

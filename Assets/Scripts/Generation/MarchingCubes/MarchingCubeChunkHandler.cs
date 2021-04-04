@@ -12,7 +12,9 @@ namespace MarchingCubes
 
         protected const int threadGroupSize = 8;
 
-        public const int ChunkSize = 16;
+        public const int ChunkSize = 50;
+
+        public GameObject chunkPrefab;
 
         public int PointsPerChunkAxis => ChunkSize + 1;
 
@@ -218,11 +220,12 @@ namespace MarchingCubes
 
         protected MarchingCubeChunk CreateChunkAt(Vector3Int p)
         {
-            GameObject g = new GameObject("Chunk" + "(" + p.x + "," + p.y + "," + p.z + ")");
-            g.transform.SetParent(transform, false);
+            //GameObject g = new GameObject("Chunk" + "(" + p.x + "," + p.y + "," + p.z + ")");
+            GameObject g = Instantiate(chunkPrefab, transform);
+            g.name = $"Chunk({p.x},{p.y},{p.z})";
             //g.transform.position = p * CHUNK_SIZE;
 
-            MarchingCubeChunk chunk = g.AddComponent<MarchingCubeChunk>();
+            MarchingCubeChunk chunk = g.GetComponent<MarchingCubeChunk>();
             chunks.Add(p, chunk);
             chunk.chunkOffset = p;
             BuildChunk(p, chunk);
@@ -250,7 +253,8 @@ namespace MarchingCubes
 
         protected void BuildChunk(Vector3Int p, MarchingCubeChunk chunk)
         {
-            densityGenerator.Generate(pointsBuffer, PointsPerChunkAxis, 0, CenterFromChunkIndex(p), 1);
+            Vector3 center = CenterFromChunkIndex(p);
+            densityGenerator.Generate(pointsBuffer, PointsPerChunkAxis, 0, center, 1);
 
             int numVoxelsPerAxis = ChunkSize;
             int numThreadsPerAxis = Mathf.CeilToInt(numVoxelsPerAxis / (float)threadGroupSize);
@@ -260,6 +264,8 @@ namespace MarchingCubes
             marshShader.SetBuffer(0, "triangles", triangleBuffer);
             marshShader.SetInt("numPointsPerAxis", PointsPerChunkAxis);
             marshShader.SetFloat("surfaceLevel", surfaceLevel);
+            marshShader.SetFloat("spacing", 1);
+            marshShader.SetVector("centre", new Vector4(center.x, center.y, center.z));
 
             marshShader.Dispatch(0, numThreadsPerAxis, numThreadsPerAxis, numThreadsPerAxis);
 
@@ -299,7 +305,7 @@ namespace MarchingCubes
             //        ReleaseBuffers();
             //    }
             triangleBuffer = new ComputeBuffer(maxTriangleCount, TriangleBuilder.SIZE_OF_TRI_BUILD, ComputeBufferType.Append);
-            pointsBuffer = new ComputeBuffer(numPoints, sizeof(float) * 4);
+            pointsBuffer = new ComputeBuffer(numPoints, sizeof(float) * 1);
             triCountBuffer = new ComputeBuffer(1, sizeof(int), ComputeBufferType.Raw);
 
             //}
@@ -319,7 +325,7 @@ namespace MarchingCubes
             }
         }
 
-        protected Vector3 CenterFromChunkIndex(Vector3Int v)
+        public static Vector3 CenterFromChunkIndex(Vector3Int v)
         {
             return new Vector3(v.x * ChunkSize, v.y * ChunkSize, v.z * ChunkSize);
         }
