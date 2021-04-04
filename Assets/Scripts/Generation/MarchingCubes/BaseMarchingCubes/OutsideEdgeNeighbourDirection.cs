@@ -7,7 +7,7 @@ public struct OutsideEdgeNeighbourDirection
 
     public int triangleIndex;
 
-    public Vector2Int edgePair;
+    //public Vector2Int edgePair;
 
     public Vector2Int rotatedEdgePair;
 
@@ -23,7 +23,7 @@ public struct OutsideEdgeNeighbourDirection
     public OutsideEdgeNeighbourDirection(int triangleIndex, Vector2Int edgePair, Vector2Int relevantVertexIndices, Vector3Int offset)
     {
         this.triangleIndex = triangleIndex;
-        this.edgePair = edgePair;
+        //this.edgePair = edgePair;
         this.offset = offset;
         this.relevantVertexIndices = relevantVertexIndices;
         rotatedEdgePair = TriangulationTableStaticData.RotateEdgeOn(
