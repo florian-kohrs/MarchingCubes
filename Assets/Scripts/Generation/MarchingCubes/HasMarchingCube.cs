@@ -6,8 +6,8 @@ namespace MarchingCubes
     public class HasMarchingCube : MonoBehaviour, IHasMarchingCubeChunk
     {
 
-        public MarchingCubeChunk chunk;
+        public IMarchingCubeInteractableChunk chunk;
 
-        public MarchingCubeChunk GetChunk => chunk;
+        public IMarchingCubeInteractableChunk GetChunk => chunk;
     }
 }

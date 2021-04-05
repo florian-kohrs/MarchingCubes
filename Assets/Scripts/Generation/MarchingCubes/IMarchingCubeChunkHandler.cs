@@ -8,6 +8,6 @@ public interface IMarchingCubeChunkHandler
 
     Dictionary<Vector3Int, MarchingCubeChunk> Chunks { get; }
 
-    void EditNeighbourChunksAt(MarchingCubeChunk chunk, Vector3Int p, float delta);
+    void EditNeighbourChunksAt(Vector3Int chunkOffset, Vector3Int cubeOrigin, float delta);
 
 }

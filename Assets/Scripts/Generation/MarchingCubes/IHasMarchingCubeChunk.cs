@@ -5,6 +5,6 @@ namespace MarchingCubes
 {
     public interface IHasMarchingCubeChunk
     {
-        MarchingCubeChunk GetChunk { get; }
+        IMarchingCubeInteractableChunk GetChunk { get; }
     }
 }

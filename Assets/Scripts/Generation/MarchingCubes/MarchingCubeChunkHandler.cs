@@ -14,16 +14,18 @@ namespace MarchingCubes
 
         public const int ChunkSize = 50;
 
+        public const int CHUNK_VOLUME = ChunkSize * ChunkSize * ChunkSize;
+
         public GameObject chunkPrefab;
 
-        public int PointsPerChunkAxis => ChunkSize + 1;
+        public const int PointsPerChunkAxis = ChunkSize + 1;
 
         public Dictionary<Vector3Int, MarchingCubeChunk> chunks = new Dictionary<Vector3Int, MarchingCubeChunk>();
 
         [Range(1,253)]
         public int blockAroundPlayer = 16;
 
-        private int maxTrianglesLeft = 10000000;
+        private const int maxTrianglesLeft = 2000000;
 
         public ComputeShader marshShader;
 
@@ -72,6 +74,7 @@ namespace MarchingCubes
 
         private void Start()
         {
+            Debug.Log(SystemInfo.processorCount);
             CreateBuffersIfNeeded();
             kernelId = marshShader.FindKernel("March");
             MarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
@@ -138,11 +141,12 @@ namespace MarchingCubes
                         chunk = CreateChunkAt(next);
                     }
                 }
-            } while (chunk != null && maxTrianglesLeft > 0);
-            if(maxTrianglesLeft <= 0)
+            } while (chunk != null && totalTriBuild < maxTrianglesLeft);
+            if(totalTriBuild >= maxTrianglesLeft)
             {
                 Debug.Log("Aborted");
             }
+            Debug.Log("Total triangles: " + totalTriBuild);
         }
 
 
@@ -245,7 +249,10 @@ namespace MarchingCubes
             return result;
         }
 
-        TriangleBuilder[] tris = new TriangleBuilder[ChunkSize * ChunkSize * ChunkSize * 5];
+        public int totalTriBuild;
+
+        TriangleBuilder[] tris = new TriangleBuilder[CHUNK_VOLUME * 5];
+        float[] pointsArray;
 
         private ComputeBuffer triangleBuffer;
         private ComputeBuffer pointsBuffer;
@@ -276,11 +283,15 @@ namespace MarchingCubes
             int numTris = triCountArray[0];
 
             // Get triangle data from shader
-            
-            triangleBuffer.GetData(tris, 0, 0, numTris);
-            maxTrianglesLeft -= numTris;
 
-            chunk.InitializeWithMeshData(chunkMaterial, tris, numTris, pointsBuffer, this, surfaceLevel);
+            triangleBuffer.GetData(tris, 0, 0, numTris);
+
+            pointsArray = new float[CHUNK_VOLUME];
+            pointsBuffer.GetData(pointsArray, 0, 0, CHUNK_VOLUME);
+
+            totalTriBuild += numTris;
+
+            chunk.InitializeWithMeshData(chunkMaterial, tris, numTris, pointsArray, this, surfaceLevel);
 
         }
 
@@ -334,9 +345,9 @@ namespace MarchingCubes
 
         public Dictionary<Vector3Int, MarchingCubeChunk> Chunks => chunks;
 
-        public void EditNeighbourChunksAt(MarchingCubeChunk chunk, Vector3Int p, float delta)
+        public void EditNeighbourChunksAt(Vector3Int chunkOffset, Vector3Int cubeOrigin, float delta)
         {
-            foreach (Vector3Int v in p.GetAllCombination())
+            foreach (Vector3Int v in cubeOrigin.GetAllCombination())
             {
                 bool allActiveIndicesHaveOffset = true;
                 Vector3Int offsetVector = new Vector3Int();
@@ -345,7 +356,7 @@ namespace MarchingCubes
                     if (v[i] != int.MinValue)
                     {
                         //offset is in range -1 to 1
-                        int offset = Mathf.CeilToInt((p[i] / (ChunkSize - 2f)) - 1);
+                        int offset = Mathf.CeilToInt((cubeOrigin[i] / (ChunkSize - 2f)) - 1);
                         allActiveIndicesHaveOffset = offset != 0;
                         offsetVector[i] = offset;
                     }
@@ -358,9 +369,9 @@ namespace MarchingCubes
                 {
                     Debug.Log("Found neighbour with offset " + offsetVector);
                     MarchingCubeChunk neighbourChunk;
-                    if (chunks.TryGetValue(chunk.chunkOffset + offsetVector, out neighbourChunk))
+                    if (chunks.TryGetValue(chunkOffset + offsetVector, out neighbourChunk))
                     {
-                        EditNeighbourChunkAt(neighbourChunk, p, offsetVector, delta);
+                        EditNeighbourChunkAt(neighbourChunk, cubeOrigin, offsetVector, delta);
                     }
                 }
             }

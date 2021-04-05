@@ -9,56 +9,25 @@ namespace MarchingCubes
     public class PathTriangle : INavigatable<PathTriangle, PathTriangle>
     {
 
-        public PathTriangle(MarchingCubeChunk chunk, Triangle t)
+        public PathTriangle(/*MarchingCubeChunkObject chunk,*/ Triangle t)
         {
-            this.chunk = chunk;
+            //this.chunk = chunk;
             tri = t;
             normal = (Vector3.Cross(tri.b - tri.a, tri.c - tri.a)).normalized;
             slope = Mathf.Acos(Vector3.Dot(normal, OriginalLOcalMiddlePointOfTriangle.normalized)) * 180 / Mathf.PI;
-            //Quaternion inverse = Quaternion.Inverse(Quaternion.Euler(normal));
-            //Vector3 a1 = Vector3.ProjectOnPlane(t.a, normal);
-            //Vector3 a2 = Vector3.ProjectOnPlane(t.b, normal);
-            //Vector3 a3= Vector3.ProjectOnPlane(t.c, normal);
         }
 
         public Vector3 normal;
 
         protected float slope;
 
-        MarchingCubeChunk chunk;
+        //MarchingCubeChunkObject chunk;
 
         public Triangle tri;
 
         public PathTriangle[] neighbours = new PathTriangle[3];
 
-        protected float[] neighbourDistanceMapping;
-
-        protected float[] NeighbourDistanceMapping
-        {
-            get
-            {
-                if (neighbourDistanceMapping == null)
-                {
-                    neighbourDistanceMapping = new float[3];
-                }
-                return neighbourDistanceMapping;
-            }
-        }
-
-
-        public bool IsInTriangle(Vector3 point)
-        {
-            float a = AreaOfTriangle(tri.a, tri.b, tri.c);
-            float a1 = AreaOfTriangle(point, tri.a, tri.b);
-            float a2 = AreaOfTriangle(point, tri.b, tri.c);
-            float a3 = AreaOfTriangle(point, tri.a, tri.c);
-            return a == a1 + a2 + a3;
-        }
-
-        protected float AreaOfTriangle(Vector3 a, Vector3 b, Vector3 c)
-        {
-            return default;
-        }
+        protected float[] neighbourDistanceMapping = new float[3];
 
 
         //public void AddNeighbourTwoWay(PathTriangle p, int myEdge1, int myEdge2, int otherEdge1, int otherEdge2)
@@ -99,8 +68,8 @@ namespace MarchingCubes
             Vector3 middleEdgePoint = tri[edge1] + ((tri[edge2] - tri[edge1]) / 2);
             float distance = (OriginalLOcalMiddlePointOfTriangle - middleEdgePoint).magnitude;
             distance += (OriginalLOcalMiddlePointOfTriangle - p.OriginalLOcalMiddlePointOfTriangle).magnitude;
-            NeighbourDistanceMapping[myKey] = distance;
-            p.NeighbourDistanceMapping[otherKey] = distance;
+            neighbourDistanceMapping[myKey] = distance;
+            p.neighbourDistanceMapping[otherKey] = distance;
         }
 
         public IEnumerable<PathTriangle> GetCircumjacent(PathTriangle field)
@@ -115,7 +84,7 @@ namespace MarchingCubes
 
         public float DistanceToField(PathTriangle from, PathTriangle to)
         {
-            return from.NeighbourDistanceMapping[Array.IndexOf(from.neighbours, to)];
+            return from.neighbourDistanceMapping[Array.IndexOf(from.neighbours, to)];
         }
 
         public bool ReachedTarget(PathTriangle current, PathTriangle destination)

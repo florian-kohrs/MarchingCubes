@@ -15,13 +15,13 @@ namespace MarchingCubes
 
         public MeshCollider collider;
 
-        protected BaseMeshChild(MarchingCubeChunk chunk, GameObject g, Transform t) : this(g.AddComponent<MeshFilter>(), g.AddComponent<MeshRenderer>(), g.AddComponent<MeshCollider>(), new Mesh())
+        protected BaseMeshChild(IMarchingCubeInteractableChunk chunk, GameObject g, Transform t) : this(g.AddComponent<MeshFilter>(), g.AddComponent<MeshRenderer>(), g.AddComponent<MeshCollider>(), new Mesh())
         {
             g.transform.SetParent(t,false);
             g.AddComponent<HasMarchingCube>().chunk = chunk;
         }
 
-        public BaseMeshChild(MarchingCubeChunk chunk, Transform t) : this(chunk, new GameObject(),t)
+        public BaseMeshChild(IMarchingCubeInteractableChunk chunk, Transform t) : this(chunk, new GameObject(),t)
         {
         }
 

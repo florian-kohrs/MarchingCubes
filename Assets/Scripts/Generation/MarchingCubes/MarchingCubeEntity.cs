@@ -42,8 +42,6 @@ namespace MarchingCubes
             }
         }
 
-        //public List<MarchingCubeEntity> neighbours = new List<MarchingCubeEntity>();
-
         /// <summary>
         /// generate a matrix in the beginning, saying which triangulation has neighbours in which triangulation,
         /// also with offsets at exactly one difference with the abs value of 1 in a single axis 
@@ -57,9 +55,9 @@ namespace MarchingCubes
             }
         }
 
-        public List<MissingNeighbourData> BuildNeighbours(Func<Vector3Int, MarchingCubeEntity> GetCube, Func<Vector3Int, bool> IsInBounds)
+        public bool BuildNeighbours(Func<Vector3Int, MarchingCubeEntity> GetCube, Func<Vector3Int, bool> IsInBounds, List<MissingNeighbourData> addHere)
         {
-            List<MissingNeighbourData> missingNeighbours = null;
+            bool hasNeighbourOutOfBounds = true;
             foreach (OutsideEdgeNeighbourDirection neighbour in NeighbourData.OutsideNeighbours)
             {
                 Vector3Int newPos = origin + neighbour.offset;
@@ -74,16 +72,12 @@ namespace MarchingCubes
                 }
                 else
                 {
-                    if (missingNeighbours == null)
-                    {
-                        missingNeighbours = new List<MissingNeighbourData>();
-                    }
-                    missingNeighbours.Add(new MissingNeighbourData(neighbour, newPos));
+                    hasNeighbourOutOfBounds = false;
+                    addHere.Add(new MissingNeighbourData(neighbour, newPos));
                 }
             }
-
             neighbourData = null;
-            return missingNeighbours;
+            return hasNeighbourOutOfBounds;
         }
 
 

@@ -8,7 +8,8 @@ namespace MarchingCubes
     {
 
         public const int SIZE_OF_TRI = sizeof(float) * 9;
-
+        //could share this with their neighbour
+        //do i need this at all?
         public Vector3 a;
         public Vector3 b;
         public Vector3 c;
@@ -27,16 +28,6 @@ namespace MarchingCubes
                         return c;
                 }
             }
-        }
-
-        public bool Equals(Triangle tri)
-        {
-            return a == tri.a && b == tri.b && c == tri.c;
-        }
-
-        public bool Contains(Vector3 v)
-        {
-            return this[0] == v || this[1] == v || this[2] == v;
         }
 
     }
