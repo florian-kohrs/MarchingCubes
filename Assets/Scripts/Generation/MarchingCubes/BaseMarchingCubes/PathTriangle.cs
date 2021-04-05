@@ -19,7 +19,7 @@ namespace MarchingCubes
 
         public Vector3 normal;
 
-        protected float slope;
+        public float slope;
 
         //MarchingCubeChunkObject chunk;
 

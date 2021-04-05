@@ -410,12 +410,13 @@ namespace MarchingCubes
                 {
                     cube.triangulationIndex = t.TriIndex;
                 }
-                cube.triangles.Add(new PathTriangle(t.tri));
+                PathTriangle pathTri = new PathTriangle(t.tri);
+                cube.triangles.Add(pathTri);
                 for (int i = 0; i < 3; i++)
                 {
                     meshTriangles[usedTriCount + i] = usedTriCount + i;
                     vertices[usedTriCount + i] = t.tri[i];
-                    colorData[usedTriCount + i] = Color.yellow;
+                    colorData[usedTriCount + i] = GetColor(pathTri, i);
                 }
                 usedTriCount += 3;
                 totalTreeCount++;
@@ -425,6 +426,14 @@ namespace MarchingCubes
                     usedTriCount = 0;
                 }
             }
+        }
+
+        protected static Color brown = new Color(75, 44, 13, 1) / 255f;
+
+        protected Color GetColor(PathTriangle t, int i)
+        {
+            float slopeProgress = Mathf.InverseLerp(15, 45, t.Slope);
+            return (Color.green * (1 - slopeProgress) + brown * slopeProgress) / 2;
         }
 
         //protected void ApplyChanges()
