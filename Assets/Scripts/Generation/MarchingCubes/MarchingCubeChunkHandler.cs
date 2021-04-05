@@ -91,7 +91,6 @@ namespace MarchingCubes
 
             StartCoroutine(BuildRelevantChunksParallelAround(chunk));
             ReleaseBuffersIfNeeded();
-            Debug.Log($"Number of chunks: {Chunks.Count}");
         }
 
         private void Update()
@@ -154,6 +153,8 @@ namespace MarchingCubes
                 Debug.Log("Aborted");
             }
             Debug.Log("Total triangles: " + totalTriBuild);
+
+            Debug.Log($"Number of chunks: {Chunks.Count}");
         }
 
         protected Vector3Int startPos;
@@ -203,6 +204,8 @@ namespace MarchingCubes
                 Debug.Log("Aborted");
             }
             Debug.Log("Total triangles: " + totalTriBuild);
+
+            Debug.Log($"Number of chunks: {Chunks.Count}");
             ReleaseBuffersIfNeeded();
         }
 
