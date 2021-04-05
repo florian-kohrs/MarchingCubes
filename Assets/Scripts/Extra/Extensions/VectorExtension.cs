@@ -298,4 +298,26 @@ public static class VectorExtension
         yield return new Vector3Int(int.MinValue, int.MinValue, v.z);
     }
 
+    public static IEnumerable<Vector3Int> GetAllDirectNeighbours(this Vector3Int v3)
+    {
+        yield return new Vector3Int(v3.x - 1, v3.y, v3.z);
+        yield return new Vector3Int(v3.x + 1, v3.y, v3.z);
+        yield return new Vector3Int(v3.x, v3.y - 1, v3.z);
+        yield return new Vector3Int(v3.x, v3.y + 1, v3.z);
+        yield return new Vector3Int(v3.x, v3.y, v3.z - 1);
+        yield return new Vector3Int(v3.x, v3.y, v3.z + 1);
+    }
+
+    public static List<Vector3Int> GetAllDirectNeighboursAsList(this Vector3Int v3)
+    {
+        List<Vector3Int> r = new List<Vector3Int>(6);
+        r.Add(new Vector3Int(v3.x - 1, v3.y, v3.z));
+        r.Add(new Vector3Int(v3.x + 1, v3.y, v3.z));
+        r.Add(new Vector3Int(v3.x, v3.y - 1, v3.z));
+        r.Add(new Vector3Int(v3.x, v3.y + 1, v3.z));
+        r.Add(new Vector3Int(v3.x, v3.y, v3.z - 1));
+        r.Add(new Vector3Int(v3.x, v3.y, v3.z + 1));
+        return r;
+    }
+
 }

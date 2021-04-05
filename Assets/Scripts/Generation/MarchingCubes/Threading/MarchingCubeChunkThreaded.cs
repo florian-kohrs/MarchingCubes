@@ -24,14 +24,14 @@ namespace MarchingCubes
 
         protected Action OnDone;
 
-        public override void InitializeWithMeshDataParallel(TriangleBuilder[] tris, int activeTris, float[] points, IMarchingCubeChunkHandler handler, float surfaceLevel, Action OnDone)
+        public override void InitializeWithMeshDataParallel(TriangleBuilder[] tris, int activeTris, float[] points, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel, Action OnDone)
         {
             HasStarted = true;
             chunkHandler = handler;
             this.OnDone = OnDone;
             children.Add(new BaseMeshChild(GetComponent<MeshFilter>(), GetComponent<MeshRenderer>(), GetComponent<MeshCollider>(), new Mesh()));
          
-            ThreadPool.QueueUserWorkItem((o) => RequestChunk(tris, handler, activeTris, points, surfaceLevel, OnChunkDone));
+            ThreadPool.QueueUserWorkItem((o) => RequestChunk(tris, handler, activeTris, points, surfaceLevel, neighbourLODs, OnChunkDone));
             
         }
 
@@ -43,9 +43,9 @@ namespace MarchingCubes
 
         private bool multiThreadDone = false;
 
-        protected void RequestChunk(TriangleBuilder[] tris, IMarchingCubeChunkHandler handler, int activeTris, float[] points, float surfaceLevel, Action OnChunkDone)
+        protected void RequestChunk(TriangleBuilder[] tris, IMarchingCubeChunkHandler handler, int activeTris, float[] points, float surfaceLevel, MarchingCubeChunkNeighbourLODs neighbourLODs, Action OnChunkDone)
         {
-            BuildMeshData(tris, activeTris, points, handler, surfaceLevel);
+            BuildMeshData(tris, activeTris, points, handler, neighbourLODs, surfaceLevel);
             OnChunkDone();
         }
 

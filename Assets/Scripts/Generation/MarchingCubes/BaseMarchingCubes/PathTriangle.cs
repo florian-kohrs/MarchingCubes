@@ -17,6 +17,8 @@ namespace MarchingCubes
             slope = Mathf.Acos(Vector3.Dot(normal, OriginalLOcalMiddlePointOfTriangle.normalized)) * 180 / Mathf.PI;
         }
 
+        protected const float MAX_SLOPE_TO_BE_USEABLE_IN_PATHFINDING = 45;
+
         public Vector3 normal;
 
         public float slope;
@@ -72,9 +74,16 @@ namespace MarchingCubes
             p.neighbourDistanceMapping[otherKey] = distance;
         }
 
+
         public IEnumerable<PathTriangle> GetCircumjacent(PathTriangle field)
         {
-            return field.neighbours;
+            for (int i = 0; i < 3; i++)
+            {
+                if(field.neighbours != null && field.Slope < MAX_SLOPE_TO_BE_USEABLE_IN_PATHFINDING)
+                {
+                    yield return field.neighbours[i];
+                }
+            }
         }
 
         public float DistanceToTarget(PathTriangle from, PathTriangle to)

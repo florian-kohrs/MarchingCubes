@@ -10,27 +10,31 @@ namespace MarchingCubes
     public class MarchingCubeChunk : MonoBehaviour, IMarchingCubeChunk, IMarchingCubeInteractableChunk, IHasMarchingCubeChunk
     {
 
-        public virtual void InitializeWithMeshDataParallel(TriangleBuilder[] tris, int activeTris, float[] points, IMarchingCubeChunkHandler handler, float surfaceLevel, Action OnDone)
+        public virtual void InitializeWithMeshDataParallel(TriangleBuilder[] tris, int activeTris, float[] points, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel, Action OnDone)
         {
-            InitializeWithMeshData(tris, activeTris, points, handler, surfaceLevel);
+            Debug.LogWarning("This class does not support concurrency! Use " + nameof(MarchingCubeChunkThreaded) + "instead!");
+            InitializeWithMeshData(tris, activeTris, points, handler, neighbourLODs, surfaceLevel);
         }
 
-        public void InitializeWithMeshData(TriangleBuilder[] tris, int activeTris, float[] points, IMarchingCubeChunkHandler handler, float surfaceLevel)
+        public void InitializeWithMeshData(TriangleBuilder[] tris, int activeTris, float[] points, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel)
         {
             children.Add(new BaseMeshChild(GetComponent<MeshFilter>(), GetComponent<MeshRenderer>(), GetComponent<MeshCollider>(), new Mesh()));
-            BuildMeshData(tris, activeTris, points, handler, surfaceLevel);
+            BuildMeshData(tris, activeTris, points, handler, neighbourLODs, surfaceLevel);
         }
 
-        protected void BuildMeshData(TriangleBuilder[] tris, int activeTris, float[] points, IMarchingCubeChunkHandler handler, float surfaceLevel)
+        protected void BuildMeshData(TriangleBuilder[] tris, int activeTris, float[] points, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel)
         {
             HasStarted = true;
             this.surfaceLevel = surfaceLevel;
+            this.neighbourLODs = neighbourLODs;
             chunkHandler = handler;
             this.points = points;
             BuildFromTriangleArray(tris, activeTris);
             BuildChunkEdges();
             IsReady = true;
         }
+
+        protected MarchingCubeChunkNeighbourLODs neighbourLODs;
 
         // protected Vector4[] firstPoint;
 
@@ -61,33 +65,27 @@ namespace MarchingCubes
         /// </summary>
         public bool IsCompletlyAir => IsEmpty && points[0] < surfaceLevel;
 
+
+        protected int vertexSize = MarchingCubeChunkHandler.ChunkSize;
+
+        public int lod = 1;
+
         public IMarchingCubeChunkHandler chunkHandler;
 
         public Dictionary<Vector3Int, HashSet<MarchingCubeEntity>> NeighboursReachableFrom = new Dictionary<Vector3Int, HashSet<MarchingCubeEntity>>();
 
         public IEnumerable<Vector3Int> NeighbourIndices => NeighboursReachableFrom.Keys;
 
-        public void AddNeighbourFromEntity(Vector3Int v3, MarchingCubeEntity from)
+        public int LOD
         {
-            HashSet<MarchingCubeEntity> r;
-            if (!NeighboursReachableFrom.TryGetValue(v3, out r))
+            get
             {
-                r = new HashSet<MarchingCubeEntity>();
-                NeighboursReachableFrom.Add(v3, r);
+                return lod;
             }
-            r.Add(from);
-        }
-
-        public void RemoveNeighbourFromEntity(Vector3Int v3, MarchingCubeEntity from)
-        {
-            HashSet<MarchingCubeEntity> r;
-            if (NeighboursReachableFrom.TryGetValue(v3, out r))
+            set
             {
-                r.Remove(from);
-                if (r.Count == 0)
-                {
-                    NeighboursReachableFrom.Remove(v3);
-                }
+                lod = value;
+                vertexSize = MarchingCubeChunkHandler.ChunkSize / lod;
             }
         }
 
@@ -109,6 +107,32 @@ namespace MarchingCubes
         protected Color[] colorData;
         protected Vector3[] vertices;
         protected int[] meshTriangles;
+
+
+        public void AddNeighbourFromEntity(Vector3Int v3, MarchingCubeEntity from)
+        {
+            HashSet<MarchingCubeEntity> r;
+            if (!NeighboursReachableFrom.TryGetValue(v3, out r))
+            {
+                r = new HashSet<MarchingCubeEntity>();
+                NeighboursReachableFrom.Add(v3, r);
+            }
+            r.Add(from);
+        }
+
+
+        public void RemoveNeighbourFromEntity(Vector3Int v3, MarchingCubeEntity from)
+        {
+            HashSet<MarchingCubeEntity> r;
+            if (NeighboursReachableFrom.TryGetValue(v3, out r))
+            {
+                r.Remove(from);
+                if (r.Count == 0)
+                {
+                    NeighboursReachableFrom.Remove(v3);
+                }
+            }
+        }
 
 
         /// <summary>
@@ -274,6 +298,8 @@ namespace MarchingCubes
         {
             return i.FloorMod(MarchingCubeChunkHandler.ChunkSize);
         }
+
+        //also add find connected neighbours chunks only search tris on border
 
         protected void BuildChunkEdges()
         {
@@ -506,19 +532,6 @@ namespace MarchingCubes
             Build();
         }
 
-
-        public int LOD
-        {
-            set
-            {
-                lod = value;
-                vertexSize = MarchingCubeChunkHandler.ChunkSize / lod;
-            }
-        }
-
-        protected int vertexSize = MarchingCubeChunkHandler.ChunkSize;
-
-        public int lod = 1;
 
         public void RebuildAround(MarchingCubeEntity e)
         {
