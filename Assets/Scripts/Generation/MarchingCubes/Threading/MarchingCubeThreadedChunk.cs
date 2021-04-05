@@ -17,6 +17,8 @@ namespace MarchingCubes
             BuildChunkEdges();
         }
 
+        public int LOD;
+
         public Action<MeshData> BuildMeshTrigger;
 
         public MarchingCubeChunkThreadWrapper wrapper;
@@ -152,7 +154,7 @@ namespace MarchingCubes
 
         protected Vector4 GetHeightDataFrom(int x, int y, int z)
         {
-            Vector3 v3 = MarchingCubeChunkHandler.CenterFromChunkIndex(chunkOffset);
+            Vector3 v3 = MarchingCubeChunkHandler.AnchorFromChunkIndex(chunkOffset);
             return BuildVector4(v3, points[IndexFromCoord(x, y, z)]);
         }
 
@@ -168,7 +170,7 @@ namespace MarchingCubes
 
         protected Vector4[] GetCubeCornersForPoint(Vector3Int p)
         {
-            Vector3 v3 = MarchingCubeChunkHandler.CenterFromChunkIndex(chunkOffset);
+            Vector3 v3 = MarchingCubeChunkHandler.AnchorFromChunkIndex(chunkOffset);
             return new Vector4[]
             {
                 BuildVector4FromCoord(v3,p.x, p.y, p.z),
@@ -532,6 +534,7 @@ namespace MarchingCubes
             RebuildAround(e);
         }
 
+        public float Spacing { get; set; }
 
         public MarchingCubeEntity GetClosestEntity(Vector3 v3)
         {
@@ -544,9 +547,10 @@ namespace MarchingCubes
             return GetClosestEntity(hit.point);
         }
 
+
         public Vector3 GetAnchorPosition()
         {
-            return wrapper.transform.position + chunkOffset * MarchingCubeChunkHandler.ChunkSize;
+            return wrapper.transform.position + (chunkOffset * MarchingCubeChunkHandler.ChunkSize).Mul(Spacing);
         }
 
         public void EditPointsNextToChunk(IMarchingCubeChunk chunk, MarchingCubeEntity e, Vector3Int offset, float delta)

@@ -20,7 +20,7 @@ struct Triangle
 AppendStructuredBuffer<Triangle> triangles;
 RWStructuredBuffer<float> points;
 
-float3 centre;
+float3 anchor;
 float spacing;
 int numPointsPerAxis;
 float surfaceLevel;
@@ -55,7 +55,7 @@ int zipData(int x, int y, int z, int triIndex) {
 float4 GetHeightDataFrom(int x, int y, int z) {
 	
 	float3 f3 = float3(x, y, z);
-	float3 pos = centre + f3 * spacing;
+	float3 pos = anchor + f3 * spacing;
 	return float4(pos.x,pos.y,pos.z, points[indexFromCoord(x, y, z)]);
 }
 

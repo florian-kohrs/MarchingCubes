@@ -27,6 +27,11 @@ public static class VectorExtension
         );
     }
 
+    public static Vector3 Mul(this Vector3Int v, float f)
+    {
+        return new Vector3(v.x * f, v.y * f, v.z * f);
+    }
+
     private static float TowardsAngle(float from, float to, float speed)
     {
         float deltaEuler = from - to;

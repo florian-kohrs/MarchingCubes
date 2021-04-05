@@ -10,6 +10,8 @@ namespace MarchingCubes
 
         bool IsReady { get; }
 
+        float Spacing { set; }
+
         bool HasStarted { get; }
 
         void SetActive(bool b);

@@ -14,7 +14,7 @@ namespace MarchingCubes
 
         protected const int threadGroupSize = 8;
 
-        public const int ChunkSize = 50;
+        public const int ChunkSize = 63;
 
         public const int CHUNK_VOLUME = ChunkSize * ChunkSize * ChunkSize;
 
@@ -39,6 +39,7 @@ namespace MarchingCubes
 
         //[Range(2, 100)]
         //public int numPointsPerAxis = 30;
+
 
 
         protected int NeededChunkAmount
@@ -86,7 +87,7 @@ namespace MarchingCubes
             CreateBuffersIfNeeded();
             kernelId = marshShader.FindKernel("March");
             IMarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
-            startPos = chunk.ChunkOffset * ChunkSize;
+            startPos = AnchorFromChunkIndex(chunk.ChunkOffset);
             maxChunkSqrDistance = buildAroundDistance * buildAroundDistance;
 
             StartCoroutine(BuildRelevantChunksParallelAround(chunk));
@@ -117,7 +118,7 @@ namespace MarchingCubes
             {
                 foreach (Vector3Int v3 in chunk.NeighbourIndices)
                 {
-                    if (!Chunks.ContainsKey(v3) && (startPos - v3 * ChunkSize).sqrMagnitude < maxChunkSqrDistance)
+                    if (!Chunks.ContainsKey(v3) && (startPos - AnchorFromChunkIndex(v3)).sqrMagnitude < maxChunkSqrDistance)
                     {
                         IMarchingCubeChunk newChunk = CreateChunkAt(v3);
                         foreach (Vector3Int newV3 in newChunk.NeighbourIndices)
@@ -157,7 +158,7 @@ namespace MarchingCubes
             Debug.Log($"Number of chunks: {Chunks.Count}");
         }
 
-        protected Vector3Int startPos;
+        protected Vector3 startPos;
         protected float maxChunkSqrDistance;
         protected Queue<Vector3Int> neighbours = new Queue<Vector3Int>();
 
@@ -244,7 +245,7 @@ namespace MarchingCubes
             channeledChunks--;
             foreach (Vector3Int v3 in chunk.NeighbourIndices)
             {
-                float distance = (startPos - v3 * ChunkSize).sqrMagnitude;
+                float distance = (startPos - AnchorFromChunkIndex(v3)).sqrMagnitude;
                 if (!Chunks.ContainsKey(v3) && distance < maxChunkSqrDistance)
                 {
                     AddSortedNeighbour(distance, v3);
@@ -364,6 +365,7 @@ namespace MarchingCubes
             return false;
         }
 
+
         protected IMarchingCubeChunk GetChunkObjectAt(Vector3Int p)
         {
             GameObject g = Instantiate(chunkPrefab, transform);
@@ -389,13 +391,15 @@ namespace MarchingCubes
         }
 
 
+        private static float spacing = 1;
+
         protected Vector3Int PositionToCoord(Vector3 pos)
         {
             Vector3Int result = new Vector3Int();
 
             for (int i = 0; i < 3; i++)
             {
-                result[i] = (int)(pos[i] / PointsPerChunkAxis);
+                result[i] = (int)(pos[i] / spacing / PointsPerChunkAxis);
             }
 
             return result;
@@ -412,32 +416,43 @@ namespace MarchingCubes
 
         protected void BuildChunk(Vector3Int p, IMarchingCubeChunk chunk)
         {
-            int numTris = DispatchAndGetShaderData(p, chunk);
+            int numTris = DispatchAndGetShaderData(p, chunk, 1);
             chunk.InitializeWithMeshData(chunkMaterial, tris, numTris, pointsArray, this, surfaceLevel);
         }
 
         protected void BuildChunkParallel(Vector3Int p, IMarchingCubeChunk chunk, Action OnDone)
         {
-            int numTris = DispatchAndGetShaderData(p, chunk);
+            int numTris = DispatchAndGetShaderData(p, chunk, 1);
             channeledChunks++;
             chunk.InitializeWithMeshDataParallel(chunkMaterial, tris, numTris, pointsArray, this, surfaceLevel, OnDone);
         }
 
-        protected int DispatchAndGetShaderData(Vector3Int p, IMarchingCubeChunk chunk)
+        protected int DispatchAndGetShaderData(Vector3Int p, IMarchingCubeChunk chunk, int lod)
         {
-            Vector3 center = CenterFromChunkIndex(p);
-            densityGenerator.Generate(pointsBuffer, PointsPerChunkAxis, 0, center, 1);
+            Vector3 anchor = AnchorFromChunkIndex(p);
+            float spacing = MarchingCubeChunkHandler.spacing;
+            spacing *= lod;
+            chunk.Spacing = spacing;
+
+            densityGenerator.Generate(pointsBuffer, PointsPerChunkAxis, 0, anchor, spacing);
 
             int numVoxelsPerAxis = ChunkSize;
-            int numThreadsPerAxis = Mathf.CeilToInt(numVoxelsPerAxis / (float)threadGroupSize);
+            //if(numVoxelsPerAxis % lod != 0)
+            //{
+            //    throw new Exception("Lod must be a divisor of numvoxelsperaxis");
+            //}
+            int numThreadsPerAxis = numVoxelsPerAxis / lod;
+            numThreadsPerAxis = Mathf.CeilToInt(numVoxelsPerAxis / (float)threadGroupSize);
+
+            numThreadsPerAxis = numThreadsPerAxis / lod;
 
             triangleBuffer.SetCounterValue(0);
             marshShader.SetBuffer(0, "points", pointsBuffer);
             marshShader.SetBuffer(0, "triangles", triangleBuffer);
             marshShader.SetInt("numPointsPerAxis", PointsPerChunkAxis);
             marshShader.SetFloat("surfaceLevel", surfaceLevel);
-            marshShader.SetFloat("spacing", 1);
-            marshShader.SetVector("centre", new Vector4(center.x, center.y, center.z));
+            marshShader.SetFloat("spacing", spacing);
+            marshShader.SetVector("anchor", new Vector4(anchor.x, anchor.y, anchor.z));
 
             marshShader.Dispatch(0, numThreadsPerAxis, numThreadsPerAxis, numThreadsPerAxis);
 
@@ -501,12 +516,10 @@ namespace MarchingCubes
             }
         }
 
-        public static Vector3 CenterFromChunkIndex(Vector3Int v)
+        public static Vector3 AnchorFromChunkIndex(Vector3Int v)
         {
-            return new Vector3(v.x * ChunkSize, v.y * ChunkSize, v.z * ChunkSize);
+            return new Vector3(v.x * ChunkSize, v.y * ChunkSize, v.z * ChunkSize) * spacing;
         }
-
-        protected float PointSpacing => 1;
 
         public Dictionary<Vector3Int, IMarchingCubeChunk> Chunks => chunks;
 

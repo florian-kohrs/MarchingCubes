@@ -200,6 +200,7 @@ namespace MarchingCubes
         public IMarchingCubeInteractableChunk GetChunk => this;
 
         public bool HasStarted { get; private set; }
+        public float Spacing { set => chunk.Spacing = value; }
 
         private struct ChunkThreadInfo
         {

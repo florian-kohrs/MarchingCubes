@@ -109,6 +109,7 @@ namespace MarchingCubes
         public int NeighbourCount => NeighboursReachableFrom.Count;
 
         public bool HasStarted { get; private set; }
+        public float Spacing { get; set; }
 
         protected float surfaceLevel;
 
@@ -187,7 +188,7 @@ namespace MarchingCubes
 
         protected Vector4 GetHeightDataFrom(int x, int y, int z)
         {
-            Vector3 v3 = MarchingCubeChunkHandler.CenterFromChunkIndex(chunkOffset);
+            Vector3 v3 = MarchingCubeChunkHandler.AnchorFromChunkIndex(chunkOffset);
             return BuildVector4(v3, points[IndexFromCoord(x, y, z)]);
         }
 
@@ -203,7 +204,7 @@ namespace MarchingCubes
 
         protected Vector4[] GetCubeCornersForPoint(Vector3Int p)
         {
-            Vector3 v3 = MarchingCubeChunkHandler.CenterFromChunkIndex(chunkOffset);
+            Vector3 v3 = MarchingCubeChunkHandler.AnchorFromChunkIndex(chunkOffset);
             return new Vector4[]
             {
                 BuildVector4FromCoord(v3,p.x, p.y, p.z),
@@ -607,7 +608,7 @@ namespace MarchingCubes
 
         public Vector3 GetAnchorPosition()
         {
-            return transform.position + chunkOffset * MarchingCubeChunkHandler.ChunkSize;
+            return transform.position + (chunkOffset * MarchingCubeChunkHandler.ChunkSize).Mul(Spacing);
         }
 
         public void EditPointsNextToChunk(IMarchingCubeChunk chunk, MarchingCubeEntity e, Vector3Int offset, float delta)

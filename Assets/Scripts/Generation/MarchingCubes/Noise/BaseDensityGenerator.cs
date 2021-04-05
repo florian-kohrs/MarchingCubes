@@ -33,9 +33,9 @@ namespace MarchingCubes
 
         public int seed;
 
-        public virtual ComputeBuffer Generate(ComputeBuffer pointsBuffer, int numPointsPerAxis, float boundsSize, Vector3 centre, float spacing)
+        public virtual ComputeBuffer Generate(ComputeBuffer pointsBuffer, int numPointsPerAxis, float boundsSize, Vector3 anchor, float spacing)
         {
-            ApplyShaderProperties(pointsBuffer, numPointsPerAxis, boundsSize, centre, spacing);
+            ApplyShaderProperties(pointsBuffer, numPointsPerAxis, boundsSize, anchor, spacing);
 
             int numThreadsPerAxis = Mathf.CeilToInt(numPointsPerAxis / (float)threadGroupSize);
 
@@ -54,7 +54,7 @@ namespace MarchingCubes
         }
 
 
-        protected void ApplyShaderProperties(ComputeBuffer pointsBuffer, int numPointsPerAxis, float boundsSize, Vector3 centre, float spacing)
+        protected void ApplyShaderProperties(ComputeBuffer pointsBuffer, int numPointsPerAxis, float boundsSize, Vector3 anchor, float spacing)
         {
             ComputeBuffer octaveOffsetsBuffer = GetOctaveOffsetsBuffer();
 
@@ -62,7 +62,7 @@ namespace MarchingCubes
             densityShader.SetInt("numPointsPerAxis", numPointsPerAxis);
             densityShader.SetFloat("boundsSize", boundsSize);
             densityShader.SetFloat("spacing", spacing);
-            densityShader.SetVector("centre", new Vector4(centre.x, centre.y, centre.z));
+            densityShader.SetVector("anchor", new Vector4(anchor.x, anchor.y, anchor.z));
             densityShader.SetVector("offset", new Vector4(offset.x, offset.y, offset.z));
 
             densityShader.SetInt("octaves", Mathf.Max(1, octaves));

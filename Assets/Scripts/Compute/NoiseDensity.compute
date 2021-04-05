@@ -2,6 +2,8 @@
 #include "/Includes/Density.compute"
 #include "/Includes/Noise.compute"
 
+static const int numThreads = 8;
+
 // Noise settings
 StructuredBuffer<float3> octaveOffsets;
 int octaves;
@@ -12,6 +14,18 @@ float amplitude;
 float scale;
 float radius;
 
+RWStructuredBuffer<float> points;
+int numPointsPerAxis;
+float boundsSize;
+float3 anchor;
+float3 offset;
+float spacing;
+
+
+int indexFromCoord(uint x, uint y, uint z) {
+    return z * numPointsPerAxis * numPointsPerAxis + y * numPointsPerAxis + x;
+}
+
 [numthreads(numThreads,numThreads,numThreads)]
 void Density (int3 id : SV_DispatchThreadID)
 {
@@ -19,7 +33,7 @@ void Density (int3 id : SV_DispatchThreadID)
         return;
     }
     //center is center of chunk, bound size is terrain size
-    float3 pos = centre + id * spacing; /* -boundsSize / 2;*/
+    float3 pos = anchor + id * spacing; /* -boundsSize / 2;*/
     float noise = radius -length(pos);
 
     float frequency = noiseScale/100;
