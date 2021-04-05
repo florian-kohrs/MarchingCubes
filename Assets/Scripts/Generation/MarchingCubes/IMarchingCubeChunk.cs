@@ -28,10 +28,12 @@ namespace MarchingCubes
 
         bool IsCompletlySolid { get; }
 
+        Material Material { set; }
+
        // void InitializeWithMeshData(Material mat, TriangleBuilder[] tris, int activeTris, float[] points, IMarchingCubeChunkHandler handler, float surfaceLevel);
 
-        void InitializeWithMeshDataParallel(Material mat, TriangleBuilder[] tris, int activeTris, float[] points, IMarchingCubeChunkHandler handler, float surfaceLevel, Action OnDone);
-        void InitializeWithMeshData(Material mat, TriangleBuilder[] tris, int activeTris, float[] points, IMarchingCubeChunkHandler handler, float surfaceLevel);
+        void InitializeWithMeshDataParallel(TriangleBuilder[] tris, int activeTris, float[] points, IMarchingCubeChunkHandler handler, float surfaceLevel, Action OnDone);
+        void InitializeWithMeshData(TriangleBuilder[] tris, int activeTris, float[] points, IMarchingCubeChunkHandler handler, float surfaceLevel);
 
         MarchingCubeEntity GetEntityAt(Vector3Int v3);
 

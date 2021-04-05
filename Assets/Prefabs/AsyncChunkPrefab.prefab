@@ -110,3 +110,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   chunkOffset: {x: 0, y: 0, z: 0}
+  vertexSize: 0
+  lod: 1

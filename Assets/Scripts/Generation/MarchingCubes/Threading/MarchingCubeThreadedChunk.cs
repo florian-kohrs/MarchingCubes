@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public class MarchingCubeThreadedChunk
+    public class MarchingCubeThreadedChunk 
     {
 
         public void InitializeWithMeshData(TriangleBuilder[] tris, int activeTris, float[] points, float surfaceLevel)
@@ -17,11 +17,20 @@ namespace MarchingCubes
             BuildChunkEdges();
         }
 
-        public int LOD;
+        public int LOD
+        {
+            set
+            {
+                lod = value;
+                vertexSize = MarchingCubeChunkHandler.PointsPerChunkAxis / lod;
+            }
+        }
+
+        public int lod;
 
         public Action<MeshData> BuildMeshTrigger;
 
-        public MarchingCubeChunkThreadWrapper wrapper;
+        public MarchingCubeChunkThreaded wrapper;
 
         // protected Vector4[] firstPoint;
 
@@ -73,7 +82,8 @@ namespace MarchingCubes
 
         public Vector3Int chunkOffset;
 
-        public int VertexSize => MarchingCubeChunkHandler.ChunkSize + 1;
+
+        public int vertexSize = MarchingCubeChunkHandler.PointsPerChunkAxis;
 
         public Vector3Int ChunkOffset { get => chunkOffset; set => chunkOffset = value; }
 
@@ -284,15 +294,15 @@ namespace MarchingCubes
         protected Vector3Int CoordFromIndex(int i)
         {
             return new Vector3Int
-               ((i % (VertexSize * VertexSize) % VertexSize)
-               , (i % (VertexSize * VertexSize) / VertexSize)
-               , (i / (VertexSize * VertexSize))
+               ((i % (vertexSize * vertexSize) % vertexSize)
+               , (i % (vertexSize * vertexSize) / vertexSize)
+               , (i / (vertexSize * vertexSize))
                );
         }
 
         protected int IndexFromCoord(int x, int y, int z)
         {
-            return z * VertexSize * VertexSize + y * VertexSize + x;
+            return z * vertexSize * vertexSize + y * vertexSize + x;
         }
 
         protected int IndexFromCoord(Vector3Int v)
@@ -311,13 +321,13 @@ namespace MarchingCubes
         {
             Vector3Int v = new Vector3Int();
 
-            for (int x = 0; x < MarchingCubeChunkHandler.ChunkSize; x++)
+            for (int x = 0; x < vertexSize; x++)
             {
                 v.x = x;
-                for (int y = 0; y < MarchingCubeChunkHandler.ChunkSize; y++)
+                for (int y = 0; y < vertexSize; y++)
                 {
                     v.y = y;
-                    for (int z = 0; z < MarchingCubeChunkHandler.ChunkSize; z++)
+                    for (int z = 0; z < vertexSize; z++)
                     {
                         v.z = z;
                         March(v, points);
@@ -357,7 +367,7 @@ namespace MarchingCubes
             int usedTriCount = 0;
 
             MarchingCubeEntity cube;
-            int chunksize = MarchingCubeChunkHandler.ChunkSize;
+            int chunksize = vertexSize;
             cubeEntities = new Dictionary<int, MarchingCubeEntity>(chunksize * chunksize * chunksize / 15);
             foreach (TriangleBuilder t in ts)
             {
@@ -550,7 +560,7 @@ namespace MarchingCubes
 
         public Vector3 GetAnchorPosition()
         {
-            return wrapper.transform.position + (chunkOffset * MarchingCubeChunkHandler.ChunkSize).Mul(Spacing);
+            return wrapper.transform.position + (chunkOffset * MarchingCubeChunkHandler.ChunkSize);
         }
 
         public void EditPointsNextToChunk(IMarchingCubeChunk chunk, MarchingCubeEntity e, Vector3Int offset, float delta)

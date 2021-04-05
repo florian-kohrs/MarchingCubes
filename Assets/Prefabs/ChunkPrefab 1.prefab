@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 6598448752860528818}
   - component: {fileID: 3634287209776401813}
   m_Layer: 0
-  m_Name: ChunkPrefab
+  m_Name: ChunkPrefab 1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -110,6 +110,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   chunkOffset: {x: 0, y: 0, z: 0}
-  colorData: []
-  vertices: []
-  meshTriangles: 
+  vertexSize: 64
+  lod: 1

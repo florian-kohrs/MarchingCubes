@@ -391,7 +391,7 @@ namespace MarchingCubes
         }
 
 
-        private static float spacing = 1;
+        private static float spacing = 2;
 
         protected Vector3Int PositionToCoord(Vector3 pos)
         {
@@ -399,7 +399,7 @@ namespace MarchingCubes
 
             for (int i = 0; i < 3; i++)
             {
-                result[i] = (int)(pos[i] / spacing / PointsPerChunkAxis);
+                result[i] = (int)(pos[i] / PointsPerChunkAxis);
             }
 
             return result;
@@ -417,18 +417,19 @@ namespace MarchingCubes
         protected void BuildChunk(Vector3Int p, IMarchingCubeChunk chunk)
         {
             int numTris = DispatchAndGetShaderData(p, chunk, 1);
-            chunk.InitializeWithMeshData(chunkMaterial, tris, numTris, pointsArray, this, surfaceLevel);
+            chunk.InitializeWithMeshData(tris, numTris, pointsArray, this, surfaceLevel);
         }
 
         protected void BuildChunkParallel(Vector3Int p, IMarchingCubeChunk chunk, Action OnDone)
         {
             int numTris = DispatchAndGetShaderData(p, chunk, 1);
             channeledChunks++;
-            chunk.InitializeWithMeshDataParallel(chunkMaterial, tris, numTris, pointsArray, this, surfaceLevel, OnDone);
+            chunk.InitializeWithMeshDataParallel(tris, numTris, pointsArray, this, surfaceLevel, OnDone);
         }
 
         protected int DispatchAndGetShaderData(Vector3Int p, IMarchingCubeChunk chunk, int lod)
         {
+            chunk.Material = chunkMaterial;
             Vector3 anchor = AnchorFromChunkIndex(p);
             float spacing = MarchingCubeChunkHandler.spacing;
             spacing *= lod;
