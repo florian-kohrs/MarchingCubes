@@ -1,6 +1,8 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using UnityEngine;
 
 namespace MarchingCubes
@@ -18,14 +20,16 @@ namespace MarchingCubes
 
         public GameObject chunkPrefab;
 
+        public GameObject threadedChunkPrefab;
+
         public const int PointsPerChunkAxis = ChunkSize + 1;
 
-        public Dictionary<Vector3Int, MarchingCubeChunk> chunks = new Dictionary<Vector3Int, MarchingCubeChunk>();
+        public Dictionary<Vector3Int, IMarchingCubeChunk> chunks = new Dictionary<Vector3Int, IMarchingCubeChunk>();
 
-        [Range(1,253)]
+        [Range(1, 253)]
         public int blockAroundPlayer = 16;
 
-        private const int maxTrianglesLeft = 2000000;
+        private const int maxTrianglesLeft = 3000000;
 
         public ComputeShader marshShader;
 
@@ -72,13 +76,20 @@ namespace MarchingCubes
 
         public int buildAroundDistance = 2;
 
+        DateTime start;
+        DateTime end;
+
         private void Start()
         {
-            Debug.Log(SystemInfo.processorCount);
+            start = DateTime.Now;
+            //Debug.Log("Max threadpool threads:" + ThreadPool.thread());
             CreateBuffersIfNeeded();
             kernelId = marshShader.FindKernel("March");
-            MarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
-            BuildRelevantChunksAround(chunk, chunk.chunkOffset, buildAroundDistance);
+            IMarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
+            startPos = chunk.ChunkOffset * ChunkSize;
+            maxChunkSqrDistance = buildAroundDistance * buildAroundDistance;
+
+            StartCoroutine(BuildRelevantChunksParallelAround(chunk));
             ReleaseBuffersIfNeeded();
             Debug.Log($"Number of chunks: {Chunks.Count}");
         }
@@ -93,29 +104,23 @@ namespace MarchingCubes
             yield return null;
 
 
-            //yield return new WaitForSeconds(3);
+            yield return new WaitForSeconds(3);
 
             yield return UpdateChunks();
         }
 
 
-        public void BuildRelevantChunksAround(MarchingCubeChunk chunk, Vector3Int startPos, int radius)
+        public void BuildRelevantChunksAround(IMarchingCubeChunk chunk)
         {
-            BuildRelevantChunksAround(chunk, startPos * ChunkSize, radius * radius, new Queue<Vector3Int>());
-        }
-
-        public void BuildRelevantChunksAround(MarchingCubeChunk chunk, Vector3Int startPos, int sqrRadius, Queue<Vector3Int> neighbours)
-        {
+            if (chunk.NeighbourCount <= 0)
+                return;
             do
             {
-                if (chunk.NeighboursReachableFrom.Count <= 0)
-                    return;
-
                 foreach (Vector3Int v3 in chunk.NeighbourIndices)
                 {
-                    if (!Chunks.ContainsKey(v3) && (startPos - v3 * ChunkSize).sqrMagnitude < sqrRadius)
+                    if (!Chunks.ContainsKey(v3) && (startPos - v3 * ChunkSize).sqrMagnitude < maxChunkSqrDistance)
                     {
-                        MarchingCubeChunk newChunk = CreateChunkAt(v3);
+                        IMarchingCubeChunk newChunk = CreateChunkAt(v3);
                         foreach (Vector3Int newV3 in newChunk.NeighbourIndices)
                         {
                             if (!Chunks.ContainsKey(newV3))
@@ -142,14 +147,109 @@ namespace MarchingCubes
                     }
                 }
             } while (chunk != null && totalTriBuild < maxTrianglesLeft);
-            if(totalTriBuild >= maxTrianglesLeft)
+            end = DateTime.Now;
+            Debug.Log("Total millis: " + (end - start).TotalMilliseconds);
+            if (totalTriBuild >= maxTrianglesLeft)
             {
                 Debug.Log("Aborted");
             }
             Debug.Log("Total triangles: " + totalTriBuild);
         }
 
+        protected Vector3Int startPos;
+        protected float maxChunkSqrDistance;
+        protected Queue<Vector3Int> neighbours = new Queue<Vector3Int>();
 
+        protected SortedDictionary<float, List<Vector3Int>> sortedNeighbourds = new SortedDictionary<float, List<Vector3Int>>();
+
+        protected void AddSortedNeighbour(float key, Vector3Int v)
+        {
+            List<Vector3Int> l;
+            if (!sortedNeighbourds.TryGetValue(key, out l))
+            {
+                l = new List<Vector3Int>();
+                sortedNeighbourds[key] = l;
+            }
+            l.Add(v);
+        }
+
+        protected Vector3Int RemoveFirst()
+        {
+            List<Vector3Int> l = sortedNeighbourds.Values.First();
+            Vector3Int r = l[l.Count-1];
+            l.RemoveAt(l.Count - 1);
+            if(l.Count == 0)
+            {
+                sortedNeighbourds.Remove(sortedNeighbourds.Keys.First());
+            }
+            return r;
+        }
+
+        public IEnumerator BuildRelevantChunksParallelAround(IMarchingCubeChunk chunk)
+        {
+            CreateBuffersIfNeeded();
+            foreach (var item in chunk.NeighbourIndices)
+            {
+                AddSortedNeighbour(0, item);
+            }
+            if (sortedNeighbourds.Count > 0)
+            {
+                yield return BuildRelevantChunksParallelAround();
+            }
+            end = DateTime.Now;
+            Debug.Log("Total millis: " + (end - start).TotalMilliseconds);
+            if (totalTriBuild >= maxTrianglesLeft)
+            {
+                Debug.Log("Aborted");
+            }
+            Debug.Log("Total triangles: " + totalTriBuild);
+            ReleaseBuffersIfNeeded();
+        }
+
+        private IEnumerator BuildRelevantChunksParallelAround()
+        {
+            Vector3Int next;
+            bool isNextInProgress = false;
+
+            do
+            {
+                next = RemoveFirst();
+                isNextInProgress = HasChunkStartedAt(next);
+            } while (isNextInProgress && sortedNeighbourds.Count > 0);
+
+            if (!isNextInProgress)
+            {
+                CreateChunkParallelAt(next, OnChunkDoneCallBack);
+            }
+
+            if (totalTriBuild < maxTrianglesLeft)
+            {
+                while (sortedNeighbourds.Count == 0 && channeledChunks > 0)
+                {
+                    yield return null;
+                }
+                if (sortedNeighbourds.Count > 0)
+                {
+                    //yield return null;
+                    yield return BuildRelevantChunksParallelAround();
+                }
+            }
+        }
+
+        protected void OnChunkDoneCallBack(IMarchingCubeChunk chunk)
+        {
+            channeledChunks--;
+            foreach (Vector3Int v3 in chunk.NeighbourIndices)
+            {
+                float distance = (startPos - v3 * ChunkSize).sqrMagnitude;
+                if (!Chunks.ContainsKey(v3) && distance < maxChunkSqrDistance)
+                {
+                    AddSortedNeighbour(distance, v3);
+                }
+            }
+        }
+
+        protected int channeledChunks = 0;
 
         public void CheckChunksAround(Vector3 v)
         {
@@ -170,8 +270,7 @@ namespace MarchingCubes
                     {
                         index.z = z;
                         Vector3Int shiftedIndex = index + chunkIndex;
-                        MarchingCubeChunk c;
-                        if (!chunks.TryGetValue(shiftedIndex, out c))
+                        if (!chunks.ContainsKey(shiftedIndex))
                         {
                             CreateChunkAt(shiftedIndex);
                         }
@@ -183,12 +282,12 @@ namespace MarchingCubes
         }
 
 
-        protected MarchingCubeChunk FindNonEmptyChunkAround(Vector3 pos)
+        protected IMarchingCubeChunk FindNonEmptyChunkAround(Vector3 pos)
         {
             bool isEmpty = true;
             CreateBuffersIfNeeded();
             Vector3Int chunkIndex = PositionToCoord(pos);
-            MarchingCubeChunk chunk = null;
+            IMarchingCubeChunk chunk = null;
             while (isEmpty)
             {
                 chunk = CreateChunkAt(chunkIndex);
@@ -215,24 +314,74 @@ namespace MarchingCubes
         {
             int deactivatedChunkSqrDistance = DeactivatedChunkDistance;
             deactivatedChunkSqrDistance *= deactivatedChunkSqrDistance;
-            foreach (KeyValuePair<Vector3Int, MarchingCubeChunk> kv in chunks)
+            foreach (KeyValuePair<Vector3Int, IMarchingCubeChunk> kv in chunks)
             {
                 int sqrMagnitude = (kv.Key - center).sqrMagnitude;
-                kv.Value.gameObject.SetActive(sqrMagnitude <= deactivatedChunkSqrDistance);
+                kv.Value.SetActive(sqrMagnitude <= deactivatedChunkSqrDistance);
             }
         }
 
-        protected MarchingCubeChunk CreateChunkAt(Vector3Int p)
+        protected void CreateChunkParallelAt(Vector3Int p, Action<IMarchingCubeChunk> OnDone)
         {
-            //GameObject g = new GameObject("Chunk" + "(" + p.x + "," + p.y + "," + p.z + ")");
+            IMarchingCubeChunk chunk = GetThreadedChunkObjectAt(p);
+            BuildChunkParallel(p, chunk, () => OnDone(chunk));
+        }
+
+        protected IMarchingCubeChunk CreateChunkAt(Vector3Int p)
+        {
+            IMarchingCubeChunk chunk = GetChunkObjectAt(p);
+            BuildChunk(p, chunk);
+            return chunk;
+        }
+
+        public bool TryGetReadyChunkAt(Vector3Int p, out IMarchingCubeChunk chunk)
+        {
+            if (chunks.TryGetValue(p, out chunk))
+            {
+                if (chunk.IsReady)
+                {
+                    return true;
+                }
+                else
+                {
+                    chunk = null;
+                    return false;
+                }
+            }
+            return false;
+        }
+
+        public bool HasChunkStartedAt(Vector3Int p)
+        {
+            IMarchingCubeChunk chunk;
+            if (chunks.TryGetValue(p, out chunk))
+            {
+                return chunk.HasStarted;
+            }
+            return false;
+        }
+
+        protected IMarchingCubeChunk GetChunkObjectAt(Vector3Int p)
+        {
             GameObject g = Instantiate(chunkPrefab, transform);
             g.name = $"Chunk({p.x},{p.y},{p.z})";
             //g.transform.position = p * CHUNK_SIZE;
 
-            MarchingCubeChunk chunk = g.GetComponent<MarchingCubeChunk>();
+            IMarchingCubeChunk chunk = g.GetComponent<IMarchingCubeChunk>();
             chunks.Add(p, chunk);
-            chunk.chunkOffset = p;
-            BuildChunk(p, chunk);
+            chunk.ChunkOffset = p;
+            return chunk;
+        }
+
+        protected IMarchingCubeChunk GetThreadedChunkObjectAt(Vector3Int p)
+        {
+            GameObject g = Instantiate(threadedChunkPrefab, transform);
+            g.name = $"Chunk({p.x},{p.y},{p.z})";
+            //g.transform.position = p * CHUNK_SIZE;
+
+            IMarchingCubeChunk chunk = g.GetComponent<IMarchingCubeChunk>();
+            chunks.Add(p, chunk);
+            chunk.ChunkOffset = p;
             return chunk;
         }
 
@@ -251,14 +400,27 @@ namespace MarchingCubes
 
         public int totalTriBuild;
 
-        TriangleBuilder[] tris = new TriangleBuilder[CHUNK_VOLUME * 5];
+        TriangleBuilder[] tris;// = new TriangleBuilder[CHUNK_VOLUME * 5];
         float[] pointsArray;
 
         private ComputeBuffer triangleBuffer;
         private ComputeBuffer pointsBuffer;
         private ComputeBuffer triCountBuffer;
 
-        protected void BuildChunk(Vector3Int p, MarchingCubeChunk chunk)
+        protected void BuildChunk(Vector3Int p, IMarchingCubeChunk chunk)
+        {
+            int numTris = DispatchAndGetShaderData(p, chunk);
+            chunk.InitializeWithMeshData(chunkMaterial, tris, numTris, pointsArray, this, surfaceLevel);
+        }
+
+        protected void BuildChunkParallel(Vector3Int p, IMarchingCubeChunk chunk, Action OnDone)
+        {
+            int numTris = DispatchAndGetShaderData(p, chunk);
+            channeledChunks++;
+            chunk.InitializeWithMeshDataParallel(chunkMaterial, tris, numTris, pointsArray, this, surfaceLevel, OnDone);
+        }
+
+        protected int DispatchAndGetShaderData(Vector3Int p, IMarchingCubeChunk chunk)
         {
             Vector3 center = CenterFromChunkIndex(p);
             densityGenerator.Generate(pointsBuffer, PointsPerChunkAxis, 0, center, 1);
@@ -284,6 +446,7 @@ namespace MarchingCubes
 
             // Get triangle data from shader
 
+            tris = new TriangleBuilder[numTris];
             triangleBuffer.GetData(tris, 0, 0, numTris);
 
             pointsArray = new float[CHUNK_VOLUME];
@@ -291,13 +454,12 @@ namespace MarchingCubes
 
             totalTriBuild += numTris;
 
-            chunk.InitializeWithMeshData(chunkMaterial, tris, numTris, pointsArray, this, surfaceLevel);
-
+            return numTris;
         }
 
         protected int buffersCreated = 0;
 
-        void CreateBuffersIfNeeded()
+        protected void CreateBuffersIfNeeded()
         {
             buffersCreated++;
             if (buffersCreated > 1)
@@ -322,7 +484,7 @@ namespace MarchingCubes
             //}
         }
 
-        void ReleaseBuffersIfNeeded()
+        protected void ReleaseBuffersIfNeeded()
         {
             buffersCreated--;
             if (buffersCreated == 0)
@@ -343,7 +505,7 @@ namespace MarchingCubes
 
         protected float PointSpacing => 1;
 
-        public Dictionary<Vector3Int, MarchingCubeChunk> Chunks => chunks;
+        public Dictionary<Vector3Int, IMarchingCubeChunk> Chunks => chunks;
 
         public void EditNeighbourChunksAt(Vector3Int chunkOffset, Vector3Int cubeOrigin, float delta)
         {
@@ -368,7 +530,7 @@ namespace MarchingCubes
                 if (allActiveIndicesHaveOffset)
                 {
                     Debug.Log("Found neighbour with offset " + offsetVector);
-                    MarchingCubeChunk neighbourChunk;
+                    IMarchingCubeChunk neighbourChunk;
                     if (chunks.TryGetValue(chunkOffset + offsetVector, out neighbourChunk))
                     {
                         EditNeighbourChunkAt(neighbourChunk, cubeOrigin, offsetVector, delta);
@@ -377,11 +539,18 @@ namespace MarchingCubes
             }
         }
 
-        public void EditNeighbourChunkAt(MarchingCubeChunk chunk, Vector3Int original, Vector3Int offset, float delta)
+        public void EditNeighbourChunkAt(IMarchingCubeChunk chunk, Vector3Int original, Vector3Int offset, float delta)
         {
-            Vector3Int newChunkCubeIndex = (original + offset).Map(f => MathExt.FloorMod(f, ChunkSize));
-            MarchingCubeEntity e = chunk.GetEntityAt(newChunkCubeIndex.x, newChunkCubeIndex.y, newChunkCubeIndex.z);
-            chunk.EditPointsNextToChunk(chunk, e, offset, delta);
+            if (chunk is IMarchingCubeInteractableChunk interactable)
+            {
+                Vector3Int newChunkCubeIndex = (original + offset).Map(f => MathExt.FloorMod(f, ChunkSize));
+                MarchingCubeEntity e = interactable.GetEntityAt(newChunkCubeIndex.x, newChunkCubeIndex.y, newChunkCubeIndex.z);
+                interactable.EditPointsNextToChunk(chunk, e, offset, delta);
+            }
+            else
+            {
+                Debug.LogWarning("Neighbour chunk is not interactable!");
+            }
         }
 
         void OnDestroy()

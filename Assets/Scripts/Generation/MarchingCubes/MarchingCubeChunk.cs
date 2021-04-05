@@ -7,11 +7,12 @@ using UnityEngine;
 namespace MarchingCubes
 {
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
-    public class MarchingCubeChunk : MonoBehaviour, IMarchingCubeInteractableChunk, IHasMarchingCubeChunk
+    public class MarchingCubeChunk : MonoBehaviour, IMarchingCubeChunk, IMarchingCubeInteractableChunk, IHasMarchingCubeChunk
     {
 
-        public void InitializeWithMeshData(Material mat, TriangleBuilder[] tris, int activeTris, float[] points, IMarchingCubeChunkHandler handler, float surfaceLevel)
+        public void InitializeWithMeshDataParallel(Material mat, TriangleBuilder[] tris, int activeTris, float[] points, IMarchingCubeChunkHandler handler, float surfaceLevel, Action OnDone)
         {
+            HasStarted = true;
             this.surfaceLevel = surfaceLevel;
             chunkHandler = handler;
             this.points = points;
@@ -19,6 +20,21 @@ namespace MarchingCubes
             this.mat = mat;
             BuildFromTriangleArray(tris, activeTris);
             BuildChunkEdges();
+            IsReady = true;
+            OnDone();
+        }
+
+        public void InitializeWithMeshData(Material mat, TriangleBuilder[] tris, int activeTris, float[] points, IMarchingCubeChunkHandler handler, float surfaceLevel)
+        {
+            HasStarted = true;
+            this.surfaceLevel = surfaceLevel;
+            chunkHandler = handler;
+            this.points = points;
+            children.Add(new BaseMeshChild(GetComponent<MeshFilter>(), GetComponent<MeshRenderer>(), GetComponent<MeshCollider>(), new Mesh()));
+            this.mat = mat;
+            BuildFromTriangleArray(tris, activeTris);
+            BuildChunkEdges();
+            IsReady = true;
         }
 
         // protected Vector4[] firstPoint;
@@ -26,6 +42,8 @@ namespace MarchingCubes
         protected List<BaseMeshChild> children = new List<BaseMeshChild>();
 
         protected Material mat;
+
+        public bool IsReady { get; private set; }
 
         protected const int MAX_TRIANGLES_PER_MESH = 65000;
 
@@ -85,6 +103,12 @@ namespace MarchingCubes
         public const int VertexSize = MarchingCubeChunkHandler.ChunkSize + 1;
 
         public IMarchingCubeInteractableChunk GetChunk => this;
+
+        public Vector3Int ChunkOffset { get => chunkOffset; set => chunkOffset = value; }
+
+        public int NeighbourCount => NeighboursReachableFrom.Count;
+
+        public bool HasStarted { get; private set; }
 
         protected float surfaceLevel;
 
@@ -277,9 +301,9 @@ namespace MarchingCubes
                             t = trisWithNeighboursOutOfBounds[i];
                             //Vector3Int offset = t.neighbour.offset.Map(Math.Sign);
                             Vector3Int target = chunkOffset + t.neighbour.offset;
-                            MarchingCubeChunk c;
+                            IMarchingCubeChunk c;
                             AddNeighbourFromEntity(target, e);
-                            if (chunkHandler.Chunks.TryGetValue(target, out c))
+                            if (chunkHandler.TryGetReadyChunkAt(target, out c))
                             {
                                 Vector3Int pos = (e.origin + t.neighbour.offset).Map(ClampInChunk);
                                 MarchingCubeEntity cube = c.GetEntityAt(pos);
@@ -586,7 +610,7 @@ namespace MarchingCubes
             return transform.position + chunkOffset * MarchingCubeChunkHandler.ChunkSize;
         }
 
-        public void EditPointsNextToChunk(MarchingCubeChunk chunk, MarchingCubeEntity e, Vector3Int offset, float delta)
+        public void EditPointsNextToChunk(IMarchingCubeChunk chunk, MarchingCubeEntity e, Vector3Int offset, float delta)
         {
             int[] cornerIndices = GetCubeCornerIndicesForPoint(e.origin);
 
@@ -613,6 +637,11 @@ namespace MarchingCubes
                 }
             }
             RebuildAround(e);
+        }
+
+        public void SetActive(bool b)
+        {
+            gameObject.SetActive(b);
         }
 
     }

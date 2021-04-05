@@ -435,11 +435,12 @@ public class TriangulationTableStaticData : MonoBehaviour
 
     public static OutsideNeighbourConnectionInfo GetIndexWithEdges(int index, int edge1, int edge2)
     {
-        int key = BuildIndexWithEdgeKey(index, edge1, edge2);
 
+        int key = BuildIndexWithEdgeKey(index, edge1, edge2);
+        Vector3 edge = new Vector3(edge1, edge2, -1);
         OutsideNeighbourConnectionInfo result;
-        
-        if(indexWithEdges.TryGetValue(key, out result))
+
+        if (indexWithEdges.TryGetValue(key, out result))
             return result;
 
         result = new OutsideNeighbourConnectionInfo();
@@ -450,7 +451,7 @@ public class TriangulationTableStaticData : MonoBehaviour
             v.y = TriangulationTable.triangulation[index][i + 1];
             v.z = TriangulationTable.triangulation[index][i + 2];
             Vector2Int sharedIndices;
-            if (v.SharesExactThisNValuesWith(new Vector3(edge1, edge2, -1), out sharedIndices, SAME_VERTICES_TO_BE_NEIGHBOURS))
+            if (v.SharesExactThisNValuesWith(edge, out sharedIndices, SAME_VERTICES_TO_BE_NEIGHBOURS))
             {
                 result.outsideNeighbourEdgeIndices = sharedIndices;
                 result.otherTriangleIndex = i / 3;
@@ -461,7 +462,10 @@ public class TriangulationTableStaticData : MonoBehaviour
         {
             throw new Exception("no triangle found in " + index + " with the edges " + edge1 + "," + edge2);
         }
-        indexWithEdges.Add(key, result);
+        //lock (indexWithEdges)
+        {
+            indexWithEdges[key] = result;
+        }
         return result;
     }
 
@@ -584,7 +588,7 @@ public class TriangulationTableStaticData : MonoBehaviour
         {
         }
         return result;
-    } 
+    }
 
 
     protected static void AddInternNeighbour(int first, int snd, Vector2Int firstEdge, Vector2Int sndEdge, List<IndexNeighbourPair> addHere)

@@ -73,6 +73,10 @@ namespace MarchingCubes
 
         public int VertexSize => MarchingCubeChunkHandler.ChunkSize + 1;
 
+        public Vector3Int ChunkOffset { get => chunkOffset; set => chunkOffset = value; }
+
+        public int NeighbourCount => NeighboursReachableFrom.Count;
+
         protected float surfaceLevel;
 
         public Color[] colorData;
@@ -145,8 +149,6 @@ namespace MarchingCubes
             return e;
         }
 
-
-        protected NoiseFilter noiseFilter;
 
         protected Vector4 GetHeightDataFrom(int x, int y, int z)
         {
@@ -251,9 +253,15 @@ namespace MarchingCubes
                 e.BuildInternNeighbours();
                 if ((e.origin.x + e.origin.y + e.origin.z) % 2 == 0 || IsBorderPoint(e.origin))
                 {
-                    if(e.BuildNeighbours(GetEntityAt, IsInBounds, trisWithNeighboursOutOfBounds))
+                    if(!e.BuildNeighbours(GetEntityAt, IsInBounds, trisWithNeighboursOutOfBounds))
                     {
                         missingNeighbours.Add(e, trisWithNeighboursOutOfBounds);
+
+                        for (int i = 0; i < trisWithNeighboursOutOfBounds.Count; i++)
+                        {
+                            Vector3Int target = chunkOffset + trisWithNeighboursOutOfBounds[i].neighbour.offset;
+                            AddNeighbourFromEntity(target, e);
+                        }
                         trisWithNeighboursOutOfBounds = new List<MissingNeighbourData>();
                     }
                 }
@@ -519,7 +527,7 @@ namespace MarchingCubes
 
             if (IsBorderPoint(e.origin))
             {
-                wrapper.chunkHandler.EditNeighbourChunksAt(wrapper.chunkOffset, e.origin, delta);
+                wrapper.chunkHandler.EditNeighbourChunksAt(chunkOffset, e.origin, delta);
             }
             RebuildAround(e);
         }
@@ -541,7 +549,7 @@ namespace MarchingCubes
             return wrapper.transform.position + chunkOffset * MarchingCubeChunkHandler.ChunkSize;
         }
 
-        public void EditPointsNextToChunk(MarchingCubeChunk chunk, MarchingCubeEntity e, Vector3Int offset, float delta)
+        public void EditPointsNextToChunk(IMarchingCubeChunk chunk, MarchingCubeEntity e, Vector3Int offset, float delta)
         {
             int[] cornerIndices = GetCubeCornerIndicesForPoint(e.origin);
 
