@@ -26,12 +26,12 @@ namespace MarchingCubes
 
         private void Update()
         {
-            if (IsReady)
+            if (multiThreadDone)
             {
-                chunk.wrapper = this;
                 BuildAllMeshes();
-                BuildAllMissingEdges();
+                chunk.wrapper = this;
                 enabled = false;
+                IsReady = true;
                 OnDone();
             }
         }
@@ -70,8 +70,11 @@ namespace MarchingCubes
 
         protected void OnChunkDone(MarchingCubeThreadedChunk chunk)
         {
-            IsReady = true;
+            BuildAllMissingEdges();
+            multiThreadDone = true;
         }
+
+        private bool multiThreadDone = false;
 
         protected void RequestChunk(TriangleBuilder[] tris, int activeTris, float[] points, float surfaceLevel, Action<MarchingCubeThreadedChunk> OnChunkDone)
         {
