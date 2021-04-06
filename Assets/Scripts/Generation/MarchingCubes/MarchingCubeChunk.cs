@@ -30,7 +30,14 @@ namespace MarchingCubes
             chunkHandler = handler;
             this.points = points;
             BuildFromTriangleArray(tris, activeTris);
-            BuildChunkEdges();
+            if (lod == 1)
+            {
+                BuildChunkEdges();
+            }
+            else
+            {
+                FindConnectedChunks();
+            }
             IsReady = true;
         }
 
@@ -296,17 +303,35 @@ namespace MarchingCubes
 
         protected int ClampInChunk(int i)
         {
-            return i.FloorMod(MarchingCubeChunkHandler.ChunkSize);
+            return i.FloorMod(vertexSize);
         }
 
-        //also add find connected neighbours chunks only search tris on border
+        protected void FindConnectedChunks()
+        {
+            if (IsEmpty)
+                return;
+
+            List<MissingNeighbourData> trisWithNeighboursOutOfBounds = new List<MissingNeighbourData>();
+            MissingNeighbourData t;
+            foreach (MarchingCubeEntity e in cubeEntities.Values)
+            {
+                if (IsBorderPoint(e.origin) && !e.FindMissingNeighbours(IsInBounds, trisWithNeighboursOutOfBounds))
+                {
+                    for (int i = 0; i < trisWithNeighboursOutOfBounds.Count; i++)
+                    {
+                        t = trisWithNeighboursOutOfBounds[i];
+                        Vector3Int target = chunkOffset + t.neighbour.offset;
+                        AddNeighbourFromEntity(target, e);
+                    }
+                }
+            }
+        }
 
         protected void BuildChunkEdges()
         {
             if (IsEmpty)
-            {
                 return;
-            }
+            
             List<MissingNeighbourData> trisWithNeighboursOutOfBounds = new List<MissingNeighbourData>();
             MissingNeighbourData t;
             foreach (MarchingCubeEntity e in cubeEntities.Values)
@@ -590,9 +615,9 @@ namespace MarchingCubes
 
         protected bool IsBorderPoint(Vector3 p)
         {
-            return p.x % (vertexSize - 1) == 0
-                || p.y % (vertexSize - 1) == 0
-                || p.z % (vertexSize - 1) == 0;
+            return p.x == 0 || p.x % (vertexSize - 1) == 0
+                || p.y == 0 || p.y % (vertexSize - 1) == 0
+                || p.z == 0 || p.z % (vertexSize - 1) == 0;
         }
 
 
@@ -631,7 +656,7 @@ namespace MarchingCubes
         public MarchingCubeEntity GetClosestEntity(Vector3 v3)
         {
             Vector3 rest = v3 - GetAnchorPosition();
-            rest /= Spacing;
+            rest /= lod;
             return GetEntityAt((int)rest.x, (int)rest.y, (int)rest.z);
         }
 
@@ -644,7 +669,7 @@ namespace MarchingCubes
 
         public Vector3 GetAnchorPosition()
         {
-            return transform.position + (chunkOffset * vertexSize).Mul(Spacing);
+            return transform.position + (chunkOffset * MarchingCubeChunkHandler.ChunkSize);
         }
 
         public void EditPointsNextToChunk(IMarchingCubeChunk chunk, MarchingCubeEntity e, Vector3Int offset, float delta)

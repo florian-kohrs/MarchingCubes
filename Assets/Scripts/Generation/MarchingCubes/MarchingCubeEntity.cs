@@ -64,11 +64,21 @@ namespace MarchingCubes
 
                 if (IsInBounds(newPos))
                 {
-                    MarchingCubeEntity neighbourCube = GetCube(newPos);
+                    try
+                    {
+                        MarchingCubeEntity neighbourCube = GetCube(newPos);
 
-                    OutsideNeighbourConnectionInfo info = TriangulationTableStaticData.GetIndexWithEdges(neighbourCube.triangulationIndex, neighbour.rotatedEdgePair);
-                    triangles[neighbour.triangleIndex].SoftSetNeighbourTwoWay(neighbourCube.triangles[info.otherTriangleIndex], 
-                        neighbour.relevantVertexIndices, info.outsideNeighbourEdgeIndices);
+                        OutsideNeighbourConnectionInfo info = TriangulationTableStaticData.GetIndexWithEdges(neighbourCube.triangulationIndex, neighbour.rotatedEdgePair);
+                        triangles[neighbour.triangleIndex].SoftSetNeighbourTwoWay(neighbourCube.triangles[info.otherTriangleIndex],
+                            neighbour.relevantVertexIndices, info.outsideNeighbourEdgeIndices);
+                    }catch (Exception x)
+                    {
+                        MarchingCubeEntity neighbourCube = GetCube(origin);
+
+                        OutsideNeighbourConnectionInfo info = TriangulationTableStaticData.GetIndexWithEdges(neighbourCube.triangulationIndex, neighbour.rotatedEdgePair);
+                        triangles[neighbour.triangleIndex].SoftSetNeighbourTwoWay(neighbourCube.triangles[info.otherTriangleIndex],
+                            neighbour.relevantVertexIndices, info.outsideNeighbourEdgeIndices);
+                    }
                 }
                 else
                 {
@@ -87,56 +97,22 @@ namespace MarchingCubes
             tri.SoftSetNeighbourTwoWay(e.triangles[info.otherTriangleIndex], myEdgeIndices, info.outsideNeighbourEdgeIndices);
         }
 
-
-        //void AddNeighboursTwoWay(MarchingCubeEntity e, PathTriangle addHere, PathTriangle add, int neighbourIndex, Vector2Int rotatedEdge)
-        //{
-        //    AddNeighboursTwoWay(e, addHere, add, neighbourIndex, rotatedEdge.x, rotatedEdge.y);
-        //}
-
-        //void AddNeighboursTwoWay(MarchingCubeEntity e, PathTriangle addHere, PathTriangle add, int neighbourIndex, int rotatedEdge1, int rotatedEdge2)
-        //{
-        //    bool wasNewNeighbour = addHere.AddNeighbourTwoWay(add, neighbourIndex, rotatedEdge1, rotatedEdge2);
-        //    if (wasNewNeighbour)
-        //    {
-        //        AddNeighboursTwoWay(e);
-        //    }
-        //}
-
-        //void AddNeighboursTwoWay(MarchingCubeEntity e, int neighbourIndex, PathTriangle tri, Vector2Int rotatedEdge)
-        //{
-        //    bool wasNewNeighbour = e.triangles[neighbourIndex].AddNeighbourTwoWay(tri, neighbourIndex, rotatedEdge);
-        //    if (wasNewNeighbour)
-        //    {
-        //        AddNeighboursTwoWay(e);
-        //    }
-        //}
-
-        //void AddNeighboursTwoWay(MarchingCubeEntity e)
-        //{
-        //     if(!neighbours.Contains(e))
-        //    {
-        //        neighbours.Add(e);
-        //        e.neighbours.Add(this);
-        //    }
-        //}
-
-        //public IList<ICubeEntity> Neighbours
-        //{
-        //    get
-        //    {
-        //        throw new System.NotImplementedException();
-        //    }
-        //}
-
-        public void UpdateMesh()
+        public bool FindMissingNeighbours(Func<Vector3Int, bool> IsInBounds, List<MissingNeighbourData> addHere)
         {
-            throw new System.NotImplementedException();
+            bool hasNeighbourOutOfBounds = true;
+            foreach (OutsideEdgeNeighbourDirection neighbour in NeighbourData.OutsideNeighbours)
+            {
+                Vector3Int newPos = origin + neighbour.offset;
+                if (!IsInBounds(newPos))
+                {
+                    hasNeighbourOutOfBounds = false;
+                    addHere.Add(new MissingNeighbourData(neighbour, newPos));
+                }
+            }
+            neighbourData = null;
+            return hasNeighbourOutOfBounds;
         }
 
-        public void BuildEntityNeighbours()
-        {
-
-        }
 
     }
 }
