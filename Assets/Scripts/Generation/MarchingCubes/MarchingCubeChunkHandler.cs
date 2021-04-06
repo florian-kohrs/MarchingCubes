@@ -46,19 +46,19 @@ namespace MarchingCubes
 
         public int GetLod(float sqrDistance)
         {
-            return RoundToPowerOf2(lodForDistances.Evaluate(sqrDistance / maxChunkSqrDistance));
+            return RoundToPowerOf2(lodForDistances.Evaluate(sqrDistance / maxChunkDistance));
         }
 
         protected int RoundToPowerOf2(float f)
         {
-            int r = (int)Mathf.Pow(2, Mathf.RoundToInt(f));
+            int r = (int)Mathf.Pow(2,Mathf.RoundToInt(f));
 
             return r;
         }
 
         public int GetLodAt(Vector3Int v3)
         {
-            return GetLod((startPos - AnchorFromChunkIndex(v3)).sqrMagnitude);
+            return GetLod((startPos - AnchorFromChunkIndex(v3)).magnitude);
         }
 
         protected int NeededChunkAmount
@@ -106,7 +106,7 @@ namespace MarchingCubes
             kernelId = marshShader.FindKernel("March");
             IMarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
             startPos = AnchorFromChunkIndex(chunk.ChunkOffset);
-            maxChunkSqrDistance = buildAroundDistance * buildAroundDistance;
+            maxChunkDistance = buildAroundDistance;
 
             StartCoroutine(BuildRelevantChunksParallelAround(chunk));
         }
@@ -135,7 +135,7 @@ namespace MarchingCubes
             {
                 foreach (Vector3Int v3 in chunk.NeighbourIndices)
                 {
-                    if (!Chunks.ContainsKey(v3) && (startPos - AnchorFromChunkIndex(v3)).sqrMagnitude < maxChunkSqrDistance)
+                    if (!Chunks.ContainsKey(v3) && (startPos - AnchorFromChunkIndex(v3)).magnitude < maxChunkDistance)
                     {
                         IMarchingCubeChunk newChunk = CreateChunkAt(v3);
                         foreach (Vector3Int newV3 in newChunk.NeighbourIndices)
@@ -176,7 +176,7 @@ namespace MarchingCubes
         }
 
         protected Vector3 startPos;
-        protected float maxChunkSqrDistance;
+        protected float maxChunkDistance;
         protected Queue<Vector3Int> neighbours = new Queue<Vector3Int>();
 
         protected SortedDictionary<float, List<Vector3Int>> sortedNeighbourds = new SortedDictionary<float, List<Vector3Int>>();
@@ -260,8 +260,8 @@ namespace MarchingCubes
             channeledChunks--;
             foreach (Vector3Int v3 in chunk.NeighbourIndices)
             {
-                float distance = (startPos - AnchorFromChunkIndex(v3)).sqrMagnitude;
-                if (!Chunks.ContainsKey(v3) && distance < maxChunkSqrDistance)
+                float distance = (startPos - AnchorFromChunkIndex(v3)).magnitude;
+                if (!Chunks.ContainsKey(v3) && distance < maxChunkDistance)
                 {
                     AddSortedNeighbour(distance, v3);
                 }
@@ -274,7 +274,7 @@ namespace MarchingCubes
         {
             Vector3Int chunkIndex = PositionToCoord(v);
 
-            SetActivationOfChunks(chunkIndex);
+           // SetActivationOfChunks(chunkIndex);
 
             Vector3Int index = new Vector3Int();
             for (int x = -NeededChunkAmount / 2; x < NeededChunkAmount / 2 + 1; x++)
@@ -323,16 +323,16 @@ namespace MarchingCubes
 
 
 
-        protected void SetActivationOfChunks(Vector3Int center)
-        {
-            int deactivatedChunkSqrDistance = DeactivatedChunkDistance;
-            deactivatedChunkSqrDistance *= deactivatedChunkSqrDistance;
-            foreach (KeyValuePair<Vector3Int, IMarchingCubeChunk> kv in chunks)
-            {
-                int sqrMagnitude = (kv.Key - center).sqrMagnitude;
-                kv.Value.SetActive(sqrMagnitude <= deactivatedChunkSqrDistance);
-            }
-        }
+        //protected void SetActivationOfChunks(Vector3Int center)
+        //{
+        //    int deactivatedChunkSqrDistance = DeactivatedChunkDistance;
+        //    deactivatedChunkSqrDistance *= deactivatedChunkSqrDistance;
+        //    foreach (KeyValuePair<Vector3Int, IMarchingCubeChunk> kv in chunks)
+        //    {
+        //        int sqrMagnitude = (kv.Key - center).sqrMagnitude;
+        //        kv.Value.SetActive(magnitude <= deactivatedChunkSqrDistance);
+        //    }
+        //}
 
         protected void CreateChunkParallelAt(Vector3Int p, Action<IMarchingCubeChunk> OnDone)
         {

@@ -343,9 +343,9 @@ public class TriangulationTableStaticData : MonoBehaviour
         for (int i = 0; i < 3; i++)
         {
             Vector3Int offset = Vector3Int.zero;
-            Vector2Int edgeIndex = new Vector2Int(TriangulationTable.triangulation[triangulationIndex][index + i], TriangulationTable.triangulation[triangulationIndex][index + ((i + 1) % 3)]);
-            GetEdgeAxisDirection(ref offset, edgeIndex.x);
-            GetEdgeAxisDirection(ref offset, edgeIndex.y);
+            Vector2Int edgeVertices = new Vector2Int(TriangulationTable.triangulation[triangulationIndex][index + i], TriangulationTable.triangulation[triangulationIndex][index + ((i + 1) % 3)]);
+            GetEdgeAxisDirection(ref offset, edgeVertices.x);
+            GetEdgeAxisDirection(ref offset, edgeVertices.y);
             //r = r.Map(f => { if (Mathf.Abs(f) == 2)  return (int)Mathf.Sign(f) * 1;  else  return 0;  });
             offset = new Vector3Int(
                 Mathf.Abs(offset.x) == 2 ? (int)Mathf.Sign(offset.x) : 0,
@@ -353,7 +353,7 @@ public class TriangulationTableStaticData : MonoBehaviour
                   Mathf.Abs(offset.z) == 2 ? (int)Mathf.Sign(offset.z) : 0);
             if (offset != Vector3.zero)
             {
-                addResult.Add(new OutsideEdgeNeighbourDirection(index / 3, edgeIndex.x, edgeIndex.y, i, (i + 1) % 3, offset));
+                addResult.Add(new OutsideEdgeNeighbourDirection(index / 3, edgeVertices.x, edgeVertices.y, i, (i + 1) % 3, offset));
             }
         }
     }
@@ -652,6 +652,20 @@ public class TriangulationTableStaticData : MonoBehaviour
     {
         neighbourTable[key] = i;
     }
+
+
+    public static readonly List<Vector3Int> offsetFromCornerIndex = new List<Vector3Int>(8)
+    {
+        new Vector3Int(0,0,0),
+        new Vector3Int(1,0,0),
+        new Vector3Int(1,0,1),
+        new Vector3Int(0,0,1),
+        new Vector3Int(0,1,0),
+        new Vector3Int(1,1,0),
+        new Vector3Int(1,1,1),
+        new Vector3Int(0,1,1),
+    };
+
 
     //protected List<int> NeighbourIndicesFromTo(int fromIndex, int toIndex, int triIndex, int sign, )
 

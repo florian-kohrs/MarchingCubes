@@ -27,6 +27,7 @@ namespace MarchingCubes
             HasStarted = true;
             this.surfaceLevel = surfaceLevel;
             this.neighbourLODs = neighbourLODs;
+            careAboutNeighbourLODS = neighbourLODs.AtLestOnHigerThan(lod);
             chunkHandler = handler;
             this.points = points;
             BuildFromTriangleArray(tris, activeTris);
@@ -141,57 +142,13 @@ namespace MarchingCubes
             }
         }
 
-
-        /// <summary>
-        /// maybe reference to pathtriangles instead?
-        /// </summary>
-        //protected List<Triangle> allTriangles;
-
-        //protected List<Triangle> AllTriangles
-        //{
-        //    get
-        //    {
-        //        if (allTriangles == null)
-        //        {
-        //            BuildAllTriangles();
-        //        }
-        //        return allTriangles;
-        //    }
-        //}
-
-        //protected void BuildAllTriangles()
-        //{
-        //    allTriangles = new List<Triangle>();
-        //    for (int x = 0; x < MarchingCubeChunkHandler.ChunkSize; x++)
-        //    {
-        //        for (int y = 0; y < MarchingCubeChunkHandler.ChunkSize; y++)
-        //        {
-        //            for (int z = 0; z < MarchingCubeChunkHandler.ChunkSize; z++)
-        //            {
-        //                MarchingCubeEntity e = cubeEntities[x, y, z];
-        //                if (e != null)
-        //                {
-        //                    foreach (PathTriangle t in e.triangles)
-        //                    {
-        //                        allTriangles.Add(t.tri);
-        //                    }
-        //                }
-        //            }
-        //        }
-        //    }
-        //}
-
+        protected bool careAboutNeighbourLODS;
 
         protected int triCount;
 
         protected int trisLeft;
 
-        //protected MarchingCubeEntity[,,] cubeEntities;
-
-        //public MarchingCubeEntity[,,] CubeEntities => cubeEntities;
-
         public Dictionary<int, MarchingCubeEntity> cubeEntities;
-
 
         public MarchingCubeEntity GetEntityAt(Vector3Int v3)
         {
@@ -301,6 +258,69 @@ namespace MarchingCubes
             cubeEntities[IndexFromCoord(p)] = e;
         }
 
+        protected int DirectionToCornerIndex(Vector3Int v3)
+        {
+            if (v3.x != 0)
+                return 1;
+            else if (v3.y != 0)
+                return 4;
+            else
+                return 3;
+        }
+
+        public Vector3 GetSimulatedTringlePointAtPositionWithEdge(Vector3Int direction, Vector3Int p)
+        {
+            return GetSimulatedTringlePointAtPositionWithEdge(DirectionToCornerIndex(direction), p);
+        }
+
+        public Vector3 GetSimulatedTringlePointAtPositionWithEdge(int cordnerIndex, Vector3Int p)
+        {
+            Vector3 result;
+
+            Vector4[] cubeCorners = GetCubeCornersForPoint(p);
+
+            short cubeIndex = 0;
+            if (cubeCorners[0].w < surfaceLevel) cubeIndex |= 1;
+            if (cubeCorners[1].w < surfaceLevel) cubeIndex |= 2;
+            if (cubeCorners[2].w < surfaceLevel) cubeIndex |= 4;
+            if (cubeCorners[3].w < surfaceLevel) cubeIndex |= 8;
+            if (cubeCorners[4].w < surfaceLevel) cubeIndex |= 16;
+            if (cubeCorners[5].w < surfaceLevel) cubeIndex |= 32;
+            if (cubeCorners[6].w < surfaceLevel) cubeIndex |= 64;
+            if (cubeCorners[7].w < surfaceLevel) cubeIndex |= 128;
+
+            for (int i = 0; TriangulationTable.triangulation[cubeIndex][i] != -1; i += 3)
+            {
+                // Get indices of corner points A and B for each of the three edges
+                // of the cube that need to be joined to form the triangle.
+                int a0 = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[cubeIndex][i]];
+                int b0 = TriangulationTable.cornerIndexBFromEdge[TriangulationTable.triangulation[cubeIndex][i]];
+
+                if (a0 == 0 && b0 == cordnerIndex)
+                {
+                    result = InterpolateVerts(cubeCorners[a0], cubeCorners[b0]);
+                    return result;
+                }
+
+                int a1 = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[cubeIndex][i + 1]];
+                int b1 = TriangulationTable.cornerIndexBFromEdge[TriangulationTable.triangulation[cubeIndex][i + 1]];
+                if (a1 == 0 && b1 == cordnerIndex)
+                {
+                    result = InterpolateVerts(cubeCorners[a1], cubeCorners[b1]);
+                    return result;
+                }
+                int a2 = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[cubeIndex][i + 2]];
+                int b2 = TriangulationTable.cornerIndexBFromEdge[TriangulationTable.triangulation[cubeIndex][i + 2]];
+                if (a2 == 0 && b2 == cordnerIndex)
+                {
+                    result = InterpolateVerts(cubeCorners[a2], cubeCorners[b2]);
+                    return result;
+                }
+
+            }
+            return -Vector3.one;
+        }
+
         protected int ClampInChunk(int i)
         {
             return i.FloorMod(vertexSize);
@@ -327,11 +347,12 @@ namespace MarchingCubes
             }
         }
 
+
         protected void BuildChunkEdges()
         {
             if (IsEmpty)
                 return;
-            
+
             List<MissingNeighbourData> trisWithNeighboursOutOfBounds = new List<MissingNeighbourData>();
             MissingNeighbourData t;
             foreach (MarchingCubeEntity e in cubeEntities.Values)
@@ -350,9 +371,37 @@ namespace MarchingCubes
                             AddNeighbourFromEntity(target, e);
                             if (chunkHandler.TryGetReadyChunkAt(target, out c))
                             {
-                                Vector3Int pos = (e.origin + t.neighbour.offset).Map(ClampInChunk);
-                                MarchingCubeEntity cube = c.GetEntityAt(pos);
-                                e.BuildSpecificNeighbourInNeighbour(cube, e.triangles[t.neighbour.triangleIndex], t.neighbour.relevantVertexIndices, t.neighbour.rotatedEdgePair);
+                                if (c.LOD == lod)
+                                {
+                                    Vector3Int pos = (e.origin + t.neighbour.offset).Map(ClampInChunk);
+                                    MarchingCubeEntity cube = c.GetEntityAt(pos);
+                                    e.BuildSpecificNeighbourInNeighbour(cube, e.triangles[t.neighbour.triangleIndex], t.neighbour.relevantVertexIndices, t.neighbour.rotatedEdgePair);
+                                }
+                                else if (c.LOD > lod)
+                                {
+                                    //if false position should be correct already
+                                    if (e.origin.x % c.LOD == 0 && e.origin.y % c.LOD == 0 && e.origin.z % c.LOD == 0)
+                                    {
+                                        Vector3Int pos = (e.origin + t.neighbour.offset).Map(ClampInChunk);
+
+                                        float lodDiff = c.LOD / lod;
+                                        ///pos needed to be divided by lodDiff or something
+                                        MarchingCubeEntity cube = c.GetEntityAt(pos);
+                                        //CorrectMarchingCubeInDirection(e, t, c.LOD, t.neighbour.offset);
+                                    } 
+                                    else
+                                    {
+                                      //  missingHigherLODNeighbour.Add(t);
+                                    }
+                                }
+                            }
+                            else if (careAboutNeighbourLODS)
+                            {
+                                int neighbourLod = neighbourLODs.GetLodFromNeighbourInDirection(t.neighbour.offset);
+                                //if (e.origin.x % neighbourLod != 0 || e.origin.y % neighbourLod != 0 || e.origin.z % neighbourLod != 0)
+                                {
+                                   // missingHigherLODNeighbour.Add(t);
+                                }
                             }
                         }
                         trisWithNeighboursOutOfBounds = new List<MissingNeighbourData>();
@@ -361,6 +410,75 @@ namespace MarchingCubes
             }
         }
 
+        protected List<MissingNeighbourData> missingHigherLODNeighbour = new List<MissingNeighbourData>();
+
+        protected void CorrectMarchingCubeInDirection(MarchingCubeEntity e, MissingNeighbourData missingData, int otherLod, Vector3Int dir)
+        {
+            int lodDiff = otherLod / lod;
+
+            //int a0 = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[cubeIndex][i]];
+            //int b0 = TriangulationTable.cornerIndexBFromEdge[TriangulationTable.triangulation[cubeIndex][i]];
+
+            //int a1 = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[cubeIndex][i + 1]];
+            //int b1 = TriangulationTable.cornerIndexBFromEdge[TriangulationTable.triangulation[cubeIndex][i + 1]];
+
+            //Vector3Int firstPointCoord = TriangulationTableStaticData.offsetFromCornerIndex[missingData.neighbour.originalEdgePair.x];
+            //Vector3Int sndPointCoord = TriangulationTableStaticData.offsetFromCornerIndex[missingData.neighbour.originalEdgePair.y];
+
+            //Vector3Int firstCoord = e.origin + firstPointCoord;
+            //Vector3Int sndCoord = e.origin + sndPointCoord;
+
+            //Vector3Int firstNeighbourOffset = new Vector3Int(firstCoord.x % lodDiff, firstCoord.y % lodDiff, firstCoord.z % lodDiff);
+            //Vector3Int sndNeighbourOffset = new Vector3Int(
+            //    (lodDiff - 1) - (sndCoord.x % lodDiff),
+            //    (lodDiff - 1) - (sndCoord.y % lodDiff),
+            //    (lodDiff - 1) - (sndCoord.z % lodDiff));   
+
+            PathTriangle t = e.triangles[missingData.neighbour.triangleIndex];
+            
+
+            Vector3Int firstNeighbourOffset = new Vector3Int(e.origin.x % lodDiff, e.origin.y % lodDiff, e.origin.z % lodDiff);
+
+            if(dir.x != 0)
+            {
+                firstNeighbourOffset.x = 0;
+            }
+            else if(dir.y != 0)
+            {
+                firstNeighbourOffset.y = 0;
+            }
+            else if(dir.z != 0)
+            {
+                firstNeighbourOffset.z = 0;
+            }
+
+            if(firstNeighbourOffset == Vector3Int.zero)
+            {
+
+            }
+
+            Vector3Int sndNeighbourOffset = new Vector3Int(
+                (lodDiff - 1) - (e.origin.x % lodDiff),
+                (lodDiff - 1) - (e.origin.y % lodDiff),
+                (lodDiff - 1) - (e.origin.z % lodDiff));
+
+
+            PathTriangle fixThis = e.triangles[missingData.neighbour.triangleIndex];
+
+            MarchingCubeEntity importantFirstNeighbourCube = GetEntityAt(e.origin - firstNeighbourOffset);
+            MarchingCubeEntity importantSndNeighbourCube = GetEntityAt(e.origin + sndNeighbourOffset);
+
+
+            if (dir.x != 0)
+            {
+                if (dir.x < 0)
+                {
+                }
+
+
+            }
+
+        }
 
         protected virtual Vector3 InterpolateVerts(Vector4 v1, Vector4 v2)
         {
@@ -369,6 +487,11 @@ namespace MarchingCubes
             return v + t * (v2.GetXYZ() - v);
         }
 
+
+        protected virtual Vector3 InterpolatePositions(Vector3 v1, Vector3 v2, float p)
+        {
+            return v1 + p * (v2 - v1);
+        }
 
         protected Vector3Int CoordFromIndex(int i)
         {
@@ -618,6 +741,57 @@ namespace MarchingCubes
             return p.x == 0 || p.x % (vertexSize - 1) == 0
                 || p.y == 0 || p.y % (vertexSize - 1) == 0
                 || p.z == 0 || p.z % (vertexSize - 1) == 0;
+        }
+
+
+        protected Direction GetBorderInfo(Vector3Int v)
+        {
+            if (!(v.y == 0 || v.y % (vertexSize - 1) == 0
+                || v.z == 0 || v.z % (vertexSize - 1) == 0))
+            {
+                if (v.x == 0)
+                    return Direction.xStart;
+                else if (v.x % (vertexSize - 1) == 0)
+                    return Direction.xEnd;
+            }
+
+            if (!(v.x == 0 || v.x % (vertexSize - 1) == 0
+                || v.z == 0 || v.z % (vertexSize - 1) == 0))
+            {
+                if (v.y == 0)
+                    return Direction.yStart;
+                else if (v.y % (vertexSize - 1) == 0)
+                    return Direction.yEnd;
+            }
+
+            if (!(v.x == 0 || v.x % (vertexSize - 1) == 0
+              || v.y == 0 || v.y % (vertexSize - 1) == 0))
+            {
+                if (v.z == 0)
+                    return Direction.yStart;
+                else if (v.z % (vertexSize - 1) == 0)
+                    return Direction.yEnd;
+            }
+            return Direction.None;
+        }
+
+
+        protected enum Direction { None, xStart, xEnd, yStart, yEnd, zStart, zEnd };
+
+        protected Direction DirFromVector(Vector3Int dir)
+        {
+            if (dir.x > 0)
+                return Direction.xEnd;
+            else if (dir.x < 0)
+                return Direction.xStart;
+            else if (dir.y > 0)
+                return Direction.yEnd;
+            else if (dir.y < 0)
+                return Direction.yStart;
+            else if (dir.z > 0)
+                return Direction.zEnd;
+            else
+                return Direction.zStart;
         }
 
 

@@ -21,6 +21,33 @@ namespace MarchingCubes
             }
         }
 
+        public bool AtLestOnHigerThan(int lod)
+        {
+            return rightNeighbourLod > lod
+                || leftNeighbourLod > lod
+                || upperNeighbourLod > lod
+                || lowerNeighbourLod > lod
+                || frontNeighbourLod > lod
+                || backNeighbourLod > lod;
+        }
+
+        public int GetLodFromNeighbourInDirection(Vector3Int dir)
+        {
+            if (dir.x > 0)
+                return rightNeighbourLod;
+            else if (dir.x < 0)
+                return leftNeighbourLod;
+            else if (dir.y > 0)
+                return upperNeighbourLod;
+            else if (dir.y < 0)
+                return lowerNeighbourLod;
+            else if (dir.z > 0)
+                return frontNeighbourLod;
+            else
+                return backNeighbourLod;
+            
+        }
+
         public int this[int i]
         {
             get

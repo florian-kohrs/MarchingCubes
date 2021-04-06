@@ -64,21 +64,11 @@ namespace MarchingCubes
 
                 if (IsInBounds(newPos))
                 {
-                    try
-                    {
                         MarchingCubeEntity neighbourCube = GetCube(newPos);
 
                         OutsideNeighbourConnectionInfo info = TriangulationTableStaticData.GetIndexWithEdges(neighbourCube.triangulationIndex, neighbour.rotatedEdgePair);
                         triangles[neighbour.triangleIndex].SoftSetNeighbourTwoWay(neighbourCube.triangles[info.otherTriangleIndex],
-                            neighbour.relevantVertexIndices, info.outsideNeighbourEdgeIndices);
-                    }catch (Exception x)
-                    {
-                        MarchingCubeEntity neighbourCube = GetCube(origin);
-
-                        OutsideNeighbourConnectionInfo info = TriangulationTableStaticData.GetIndexWithEdges(neighbourCube.triangulationIndex, neighbour.rotatedEdgePair);
-                        triangles[neighbour.triangleIndex].SoftSetNeighbourTwoWay(neighbourCube.triangles[info.otherTriangleIndex],
-                            neighbour.relevantVertexIndices, info.outsideNeighbourEdgeIndices);
-                    }
+                        neighbour.relevantVertexIndices, info.outsideNeighbourEdgeIndices);
                 }
                 else
                 {

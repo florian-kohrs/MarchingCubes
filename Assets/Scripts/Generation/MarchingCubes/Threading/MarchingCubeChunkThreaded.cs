@@ -45,8 +45,15 @@ namespace MarchingCubes
 
         protected void RequestChunk(TriangleBuilder[] tris, IMarchingCubeChunkHandler handler, int activeTris, float[] points, float surfaceLevel, MarchingCubeChunkNeighbourLODs neighbourLODs, Action OnChunkDone)
         {
-            BuildMeshData(tris, activeTris, points, handler, neighbourLODs, surfaceLevel);
-            OnChunkDone();
+            //try
+            //{
+                BuildMeshData(tris, activeTris, points, handler, neighbourLODs, surfaceLevel);
+                OnChunkDone();
+            //}
+            //catch(Exception x)
+            //{
+
+            //}
         }
 
         protected override void SetCurrentMeshData()
