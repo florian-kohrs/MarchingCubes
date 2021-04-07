@@ -30,15 +30,17 @@ namespace MarchingCubes
             careAboutNeighbourLODS = neighbourLODs.AtLestOnHigerThan(lod);
             chunkHandler = handler;
             this.points = points;
-            BuildFromTriangleArray(tris, activeTris);
-            if (lod == 1)
-            {
-                BuildChunkEdges();
-            }
-            else
-            {
-                FindConnectedChunks();
-            }
+            //Build();
+            BuildMarchAll();
+            BuildFromTriangleArray(cubeEntities2.ToArray(), activeTris);
+            //if (lod == 1)
+            //{
+            //    BuildChunkEdges();
+            //}
+            //else
+            //{
+            //    FindConnectedChunks();
+            //}
             IsReady = true;
         }
 
@@ -75,6 +77,8 @@ namespace MarchingCubes
 
 
         protected int vertexSize = MarchingCubeChunkHandler.ChunkSize;
+
+        protected int PointSize => vertexSize + 1;
 
         public int lod = 1;
 
@@ -148,7 +152,10 @@ namespace MarchingCubes
 
         protected int trisLeft;
 
-        public Dictionary<int, MarchingCubeEntity> cubeEntities;
+        public Dictionary<int, MarchingCubeEntity> cubeEntities = new Dictionary<int, MarchingCubeEntity>();
+        public List<TriangleBuilder> cubeEntities2 = new List<TriangleBuilder>();
+
+        protected Dictionary<Vector3Int, MarchingCubeEntity> higherLodNeighbourCubes = new Dictionary<Vector3Int, MarchingCubeEntity>();
 
         public MarchingCubeEntity GetEntityAt(Vector3Int v3)
         {
@@ -167,35 +174,54 @@ namespace MarchingCubes
 
         protected NoiseFilter noiseFilter;
 
-        protected Vector4 GetHeightDataFrom(int x, int y, int z)
-        {
-            Vector3 v3 = MarchingCubeChunkHandler.AnchorFromChunkIndex(chunkOffset);
-            return BuildVector4(v3, points[IndexFromCoord(x, y, z)]);
-        }
 
         protected Vector4 BuildVector4(Vector3 v3, float w)
         {
             return new Vector4(v3.x, v3.y, v3.z, w);
         }
 
-        protected Vector4 BuildVector4FromCoord(Vector3 v3, int x, int y, int z)
+        public Vector3 AnchorPos { get; set; }
+
+        protected Vector4 BuildVector4FromCoord(int x, int y, int z)
         {
-            return new Vector4(v3.x, v3.y, v3.z, points[IndexFromCoord(x, y, z)]);
+            x *= lod;
+            y *= lod;
+            z *= lod;
+            return new Vector4(AnchorPos.x + x, AnchorPos.y + y, AnchorPos.z + z, points[IndexFromCoord(x, y, z)]);
+        }
+
+        protected Vector4[] GetCubeCornersForPoint(int x, int y, int z)
+        {
+            return new Vector4[]
+            {
+                BuildVector4FromCoord(x, y, z),
+                BuildVector4FromCoord(x + 1, y, z),
+                BuildVector4FromCoord(x + 1, y, z + 1),
+                BuildVector4FromCoord(x, y, z + 1),
+                BuildVector4FromCoord(x, y + 1, z),
+                BuildVector4FromCoord(x + 1, y + 1, z),
+                BuildVector4FromCoord(x + 1, y + 1, z + 1),
+                BuildVector4FromCoord(x, y + 1, z + 1)
+            };
         }
 
         protected Vector4[] GetCubeCornersForPoint(Vector3Int p)
         {
-            Vector3 v3 = MarchingCubeChunkHandler.AnchorFromChunkIndex(chunkOffset);
+            return GetCubeCornersForPoint(p.x, p.y, p.z);
+        }
+
+        protected Vector4[] GetCubeCornersForPointWithLod(Vector3Int p, int spacing)
+        {
             return new Vector4[]
             {
-                BuildVector4FromCoord(v3,p.x, p.y, p.z),
-                BuildVector4FromCoord(v3,p.x + 1, p.y, p.z),
-                BuildVector4FromCoord(v3,p.x + 1, p.y, p.z + 1),
-                BuildVector4FromCoord(v3,p.x, p.y, p.z + 1),
-                BuildVector4FromCoord(v3,p.x, p.y + 1, p.z),
-                BuildVector4FromCoord(v3,p.x + 1, p.y + 1, p.z),
-                BuildVector4FromCoord(v3,p.x + 1, p.y + 1, p.z + 1),
-                BuildVector4FromCoord(v3,p.x, p.y + 1, p.z + 1)
+                BuildVector4FromCoord(p.x, p.y, p.z),
+                BuildVector4FromCoord(p.x + spacing, p.y, p.z),
+                BuildVector4FromCoord(p.x + spacing, p.y, p.z + spacing),
+                BuildVector4FromCoord(p.x, p.y, p.z + spacing),
+                BuildVector4FromCoord(p.x, p.y + spacing, p.z),
+                BuildVector4FromCoord(p.x + spacing, p.y + spacing, p.z),
+                BuildVector4FromCoord(p.x +spacing, p.y + spacing, p.z + spacing),
+                BuildVector4FromCoord(p.x, p.y + spacing, p.z + spacing)
             };
         }
 
@@ -214,7 +240,7 @@ namespace MarchingCubes
             };
         }
 
-        public virtual void March(Vector3Int p, float[] points)
+        public virtual void March(Vector3Int p)
         {
             MarchingCubeEntity e = new MarchingCubeEntity();
             e.origin = p;
@@ -251,11 +277,211 @@ namespace MarchingCubes
                 tri.b = InterpolateVerts(cubeCorners[a1], cubeCorners[b1]);
                 tri.a = InterpolateVerts(cubeCorners[a2], cubeCorners[b2]);
                 e.triangles.Add(new PathTriangle(tri));
+                triCount+=3;
+
+            }
+
+            if (e.triangles.Count > 0)
+            {
+                cubeEntities[IndexFromCoord(p)] = e;
+            }
+        }
+
+        public void BuildMarchAll()
+        {
+            for (int x = 0; x < vertexSize; x++)
+            {
+                for (int y = 0; y < vertexSize; y++)
+                {
+                    for (int z = 0; z < vertexSize; z++)
+                    {
+                        MarchIntoBuilder2(x,y,z);
+                    }
+                }
+            }
+        }
+
+
+        int indexFromCoord(int x, int y, int z)
+        {
+            return z * vertexSize * vertexSize + y * vertexSize + x;
+        }
+
+        Vector4 GetHeightDataFrom(int x, int y, int z)
+        {
+            Vector3 f3 = new Vector3(x, y, z);
+            Vector4 pos = AnchorPos + f3 * lod;
+            return new Vector4(pos.x, pos.y, pos.z, points[indexFromCoord(x, y, z)]);
+        }
+
+        Vector3 interpolateVerts(Vector4 v1, Vector4 v2)
+        {
+            //return v1.xyz + 0.5 * (v2.xyz - v1.xyz);
+            float t = (surfaceLevel - v1.w) / (v2.w - v1.w);
+            return new Vector3(v1.x,v1.y,v1.z) + (t) * (new Vector3(v2.x, v2.y, v2.z) - new Vector3(v1.x, v1.y, v1.z));
+        }
+
+        uint zipData(int x, int y, int z, int triIndex)
+        {
+            return (uint)((triIndex << 24) + (x << 16) + (y << 8) + z);
+        }
+
+        void MarchIntoBuilder(Vector3Int id)
+        {
+
+            // 8 corners of the current cube
+            Vector4[] cubeCorners =
+            {
+        GetHeightDataFrom(id.x, id.y, id.z),
+        GetHeightDataFrom(id.x + 1, id.y, id.z),
+        GetHeightDataFrom(id.x + 1, id.y, id.z + 1),
+        GetHeightDataFrom(id.x, id.y, id.z + 1),
+        GetHeightDataFrom(id.x, id.y + 1, id.z),
+        GetHeightDataFrom(id.x + 1, id.y + 1, id.z),
+        GetHeightDataFrom(id.x + 1, id.y + 1, id.z + 1),
+        GetHeightDataFrom(id.x, id.y + 1, id.z + 1)
+            };
+
+            // Calculate unique index for each cube configuration.
+            // There are 256 possible values
+            // A value of 0 means cube is entirely inside surface; 255 entirely outside.
+            // The value is used to look up the edge table, which indicates which edges of the cube are cut by the isosurface.
+            int cubeIndex = 0;
+
+            if (cubeCorners[0].w < surfaceLevel) cubeIndex |= 1;
+            if (cubeCorners[1].w < surfaceLevel) cubeIndex |= 2;
+            if (cubeCorners[2].w < surfaceLevel) cubeIndex |= 4;
+            if (cubeCorners[3].w < surfaceLevel) cubeIndex |= 8;
+            if (cubeCorners[4].w < surfaceLevel) cubeIndex |= 16;
+            if (cubeCorners[5].w < surfaceLevel) cubeIndex |= 32;
+            if (cubeCorners[6].w < surfaceLevel) cubeIndex |= 64;
+            if (cubeCorners[7].w < surfaceLevel) cubeIndex |= 128;
+
+            // Create triangles for current cube configuration
+            for (int i = 0; TriangulationTable.triangulation[cubeIndex][i] != -1; i += 3)
+            {
+                // Get indices of corner points A and B for each of the three edges
+                // of the cube that need to be joined to form the triangle.
+                int a0 = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[cubeIndex][i]];
+                int b0 = TriangulationTable.cornerIndexBFromEdge[TriangulationTable.triangulation[cubeIndex][i]];
+
+                int a1 = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[cubeIndex][i + 1]];
+                int b1 = TriangulationTable.cornerIndexBFromEdge[TriangulationTable.triangulation[cubeIndex][i + 1]];
+
+                int a2 = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[cubeIndex][i + 2]];
+                int b2 = TriangulationTable.cornerIndexBFromEdge[TriangulationTable.triangulation[cubeIndex][i + 2]];
+
+                TriangleBuilder tri = new TriangleBuilder();
+                tri.tri = new Triangle();
+                tri.data = zipData(id.x, id.y, id.z, cubeIndex);
+                tri.tri.a = interpolateVerts(cubeCorners[a0], cubeCorners[b0]);
+                tri.tri.b = interpolateVerts(cubeCorners[a1], cubeCorners[b1]);
+                tri.tri.c = interpolateVerts(cubeCorners[a2], cubeCorners[b2]);
+
+                /*float3 normal = normalize(cross(tri.vertexB - tri.vertexA, tri.vertexC - tri.vertexA));
+                float3 middlePoint = (tri.vertexA + tri.vertexB + tri.vertexC) / 3;
+                float angleFromCenter = acos(dot(normal, normalize(middlePoint))) * 180 / PI;*/
+
+                cubeEntities2.Add(tri);
+            }
+        }
+
+        public virtual void MarchIntoBuilder2(int x, int y, int z)
+        {
+            Vector4[] cubeCorners = GetCubeCornersForPoint(x,y,z);
+
+            short cubeIndex = 0;
+            if (cubeCorners[0].w < surfaceLevel) cubeIndex |= 1;
+            if (cubeCorners[1].w < surfaceLevel) cubeIndex |= 2;
+            if (cubeCorners[2].w < surfaceLevel) cubeIndex |= 4;
+            if (cubeCorners[3].w < surfaceLevel) cubeIndex |= 8;
+            if (cubeCorners[4].w < surfaceLevel) cubeIndex |= 16;
+            if (cubeCorners[5].w < surfaceLevel) cubeIndex |= 32;
+            if (cubeCorners[6].w < surfaceLevel) cubeIndex |= 64;
+            if (cubeCorners[7].w < surfaceLevel) cubeIndex |= 128;
+
+
+            for (int i = 0; TriangulationTable.triangulation[cubeIndex][i] != -1; i += 3)
+            {
+                // Get indices of corner points A and B for each of the three edges
+                // of the cube that need to be joined to form the triangle.
+                int a0 = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[cubeIndex][i]];
+                int b0 = TriangulationTable.cornerIndexBFromEdge[TriangulationTable.triangulation[cubeIndex][i]];
+
+                int a1 = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[cubeIndex][i + 1]];
+                int b1 = TriangulationTable.cornerIndexBFromEdge[TriangulationTable.triangulation[cubeIndex][i + 1]];
+
+                int a2 = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[cubeIndex][i + 2]];
+                int b2 = TriangulationTable.cornerIndexBFromEdge[TriangulationTable.triangulation[cubeIndex][i + 2]];
+
+                TriangleBuilder triBuild = new TriangleBuilder();
+                triBuild.data = triBuild.zipData(x, y, z, cubeIndex);
+                Triangle tri = new Triangle();
+                tri.c = InterpolateVerts(cubeCorners[a0], cubeCorners[b0]);
+                tri.b = InterpolateVerts(cubeCorners[a1], cubeCorners[b1]);
+                tri.a = InterpolateVerts(cubeCorners[a2], cubeCorners[b2]);
+                triBuild.tri = tri;
+                cubeEntities2.Add(triBuild);
+                triCount++;
+
+            }
+        }
+
+
+        public virtual MarchingCubeEntity GetCubeMarchWithLod(Vector3Int p, int spacing)
+        {
+
+            MarchingCubeEntity e;
+            //if (higherLodNeighbourCubes.TryGetValue(p, out e))
+            //    return e;
+
+            e = new MarchingCubeEntity();
+            e.origin = p;
+            Vector4[] cubeCorners = GetCubeCornersForPointWithLod(p, spacing);
+
+            short cubeIndex = 0;
+            if (cubeCorners[0].w < surfaceLevel) cubeIndex |= 1;
+            if (cubeCorners[1].w < surfaceLevel) cubeIndex |= 2;
+            if (cubeCorners[2].w < surfaceLevel) cubeIndex |= 4;
+            if (cubeCorners[3].w < surfaceLevel) cubeIndex |= 8;
+            if (cubeCorners[4].w < surfaceLevel) cubeIndex |= 16;
+            if (cubeCorners[5].w < surfaceLevel) cubeIndex |= 32;
+            if (cubeCorners[6].w < surfaceLevel) cubeIndex |= 64;
+            if (cubeCorners[7].w < surfaceLevel) cubeIndex |= 128;
+
+            e.triangulationIndex = cubeIndex;
+
+            for (int i = 0; TriangulationTable.triangulation[cubeIndex][i] != -1; i += 3)
+            {
+                // Get indices of corner points A and B for each of the three edges
+                // of the cube that need to be joined to form the triangle.
+                int a0 = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[cubeIndex][i]];
+                int b0 = TriangulationTable.cornerIndexBFromEdge[TriangulationTable.triangulation[cubeIndex][i]];
+
+                int a1 = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[cubeIndex][i + 1]];
+                int b1 = TriangulationTable.cornerIndexBFromEdge[TriangulationTable.triangulation[cubeIndex][i + 1]];
+
+                int a2 = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[cubeIndex][i + 2]];
+                int b2 = TriangulationTable.cornerIndexBFromEdge[TriangulationTable.triangulation[cubeIndex][i + 2]];
+
+                Triangle tri = new Triangle();
+
+                tri.c = InterpolateVerts(cubeCorners[a0], cubeCorners[b0]);
+                tri.b = InterpolateVerts(cubeCorners[a1], cubeCorners[b1]);
+                tri.a = InterpolateVerts(cubeCorners[a2], cubeCorners[b2]);
+                e.triangles.Add(new PathTriangle(tri));
                 triCount++;
 
             }
             //e.BuildInternNeighbours();
-            cubeEntities[IndexFromCoord(p)] = e;
+            //higherLodNeighbourCubes.Add(p, e);
+            return e;
+        }
+
+
+        public void FixConnectionsInDirection(Vector3Int v3)
+        {
+
         }
 
         protected int DirectionToCornerIndex(Vector3Int v3)
@@ -335,7 +561,7 @@ namespace MarchingCubes
             MissingNeighbourData t;
             foreach (MarchingCubeEntity e in cubeEntities.Values)
             {
-                if (IsBorderPoint(e.origin) && !e.FindMissingNeighbours(IsInBounds, trisWithNeighboursOutOfBounds))
+                if (IsBorderCube(e.origin) && !e.FindMissingNeighbours(IsCubeInBounds, trisWithNeighboursOutOfBounds))
                 {
                     for (int i = 0; i < trisWithNeighboursOutOfBounds.Count; i++)
                     {
@@ -358,9 +584,9 @@ namespace MarchingCubes
             foreach (MarchingCubeEntity e in cubeEntities.Values)
             {
                 e.BuildInternNeighbours();
-                if ((e.origin.x + e.origin.y + e.origin.z) % 2 == 0 || IsBorderPoint(e.origin))
+                if ((e.origin.x + e.origin.y + e.origin.z) % 2 == 0 || IsBorderCube(e.origin))
                 {
-                    if (!e.BuildNeighbours(GetEntityAt, IsInBounds, trisWithNeighboursOutOfBounds))
+                    if (!e.BuildNeighbours(GetEntityAt, IsCubeInBounds, trisWithNeighboursOutOfBounds))
                     {
                         for (int i = 0; i < trisWithNeighboursOutOfBounds.Count; i++)
                         {
@@ -379,28 +605,20 @@ namespace MarchingCubes
                                 }
                                 else if (c.LOD > lod)
                                 {
-                                    //if false position should be correct already
-                                    if (e.origin.x % c.LOD == 0 && e.origin.y % c.LOD == 0 && e.origin.z % c.LOD == 0)
-                                    {
                                         Vector3Int pos = (e.origin + t.neighbour.offset).Map(ClampInChunk);
 
                                         float lodDiff = c.LOD / lod;
                                         ///pos needed to be divided by lodDiff or something
                                         MarchingCubeEntity cube = c.GetEntityAt(pos);
-                                        //CorrectMarchingCubeInDirection(e, t, c.LOD, t.neighbour.offset);
-                                    } 
-                                    else
-                                    {
-                                      //  missingHigherLODNeighbour.Add(t);
-                                    }
+                                        CorrectMarchingCubeInDirection(e, t, c.LOD, t.neighbour.offset);
                                 }
                             }
                             else if (careAboutNeighbourLODS)
                             {
                                 int neighbourLod = neighbourLODs.GetLodFromNeighbourInDirection(t.neighbour.offset);
-                                //if (e.origin.x % neighbourLod != 0 || e.origin.y % neighbourLod != 0 || e.origin.z % neighbourLod != 0)
+                                if (neighbourLod > lod)
                                 {
-                                   // missingHigherLODNeighbour.Add(t);
+                                    CorrectMarchingCubeInDirection(e, t, neighbourLod, t.neighbour.offset);
                                 }
                             }
                         }
@@ -415,6 +633,10 @@ namespace MarchingCubes
         protected void CorrectMarchingCubeInDirection(MarchingCubeEntity e, MissingNeighbourData missingData, int otherLod, Vector3Int dir)
         {
             int lodDiff = otherLod / lod;
+
+            Vector3Int rightCubeIndex = e.origin.Map(f => f - f % lodDiff);
+            MarchingCubeEntity originalTest = GetCubeMarchWithLod(e.origin, 1);
+            MarchingCubeEntity reference = GetCubeMarchWithLod(rightCubeIndex, lodDiff);
 
             //int a0 = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[cubeIndex][i]];
             //int b0 = TriangulationTable.cornerIndexBFromEdge[TriangulationTable.triangulation[cubeIndex][i]];
@@ -474,8 +696,6 @@ namespace MarchingCubes
                 if (dir.x < 0)
                 {
                 }
-
-
             }
 
         }
@@ -488,12 +708,13 @@ namespace MarchingCubes
         }
 
 
+
         protected virtual Vector3 InterpolatePositions(Vector3 v1, Vector3 v2, float p)
         {
             return v1 + p * (v2 - v1);
         }
 
-        protected Vector3Int CoordFromIndex(int i)
+        protected Vector3Int CoordFromCubeIndex(int i)
         {
             return new Vector3Int
                ((i % (vertexSize * vertexSize) % vertexSize)
@@ -504,7 +725,8 @@ namespace MarchingCubes
 
         protected int IndexFromCoord(int x, int y, int z)
         {
-            return z * vertexSize * vertexSize + y * vertexSize + x;
+            int index = z * PointSize * PointSize + y * PointSize + x;
+            return index;
         }
 
         protected int IndexFromCoord(Vector3Int v)
@@ -533,11 +755,11 @@ namespace MarchingCubes
                     for (int z = 0; z < vertexSize; z++)
                     {
                         v.z = z;
-                        March(v, points);
+                        March(v);
                     }
                 }
             }
-            //   ApplyChanges();
+            ApplyChanges();
         }
 
         protected bool GetOrAddEntityAt(int x, int y, int z, out MarchingCubeEntity e)
@@ -610,30 +832,29 @@ namespace MarchingCubes
             return (Color.green * (1 - slopeProgress) + brown * slopeProgress) / 2;
         }
 
-        //protected void ApplyChanges()
-        //{
-        //    Vector3[] vertices = new Vector3[triCount];
-        //    int[] meshTriangles = new int[triCount];
-        //    colorData = new Color[triCount];
+        protected void ApplyChanges()
+        {
+            vertices = new Vector3[triCount];
+            meshTriangles = new int[triCount];
+            colorData = new Color[triCount];
 
-        //    int count = 0;
+            int count = 0;
 
-        //    foreach (MarchingCubeEntity e in cubeEntities.Values)
-        //    {
-        //        foreach (PathTriangle t in e.triangles)
-        //        {
-        //            for (int i = 0; i < 3; i++)
-        //            {
-        //                meshTriangles[count + i] = count + i;
-        //                vertices[count + i] = t.tri[i];
-        //                colorData[count + i] = Color.yellow;
-        //            }
-        //            count += 3;
-        //        }
-        //    }
-
-        //    ApplyChangesToMesh();
-        //}
+            foreach (MarchingCubeEntity e in cubeEntities.Values)
+            {
+                foreach (PathTriangle t in e.triangles)
+                {
+                    for (int i = 0; i < 3; i++)
+                    {
+                        meshTriangles[count + i] = count + i;
+                        vertices[count + i] = t.tri[i];
+                        colorData[count + i] = Color.yellow;
+                    }
+                    count += 3;
+                }
+            }
+            ApplyChangesToMesh();
+        }
 
         public BaseMeshChild GetNextMeshDisplayer()
         {
@@ -695,9 +916,9 @@ namespace MarchingCubes
                     for (int z = e.origin.z - 1; z <= e.origin.z + 1; z++)
                     {
                         v.z = z;
-                        if (IsInBounds(v))
+                        if (IsCubeInBounds(v))
                         {
-                            March(v, points);
+                            March(v);
                             ///inform neighbours about eventuell change!
                         }
                     }
@@ -721,14 +942,14 @@ namespace MarchingCubes
         {
             foreach (Vector3Int v3 in GetIndicesAround(e))
             {
-                if (IsInBounds(v3))
+                if (IsCubeInBounds(v3))
                 {
                     yield return v3;
                 }
             }
         }
 
-        protected bool IsInBounds(Vector3Int v)
+        protected bool IsCubeInBounds(Vector3Int v)
         {
             return
                 v.x >= 0 && v.x < vertexSize
@@ -736,7 +957,7 @@ namespace MarchingCubes
                 && v.z >= 0 && v.z < vertexSize;
         }
 
-        protected bool IsBorderPoint(Vector3 p)
+        protected bool IsBorderCube(Vector3 p)
         {
             return p.x == 0 || p.x % (vertexSize - 1) == 0
                 || p.y == 0 || p.y % (vertexSize - 1) == 0
@@ -744,55 +965,55 @@ namespace MarchingCubes
         }
 
 
-        protected Direction GetBorderInfo(Vector3Int v)
-        {
-            if (!(v.y == 0 || v.y % (vertexSize - 1) == 0
-                || v.z == 0 || v.z % (vertexSize - 1) == 0))
-            {
-                if (v.x == 0)
-                    return Direction.xStart;
-                else if (v.x % (vertexSize - 1) == 0)
-                    return Direction.xEnd;
-            }
+        //protected Direction GetBorderInfo(Vector3Int v)
+        //{
+        //    if (!(v.y == 0 || v.y % (vertexSize - 1) == 0
+        //        || v.z == 0 || v.z % (vertexSize - 1) == 0))
+        //    {
+        //        if (v.x == 0)
+        //            return Direction.xStart;
+        //        else if (v.x % (vertexSize - 1) == 0)
+        //            return Direction.xEnd;
+        //    }
 
-            if (!(v.x == 0 || v.x % (vertexSize - 1) == 0
-                || v.z == 0 || v.z % (vertexSize - 1) == 0))
-            {
-                if (v.y == 0)
-                    return Direction.yStart;
-                else if (v.y % (vertexSize - 1) == 0)
-                    return Direction.yEnd;
-            }
+        //    if (!(v.x == 0 || v.x % (vertexSize - 1) == 0
+        //        || v.z == 0 || v.z % (vertexSize - 1) == 0))
+        //    {
+        //        if (v.y == 0)
+        //            return Direction.yStart;
+        //        else if (v.y % (vertexSize - 1) == 0)
+        //            return Direction.yEnd;
+        //    }
 
-            if (!(v.x == 0 || v.x % (vertexSize - 1) == 0
-              || v.y == 0 || v.y % (vertexSize - 1) == 0))
-            {
-                if (v.z == 0)
-                    return Direction.yStart;
-                else if (v.z % (vertexSize - 1) == 0)
-                    return Direction.yEnd;
-            }
-            return Direction.None;
-        }
+        //    if (!(v.x == 0 || v.x % (vertexSize - 1) == 0
+        //      || v.y == 0 || v.y % (vertexSize - 1) == 0))
+        //    {
+        //        if (v.z == 0)
+        //            return Direction.yStart;
+        //        else if (v.z % (vertexSize - 1) == 0)
+        //            return Direction.yEnd;
+        //    }
+        //    return Direction.None;
+        //}
 
 
-        protected enum Direction { None, xStart, xEnd, yStart, yEnd, zStart, zEnd };
+        //protected enum Direction { None, xStart, xEnd, yStart, yEnd, zStart, zEnd };
 
-        protected Direction DirFromVector(Vector3Int dir)
-        {
-            if (dir.x > 0)
-                return Direction.xEnd;
-            else if (dir.x < 0)
-                return Direction.xStart;
-            else if (dir.y > 0)
-                return Direction.yEnd;
-            else if (dir.y < 0)
-                return Direction.yStart;
-            else if (dir.z > 0)
-                return Direction.zEnd;
-            else
-                return Direction.zStart;
-        }
+        //protected Direction DirFromVector(Vector3Int dir)
+        //{
+        //    if (dir.x > 0)
+        //        return Direction.xEnd;
+        //    else if (dir.x < 0)
+        //        return Direction.xStart;
+        //    else if (dir.y > 0)
+        //        return Direction.yEnd;
+        //    else if (dir.y < 0)
+        //        return Direction.yStart;
+        //    else if (dir.z > 0)
+        //        return Direction.zEnd;
+        //    else
+        //        return Direction.zStart;
+        //}
 
 
         public PathTriangle GetTriangleFromRayHit(RaycastHit hit)
@@ -819,7 +1040,7 @@ namespace MarchingCubes
                 points[i] += delta;
             }
 
-            if (IsBorderPoint(e.origin))
+            if (IsBorderCube(e.origin))
             {
                 chunkHandler.EditNeighbourChunksAt(chunkOffset, e.origin, delta);
             }
@@ -852,7 +1073,7 @@ namespace MarchingCubes
 
             foreach (int index in cornerIndices)
             {
-                Vector3Int indexPoint = CoordFromIndex(index);
+                Vector3Int indexPoint = CoordFromCubeIndex(index);
                 Vector3Int pointOffset = new Vector3Int();
                 for (int i = 0; i < 3; i++)
                 {

@@ -97,18 +97,5 @@ namespace MarchingCubes
         //    }       
         //}
 
-        private struct ChunkThreadInfo
-        {
-
-            public Action<ChunkThreadInfo> t;
-            public MarchingCubeThreadedChunk param;
-
-            public ChunkThreadInfo(Action<ChunkThreadInfo> t, MarchingCubeThreadedChunk param)
-            {
-                this.t = t;
-                this.param = param;
-            }
-        }
-
     }
 }

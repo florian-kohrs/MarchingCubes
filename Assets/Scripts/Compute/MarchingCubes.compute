@@ -21,10 +21,6 @@ float spacing;
 int numPointsPerAxis;
 float surfaceLevel;
 
-int combine(int r, int g, int b)
-{
-	return (r << 16) + (g << 8) + b;
-}
 
 float3 interpolateVerts(float4 v1, float4 v2)
 {

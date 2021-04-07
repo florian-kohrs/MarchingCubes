@@ -12,6 +12,8 @@ namespace MarchingCubes
 
         float Spacing { set; }
 
+        Vector3 AnchorPos { set; }
+
         bool HasStarted { get; }
 
         void SetActive(bool b);

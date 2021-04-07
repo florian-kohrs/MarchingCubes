@@ -14,7 +14,7 @@ namespace MarchingCubes
 
         protected const int threadGroupSize = 8;
 
-        public const int ChunkSize = 128;
+        public const int ChunkSize = 16;
 
         public const int CHUNK_VOLUME = ChunkSize * ChunkSize * ChunkSize;
 
@@ -53,7 +53,7 @@ namespace MarchingCubes
         {
             int r = (int)Mathf.Pow(2,Mathf.RoundToInt(f));
 
-            return r;
+            return Mathf.Max(1, r);
         }
 
         public int GetLodAt(Vector3Int v3)
@@ -379,7 +379,7 @@ namespace MarchingCubes
         {
             GameObject g = Instantiate(chunkPrefab, transform);
             g.name = $"Chunk({p.x},{p.y},{p.z})";
-            //g.transform.position = p * CHUNK_SIZE;
+            //g.transform.position = AnchorFromChunkIndex(p);
 
             IMarchingCubeChunk chunk = g.GetComponent<IMarchingCubeChunk>();
             chunks.Add(p, chunk);
@@ -391,7 +391,7 @@ namespace MarchingCubes
         {
             GameObject g = Instantiate(threadedChunkPrefab, transform);
             g.name = $"Chunk({p.x},{p.y},{p.z})";
-            //g.transform.position = p * CHUNK_SIZE;
+            //AnchorFromChunkIndex(p);
 
             IMarchingCubeChunk chunk = g.GetComponent<IMarchingCubeChunk>();
             chunks.Add(p, chunk);
@@ -406,7 +406,7 @@ namespace MarchingCubes
 
             for (int i = 0; i < 3; i++)
             {
-                result[i] = (int)(pos[i] / PointsPerChunkAxis);
+                result[i] = (int)(pos[i] / ChunkSize);
             }
 
             return result;
@@ -464,16 +464,16 @@ namespace MarchingCubes
             int numVoxelsPerAxis = ChunkSize / lod;
             int chunkVolume = numVoxelsPerAxis * numVoxelsPerAxis * numVoxelsPerAxis;
             int pointsPerAxis = numVoxelsPerAxis + 1;
+            int pointsVolume = pointsPerAxis * pointsPerAxis * pointsPerAxis;
 
             CreateBuffersWithSizes(numVoxelsPerAxis);
 
             float spacing = lod;
+            Vector3 anchor = AnchorFromChunkIndex(p);
 
             chunk.LOD = lod;
             chunk.Material = chunkMaterial;
-
-            Vector3 anchor = AnchorFromChunkIndex(p);
-
+            chunk.AnchorPos = anchor;
 
             densityGenerator.Generate(pointsBuffer, pointsPerAxis, 0, anchor, spacing);
 
@@ -500,8 +500,8 @@ namespace MarchingCubes
             tris = new TriangleBuilder[numTris];
             triangleBuffer.GetData(tris, 0, 0, numTris);
 
-            pointsArray = new float[chunkVolume];
-            pointsBuffer.GetData(pointsArray, 0, 0, chunkVolume);
+            pointsArray = new float[pointsVolume];
+            pointsBuffer.GetData(pointsArray, 0, 0, pointsVolume);
 
             totalTriBuild += numTris;
             ReleaseBuffers();
@@ -546,7 +546,7 @@ namespace MarchingCubes
 
         }
 
-        public static Vector3 AnchorFromChunkIndex(Vector3Int v)
+        public Vector3 AnchorFromChunkIndex(Vector3Int v)
         {
             return new Vector3(v.x * ChunkSize, v.y * ChunkSize, v.z * ChunkSize);
         }

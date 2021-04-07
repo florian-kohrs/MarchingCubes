@@ -26,6 +26,11 @@ namespace MarchingCubes
             }
         }
 
+        public uint zipData(int x, int y, int z, int triIndex)
+        {
+            return (uint)((triIndex << 24) + (x << 16) + (y << 8) + z);
+        }
+
         public int TriIndex => (int)(data >> 24);
 
         //public Color Color

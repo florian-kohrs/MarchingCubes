@@ -726,13 +726,46 @@ MonoBehaviour:
   blockAroundPlayer: 40
   marshShader: {fileID: 7200000, guid: 85821faa1826fb64b8a447b36cf4fae9, type: 3}
   noiseOffset: {x: 0, y: 0, z: 0}
+  lodForDistances:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 1.885459
+      outSlope: 1.885459
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.22112866
+    - serializedVersion: 3
+      time: 0.32320005
+      value: 3
+      inSlope: 6.5420423
+      outSlope: 0
+      tangentMode: 65
+      weightedMode: 0
+      inWeight: 0.08700488
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.69970703
+      value: 3
+      inSlope: -0
+      outSlope: 0.45106116
+      tangentMode: 5
+      weightedMode: 0
+      inWeight: 0.059808794
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
   densityGenerator: {fileID: 1484889474}
   useTerrainNoise: 1
   deactivateAfterDistance: 400
   chunkMaterial: {fileID: 2100000, guid: 97d2f9aa8d16b8241a90494b8d616c04, type: 2}
   surfaceLevel: 0.511
   player: {fileID: 1779183453}
-  buildAroundDistance: 302
+  buildAroundDistance: 2500
   totalTriBuild: 0
 --- !u!54 &1125545289
 Rigidbody:
