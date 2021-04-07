@@ -14,7 +14,7 @@ namespace MarchingCubes
 
         protected const int threadGroupSize = 8;
 
-        public const int ChunkSize = 16;
+        public const int ChunkSize = 4;
 
         public const int CHUNK_VOLUME = ChunkSize * ChunkSize * ChunkSize;
 

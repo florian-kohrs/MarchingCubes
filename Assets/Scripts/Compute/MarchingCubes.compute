@@ -88,6 +88,8 @@ void March(int3 id : SV_DispatchThreadID)
 	if (cubeCorners[6].w < surfaceLevel) cubeIndex |= 64;
 	if (cubeCorners[7].w < surfaceLevel) cubeIndex |= 128;
 
+	int zipedData = zipData(id.x, id.y, id.z, cubeIndex);
+
 	// Create triangles for current cube configuration
 	for (int i = 0; triangulation[cubeIndex][i] != -1; i += 3)
 	{
@@ -103,7 +105,7 @@ void March(int3 id : SV_DispatchThreadID)
 		int b2 = cornerIndexBFromEdge[triangulation[cubeIndex][i + 2]];
 
 		Triangle tri;
-		tri.data = zipData(id.x, id.y, id.z, cubeIndex);
+		tri.data = zipedData;
 		tri.vertexA = interpolateVerts(cubeCorners[a0], cubeCorners[b0]);
 		tri.vertexB = interpolateVerts(cubeCorners[a1], cubeCorners[b1]);
 		tri.vertexC = interpolateVerts(cubeCorners[a2], cubeCorners[b2]);

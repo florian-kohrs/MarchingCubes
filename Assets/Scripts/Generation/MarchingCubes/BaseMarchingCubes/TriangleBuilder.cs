@@ -26,7 +26,7 @@ namespace MarchingCubes
             }
         }
 
-        public uint zipData(int x, int y, int z, int triIndex)
+        public static uint zipData(int x, int y, int z, int triIndex)
         {
             return (uint)((triIndex << 24) + (x << 16) + (y << 8) + z);
         }
