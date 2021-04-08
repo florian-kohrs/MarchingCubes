@@ -587,7 +587,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 910780109}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1050, z: 0}
+  m_LocalPosition: {x: 0, y: 65008.9, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 2047378104}
@@ -732,29 +732,20 @@ MonoBehaviour:
     - serializedVersion: 3
       time: 0
       value: 0
-      inSlope: 1.885459
-      outSlope: 1.885459
-      tangentMode: 0
+      inSlope: 1
+      outSlope: 1
+      tangentMode: 34
       weightedMode: 0
       inWeight: 0
-      outWeight: 0.22112866
+      outWeight: 0
     - serializedVersion: 3
-      time: 0.32320005
-      value: 3
-      inSlope: 6.5420423
-      outSlope: 0
-      tangentMode: 65
+      time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 1
+      tangentMode: 34
       weightedMode: 0
-      inWeight: 0.08700488
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 0.69970703
-      value: 3
-      inSlope: -0
-      outSlope: 0.45106116
-      tangentMode: 5
-      weightedMode: 0
-      inWeight: 0.059808794
+      inWeight: 0
       outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
@@ -765,7 +756,7 @@ MonoBehaviour:
   chunkMaterial: {fileID: 2100000, guid: 97d2f9aa8d16b8241a90494b8d616c04, type: 2}
   surfaceLevel: 0.511
   player: {fileID: 1779183453}
-  buildAroundDistance: 2500
+  buildAroundDistance: 12
   totalTriBuild: 0
 --- !u!54 &1125545289
 Rigidbody:
@@ -863,7 +854,7 @@ MonoBehaviour:
   amplitude: 70.18
   frequency: 2.05
   scale: 18.5
-  radius: 1000
+  radius: 65000
   octaves: 9
   offset: {x: 0, y: 0, z: 0}
   persistence: 0.518
@@ -1302,7 +1293,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   c: {fileID: 2047378107}
-  speed: 10
+  speed: 100
 --- !u!143 &2047378107
 CharacterController:
   m_ObjectHideFlags: 0

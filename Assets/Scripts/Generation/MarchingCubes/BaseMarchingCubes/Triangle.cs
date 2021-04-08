@@ -28,6 +28,21 @@ namespace MarchingCubes
                         return c;
                 }
             }
+            set
+            {
+                switch (i)
+                {
+                    case 0:
+                        a = value;
+                        break;
+                    case 1:
+                        b = value;
+                        break;
+                    default:
+                        c = value;
+                        break;
+                }
+            }
         }
 
     }

@@ -363,6 +363,8 @@ namespace MarchingCubes
             if (IsEmpty)
                 return;
 
+            lodNeighbourPointCorrectionLookUp = new Dictionary<Vector3, Vector3>();
+
             List<MissingNeighbourData> trisWithNeighboursOutOfBounds = new List<MissingNeighbourData>();
             MissingNeighbourData t;
             foreach (MarchingCubeEntity e in cubeEntities.Values)
@@ -414,70 +416,65 @@ namespace MarchingCubes
 
         protected List<MissingNeighbourData> missingHigherLODNeighbour = new List<MissingNeighbourData>();
 
+        protected Dictionary<Vector3, Vector3> lodNeighbourPointCorrectionLookUp;
 
-        protected void CorrectMarchingCubeInDirection(MarchingCubeEntity e, MissingNeighbourData missingData, int otherLod, Vector3Int dir)
+        protected bool GetPointWithCorner(MarchingCubeEntity e, int a, int b, out Vector3 result)
         {
-            ///maybe add corrected triangles to extra mesh to not recompute them when chunk changes and easier remove /swap them if neihghbour changes lod
-
-
-            int lodDiff = otherLod / lod;
-
-            Vector3Int rightCubeIndex = e.origin.Map(f => f - f % lodDiff);
-            //MarchingCubeEntity originalTest = MarchAt(e.origin, 1);
-            MarchingCubeEntity reference = MarchAt(rightCubeIndex, lodDiff);
-
             for (int i = 0; i < e.triangles.Count; i++)
             {
                 for (int x = 0; x < 3; x++)
                 {
                     Vector3 v = e.triangles[i].tri[x];
-                    if(IsPointTouchingBorderInDirection(v,dir))
+                    int aIndex = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[e.triangulationIndex][i * 3 + x]];
+                    int bIndex = TriangulationTable.cornerIndexBFromEdge[TriangulationTable.triangulation[e.triangulationIndex][i * 3 + x]];
+                    if (aIndex == a && bIndex == b)
+                    {
+                        result = v;
+                        return true;
+                    }
                 }
             }
+            result = Vector3.zero;
+            return false;
+        }
 
-           
-            PathTriangle t = e.triangles[missingData.neighbour.triangleIndex];
+        protected void CorrectMarchingCubeInDirection(MarchingCubeEntity e, MissingNeighbourData missingData, int otherLod, Vector3Int dir)
+        {
+            ///maybe add corrected triangles to extra mesh to not recompute them when chunk changes and easier remove /swap them if neihghbour changes lod
 
+            int lodDiff = otherLod / lod;
 
-            Vector3Int firstNeighbourOffset = new Vector3Int(e.origin.x % lodDiff, e.origin.y % lodDiff, e.origin.z % lodDiff);
+            Vector3Int rightCubeIndex = e.origin.Map(f => f - f % lodDiff);
+            Vector3Int diff = e.origin - rightCubeIndex;
+            MarchingCubeEntity original = MarchAt(e.origin, 1);
+            MarchingCubeEntity reference = MarchAt(rightCubeIndex, lodDiff);
 
-            if (dir.x != 0)
+            for (int i = 0; i < original.triangles.Count; i++)
             {
-                firstNeighbourOffset.x = 0;
-            }
-            else if (dir.y != 0)
-            {
-                firstNeighbourOffset.y = 0;
-            }
-            else if (dir.z != 0)
-            {
-                firstNeighbourOffset.z = 0;
-            }
-
-            if (firstNeighbourOffset == Vector3Int.zero)
-            {
-
-            }
-
-            Vector3Int sndNeighbourOffset = new Vector3Int(
-                (lodDiff - 1) - (e.origin.x % lodDiff),
-                (lodDiff - 1) - (e.origin.y % lodDiff),
-                (lodDiff - 1) - (e.origin.z % lodDiff));
-
-
-            PathTriangle fixThis = e.triangles[missingData.neighbour.triangleIndex];
-
-            MarchingCubeEntity importantFirstNeighbourCube = GetEntityAt(e.origin - firstNeighbourOffset);
-            MarchingCubeEntity importantSndNeighbourCube = GetEntityAt(e.origin + sndNeighbourOffset);
-
-
-            if (dir.x != 0)
-            {
-                if (dir.x < 0)
+                for (int x = 0; x < 3; x++)
                 {
+                    bool modified = false;
+                    Triangle triangle = e.triangles[i].tri;
+                    Vector3 v = original.triangles[i].tri[x];
+                    if (IsPointTouchingBorderInDirection(v, dir))
+                    {
+                        int aIndex = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[original.triangulationIndex][i * 3 + x]];
+                        int bIndex = TriangulationTable.cornerIndexBFromEdge[TriangulationTable.triangulation[original.triangulationIndex][i * 3 + x]];
+                        triangle = e.triangles[i].tri;
+                        Vector3 triPos;
+                        if (GetPointWithCorner(e, aIndex, bIndex, out triPos))
+                        {
+                            //triangle[x] = triPos;
+                            triangle[x] = Vector3.zero;
+                            modified = true;
+                        }
+                    }
+                    if (modified)
+                    {
+                        e.triangles[i] = new PathTriangle(triangle);
+                    }
                 }
             }
-
         }
 
         protected virtual Vector3 InterpolateVerts(Vector4 v1, Vector4 v2)
@@ -604,9 +601,27 @@ namespace MarchingCubes
             }
         }
 
+        protected void BuildAllTrianglesIntoMesh()
+        {
+            int buildedTris = 0;
+            foreach (MarchingCubeEntity t in cubeEntities.Values)
+            {
+                for (int i = 0; i < t.triangles.Count; i++)
+                {
+                    for (int x = 0; x < 3; x++)
+                    {
+                        meshTriangles[buildedTris + i] = buildedTris + i;
+                        vertices[buildedTris + i] = t.triangles[i].tri[x];
+                        colorData[buildedTris + i] = GetColor(t.triangles[i]);
+                    }
+                    buildedTris += 3;
+                }
+            }
+        }
+
         protected static Color brown = new Color(75, 44, 13, 1) / 255f;
 
-        protected Color GetColor(PathTriangle t, int i)
+        protected Color GetColor(PathTriangle t)
         {
             float slopeProgress = Mathf.InverseLerp(15, 45, t.Slope);
             return (Color.green * (1 - slopeProgress) + brown * slopeProgress) / 2;
@@ -747,10 +762,13 @@ namespace MarchingCubes
 
         protected bool IsPointTouchingBorderInDirection(Vector3 p, Vector3Int borderDir)
         {
-            if(borderDir.x == 0 && p.x == 0)
-            {
-                return true;
-            }
+            p -= AnchorPos;
+            return (borderDir.x < 0 && p.x == 0
+                || borderDir.x > 0 && p.x == vertexSize
+                || borderDir.y < 0 && p.y == 0
+                || borderDir.y > 0 && p.y == vertexSize
+                || borderDir.z < 0 && p.z == 0
+                || borderDir.z > 0 && p.z == vertexSize);
         }
 
         //protected Direction GetBorderInfo(Vector3Int v)
