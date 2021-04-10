@@ -30,7 +30,7 @@ namespace MarchingCubes
         }
 
 
-        public bool AtLestOnHigerThan(int lod)
+        public bool HasNeighbourWithHigherLOD(int lod)
         {
             return rightNeighbourLod > lod
                 || leftNeighbourLod > lod

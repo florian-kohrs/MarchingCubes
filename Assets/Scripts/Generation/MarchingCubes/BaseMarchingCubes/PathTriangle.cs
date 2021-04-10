@@ -53,12 +53,27 @@ namespace MarchingCubes
             BuildDistance(p, myEdge1, myEdge2, myKey, otherKey);
         }
 
+        public void OverrideNeighbourTwoWay(PathTriangle p, int myEdge1, int myEdge2, int otherEdge1, int otherEdge2)
+        {
+            int myKey = (myEdge1 + myEdge2) % 3;
+
+            int otherKey = (otherEdge1 + otherEdge2) % 3;
+            neighbours[myKey] = p;
+            p.neighbours[otherKey] = this;
+            BuildDistance(p, myEdge1, myEdge2, myKey, otherKey);
+        }
+
 
         public void SoftSetNeighbourTwoWay(PathTriangle p, Vector2Int myEdges, Vector2Int otherEdges)
         {
             SoftSetNeighbourTwoWay(p, myEdges.x, myEdges.y, otherEdges.x, otherEdges.y);
         }
 
+
+        public void OverrideNeighbourTwoWay(PathTriangle p, Vector2Int myEdges, Vector2Int otherEdges)
+        {
+            OverrideNeighbourTwoWay(p, myEdges.x, myEdges.y, otherEdges.x, otherEdges.y);
+        }
 
         //public void AddNeighbourTwoWay(PathTriangle p, Vector2Int edgeIndices)
         //{

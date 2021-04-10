@@ -14,13 +14,15 @@ namespace MarchingCubes
 
         protected const int threadGroupSize = 8;
 
-        public const int ChunkSize = 128;
+        public const int ChunkSize = 16;
 
         public const int CHUNK_VOLUME = ChunkSize * ChunkSize * ChunkSize;
 
         public GameObject chunkPrefab;
 
         public GameObject threadedChunkPrefab;
+
+        // protected int maxRunningThreads = 0;
 
         public const int PointsPerChunkAxis = ChunkSize + 1;
 
@@ -53,7 +55,7 @@ namespace MarchingCubes
 
         protected int RoundToPowerOf2(float f)
         {
-            int r = (int)Mathf.Pow(2,Mathf.RoundToInt(f));
+            int r = (int)Mathf.Pow(2, Mathf.RoundToInt(f));
 
             return Mathf.Max(1, r);
         }
@@ -242,11 +244,11 @@ namespace MarchingCubes
             {
                 CreateChunkParallelAt(next, OnChunkDoneCallBack);
             }
-
             if (totalTriBuild < maxTrianglesLeft)
             {
-                while (sortedNeighbourds.Count == 0 && channeledChunks > 0)
+                while ((sortedNeighbourds.Count == 0 && channeledChunks > 0)/* ||channeledChunks > maxRunningThreads*/)
                 {
+                   // Debug.Log(channeledChunks);
                     yield return null;
                 }
                 if (sortedNeighbourds.Count > 0)
@@ -256,6 +258,7 @@ namespace MarchingCubes
                 }
             }
         }
+
 
         protected void OnChunkDoneCallBack(IMarchingCubeChunk chunk)
         {
@@ -276,7 +279,7 @@ namespace MarchingCubes
         {
             Vector3Int chunkIndex = PositionToCoord(v);
 
-           // SetActivationOfChunks(chunkIndex);
+            // SetActivationOfChunks(chunkIndex);
 
             Vector3Int index = new Vector3Int();
             for (int x = -NeededChunkAmount / 2; x < NeededChunkAmount / 2 + 1; x++)
@@ -431,7 +434,7 @@ namespace MarchingCubes
             {
                 int current;
                 IMarchingCubeChunk chunk;
-                if(Chunks.TryGetValue(coords[i], out chunk))
+                if (Chunks.TryGetValue(coords[i], out chunk))
                 {
                     current = chunk.LOD;
                 }
@@ -447,7 +450,7 @@ namespace MarchingCubes
         protected void BuildChunk(Vector3Int p, IMarchingCubeChunk chunk)
         {
             int lod = GetLodAt(p);
-            int numTris = ApplyChunkDataAndDispatchAndGetShaderData(p, chunk, lod);
+            int numTris = ApplyChunkDataAndDispatchAndGetShaderData(p, chunk, 1);
             chunk.InitializeWithMeshData(tris, pointsArray, this, GetNeighbourLODSFrom(p), surfaceLevel);
         }
 

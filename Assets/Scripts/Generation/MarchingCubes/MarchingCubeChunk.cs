@@ -29,12 +29,14 @@ namespace MarchingCubes
             this.surfaceLevel = surfaceLevel;
             this.neighbourLODs = neighbourLODs;
             triCount = tris.Length * 3;
-            careAboutNeighbourLODS = neighbourLODs.AtLestOnHigerThan(lod);
+            careAboutNeighbourLODS = neighbourLODs.HasNeighbourWithHigherLOD(lod);
             chunkHandler = handler;
             this.points = points;
 
             BuildFromTriangleArray(tris);
-            //BuildAll(2/lod);
+            //ResetAll();
+            //BuildAll();
+
             if (lod == 1)
             {
                 BuildChunkEdges();
@@ -43,6 +45,8 @@ namespace MarchingCubes
             {
                 FindConnectedChunks();
             }
+
+            //  BuildMeshFromCurrentTriangles();
 
             //if (careAboutNeighbourLODS)
             //{
@@ -267,7 +271,7 @@ namespace MarchingCubes
             };
         }
 
-        public virtual void March(Vector3Int p)
+        public virtual MarchingCubeEntity March(Vector3Int p)
         {
             MarchingCubeEntity e = new MarchingCubeEntity();
             e.origin = p;
@@ -312,6 +316,7 @@ namespace MarchingCubes
             {
                 cubeEntities[IndexFromCoord(p)] = e;
             }
+            return e;
         }
 
         public virtual MarchingCubeEntity MarchAt(Vector3Int v3, int lod)
@@ -506,6 +511,16 @@ namespace MarchingCubes
             }
         }
 
+        protected void BuildEdgesFor(MarchingCubeEntity e, List<MissingNeighbourData> addMissingNeighboursHere, bool overrideEdges)
+        {
+            int currentCount = addMissingNeighboursHere.Count;
+
+            e.BuildInternNeighbours();
+            e.BuildNeighbours(GetEntityAt, IsCubeInBounds, addMissingNeighboursHere, overrideEdges);
+        }
+
+
+
         protected Dictionary<int, MarchingCubeEntity> neighbourChunksGlue = new Dictionary<int, MarchingCubeEntity>();
 
         protected int glueTriangleCount = 0;
@@ -651,8 +666,10 @@ namespace MarchingCubes
         }
 
 
-        protected void ResetMesh()
+        protected virtual void ResetAll()
         {
+            ResetMeshDisplayers();
+            cubeEntities = new Dictionary<int, MarchingCubeEntity>();
             triCount = 0;
         }
 
@@ -672,13 +689,13 @@ namespace MarchingCubes
                     for (int z = 0; z < vertexSize / localLod; z++)
                     {
                         v.z = z;
-                        MarchingCubeEntity e = MarchAt(v, localLod);
-                        if (e.triangles.Count > 0)
-                        {
-                            cubeEntities[IndexFromCoord(x, y, z)] = e;
-                            triCount += e.triangles.Count * 3;
-                        }
-                        //March(v);
+                        //MarchingCubeEntity e = MarchAt(v, localLod);
+                        //if (e.triangles.Count > 0)
+                        //{
+                        //    cubeEntities[IndexFromCoord(x, y, z)] = e;
+                        //    triCount += e.triangles.Count * 3;
+                        //}
+                        March(v);
                     }
                 }
             }
@@ -742,7 +759,7 @@ namespace MarchingCubes
             {
                 for (int i = 0; i < t.triangles.Count; i++)
                 {
-                    AddTriangleToMeshData(t.triangles[i], ref usedTriCount, ref totalTreeCount, false);
+                    AddTriangleToMeshData(t.triangles[i], ref usedTriCount, ref totalTreeCount, true);
                 }
             }
         }
@@ -775,15 +792,29 @@ namespace MarchingCubes
 
         public BaseMeshChild GetNextMeshDisplayer()
         {
-            if (children[children.Count - 1].IsAppliedMesh)
+
+            BaseMeshChild displayer = null;
+            for (int i = 0; i < children.Count && displayer == null; i++)
             {
-                BaseMeshChild result = new BaseMeshChild(this, transform);
-                children.Add(result);
-                return result;
+                if (!children[i].IsAppliedMesh)
+                {
+                    displayer = children[i];
+                }
             }
-            else
+            if (displayer == null)
             {
-                return children[children.Count - 1];
+                displayer = new BaseMeshChild(this, transform);
+                children.Add(displayer);
+            }
+            return displayer;
+        }
+
+        protected void ResetMeshDisplayers()
+        {
+            for (int i = 0; i < children.Count; i++)
+            {
+                if (children[i].IsColliderActive)
+                    children[i].Reset();
             }
         }
 
@@ -814,16 +845,23 @@ namespace MarchingCubes
 
         public void Rebuild()
         {
-            ResetMesh();
+            ResetAll();
             BuildAll();
         }
 
 
         public void RebuildAround(MarchingCubeEntity e)
         {
+            //ResetAll();
+            //BuildAll();
+            //BuildChunkEdges();
+            //BuildMeshFromCurrentTriangles();
             triCount -= e.triangles.Count * 3;
-
+            cubeEntities.Remove(IndexFromCoord(e.origin));
             Vector3Int v = new Vector3Int();
+
+            List<MarchingCubeEntity> buildNeighbours = new List<MarchingCubeEntity>();
+
             for (int x = e.origin.x - 1; x <= e.origin.x + 1; x++)
             {
                 v.x = x;
@@ -835,13 +873,30 @@ namespace MarchingCubes
                         v.z = z;
                         if (IsCubeInBounds(v))
                         {
-                            March(v);
+                            MarchingCubeEntity neighbourEntity;
+                            if (cubeEntities.TryGetValue(IndexFromCoord(v), out neighbourEntity))
+                            {
+                                triCount -= neighbourEntity.triangles.Count * 3;
+                                cubeEntities.Remove(IndexFromCoord(v));
+                            }
+                            MarchingCubeEntity newCube = March(v);
+                            if (newCube.triangles.Count > 0)
+                            {
+                                buildNeighbours.Add(newCube);
+                            }
                             ///inform neighbours about eventuell change!
                         }
                     }
                 }
             }
-            // ApplyChanges();
+            List<MissingNeighbourData> missingNeighbours = new List<MissingNeighbourData>();
+            for (int i = 0; i < buildNeighbours.Count; i++)
+            {
+                BuildEdgesFor(buildNeighbours[i], missingNeighbours, true);
+            }
+
+            ResetMeshDisplayers();
+            BuildMeshFromCurrentTriangles();
         }
 
         protected IEnumerable<Vector3Int> GetIndicesAround(MarchingCubeEntity e)
@@ -963,15 +1018,15 @@ namespace MarchingCubes
                 points[i] += delta;
             }
 
-            for (int i = 0; i < points.Length; i++)
-            {
-                points[i] += delta;
-            }
+            //for (int i = 0; i < points.Length; i++)
+            //{
+            //    points[i] += delta;
+            //}
 
-            if (IsBorderCube(e.origin))
-            {
-                chunkHandler.EditNeighbourChunksAt(chunkOffset, e.origin, delta);
-            }
+            //if (IsBorderCube(e.origin))
+            //{
+            //    chunkHandler.EditNeighbourChunksAt(chunkOffset, e.origin, delta);
+            //}
             RebuildAround(e);
         }
 

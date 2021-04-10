@@ -13,7 +13,7 @@ namespace MarchingCubes
         {
             for (int i = 0; i < triangles.Count; i++)
             {
-                if(triangles[i].Normal == normal)
+                if (triangles[i].Normal == normal)
                 {
                     return triangles[i];
                 }
@@ -51,11 +51,11 @@ namespace MarchingCubes
         {
             foreach (var item in NeighbourData.InternNeighbourPairs)
             {
-                triangles[item.first].SoftSetNeighbourTwoWay(triangles[item.second], item.firstEdgeIndices, item.sndEdgeIndice);
+                 triangles[item.first].SoftSetNeighbourTwoWay(triangles[item.second], item.firstEdgeIndices, item.sndEdgeIndice);
             }
         }
 
-        public bool BuildNeighbours(Func<Vector3Int, MarchingCubeEntity> GetCube, Func<Vector3Int, bool> IsInBounds, List<MissingNeighbourData> addHere)
+        public bool BuildNeighbours(Func<Vector3Int, MarchingCubeEntity> GetCube, Func<Vector3Int, bool> IsInBounds, List<MissingNeighbourData> addHere, bool overrideNeighbours = false)
         {
             bool hasNeighbourOutOfBounds = true;
             foreach (OutsideEdgeNeighbourDirection neighbour in NeighbourData.OutsideNeighbours)
@@ -64,11 +64,17 @@ namespace MarchingCubes
 
                 if (IsInBounds(newPos))
                 {
-                        MarchingCubeEntity neighbourCube = GetCube(newPos);
+                    MarchingCubeEntity neighbourCube = GetCube(newPos);
 
-                        OutsideNeighbourConnectionInfo info = TriangulationTableStaticData.GetIndexWithEdges(neighbourCube.triangulationIndex, neighbour.rotatedEdgePair);
-                        triangles[neighbour.triangleIndex].SoftSetNeighbourTwoWay(neighbourCube.triangles[info.otherTriangleIndex],
-                        neighbour.relevantVertexIndices, info.outsideNeighbourEdgeIndices);
+                    OutsideNeighbourConnectionInfo info = TriangulationTableStaticData.GetIndexWithEdges(neighbourCube.triangulationIndex, neighbour.rotatedEdgePair);
+                    if (overrideNeighbours)
+                    {
+                        triangles[neighbour.triangleIndex].OverrideNeighbourTwoWay(neighbourCube.triangles[info.otherTriangleIndex], neighbour.relevantVertexIndices, info.outsideNeighbourEdgeIndices);
+                    }
+                    else
+                    {
+                        triangles[neighbour.triangleIndex].SoftSetNeighbourTwoWay(neighbourCube.triangles[info.otherTriangleIndex], neighbour.relevantVertexIndices, info.outsideNeighbourEdgeIndices);
+                    }
                 }
                 else
                 {
@@ -85,6 +91,7 @@ namespace MarchingCubes
         {
             OutsideNeighbourConnectionInfo info = TriangulationTableStaticData.GetIndexWithEdges(e.triangulationIndex, rotatedEdge);
             tri.SoftSetNeighbourTwoWay(e.triangles[info.otherTriangleIndex], myEdgeIndices, info.outsideNeighbourEdgeIndices);
+
         }
 
         public bool FindMissingNeighbours(Func<Vector3Int, bool> IsInBounds, List<MissingNeighbourData> addHere)

@@ -15,6 +15,7 @@ namespace MarchingCubes
         {
             if (multiThreadDone)
             {
+                isInOtherThread = false;
                 BuildAllMeshes();
                 enabled = false;
                 IsReady = true;
@@ -35,6 +36,8 @@ namespace MarchingCubes
             
         }
 
+        protected bool isInOtherThread;
+
         protected void OnChunkDone()
         {
             //BuildAllMissingEdges();
@@ -45,20 +48,41 @@ namespace MarchingCubes
 
         protected void RequestChunk(TriangleBuilder[] tris, IMarchingCubeChunkHandler handler, float[] points, float surfaceLevel, MarchingCubeChunkNeighbourLODs neighbourLODs, Action OnChunkDone)
         {
-            //try
-            //{
+            
+            try
+            {
+                isInOtherThread = true;
                 BuildMeshData(tris, points, handler, neighbourLODs, surfaceLevel);
                 OnChunkDone();
-            //}
-            //catch(Exception x)
-            //{
+            }
+            catch(Exception x)
+            {
 
-            //}
+            }
         }
 
         protected override void SetCurrentMeshData(bool useCollider)
         {
-           data.Add(new MeshData(meshTriangles, vertices, colorData, useCollider));
+            if (isInOtherThread)
+            {
+                data.Add(new MeshData(meshTriangles, vertices, colorData, useCollider));
+            }
+            else
+            {
+                base.SetCurrentMeshData(useCollider);
+            }
+        }
+
+        protected override void ResetAll()
+        {
+            if (isInOtherThread)
+            {
+                data.Clear();
+            }
+            else
+            {
+                base.ResetAll();
+            }
         }
 
 
