@@ -197,6 +197,7 @@ public class TriangulationTableStaticData : MonoBehaviour
 
     }
 
+
     public static int GetEdgeIndex(int triangulationIndex, int triIndex, int edgeValue)
     {
         for (int i = 0; i < 3; i++)
@@ -282,6 +283,21 @@ public class TriangulationTableStaticData : MonoBehaviour
         CubeRepresentation cube = new CubeRepresentation(triangulationIndex);
         cube.MirrorRepresentation(axis);
         return cube.CubeIndex;
+    }
+
+    public static int RotateCornerIndex(int cornerIndex, Vector3Int dir)
+    {
+        return RotateCornerIndexOnAxis(cornerIndex, AxisFromDir(dir));
+    }
+
+    public static MirrorAxis AxisFromDir(Vector3Int dir)
+    {
+        if(dir.x == 0)
+            return MirrorAxis.X;
+        if (dir.y == 0)
+            return MirrorAxis.Y;
+        else
+            return MirrorAxis.Z;
     }
 
     //public static bool GetNeighbourIndexIn(int fromIndex, int fromTriIndex, int toIndex, out int result)
@@ -422,6 +438,22 @@ public class TriangulationTableStaticData : MonoBehaviour
             f = CubeRepresentation.RotateOnZ;
         }
         return @is.Select(f);
+    }
+
+    public static int RotateCornerIndexOnAxis(int cornerIndex, MirrorAxis axis)
+    {
+        if (axis == MirrorAxis.X)
+        {
+            return CubeRepresentation.RotateOnX(cornerIndex);
+        }
+        else if (axis == MirrorAxis.Y)
+        {
+            return CubeRepresentation.RotateOnY(cornerIndex);
+        }
+        else
+        {
+            return CubeRepresentation.RotateOnZ(cornerIndex);
+        }
     }
 
     public static OutsideNeighbourConnectionInfo GetIndexWithEdges(int index, Vector2Int edge)

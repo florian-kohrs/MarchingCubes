@@ -31,7 +31,7 @@ namespace MarchingCubes
             mesh.Clear();
         }
 
-        public void ApplyMesh(Color[] colorData, Vector3[] vertices, int[] meshTriangles, Material mat)
+        public void ApplyMesh(Color[] colorData, Vector3[] vertices, int[] meshTriangles, Material mat, bool useCollider)
         {
             IsAppliedMesh = true;
             mesh.vertices = vertices;
@@ -39,7 +39,10 @@ namespace MarchingCubes
             mesh.triangles = meshTriangles;
             renderer.material = mat;
             mesh.RecalculateNormals();
-            collider.sharedMesh = mesh;
+            if (useCollider)
+            {
+                collider.sharedMesh = mesh;
+            }
         }
 
         public bool IsAppliedMesh { get; private set; }

@@ -24,14 +24,14 @@ namespace MarchingCubes
 
         protected Action OnDone;
 
-        public override void InitializeWithMeshDataParallel(TriangleBuilder[] tris, int activeTris, float[] points, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel, Action OnDone)
+        public override void InitializeWithMeshDataParallel(TriangleBuilder[] tris, float[] points, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel, Action OnDone)
         {
             HasStarted = true;
             chunkHandler = handler;
             this.OnDone = OnDone;
             children.Add(new BaseMeshChild(GetComponent<MeshFilter>(), GetComponent<MeshRenderer>(), GetComponent<MeshCollider>(), new Mesh()));
          
-            ThreadPool.QueueUserWorkItem((o) => RequestChunk(tris, handler, activeTris, points, surfaceLevel, neighbourLODs, OnChunkDone));
+            ThreadPool.QueueUserWorkItem((o) => RequestChunk(tris, handler, points, surfaceLevel, neighbourLODs, OnChunkDone));
             
         }
 
@@ -43,11 +43,11 @@ namespace MarchingCubes
 
         private bool multiThreadDone = false;
 
-        protected void RequestChunk(TriangleBuilder[] tris, IMarchingCubeChunkHandler handler, int activeTris, float[] points, float surfaceLevel, MarchingCubeChunkNeighbourLODs neighbourLODs, Action OnChunkDone)
+        protected void RequestChunk(TriangleBuilder[] tris, IMarchingCubeChunkHandler handler, float[] points, float surfaceLevel, MarchingCubeChunkNeighbourLODs neighbourLODs, Action OnChunkDone)
         {
             //try
             //{
-                BuildMeshData(tris, activeTris, points, handler, neighbourLODs, surfaceLevel);
+                BuildMeshData(tris, points, handler, neighbourLODs, surfaceLevel);
                 OnChunkDone();
             //}
             //catch(Exception x)
@@ -56,9 +56,9 @@ namespace MarchingCubes
             //}
         }
 
-        protected override void SetCurrentMeshData()
+        protected override void SetCurrentMeshData(bool useCollider)
         {
-           data.Add(new MeshData(meshTriangles, vertices, colorData));
+           data.Add(new MeshData(meshTriangles, vertices, colorData, useCollider));
         }
 
 
@@ -75,7 +75,7 @@ namespace MarchingCubes
         protected void ApplyChangesToMesh(in MeshData d)
         {
             BaseMeshChild displayer = GetNextMeshDisplayer();
-            displayer.ApplyMesh(d.colorData, d.vertices, d.triangles, Material);
+            displayer.ApplyMesh(d.colorData, d.vertices, d.triangles, Material, d.useCollider);
         }
 
         //protected void BuildAllMissingEdges()

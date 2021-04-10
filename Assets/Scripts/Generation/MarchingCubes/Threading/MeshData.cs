@@ -8,11 +8,13 @@ public struct MeshData
     public int[] triangles;
     public Vector3[] vertices;
     public Color[] colorData;
+    public bool useCollider;
 
-    public MeshData(int[] triangles, Vector3[] vertices, Color[] colorData)
+    public MeshData(int[] triangles, Vector3[] vertices, Color[] colorData, bool useCollider)
     {
         this.triangles = triangles;
         this.vertices = vertices;
         this.colorData = colorData;
+        this.useCollider = useCollider;
     }
 }

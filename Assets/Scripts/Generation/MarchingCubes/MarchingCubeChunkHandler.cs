@@ -14,7 +14,7 @@ namespace MarchingCubes
 
         protected const int threadGroupSize = 8;
 
-        public const int ChunkSize = 4;
+        public const int ChunkSize = 128;
 
         public const int CHUNK_VOLUME = ChunkSize * ChunkSize * ChunkSize;
 
@@ -33,6 +33,8 @@ namespace MarchingCubes
 
         public ComputeShader marshShader;
 
+        public const int maxLodAtDistance = 1500;
+
         [Header("Voxel Settings")]
         //public float boundsSize = 8;
         public Vector3 noiseOffset = Vector3.zero;
@@ -46,7 +48,7 @@ namespace MarchingCubes
 
         public int GetLod(float sqrDistance)
         {
-            return RoundToPowerOf2(lodForDistances.Evaluate(sqrDistance / maxChunkDistance));
+            return RoundToPowerOf2(lodForDistances.Evaluate(sqrDistance / maxLodAtDistance));
         }
 
         protected int RoundToPowerOf2(float f)
@@ -104,8 +106,8 @@ namespace MarchingCubes
             start = DateTime.Now;
             //Debug.Log("Max threadpool threads:" + ThreadPool.thread());
             kernelId = marshShader.FindKernel("March");
+            startPos = player.position;
             IMarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
-            startPos = AnchorFromChunkIndex(chunk.ChunkOffset);
             maxChunkDistance = buildAroundDistance;
 
             StartCoroutine(BuildRelevantChunksParallelAround(chunk));
@@ -249,7 +251,7 @@ namespace MarchingCubes
                 }
                 if (sortedNeighbourds.Count > 0)
                 {
-                    //yield return null;
+                    //yield return new WaitForSeconds(0.03f);
                     yield return BuildRelevantChunksParallelAround();
                 }
             }
@@ -444,8 +446,9 @@ namespace MarchingCubes
 
         protected void BuildChunk(Vector3Int p, IMarchingCubeChunk chunk)
         {
-            int numTris = ApplyChunkDataAndDispatchAndGetShaderData(p, chunk, 1);
-            chunk.InitializeWithMeshData(tris, numTris, pointsArray, this, MarchingCubeChunkNeighbourLODs.One, surfaceLevel);
+            int lod = GetLodAt(p);
+            int numTris = ApplyChunkDataAndDispatchAndGetShaderData(p, chunk, lod);
+            chunk.InitializeWithMeshData(tris, pointsArray, this, GetNeighbourLODSFrom(p), surfaceLevel);
         }
 
         protected void BuildChunkParallel(Vector3Int p, IMarchingCubeChunk chunk, Action OnDone)
@@ -453,7 +456,7 @@ namespace MarchingCubes
             int lod = GetLodAt(p);
             int numTris = ApplyChunkDataAndDispatchAndGetShaderData(p, chunk, lod);
             channeledChunks++;
-            chunk.InitializeWithMeshDataParallel(tris, numTris, pointsArray, this, GetNeighbourLODSFrom(p), surfaceLevel, OnDone);
+            chunk.InitializeWithMeshDataParallel(tris, pointsArray, this, GetNeighbourLODSFrom(p), surfaceLevel, OnDone);
         }
 
         protected int ApplyChunkDataAndDispatchAndGetShaderData(Vector3Int p, IMarchingCubeChunk chunk, int lod)

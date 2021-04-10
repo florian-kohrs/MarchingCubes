@@ -21,6 +21,15 @@ namespace MarchingCubes
             }
         }
 
+        public static MarchingCubeChunkNeighbourLODs Two
+        {
+            get
+            {
+                return new MarchingCubeChunkNeighbourLODs(2,2,2,2,2,2);
+            }
+        }
+
+
         public bool AtLestOnHigerThan(int lod)
         {
             return rightNeighbourLod > lod
