@@ -40,6 +40,8 @@ namespace MarchingCubes
 
         void InitializeWithMeshData(TriangleBuilder[] tris, float[] points, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLod, float surfaceLevel);
 
+        void InitializeEmpty(IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel);
+
         MarchingCubeEntity GetEntityAt(Vector3Int v3);
 
         MarchingCubeEntity GetEntityAt(int x, int y, int z);

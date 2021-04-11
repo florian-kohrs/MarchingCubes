@@ -7,6 +7,8 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
+
+    ///when saving: save for each chunk if it was initialized empty and a dictionary which modified point has which w
     public class MarchingCubeChunkHandler : MonoBehaviour, IMarchingCubeChunkHandler
     {
 
@@ -62,7 +64,7 @@ namespace MarchingCubes
 
         public int GetLodAt(Vector3Int v3)
         {
-            return GetLod((startPos - AnchorFromChunkIndex(v3)).magnitude);
+            return GetLod((startPos - AnchorFromChunkCoords(v3)).magnitude);
         }
 
         protected int NeededChunkAmount
@@ -139,7 +141,7 @@ namespace MarchingCubes
             {
                 foreach (Vector3Int v3 in chunk.NeighbourIndices)
                 {
-                    if (!Chunks.ContainsKey(v3) && (startPos - AnchorFromChunkIndex(v3)).magnitude < maxChunkDistance)
+                    if (!Chunks.ContainsKey(v3) && (startPos - AnchorFromChunkCoords(v3)).magnitude < maxChunkDistance)
                     {
                         IMarchingCubeChunk newChunk = CreateChunkAt(v3);
                         foreach (Vector3Int newV3 in newChunk.NeighbourIndices)
@@ -265,7 +267,7 @@ namespace MarchingCubes
             channeledChunks--;
             foreach (Vector3Int v3 in chunk.NeighbourIndices)
             {
-                float distance = (startPos - AnchorFromChunkIndex(v3)).magnitude;
+                float distance = (startPos - AnchorFromChunkCoords(v3)).magnitude;
                 if (!Chunks.ContainsKey(v3) && distance < maxChunkDistance)
                 {
                     AddSortedNeighbour(distance, v3);
@@ -367,6 +369,38 @@ namespace MarchingCubes
                 }
             }
             return false;
+        }
+
+        /// <summary>
+        /// gets or creates a chunk at position. Fails if at position a chunk is being created asynchronously
+        /// </summary>
+        /// <param name="p"></param>
+        /// <param name="chunk"></param>
+        /// <returns></returns>
+        public bool TryGetOrCreateChunk(Vector3Int p, out IMarchingCubeChunk chunk)
+        {
+            if (chunks.TryGetValue(p, out chunk))
+            {
+                if (chunk.IsReady)
+                {
+                    return true;
+                }
+                else
+                {
+                    chunk = null;
+                    return false;
+                }
+            }
+            else
+            {
+                chunk = CreateChunkAt(p);
+                //chunk = GetChunkObjectAt(p);
+                //chunk.LOD = GetLodAt(p);
+                //chunk.Material = chunkMaterial;
+                //chunk.AnchorPos = AnchorFromChunkCoords(p);
+                //chunk.InitializeEmpty(this, GetNeighbourLODSFrom(p), surfaceLevel);
+            }
+            return true;
         }
 
         public bool HasChunkStartedAt(Vector3Int p)
@@ -475,7 +509,7 @@ namespace MarchingCubes
             CreateBuffersWithSizes(numVoxelsPerAxis);
 
             float spacing = lod;
-            Vector3 anchor = AnchorFromChunkIndex(p);
+            Vector3 anchor = AnchorFromChunkCoords(p);
 
             chunk.LOD = lod;
             chunk.Material = chunkMaterial;
@@ -552,7 +586,7 @@ namespace MarchingCubes
 
         }
 
-        public Vector3 AnchorFromChunkIndex(Vector3Int v)
+        public Vector3 AnchorFromChunkCoords(Vector3Int v)
         {
             return new Vector3(v.x * ChunkSize, v.y * ChunkSize, v.z * ChunkSize);
         }
@@ -586,7 +620,7 @@ namespace MarchingCubes
                 {
                     Debug.Log("Found neighbour with offset " + offsetVector);
                     IMarchingCubeChunk neighbourChunk;
-                    if (chunks.TryGetValue(chunkOffset + offsetVector, out neighbourChunk))
+                    if (TryGetOrCreateChunk(chunkOffset + offsetVector, out neighbourChunk))
                     {
                         if (neighbourChunk.LOD == 1)
                         {

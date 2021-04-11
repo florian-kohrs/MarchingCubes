@@ -7,7 +7,7 @@ namespace MarchingCubes
     public class ClickEditor : MonoBehaviour
     {
 
-        int sign = 1;
+        int pointDelta = -2;
 
         protected PathTriangle firstTriIndex;
         protected PathTriangle secondTriIndex;
@@ -36,9 +36,9 @@ namespace MarchingCubes
         {
             if (Input.GetKeyDown(KeyCode.Space))
             {
-                sign *= -1;
+                pointDelta *= -1;
             }
-            if (Input.GetMouseButtonDown(0))
+            if (Input.GetMouseButtonDown(2))
             {
                 RaycastHit hit;
                 Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -91,7 +91,7 @@ namespace MarchingCubes
                 }
 
             }
-            else if (Input.GetMouseButtonDown(2))
+            else if (Input.GetMouseButtonDown(0))
             {
                 RaycastHit hit;
                 Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -104,7 +104,7 @@ namespace MarchingCubes
 
                     if (chunk != null)
                     {
-                        chunk.EditPointsAroundRayHit(sign, hit, 0);
+                        chunk.EditPointsAroundRayHit(pointDelta * Time.deltaTime, hit, 0);
                     }
                 }
             }

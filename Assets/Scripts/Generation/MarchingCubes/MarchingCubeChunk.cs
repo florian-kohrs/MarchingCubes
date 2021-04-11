@@ -24,7 +24,6 @@ namespace MarchingCubes
 
         protected void BuildMeshData(TriangleBuilder[] tris, float[] points, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel)
         {
-
             HasStarted = true;
             this.surfaceLevel = surfaceLevel;
             this.neighbourLODs = neighbourLODs;
@@ -57,7 +56,17 @@ namespace MarchingCubes
 
             IsReady = true;
 
+        }
 
+        public void InitializeEmpty(IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel)
+        {
+            HasStarted = true;
+            points = new float[PointsPerAxis * PointsPerAxis * PointsPerAxis];
+            this.surfaceLevel = surfaceLevel;
+            this.neighbourLODs = neighbourLODs;
+            careAboutNeighbourLODS = neighbourLODs.HasNeighbourWithHigherLOD(lod);
+            chunkHandler = handler;
+            IsReady = true;
         }
 
         protected MarchingCubeChunkNeighbourLODs neighbourLODs;
@@ -92,7 +101,7 @@ namespace MarchingCubes
 
         protected int vertexSize = MarchingCubeChunkHandler.ChunkSize;
 
-        protected int PointSize => vertexSize + 1;
+        protected int PointsPerAxis => vertexSize + 1;
 
         public int lod = 1;
 
@@ -657,15 +666,15 @@ namespace MarchingCubes
         protected Vector3Int CoordFromPointIndex(int i)
         {
             return new Vector3Int
-               ((i % (PointSize * PointSize) % PointSize)
-               , (i % (PointSize * PointSize) / PointSize)
-               , (i / (PointSize * PointSize))
+               ((i % (PointsPerAxis * PointsPerAxis) % PointsPerAxis)
+               , (i % (PointsPerAxis * PointsPerAxis) / PointsPerAxis)
+               , (i / (PointsPerAxis * PointsPerAxis))
                );
         }
 
         protected int IndexFromCoord(int x, int y, int z)
         {
-            int index = z * PointSize * PointSize + y * PointSize + x;
+            int index = z * PointsPerAxis * PointsPerAxis + y * PointsPerAxis + x;
             return index;
         }
 
@@ -1017,13 +1026,12 @@ namespace MarchingCubes
             return cube.GetTriangleWithNormal(hit.normal);
         }
 
-        public void EditPointsAroundRayHit(int sign, RaycastHit hit, int editDistance)
+        public void EditPointsAroundRayHit(float delta, RaycastHit hit, int editDistance)
         {
             MarchingCubeEntity e = GetEntityFromRayHit(hit);
             //Triangle t = e.GetTriangleWithNormal(hit.normal).tri;
 
             int[] cornerIndices = GetCubeCornerIndicesForPoint(e.origin);
-            float delta = sign * 1f /** Time.deltaTime*/;
 
             foreach (int i in cornerIndices)
             {
