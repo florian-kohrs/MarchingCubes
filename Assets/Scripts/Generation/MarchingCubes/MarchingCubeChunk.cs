@@ -654,6 +654,15 @@ namespace MarchingCubes
                );
         }
 
+        protected Vector3Int CoordFromPointIndex(int i)
+        {
+            return new Vector3Int
+               ((i % (PointSize * PointSize) % PointSize)
+               , (i % (PointSize * PointSize) / PointSize)
+               , (i / (PointSize * PointSize))
+               );
+        }
+
         protected int IndexFromCoord(int x, int y, int z)
         {
             int index = z * PointSize * PointSize + y * PointSize + x;
@@ -850,25 +859,28 @@ namespace MarchingCubes
         }
 
 
-        public void RebuildAround(MarchingCubeEntity e)
+        public void RebuildAround(MarchingCubeEntity e, in Vector3Int origin)
         {
             //ResetAll();
             //BuildAll();
             //BuildChunkEdges();
             //BuildMeshFromCurrentTriangles();
-            triCount -= e.triangles.Count * 3;
-            cubeEntities.Remove(IndexFromCoord(e.origin));
+            if (e != null)
+            {
+                triCount -= e.triangles.Count * 3;
+                cubeEntities.Remove(IndexFromCoord(e.origin));
+            }
             Vector3Int v = new Vector3Int();
 
             List<MarchingCubeEntity> buildNeighbours = new List<MarchingCubeEntity>();
 
-            for (int x = e.origin.x - 1; x <= e.origin.x + 1; x++)
+            for (int x = origin.x - 1; x <= origin.x + 1; x++)
             {
                 v.x = x;
-                for (int y = e.origin.y - 1; y <= e.origin.y + 1; y++)
+                for (int y = origin.y - 1; y <= origin.y + 1; y++)
                 {
                     v.y = y;
-                    for (int z = e.origin.z - 1; z <= e.origin.z + 1; z++)
+                    for (int z = origin.z - 1; z <= origin.z + 1; z++)
                     {
                         v.z = z;
                         if (IsCubeInBounds(v))
@@ -1023,11 +1035,11 @@ namespace MarchingCubes
             //    points[i] += delta;
             //}
 
-            //if (IsBorderCube(e.origin))
-            //{
-            //    chunkHandler.EditNeighbourChunksAt(chunkOffset, e.origin, delta);
-            //}
-            RebuildAround(e);
+            if (IsBorderCube(e.origin))
+            {
+                chunkHandler.EditNeighbourChunksAt(chunkOffset, e.origin, delta);
+            }
+            RebuildAround(e, e.origin);
         }
 
 
@@ -1050,13 +1062,13 @@ namespace MarchingCubes
             return transform.position + (chunkOffset * MarchingCubeChunkHandler.ChunkSize);
         }
 
-        public void EditPointsNextToChunk(IMarchingCubeChunk chunk, MarchingCubeEntity e, Vector3Int offset, float delta)
+        public void EditPointsNextToChunk(IMarchingCubeChunk chunk, Vector3Int entityOrigin, Vector3Int offset, float delta)
         {
-            int[] cornerIndices = GetCubeCornerIndicesForPoint(e.origin);
+            int[] cornerIndices = GetCubeCornerIndicesForPoint(entityOrigin);
 
             foreach (int index in cornerIndices)
             {
-                Vector3Int indexPoint = CoordFromCubeIndex(index);
+                Vector3Int indexPoint = CoordFromPointIndex(index);
                 Vector3Int pointOffset = new Vector3Int();
                 for (int i = 0; i < 3; i++)
                 {
@@ -1076,7 +1088,7 @@ namespace MarchingCubes
                     points[index] += delta;
                 }
             }
-            RebuildAround(e);
+            RebuildAround(GetEntityAt(entityOrigin), entityOrigin);
         }
 
         public void SetActive(bool b)

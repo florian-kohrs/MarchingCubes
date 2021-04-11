@@ -588,7 +588,14 @@ namespace MarchingCubes
                     IMarchingCubeChunk neighbourChunk;
                     if (chunks.TryGetValue(chunkOffset + offsetVector, out neighbourChunk))
                     {
-                        EditNeighbourChunkAt(neighbourChunk, cubeOrigin, offsetVector, delta);
+                        if (neighbourChunk.LOD == 1)
+                        {
+                            EditNeighbourChunkAt(neighbourChunk, cubeOrigin, offsetVector, delta);
+                        }
+                        else
+                        {
+                            Debug.LogWarning("Cant edit a neighbour mesh with higher lod! Upgrade neighbour lods if player gets too close.");
+                        }
                     }
                 }
             }
@@ -599,8 +606,7 @@ namespace MarchingCubes
             if (chunk is IMarchingCubeInteractableChunk interactable)
             {
                 Vector3Int newChunkCubeIndex = (original + offset).Map(f => MathExt.FloorMod(f, ChunkSize));
-                MarchingCubeEntity e = interactable.GetEntityAt(newChunkCubeIndex.x, newChunkCubeIndex.y, newChunkCubeIndex.z);
-                interactable.EditPointsNextToChunk(chunk, e, offset, delta);
+                interactable.EditPointsNextToChunk(chunk, newChunkCubeIndex, offset, delta);
             }
             else
             {

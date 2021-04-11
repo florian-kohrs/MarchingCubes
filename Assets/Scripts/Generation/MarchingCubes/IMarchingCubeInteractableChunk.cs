@@ -14,7 +14,7 @@ namespace MarchingCubes
 
         void EditPointsAroundRayHit(int sign, RaycastHit hit, int editDistance);
 
-        void EditPointsNextToChunk(IMarchingCubeChunk chunk, MarchingCubeEntity e, Vector3Int offset, float delta);
+        void EditPointsNextToChunk(IMarchingCubeChunk chunk, Vector3Int entityOrigin, Vector3Int offset, float delta);
 
         MarchingCubeEntity GetEntityAt(Vector3Int v3);
 
