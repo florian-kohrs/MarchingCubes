@@ -11,15 +11,47 @@ namespace MarchingCubes
 
         public PathTriangle GetTriangleWithNormal(Vector3 normal)
         {
+            return triangles[GetTriangleIndexWithNormal(normal)];
+        }
+
+        public int GetTriangleIndexWithNormal(Vector3 normal)
+        {
             for (int i = 0; i < triangles.Count; i++)
             {
                 if (triangles[i].Normal == normal)
                 {
-                    return triangles[i];
+                    return i;
                 }
             }
             throw new System.Exception("No triangle with same normal found!");
-            //return best;
+        }
+
+        public int GetTriangleIndexWithNormalOrClosest(Vector3 normal, Vector3 point)
+        {
+            float closestSqr = float.MaxValue;
+            int closestIndex = -1;
+            for (int i = 0; i < triangles.Count; i++)
+            {
+                if (triangles[i].Normal == normal)
+                {
+                    return i;
+                }
+                else
+                {
+                    float distance = (triangles[i].OriginalLOcalMiddlePointOfTriangle - point).sqrMagnitude;
+                    if (distance < closestSqr)
+                    {
+                        closestSqr = distance;
+                        closestIndex = i;
+                    }
+                }
+            }
+            return closestIndex;
+        }
+
+        public PathTriangle GetTriangleWithNormalOrClosest(Vector3 normal, Vector3 point)
+        {
+            return triangles[GetTriangleIndexWithNormalOrClosest(normal, point)];
         }
 
         public List<PathTriangle> triangles = new List<PathTriangle>();

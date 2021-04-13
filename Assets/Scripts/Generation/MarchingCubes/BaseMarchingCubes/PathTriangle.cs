@@ -14,12 +14,15 @@ namespace MarchingCubes
             //this.chunk = chunk;
             tri = t;
             normal = (Vector3.Cross(tri.b - tri.a, tri.c - tri.a)).normalized;
-            slope = Mathf.Acos(Vector3.Dot(normal, OriginalLOcalMiddlePointOfTriangle.normalized)) * 180 / Mathf.PI;
+            middlePoint = (tri.a + tri.b + tri.c) / 3;
+            slope = Mathf.Acos(Vector3.Dot(normal, middlePoint.normalized)) * 180 / Mathf.PI;
         }
 
         protected const float MAX_SLOPE_TO_BE_USEABLE_IN_PATHFINDING = 45;
 
         public Vector3 normal;
+
+        public Vector3 middlePoint;
 
         public float slope;
 
@@ -126,7 +129,7 @@ namespace MarchingCubes
         public float Slope => slope;
 
 
-        public Vector3 OriginalLOcalMiddlePointOfTriangle => (tri.a + tri.b + tri.c) / 3;
+        public Vector3 OriginalLOcalMiddlePointOfTriangle => middlePoint;
 
     }
 

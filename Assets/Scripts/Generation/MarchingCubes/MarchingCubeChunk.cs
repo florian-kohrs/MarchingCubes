@@ -182,14 +182,14 @@ namespace MarchingCubes
         public MarchingCubeEntity GetEntityAt(Vector3Int v3)
         {
             MarchingCubeEntity e;
-            cubeEntities.TryGetValue(IndexFromCoord(v3), out e);
+            cubeEntities.TryGetValue(PointIndexFromCoord(v3), out e);
             return e;
         }
 
         public MarchingCubeEntity GetEntityAt(int x, int y, int z)
         {
             MarchingCubeEntity e;
-            cubeEntities.TryGetValue(IndexFromCoord(x, y, z), out e);
+            cubeEntities.TryGetValue(PointIndexFromCoord(x, y, z), out e);
             return e;
         }
 
@@ -210,12 +210,12 @@ namespace MarchingCubes
             //x *= lod;
             //y *= lod;
             //z *= lod;
-            return new Vector4(AnchorPos.x + x * globalLod, AnchorPos.y + y * globalLod, AnchorPos.z + z * globalLod, points[IndexFromCoord(x, y, z)]);
+            return new Vector4(AnchorPos.x + x * globalLod, AnchorPos.y + y * globalLod, AnchorPos.z + z * globalLod, points[PointIndexFromCoord(x, y, z)]);
         }
 
         protected Vector4 BuildVector4FromCoord(int x, int y, int z)
         {
-            return new Vector4(AnchorPos.x + x * lod, AnchorPos.y + y * lod, AnchorPos.z + z * lod, points[IndexFromCoord(x, y, z)]);
+            return new Vector4(AnchorPos.x + x * lod, AnchorPos.y + y * lod, AnchorPos.z + z * lod, points[PointIndexFromCoord(x, y, z)]);
         }
 
 
@@ -269,14 +269,14 @@ namespace MarchingCubes
         {
             return new int[]
             {
-                IndexFromCoord(p.x, p.y, p.z),
-                IndexFromCoord(p.x + 1, p.y, p.z),
-                IndexFromCoord(p.x + 1, p.y, p.z + 1),
-                IndexFromCoord(p.x, p.y, p.z + 1),
-                IndexFromCoord(p.x, p.y + 1, p.z),
-                IndexFromCoord(p.x + 1, p.y + 1, p.z),
-                IndexFromCoord(p.x + 1, p.y + 1, p.z + 1),
-                IndexFromCoord(p.x, p.y + 1, p.z + 1)
+                PointIndexFromCoord(p.x, p.y, p.z),
+                PointIndexFromCoord(p.x + 1, p.y, p.z),
+                PointIndexFromCoord(p.x + 1, p.y, p.z + 1),
+                PointIndexFromCoord(p.x, p.y, p.z + 1),
+                PointIndexFromCoord(p.x, p.y + 1, p.z),
+                PointIndexFromCoord(p.x + 1, p.y + 1, p.z),
+                PointIndexFromCoord(p.x + 1, p.y + 1, p.z + 1),
+                PointIndexFromCoord(p.x, p.y + 1, p.z + 1)
             };
         }
 
@@ -323,7 +323,7 @@ namespace MarchingCubes
 
             if (e.triangles.Count > 0)
             {
-                cubeEntities[IndexFromCoord(p)] = e;
+                cubeEntities[PointIndexFromCoord(p)] = e;
             }
             return e;
         }
@@ -542,7 +542,7 @@ namespace MarchingCubes
         protected void AddCubeForNeigbhourInDirection(int key, MarchingCubeEntity c)
         {
             List<MarchingCubeEntity> cubes;
-            if(!cubesForNeighbourInDirection.TryGetValue(key, out cubes))
+            if (!cubesForNeighbourInDirection.TryGetValue(key, out cubes))
             {
                 cubes = new List<MarchingCubeEntity>();
                 cubesForNeighbourInDirection.Add(key, cubes);
@@ -585,7 +585,7 @@ namespace MarchingCubes
             int lodDiff = otherLod / lod;
 
             Vector3Int rightCubeIndex = e.origin.Map(f => f - f % lodDiff);
-            int key = IndexFromCoord(rightCubeIndex);
+            int key = PointIndexFromCoord(rightCubeIndex);
             if (!neighbourChunksGlue.ContainsKey(key))
             {
                 Vector3Int diff = e.origin - rightCubeIndex;
@@ -694,15 +694,15 @@ namespace MarchingCubes
                );
         }
 
-        protected int IndexFromCoord(int x, int y, int z)
+        protected int PointIndexFromCoord(int x, int y, int z)
         {
             int index = z * PointsPerAxis * PointsPerAxis + y * PointsPerAxis + x;
             return index;
         }
 
-        protected int IndexFromCoord(Vector3Int v)
+        protected int PointIndexFromCoord(Vector3Int v)
         {
-            return IndexFromCoord(v.x, v.y, v.z);
+            return PointIndexFromCoord(v.x, v.y, v.z);
         }
 
 
@@ -744,7 +744,7 @@ namespace MarchingCubes
 
         protected bool GetOrAddEntityAt(int x, int y, int z, out MarchingCubeEntity e)
         {
-            int key = IndexFromCoord(x, y, z);
+            int key = PointIndexFromCoord(x, y, z);
             if (!cubeEntities.TryGetValue(key, out e))
             {
                 e = new MarchingCubeEntity();
@@ -899,7 +899,7 @@ namespace MarchingCubes
             if (e != null)
             {
                 triCount -= e.triangles.Count * 3;
-                cubeEntities.Remove(IndexFromCoord(e.origin));
+                cubeEntities.Remove(PointIndexFromCoord(e.origin));
             }
             Vector3Int v = new Vector3Int();
 
@@ -917,10 +917,10 @@ namespace MarchingCubes
                         if (IsCubeInBounds(v))
                         {
                             MarchingCubeEntity neighbourEntity;
-                            if (cubeEntities.TryGetValue(IndexFromCoord(v), out neighbourEntity))
+                            if (cubeEntities.TryGetValue(PointIndexFromCoord(v), out neighbourEntity))
                             {
                                 triCount -= neighbourEntity.triangles.Count * 3;
-                                cubeEntities.Remove(IndexFromCoord(v));
+                                cubeEntities.Remove(PointIndexFromCoord(v));
                             }
                             MarchingCubeEntity newCube = March(v);
                             if (newCube.triangles.Count > 0)
@@ -1049,17 +1049,84 @@ namespace MarchingCubes
             return cube.GetTriangleWithNormal(hit.normal);
         }
 
+        protected int LocalCornerIndexToGlobalDelta(int local)
+        {
+            if (local == 0)
+                return 0;
+            else if (local == 1)
+                return 1;
+            else if (local == 2)
+                return 1 + PointsPerAxis * PointsPerAxis;
+            else if (local == 3)
+                return PointsPerAxis * PointsPerAxis;
+            else if (local == 4)
+                return PointsPerAxis;
+            else if (local == 5)
+                return PointsPerAxis + 1;
+            else if (local == 6)
+                return PointsPerAxis + PointsPerAxis * PointsPerAxis + 1;
+            else if (local == 7)
+                return PointsPerAxis + PointsPerAxis * PointsPerAxis;
+            else
+                throw new Exception("Invalid value");
+        }
+
+        protected int FlipIndexInDirection(int pointIndex, Vector3Int dir)
+        {
+            if(dir.x > 0)
+            {
+                pointIndex -= vertexSize;
+            }
+            else if(dir.x < 0)
+            {
+                pointIndex += vertexSize;
+            }
+            if (dir.y > 0)
+            {
+                pointIndex -= PointsPerAxis * vertexSize;
+            }
+            else if (dir.y < 0)
+            {
+                pointIndex += PointsPerAxis * vertexSize;
+            }
+            if (dir.y > 0)
+            {
+                pointIndex -= PointsPerAxis * PointsPerAxis * vertexSize;
+            }
+            else if (dir.y < 0)
+            {
+                pointIndex += PointsPerAxis * PointsPerAxis * vertexSize;
+            }
+            return pointIndex;
+        }
+
         public void EditPointsAroundRayHit(float delta, RaycastHit hit, int editDistance)
         {
             MarchingCubeEntity e = GetEntityFromRayHit(hit);
-            //Triangle t = e.GetTriangleWithNormal(hit.normal).tri;
-
-            int[] cornerIndices = GetCubeCornerIndicesForPoint(e.origin);
-
-            foreach (int i in cornerIndices)
+            int triIndex = e.GetTriangleIndexWithNormalOrClosest(hit.normal, hit.point) * 3;
+            int startPointIndex = PointIndexFromCoord(e.origin);
+            float[] cornerIndices = new float[8];
+            for (int i = 0; i < cornerIndices.Length; i++)
             {
-                points[i] += delta;
+                cornerIndices[i] = 0.4f;
             }
+            for (int i = 0; i < 3; i++)
+            {
+                int cornerA = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[e.triangulationIndex][triIndex + i]];
+                int cornerB = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[e.triangulationIndex][triIndex + i]];
+                cornerIndices[cornerA] += 0.2f;
+                cornerIndices[cornerB] += 0.2f;
+            }
+
+            for (int i = 0; i < cornerIndices.Length; i++)
+            {
+                points[startPointIndex + LocalCornerIndexToGlobalDelta(i)] += cornerIndices[i] * delta;
+            }
+
+            //foreach (int i in cornerIndices)
+            //{
+            //    points[i] += delta;
+            //}
 
             //for (int i = 0; i < points.Length; i++)
             //{
@@ -1070,6 +1137,7 @@ namespace MarchingCubes
             {
                 chunkHandler.EditNeighbourChunksAt(chunkOffset, e.origin, delta);
             }
+
             RebuildAround(e, e.origin);
         }
 
