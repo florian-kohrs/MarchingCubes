@@ -16,7 +16,7 @@ namespace MarchingCubes
 
         protected const int threadGroupSize = 8;
 
-        public const int ChunkSize = 16;
+        public const int ChunkSize = 64;
 
         public const int CHUNK_VOLUME = ChunkSize * ChunkSize * ChunkSize;
 
@@ -394,6 +394,7 @@ namespace MarchingCubes
             else
             {
                 chunk = CreateChunkAt(p);
+                StartCoroutine(BuildRelevantChunksParallelAround(chunk));
                 //chunk = GetChunkObjectAt(p);
                 //chunk.LOD = GetLodAt(p);
                 //chunk.Material = chunkMaterial;
@@ -618,7 +619,7 @@ namespace MarchingCubes
                 }
                 if (allActiveIndicesHaveOffset)
                 {
-                    Debug.Log("Found neighbour with offset " + offsetVector);
+                    //Debug.Log("Found neighbour with offset " + offsetVector);
                     IMarchingCubeChunk neighbourChunk;
                     if (TryGetOrCreateChunk(chunkOffset + offsetVector, out neighbourChunk))
                     {

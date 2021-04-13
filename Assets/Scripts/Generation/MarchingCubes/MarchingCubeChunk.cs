@@ -529,8 +529,27 @@ namespace MarchingCubes
         }
 
 
-
+        /// <summary>
+        /// stores chunkEntities based on their position as index
+        /// </summary>
         protected Dictionary<int, MarchingCubeEntity> neighbourChunksGlue = new Dictionary<int, MarchingCubeEntity>();
+
+        /// <summary>
+        /// stores for each direction of the neighbour all cubes
+        /// </summary>
+        protected Dictionary<int, List<MarchingCubeEntity>> cubesForNeighbourInDirection = new Dictionary<int, List<MarchingCubeEntity>>();
+
+        protected void AddCubeForNeigbhourInDirection(int key, MarchingCubeEntity c)
+        {
+            List<MarchingCubeEntity> cubes;
+            if(!cubesForNeighbourInDirection.TryGetValue(key, out cubes))
+            {
+                cubes = new List<MarchingCubeEntity>();
+                cubesForNeighbourInDirection.Add(key, cubes);
+            }
+            cubes.Add(c);
+        }
+
 
         protected int glueTriangleCount = 0;
 
@@ -573,8 +592,10 @@ namespace MarchingCubes
                 //MarchingCubeEntity original = MarchAt(e.origin, 1);
                 MarchingCubeEntity bindWithNeighbour = MarchAt(rightCubeIndex, lodDiff);
                 neighbourChunksGlue.Add(key, bindWithNeighbour);
+                AddCubeForNeigbhourInDirection(neighbourLODs.GetIndexFromDirection(dir), bindWithNeighbour);
                 glueTriangleCount += bindWithNeighbour.triangles.Count * 3;
             }
+            #region comment code
             //e.triangles.ForEach(t => t. = reference.triangles;
             //try
             //{
@@ -619,6 +640,7 @@ namespace MarchingCubes
 
             //    MarchingCubeEntity reference = MarchAt(rightCubeIndex, lodDiff);
             //}
+            #endregion
         }
 
         protected void BuildMeshToConnectHigherLodChunks()
@@ -1018,6 +1040,7 @@ namespace MarchingCubes
         //    else
         //        return Direction.zStart;
         //}
+
 
 
         public PathTriangle GetTriangleFromRayHit(RaycastHit hit)

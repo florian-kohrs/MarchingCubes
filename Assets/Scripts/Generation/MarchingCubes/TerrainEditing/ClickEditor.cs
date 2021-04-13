@@ -7,7 +7,7 @@ namespace MarchingCubes
     public class ClickEditor : MonoBehaviour
     {
 
-        int pointDelta = -2;
+        int pointDelta = -100;
 
         protected PathTriangle firstTriIndex;
         protected PathTriangle secondTriIndex;
@@ -22,8 +22,10 @@ namespace MarchingCubes
             {
                 foreach (PathTriangle p in ps)
                 {
-                    Gizmos.DrawSphere(p.OriginalLOcalMiddlePointOfTriangle, 0.4f);
-
+                    if (p != null)
+                    {
+                        Gizmos.DrawSphere(p.OriginalLOcalMiddlePointOfTriangle, 0.4f);
+                    }
                 }
             }
             if(p != null)
@@ -91,7 +93,7 @@ namespace MarchingCubes
                 }
 
             }
-            else if (Input.GetMouseButtonDown(0))
+            else if (Input.GetMouseButton(0))
             {
                 RaycastHit hit;
                 Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);

@@ -33,11 +33,35 @@ void Density (int3 id : SV_DispatchThreadID)
         return;
     }
     //center is center of chunk, bound size is terrain size
-    float3 pos = anchor + id * spacing; /* -boundsSize / 2;*/
-    float noise = radius -length(pos);
 
-    float frequency = noiseScale/100;
+    float3 pos = anchor + id * spacing;
+
+    float noise = radius - length(pos);
+
+    float frequency = noiseScale / 100;
     float localAmplitude = amplitude;
+
+  /*  float lengthPos = length(pos);
+
+    float originalNoise = radius - lengthPos;
+
+    float caveBeginHeight = radius - 80;
+    float caveEndHeight = caveBeginHeight - 30;
+    float noise;*/
+
+    //if (lengthPos > radius)
+    //    noise = originalNoise;
+    //else if (lengthPos > caveBeginHeight)
+    //    noise = min(originalNoise, lengthPos - caveBeginHeight);
+    //else if (lengthPos > caveEndHeight) {
+    //    noise = min(caveBeginHeight - lengthPos, lengthPos - caveEndHeight);
+    //    localAmplitude /= 2;
+    //}
+    //else
+    //    noise = (caveEndHeight - lengthPos);
+
+
+
 
     for (int j =0; j < octaves; j ++) {
         float n = snoise((pos * frequency) / scale + octaveOffsets[j] + offset);
@@ -50,6 +74,9 @@ void Density (int3 id : SV_DispatchThreadID)
     }
 
     int index = indexFromCoord(id.x, id.y, id.z);
+    //if (noise > 1 ||noise < -1)
+    //    noise /= 32;
+
     points[index] = noise;
     
 }

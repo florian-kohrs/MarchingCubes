@@ -57,6 +57,23 @@ namespace MarchingCubes
             
         }
 
+        public int GetIndexFromDirection(Vector3Int dir)
+        {
+            if (dir.x > 0)
+                return 0;
+            else if (dir.x < 0)
+                return 1;
+            else if (dir.y > 0)
+                return 2;
+            else if (dir.y < 0)
+                return 3;
+            else if (dir.z > 0)
+                return 4;
+            else
+                return 5;
+
+        }
+
         public int this[int i]
         {
             get
