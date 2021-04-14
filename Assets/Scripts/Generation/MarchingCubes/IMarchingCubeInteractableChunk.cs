@@ -5,7 +5,7 @@ using UnityEngine;
 namespace MarchingCubes
 {
 
-    public interface IMarchingCubeInteractableChunk
+    public interface IMarchingCubeInteractableChunk : IMarchingCubeChunk
     {
 
         PathTriangle GetTriangleFromRayHit(RaycastHit hit);

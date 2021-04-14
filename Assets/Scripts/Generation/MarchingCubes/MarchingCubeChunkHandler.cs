@@ -20,9 +20,9 @@ namespace MarchingCubes
 
         public const int CHUNK_VOLUME = ChunkSize * ChunkSize * ChunkSize;
 
-        public GameObject chunkPrefab;
-
         public GameObject threadedChunkPrefab;
+
+        public GameObject threadedCompressedChunkPrefab;
 
         // protected int maxRunningThreads = 0;
 
@@ -343,14 +343,16 @@ namespace MarchingCubes
 
         protected void CreateChunkParallelAt(Vector3Int p, Action<IMarchingCubeChunk> OnDone)
         {
-            IMarchingCubeChunk chunk = GetThreadedChunkObjectAt(p);
-            BuildChunkParallel(p, chunk, () => OnDone(chunk));
+            int lod = GetLodAt(p);
+            IMarchingCubeChunk chunk = GetThreadedChunkObjectAt(p, lod);
+            BuildChunkParallel(p, chunk, () => OnDone(chunk), lod);
         }
 
         protected IMarchingCubeChunk CreateChunkAt(Vector3Int p)
         {
-            IMarchingCubeChunk chunk = GetChunkObjectAt(p);
-            BuildChunk(p, chunk);
+            int lod = 1;
+            IMarchingCubeChunk chunk = GetThreadedChunkObjectAt(p, lod);
+            BuildChunk(p, chunk, lod);
             return chunk;
         }
 
@@ -394,7 +396,7 @@ namespace MarchingCubes
             else
             {
                 chunk = CreateChunkAt(p);
-                StartCoroutine(BuildRelevantChunksParallelAround(chunk));
+                //StartCoroutine(BuildRelevantChunksParallelAround(chunk));
                 //chunk = GetChunkObjectAt(p);
                 //chunk.LOD = GetLodAt(p);
                 //chunk.Material = chunkMaterial;
@@ -414,10 +416,9 @@ namespace MarchingCubes
             return false;
         }
 
-
-        protected IMarchingCubeChunk GetChunkObjectAt(Vector3Int p)
+        protected IMarchingCubeChunk GetChunkObjectAt(Vector3Int p, GameObject prefab)
         {
-            GameObject g = Instantiate(chunkPrefab, transform);
+            GameObject g = Instantiate(prefab, transform);
             g.name = $"Chunk({p.x},{p.y},{p.z})";
             //g.transform.position = AnchorFromChunkIndex(p);
 
@@ -427,18 +428,13 @@ namespace MarchingCubes
             return chunk;
         }
 
-        protected IMarchingCubeChunk GetThreadedChunkObjectAt(Vector3Int p)
+        protected IMarchingCubeChunk GetThreadedChunkObjectAt(Vector3Int p, int lod)
         {
-            GameObject g = Instantiate(threadedChunkPrefab, transform);
-            g.name = $"Chunk({p.x},{p.y},{p.z})";
-            //AnchorFromChunkIndex(p);
-
-            IMarchingCubeChunk chunk = g.GetComponent<IMarchingCubeChunk>();
-            chunks.Add(p, chunk);
-            chunk.ChunkOffset = p;
-            return chunk;
+            if(lod == 1)
+                return GetChunkObjectAt(p, threadedChunkPrefab);
+            else
+                return GetChunkObjectAt(p, threadedCompressedChunkPrefab);
         }
-
 
         protected Vector3Int PositionToCoord(Vector3 pos)
         {
@@ -482,16 +478,14 @@ namespace MarchingCubes
             return result;
         }
 
-        protected void BuildChunk(Vector3Int p, IMarchingCubeChunk chunk)
+        protected void BuildChunk(Vector3Int p, IMarchingCubeChunk chunk, int lod)
         {
-            int lod = GetLodAt(p);
-            int numTris = ApplyChunkDataAndDispatchAndGetShaderData(p, chunk, 1);
+            int numTris = ApplyChunkDataAndDispatchAndGetShaderData(p, chunk, lod);
             chunk.InitializeWithMeshData(tris, pointsArray, this, GetNeighbourLODSFrom(p), surfaceLevel);
         }
 
-        protected void BuildChunkParallel(Vector3Int p, IMarchingCubeChunk chunk, Action OnDone)
+        protected void BuildChunkParallel(Vector3Int p, IMarchingCubeChunk chunk, Action OnDone, int lod)
         {
-            int lod = GetLodAt(p);
             int numTris = ApplyChunkDataAndDispatchAndGetShaderData(p, chunk, lod);
             channeledChunks++;
             chunk.InitializeWithMeshDataParallel(tris, pointsArray, this, GetNeighbourLODSFrom(p), surfaceLevel, OnDone);
@@ -542,7 +536,8 @@ namespace MarchingCubes
             triangleBuffer.GetData(tris, 0, 0, numTris);
 
             pointsArray = new float[pointsVolume];
-            pointsBuffer.GetData(pointsArray, 0, 0, pointsVolume);
+            
+            pointsBuffer.GetData(pointsArray, 0, 0, pointsArray.Length);
 
             totalTriBuild += numTris;
             ReleaseBuffers();

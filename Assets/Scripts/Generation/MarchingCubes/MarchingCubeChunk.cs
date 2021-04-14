@@ -7,22 +7,22 @@ using UnityEngine;
 namespace MarchingCubes
 {
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
-    public class MarchingCubeChunk : MonoBehaviour, IMarchingCubeChunk, IMarchingCubeInteractableChunk, IHasMarchingCubeChunk
+    public class MarchingCubeChunk : CompressedMarchingCubeChunk, IMarchingCubeInteractableChunk, IHasInteractableMarchingCubeChunk
     {
 
-        public virtual void InitializeWithMeshDataParallel(TriangleBuilder[] tris, float[] points, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel, Action OnDone)
+        public override void InitializeWithMeshDataParallel(TriangleBuilder[] tris, float[] points, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel, Action OnDone)
         {
-            Debug.LogWarning("This class does not support concurrency! Use " + nameof(MarchingCubeChunkThreaded) + "instead!");
-            InitializeWithMeshData(tris, points, handler, neighbourLODs, surfaceLevel);
+            Debug.LogWarning("This class does not support concurrency! Will use base class instead. Use " + nameof(MarchingCubeChunkThreaded) + "instead!");
+            base.InitializeWithMeshDataParallel(tris, points, handler,neighbourLODs, surfaceLevel, OnDone);
         }
 
-        public void InitializeWithMeshData(TriangleBuilder[] tris, float[] points, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel)
+        public override void InitializeWithMeshData(TriangleBuilder[] tris, float[] points, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel)
         {
             children.Add(new BaseMeshChild(GetComponent<MeshFilter>(), GetComponent<MeshRenderer>(), GetComponent<MeshCollider>(), new Mesh()));
             BuildMeshData(tris, points, handler, neighbourLODs, surfaceLevel);
         }
 
-        protected void BuildMeshData(TriangleBuilder[] tris, float[] points, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel)
+        protected override void BuildMeshData(TriangleBuilder[] tris, float[] points, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel)
         {
             HasStarted = true;
             this.surfaceLevel = surfaceLevel;
@@ -58,26 +58,16 @@ namespace MarchingCubes
 
         }
 
-        public void InitializeEmpty(IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel)
-        {
-            HasStarted = true;
-            points = new float[PointsPerAxis * PointsPerAxis * PointsPerAxis];
-            this.surfaceLevel = surfaceLevel;
-            this.neighbourLODs = neighbourLODs;
-            careAboutNeighbourLODS = neighbourLODs.HasNeighbourWithHigherLOD(lod);
-            chunkHandler = handler;
-            IsReady = true;
-        }
-
-        protected MarchingCubeChunkNeighbourLODs neighbourLODs;
-
-        protected List<BaseMeshChild> children = new List<BaseMeshChild>();
-
-        public Material Material { protected get; set; }
-
-        public bool IsReady { get; protected set; }
-
-        protected const int MAX_TRIANGLES_PER_MESH = 65000;
+        //public override void InitializeEmpty(IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel)
+        //{
+        //    HasStarted = true;
+        //    points = new float[PointsPerAxis * PointsPerAxis * PointsPerAxis];
+        //    this.surfaceLevel = surfaceLevel;
+        //    this.neighbourLODs = neighbourLODs;
+        //    careAboutNeighbourLODS = neighbourLODs.HasNeighbourWithHigherLOD(lod);
+        //    chunkHandler = handler;
+        //    IsReady = true;
+        //}
 
         protected void AddCurrentMeshDataChild()
         {
@@ -86,94 +76,8 @@ namespace MarchingCubes
             g.AddComponent<MeshFilter>();
         }
 
-        public bool IsEmpty => triCount == 0;
-
-        /// <summary>
-        /// chunk is completly underground
-        /// </summary>
-        public bool IsCompletlySolid => IsEmpty && points[0] >= surfaceLevel;
-
-        /// <summary>
-        /// chunk is completly air
-        /// </summary>
-        public bool IsCompletlyAir => IsEmpty && points[0] < surfaceLevel;
-
-
-        protected int vertexSize = MarchingCubeChunkHandler.ChunkSize;
-
-        protected int PointsPerAxis => vertexSize + 1;
-
-        public int lod = 1;
-
-        public IMarchingCubeChunkHandler chunkHandler;
-
-        public Dictionary<Vector3Int, HashSet<MarchingCubeEntity>> NeighboursReachableFrom = new Dictionary<Vector3Int, HashSet<MarchingCubeEntity>>();
-
-        public IEnumerable<Vector3Int> NeighbourIndices => NeighboursReachableFrom.Keys;
-
-        public int LOD
-        {
-            get
-            {
-                return lod;
-            }
-            set
-            {
-                lod = value;
-                vertexSize = MarchingCubeChunkHandler.ChunkSize / lod;
-            }
-        }
-
-        protected float[] points;
-
-        public Vector3Int chunkOffset;
-
         public IMarchingCubeInteractableChunk GetChunk => this;
 
-        public Vector3Int ChunkOffset { get => chunkOffset; set => chunkOffset = value; }
-
-        public int NeighbourCount => NeighboursReachableFrom.Count;
-
-        public bool HasStarted { get; protected set; }
-        public float Spacing { get; set; }
-
-        protected float surfaceLevel;
-
-        protected Color[] colorData;
-        protected Vector3[] vertices;
-        protected int[] meshTriangles;
-
-
-        public void AddNeighbourFromEntity(Vector3Int v3, MarchingCubeEntity from)
-        {
-            HashSet<MarchingCubeEntity> r;
-            if (!NeighboursReachableFrom.TryGetValue(v3, out r))
-            {
-                r = new HashSet<MarchingCubeEntity>();
-                NeighboursReachableFrom.Add(v3, r);
-            }
-            r.Add(from);
-        }
-
-
-        public void RemoveNeighbourFromEntity(Vector3Int v3, MarchingCubeEntity from)
-        {
-            HashSet<MarchingCubeEntity> r;
-            if (NeighboursReachableFrom.TryGetValue(v3, out r))
-            {
-                r.Remove(from);
-                if (r.Count == 0)
-                {
-                    NeighboursReachableFrom.Remove(v3);
-                }
-            }
-        }
-
-        protected bool careAboutNeighbourLODS;
-
-        protected int triCount;
-
-        protected int trisLeft;
 
         public Dictionary<int, MarchingCubeEntity> cubeEntities = new Dictionary<int, MarchingCubeEntity>();
 
@@ -200,84 +104,6 @@ namespace MarchingCubes
         protected Vector4 BuildVector4(Vector3 v3, float w)
         {
             return new Vector4(v3.x, v3.y, v3.z, w);
-        }
-
-        public Vector3 AnchorPos { get; set; }
-
-        protected Vector4 BuildVector4FromCoord(int x, int y, int z, int lod)
-        {
-            int globalLod = lod * this.lod;
-            //x *= lod;
-            //y *= lod;
-            //z *= lod;
-            return new Vector4(AnchorPos.x + x * globalLod, AnchorPos.y + y * globalLod, AnchorPos.z + z * globalLod, points[PointIndexFromCoord(x, y, z)]);
-        }
-
-        protected Vector4 BuildVector4FromCoord(int x, int y, int z)
-        {
-            return new Vector4(AnchorPos.x + x * lod, AnchorPos.y + y * lod, AnchorPos.z + z * lod, points[PointIndexFromCoord(x, y, z)]);
-        }
-
-
-
-        protected Vector4[] GetCubeCornersForPoint(int x, int y, int z, int spacing)
-        {
-            return GetCubeCornersForPointWithLod(x, y, z, spacing);
-        }
-
-        protected Vector4[] GetCubeCornersForPoint(Vector3Int p)
-        {
-            return GetCubeCornersForPoint(p.x, p.y, p.z);
-        }
-
-        protected Vector4[] GetCubeCornersForPointWithLod(Vector3Int p, int spacing)
-        {
-            return GetCubeCornersForPointWithLod(p.x, p.y, p.z, spacing);
-        }
-
-        protected Vector4[] GetCubeCornersForPoint(int x, int y, int z)
-        {
-            return new Vector4[]
-            {
-                BuildVector4FromCoord(x, y, z),
-                BuildVector4FromCoord(x + 1, y, z),
-                BuildVector4FromCoord(x + 1, y, z + 1),
-                BuildVector4FromCoord(x, y, z + 1),
-                BuildVector4FromCoord(x, y + 1, z),
-                BuildVector4FromCoord(x + 1, y + 1, z),
-                BuildVector4FromCoord(x +1, y + 1, z + 1),
-                BuildVector4FromCoord(x, y + 1, z + 1)
-            };
-        }
-
-        protected Vector4[] GetCubeCornersForPointWithLod(int x, int y, int z, int spacing)
-        {
-            return new Vector4[]
-            {
-                BuildVector4FromCoord(x, y, z),
-                BuildVector4FromCoord(x + spacing, y, z),
-                BuildVector4FromCoord(x + spacing, y, z + spacing),
-                BuildVector4FromCoord(x, y, z + spacing),
-                BuildVector4FromCoord(x, y + spacing, z),
-                BuildVector4FromCoord(x + spacing, y + spacing, z),
-                BuildVector4FromCoord(x + spacing, y + spacing, z + spacing),
-                BuildVector4FromCoord(x, y + spacing, z + spacing)
-            };
-        }
-
-        protected int[] GetCubeCornerIndicesForPoint(Vector3Int p)
-        {
-            return new int[]
-            {
-                PointIndexFromCoord(p.x, p.y, p.z),
-                PointIndexFromCoord(p.x + 1, p.y, p.z),
-                PointIndexFromCoord(p.x + 1, p.y, p.z + 1),
-                PointIndexFromCoord(p.x, p.y, p.z + 1),
-                PointIndexFromCoord(p.x, p.y + 1, p.z),
-                PointIndexFromCoord(p.x + 1, p.y + 1, p.z),
-                PointIndexFromCoord(p.x + 1, p.y + 1, p.z + 1),
-                PointIndexFromCoord(p.x, p.y + 1, p.z + 1)
-            };
         }
 
         public virtual MarchingCubeEntity March(Vector3Int p)
@@ -328,96 +154,65 @@ namespace MarchingCubes
             return e;
         }
 
-        public virtual MarchingCubeEntity MarchAt(Vector3Int v3, int lod)
+
+
+        protected void BuildChunkEdges()
         {
-            MarchingCubeEntity e = new MarchingCubeEntity();
-            e.origin = v3;
+            if (IsEmpty)
+                return;
 
-            Vector4[] cubeCorners = GetCubeCornersForPoint(v3.x, v3.y, v3.z, lod);
+            lodNeighbourPointCorrectionLookUp = new Dictionary<Vector3, Vector3>();
 
-            int cubeIndex = 0;
-            if (cubeCorners[0].w < surfaceLevel) cubeIndex |= 1;
-            if (cubeCorners[1].w < surfaceLevel) cubeIndex |= 2;
-            if (cubeCorners[2].w < surfaceLevel) cubeIndex |= 4;
-            if (cubeCorners[3].w < surfaceLevel) cubeIndex |= 8;
-            if (cubeCorners[4].w < surfaceLevel) cubeIndex |= 16;
-            if (cubeCorners[5].w < surfaceLevel) cubeIndex |= 32;
-            if (cubeCorners[6].w < surfaceLevel) cubeIndex |= 64;
-            if (cubeCorners[7].w < surfaceLevel) cubeIndex |= 128;
-
-            e.triangulationIndex = cubeIndex;
-
-            for (int i = 0; TriangulationTable.triangulation[cubeIndex][i] != -1; i += 3)
+            List<MissingNeighbourData> trisWithNeighboursOutOfBounds = new List<MissingNeighbourData>();
+            MissingNeighbourData t;
+            foreach (MarchingCubeEntity e in cubeEntities.Values)
             {
-                // Get indices of corner points A and B for each of the three edges
-                // of the cube that need to be joined to form the triangle.
-                int a0 = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[cubeIndex][i]];
-                int b0 = TriangulationTable.cornerIndexBFromEdge[TriangulationTable.triangulation[cubeIndex][i]];
+                e.BuildInternNeighbours();
+                if ((e.origin.x + e.origin.y + e.origin.z) % 2 == 0 || IsBorderCube(e.origin))
+                {
+                    if (!e.BuildNeighbours(GetEntityAt, IsCubeInBounds, trisWithNeighboursOutOfBounds))
+                    {
+                        for (int i = 0; i < trisWithNeighboursOutOfBounds.Count; i++)
+                        {
+                            t = trisWithNeighboursOutOfBounds[i];
+                            //Vector3Int offset = t.neighbour.offset.Map(Math.Sign);
+                            Vector3Int target = chunkOffset + t.neighbour.offset;
+                            IMarchingCubeChunk chunk;
+                            AddNeighbourFromEntity(target, e);
+                            if (chunkHandler.TryGetReadyChunkAt(target, out chunk))
+                            {
+                                if (chunk is IMarchingCubeInteractableChunk c)
+                                {
+                                    if (c.LOD == lod)
+                                    {
+                                        Vector3Int pos = (e.origin + t.neighbour.offset).Map(ClampInChunk);
+                                        MarchingCubeEntity cube = c.GetEntityAt(pos);
+                                        e.BuildSpecificNeighbourInNeighbour(cube, e.triangles[t.neighbour.triangleIndex], t.neighbour.relevantVertexIndices, t.neighbour.rotatedEdgePair);
+                                    }
+                                    else if (c.LOD > lod)
+                                    {
+                                        Vector3Int pos = (e.origin + t.neighbour.offset).Map(ClampInChunk);
 
-                int a1 = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[cubeIndex][i + 1]];
-                int b1 = TriangulationTable.cornerIndexBFromEdge[TriangulationTable.triangulation[cubeIndex][i + 1]];
-
-                int a2 = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[cubeIndex][i + 2]];
-                int b2 = TriangulationTable.cornerIndexBFromEdge[TriangulationTable.triangulation[cubeIndex][i + 2]];
-
-                Triangle tri = new Triangle();
-                tri.c = InterpolateVerts(cubeCorners[a0], cubeCorners[b0]);
-                tri.b = InterpolateVerts(cubeCorners[a1], cubeCorners[b1]);
-                tri.a = InterpolateVerts(cubeCorners[a2], cubeCorners[b2]);
-
-                e.triangles.Add(new PathTriangle(tri));
+                                        float lodDiff = c.LOD / lod;
+                                        ///pos needed to be divided by lodDiff or something
+                                        MarchingCubeEntity cube = c.GetEntityAt(pos);
+                                        CorrectMarchingCubeInDirection(e.origin, t, c.LOD, t.neighbour.offset);
+                                    }
+                                }
+                            }
+                            else if (careAboutNeighbourLODS)
+                            {
+                                int neighbourLod = neighbourLODs.GetLodFromNeighbourInDirection(t.neighbour.offset);
+                                if (neighbourLod > lod)
+                                {
+                                    CorrectMarchingCubeInDirection(e.origin, t, neighbourLod, t.neighbour.offset);
+                                }
+                            }
+                        }
+                        trisWithNeighboursOutOfBounds = new List<MissingNeighbourData>();
+                    }
+                }
             }
-            return e;
-        }
-
-        public virtual MarchingCubeEntity MarchAt(int x, int y, int z, int lod)
-        {
-            MarchingCubeEntity e = new MarchingCubeEntity();
-            e.origin = new Vector3Int(x, y, z);
-
-            Vector4[] cubeCorners = GetCubeCornersForPoint(x, y, z, lod);
-
-            short cubeIndex = 0;
-            if (cubeCorners[0].w < surfaceLevel) cubeIndex |= 1;
-            if (cubeCorners[1].w < surfaceLevel) cubeIndex |= 2;
-            if (cubeCorners[2].w < surfaceLevel) cubeIndex |= 4;
-            if (cubeCorners[3].w < surfaceLevel) cubeIndex |= 8;
-            if (cubeCorners[4].w < surfaceLevel) cubeIndex |= 16;
-            if (cubeCorners[5].w < surfaceLevel) cubeIndex |= 32;
-            if (cubeCorners[6].w < surfaceLevel) cubeIndex |= 64;
-            if (cubeCorners[7].w < surfaceLevel) cubeIndex |= 128;
-
-            e.triangulationIndex = cubeIndex;
-
-            uint data = TriangleBuilder.zipData(x, y, z, cubeIndex);
-
-            for (int i = 0; TriangulationTable.triangulation[cubeIndex][i] != -1; i += 3)
-            {
-                // Get indices of corner points A and B for each of the three edges
-                // of the cube that need to be joined to form the triangle.
-                int a0 = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[cubeIndex][i]];
-                int b0 = TriangulationTable.cornerIndexBFromEdge[TriangulationTable.triangulation[cubeIndex][i]];
-
-                int a1 = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[cubeIndex][i + 1]];
-                int b1 = TriangulationTable.cornerIndexBFromEdge[TriangulationTable.triangulation[cubeIndex][i + 1]];
-
-                int a2 = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[cubeIndex][i + 2]];
-                int b2 = TriangulationTable.cornerIndexBFromEdge[TriangulationTable.triangulation[cubeIndex][i + 2]];
-
-                Triangle tri = new Triangle();
-                tri.c = InterpolateVerts(cubeCorners[a0], cubeCorners[b0]);
-                tri.b = InterpolateVerts(cubeCorners[a1], cubeCorners[b1]);
-                tri.a = InterpolateVerts(cubeCorners[a2], cubeCorners[b2]);
-
-                e.triangles.Add(new PathTriangle(tri));
-            }
-            return e;
-        }
-
-
-        protected int ClampInChunk(int i)
-        {
-            return i.FloorMod(vertexSize);
         }
 
         protected void FindConnectedChunks()
@@ -446,8 +241,7 @@ namespace MarchingCubes
 
                                 float lodDiff = c.LOD / lod;
                                 ///pos needed to be divided by lodDiff or something
-                                MarchingCubeEntity cube = c.GetEntityAt(pos);
-                                CorrectMarchingCubeInDirection(e, t, c.LOD, t.neighbour.offset);
+                                CorrectMarchingCubeInDirection(e.origin, t, c.LOD, t.neighbour.offset);
                             }
                         }
                         else if (careAboutNeighbourLODS)
@@ -455,66 +249,9 @@ namespace MarchingCubes
                             int neighbourLod = neighbourLODs.GetLodFromNeighbourInDirection(t.neighbour.offset);
                             if (neighbourLod > lod)
                             {
-                                CorrectMarchingCubeInDirection(e, t, neighbourLod, t.neighbour.offset);
+                                CorrectMarchingCubeInDirection(e.origin, t, neighbourLod, t.neighbour.offset);
                             }
                         }
-                    }
-                }
-            }
-        }
-
-
-        protected void BuildChunkEdges()
-        {
-            if (IsEmpty)
-                return;
-
-            lodNeighbourPointCorrectionLookUp = new Dictionary<Vector3, Vector3>();
-
-            List<MissingNeighbourData> trisWithNeighboursOutOfBounds = new List<MissingNeighbourData>();
-            MissingNeighbourData t;
-            foreach (MarchingCubeEntity e in cubeEntities.Values)
-            {
-                e.BuildInternNeighbours();
-                if ((e.origin.x + e.origin.y + e.origin.z) % 2 == 0 || IsBorderCube(e.origin))
-                {
-                    if (!e.BuildNeighbours(GetEntityAt, IsCubeInBounds, trisWithNeighboursOutOfBounds))
-                    {
-                        for (int i = 0; i < trisWithNeighboursOutOfBounds.Count; i++)
-                        {
-                            t = trisWithNeighboursOutOfBounds[i];
-                            //Vector3Int offset = t.neighbour.offset.Map(Math.Sign);
-                            Vector3Int target = chunkOffset + t.neighbour.offset;
-                            IMarchingCubeChunk c;
-                            AddNeighbourFromEntity(target, e);
-                            if (chunkHandler.TryGetReadyChunkAt(target, out c))
-                            {
-                                if (c.LOD == lod)
-                                {
-                                    Vector3Int pos = (e.origin + t.neighbour.offset).Map(ClampInChunk);
-                                    MarchingCubeEntity cube = c.GetEntityAt(pos);
-                                    e.BuildSpecificNeighbourInNeighbour(cube, e.triangles[t.neighbour.triangleIndex], t.neighbour.relevantVertexIndices, t.neighbour.rotatedEdgePair);
-                                }
-                                else if (c.LOD > lod)
-                                {
-                                    Vector3Int pos = (e.origin + t.neighbour.offset).Map(ClampInChunk);
-
-                                    float lodDiff = c.LOD / lod;
-                                    ///pos needed to be divided by lodDiff or something
-                                    MarchingCubeEntity cube = c.GetEntityAt(pos);
-                                    CorrectMarchingCubeInDirection(e, t, c.LOD, t.neighbour.offset);
-                                }
-                            }
-                            else if (careAboutNeighbourLODS)
-                            {
-                                int neighbourLod = neighbourLODs.GetLodFromNeighbourInDirection(t.neighbour.offset);
-                                if (neighbourLod > lod)
-                                {
-                                    CorrectMarchingCubeInDirection(e, t, neighbourLod, t.neighbour.offset);
-                                }
-                            }
-                        }
-                        trisWithNeighboursOutOfBounds = new List<MissingNeighbourData>();
                     }
                 }
             }
@@ -528,30 +265,6 @@ namespace MarchingCubes
             e.BuildNeighbours(GetEntityAt, IsCubeInBounds, addMissingNeighboursHere, overrideEdges);
         }
 
-
-        /// <summary>
-        /// stores chunkEntities based on their position as index
-        /// </summary>
-        protected Dictionary<int, MarchingCubeEntity> neighbourChunksGlue = new Dictionary<int, MarchingCubeEntity>();
-
-        /// <summary>
-        /// stores for each direction of the neighbour all cubes
-        /// </summary>
-        protected Dictionary<int, List<MarchingCubeEntity>> cubesForNeighbourInDirection = new Dictionary<int, List<MarchingCubeEntity>>();
-
-        protected void AddCubeForNeigbhourInDirection(int key, MarchingCubeEntity c)
-        {
-            List<MarchingCubeEntity> cubes;
-            if (!cubesForNeighbourInDirection.TryGetValue(key, out cubes))
-            {
-                cubes = new List<MarchingCubeEntity>();
-                cubesForNeighbourInDirection.Add(key, cubes);
-            }
-            cubes.Add(c);
-        }
-
-
-        protected int glueTriangleCount = 0;
 
         //protected List<MissingNeighbourData> missingHigherLODNeighbour = new List<MissingNeighbourData>();
 
@@ -577,132 +290,13 @@ namespace MarchingCubes
             return false;
         }
 
-        protected void CorrectMarchingCubeInDirection(MarchingCubeEntity e, MissingNeighbourData missingData, int otherLod, Vector3Int dir)
-        {
-            //Debug.Log("entitiy with neighbour in higher lod chunk");
-            ///maybe add corrected triangles to extra mesh to not recompute them when chunk changes and easier remove /swap them if neihghbour changes lod
 
-            int lodDiff = otherLod / lod;
-
-            Vector3Int rightCubeIndex = e.origin.Map(f => f - f % lodDiff);
-            int key = PointIndexFromCoord(rightCubeIndex);
-            if (!neighbourChunksGlue.ContainsKey(key))
-            {
-                Vector3Int diff = e.origin - rightCubeIndex;
-                //MarchingCubeEntity original = MarchAt(e.origin, 1);
-                MarchingCubeEntity bindWithNeighbour = MarchAt(rightCubeIndex, lodDiff);
-                neighbourChunksGlue.Add(key, bindWithNeighbour);
-                AddCubeForNeigbhourInDirection(neighbourLODs.GetIndexFromDirection(dir), bindWithNeighbour);
-                glueTriangleCount += bindWithNeighbour.triangles.Count * 3;
-            }
-            #region comment code
-            //e.triangles.ForEach(t => t. = reference.triangles;
-            //try
-            //{
-
-
-            //    for (int i = 0; i < original.triangles.Count; i++)
-            //    {
-
-            //        for (int x = 0; x < 3; x++)
-            //        {
-            //            bool modified = false;
-            //            Triangle triangle = e.triangles[i].tri;
-            //            Vector3 v = original.triangles[i].tri[x];
-            //            if (IsPointTouchingBorderInDirection(v, dir))
-            //            {
-            //                Debug.Log("Found Point to fix");
-            //                int aIndex = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[original.triangulationIndex][i * 3 + x]];
-            //                int bIndex = TriangulationTable.cornerIndexBFromEdge[TriangulationTable.triangulation[original.triangulationIndex][i * 3 + x]];
-            //                //int rotatedA = TriangulationTableStaticData.RotateCornerIndex(aIndex, dir);
-            //                //int rotatedB = TriangulationTableStaticData.RotateCornerIndex(aIndex, dir);
-            //                triangle = e.triangles[i].tri;
-            //                Vector3 triPos;
-            //                if (GetPointWithCorner(reference, aIndex, bIndex, out triPos))
-            //                {
-            //                    triangle[x] = triPos;
-            //                    modified = true;
-            //                }
-            //                else
-            //                {
-            //                    Debug.LogWarning("Didnt found point with corners!");
-            //                }
-            //            }
-            //            if (modified)
-            //            {
-            //                e.triangles[i] = new PathTriangle(triangle);
-            //            }
-            //        }
-            //    }
-            //}
-            //catch (Exception x)
-            //{
-
-            //    MarchingCubeEntity reference = MarchAt(rightCubeIndex, lodDiff);
-            //}
-            #endregion
-        }
-
-        protected void BuildMeshToConnectHigherLodChunks()
-        {
-            trisLeft = glueTriangleCount;
-
-
-            ResetArrayData();
-
-            int totalTreeCount = 0;
-            int usedTriCount = 0;
-
-            foreach (MarchingCubeEntity t in neighbourChunksGlue.Values)
-            {
-                for (int i = 0; i < t.triangles.Count; i++)
-                {
-                    AddTriangleToMeshData(t.triangles[i], ref usedTriCount, ref totalTreeCount, false);
-                }
-            }
-        }
-
-        protected virtual Vector3 InterpolateVerts(Vector4 v1, Vector4 v2)
-        {
-            Vector3 v = v1.GetXYZ();
-            float t = (surfaceLevel - v1.w) / (v2.w - v1.w);
-            return v + t * (v2.GetXYZ() - v);
-        }
 
 
 
         protected virtual Vector3 InterpolatePositions(Vector3 v1, Vector3 v2, float p)
         {
             return v1 + p * (v2 - v1);
-        }
-
-        protected Vector3Int CoordFromCubeIndex(int i)
-        {
-            return new Vector3Int
-               ((i % (vertexSize * vertexSize) % vertexSize)
-               , (i % (vertexSize * vertexSize) / vertexSize)
-               , (i / (vertexSize * vertexSize))
-               );
-        }
-
-        protected Vector3Int CoordFromPointIndex(int i)
-        {
-            return new Vector3Int
-               ((i % (PointsPerAxis * PointsPerAxis) % PointsPerAxis)
-               , (i % (PointsPerAxis * PointsPerAxis) / PointsPerAxis)
-               , (i / (PointsPerAxis * PointsPerAxis))
-               );
-        }
-
-        protected int PointIndexFromCoord(int x, int y, int z)
-        {
-            int index = z * PointsPerAxis * PointsPerAxis + y * PointsPerAxis + x;
-            return index;
-        }
-
-        protected int PointIndexFromCoord(Vector3Int v)
-        {
-            return PointIndexFromCoord(v.x, v.y, v.z);
         }
 
 
@@ -760,7 +354,7 @@ namespace MarchingCubes
             return GetOrAddEntityAt(v3.x, v3.y, v3.z, out e);
         }
 
-        public void BuildFromTriangleArray(TriangleBuilder[] ts, bool buildMeshAswell = true)
+        protected override void BuildFromTriangleArray(TriangleBuilder[] ts, bool buildMeshAswell = true)
         {
             trisLeft = triCount;
 
@@ -804,84 +398,13 @@ namespace MarchingCubes
             }
         }
 
-        protected void AddTriangleToMeshData(PathTriangle tri, ref int usedTriCount, ref int totalTriCount, bool useCollider = true)
-        {
-            for (int x = 0; x < 3; x++)
-            {
-                meshTriangles[usedTriCount + x] = usedTriCount + x;
-                vertices[usedTriCount + x] = tri.tri[x];
-                colorData[usedTriCount + x] = GetColor(tri);
-            }
-            usedTriCount += 3;
-            totalTriCount++;
-            if (usedTriCount >= MAX_TRIANGLES_PER_MESH || usedTriCount >= trisLeft)
-            {
-                ApplyChangesToMesh(useCollider);
-                usedTriCount = 0;
-            }
-        }
-
-        protected static Color brown = new Color(75, 44, 13, 1) / 255f;
-
-        protected Color GetColor(PathTriangle t)
-        {
-            float slopeProgress = Mathf.InverseLerp(15, 45, t.Slope);
-            return (Color.green * (1 - slopeProgress) + brown * slopeProgress) / 2;
-        }
 
 
-        public BaseMeshChild GetNextMeshDisplayer()
-        {
-
-            BaseMeshChild displayer = null;
-            for (int i = 0; i < children.Count && displayer == null; i++)
-            {
-                if (!children[i].IsAppliedMesh)
-                {
-                    displayer = children[i];
-                }
-            }
-            if (displayer == null)
-            {
-                displayer = new BaseMeshChild(this, transform);
-                children.Add(displayer);
-            }
-            return displayer;
-        }
-
-        protected void ResetMeshDisplayers()
-        {
-            for (int i = 0; i < children.Count; i++)
-            {
-                if (children[i].IsColliderActive)
-                    children[i].Reset();
-            }
-        }
 
 
-        protected virtual void SetCurrentMeshData(bool useCollider)
-        {
-            BaseMeshChild displayer = GetNextMeshDisplayer();
-            displayer.ApplyMesh(colorData, vertices, meshTriangles, Material, useCollider);
-        }
 
-        protected void ApplyChangesToMesh(bool useCollider)
-        {
-            SetCurrentMeshData(useCollider);
-            trisLeft -= meshTriangles.Length;
-            if (trisLeft > 0)
-            {
-                ResetArrayData();
-            }
-        }
 
-        protected void ResetArrayData()
-        {
-            int size = Mathf.Min(trisLeft, MAX_TRIANGLES_PER_MESH + 1);
-            meshTriangles = new int[size];
-            vertices = new Vector3[size];
-            colorData = new Color[size];
-        }
+
 
         public void Rebuild()
         {
@@ -964,13 +487,7 @@ namespace MarchingCubes
             }
         }
 
-        protected bool IsCubeInBounds(Vector3Int v)
-        {
-            return
-                v.x >= 0 && v.x < vertexSize
-                && v.y >= 0 && v.y < vertexSize
-                && v.z >= 0 && v.z < vertexSize;
-        }
+
 
         protected bool IsBorderCube(Vector3 p)
         {
@@ -1073,11 +590,11 @@ namespace MarchingCubes
 
         protected int FlipIndexInDirection(int pointIndex, Vector3Int dir)
         {
-            if(dir.x > 0)
+            if (dir.x > 0)
             {
                 pointIndex -= vertexSize;
             }
-            else if(dir.x < 0)
+            else if (dir.x < 0)
             {
                 pointIndex += vertexSize;
             }
@@ -1190,10 +707,7 @@ namespace MarchingCubes
             RebuildAround(GetEntityAt(entityOrigin), entityOrigin);
         }
 
-        public void SetActive(bool b)
-        {
-            gameObject.SetActive(b);
-        }
+
 
     }
 }

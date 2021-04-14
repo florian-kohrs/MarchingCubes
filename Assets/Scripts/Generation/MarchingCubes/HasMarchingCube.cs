@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 namespace MarchingCubes
 {
-    public class HasMarchingCube : MonoBehaviour, IHasMarchingCubeChunk
+    public class HasMarchingCube : MonoBehaviour, IHasInteractableMarchingCubeChunk
     {
 
         public IMarchingCubeInteractableChunk chunk;

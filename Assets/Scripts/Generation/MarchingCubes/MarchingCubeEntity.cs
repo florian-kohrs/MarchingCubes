@@ -111,7 +111,7 @@ namespace MarchingCubes
                 else
                 {
                     hasNeighbourOutOfBounds = false;
-                    addHere.Add(new MissingNeighbourData(neighbour, newPos));
+                    addHere.Add(new MissingNeighbourData(neighbour, origin));
                 }
             }
             neighbourData = null;
@@ -135,10 +135,26 @@ namespace MarchingCubes
                 if (!IsInBounds(newPos))
                 {
                     hasNeighbourOutOfBounds = false;
-                    addHere.Add(new MissingNeighbourData(neighbour, newPos));
+                    addHere.Add(new MissingNeighbourData(neighbour, origin));
                 }
             }
             neighbourData = null;
+            return hasNeighbourOutOfBounds;
+        }
+
+        public static bool FindMissingNeighboursAt(int triangulationIndex, Vector3Int origin, Func<Vector3Int, bool> IsInBounds, List<MissingNeighbourData> addHere)
+        {
+            bool hasNeighbourOutOfBounds = true;
+            TriangulationNeighbours neighbourData = TriangulationTableStaticData.GetNeighbourData(triangulationIndex);
+            foreach (OutsideEdgeNeighbourDirection neighbour in neighbourData.OutsideNeighbours)
+            {
+                Vector3Int newPos = origin + neighbour.offset;
+                if (!IsInBounds(newPos))
+                {
+                    hasNeighbourOutOfBounds = false;
+                    addHere.Add(new MissingNeighbourData(neighbour, origin));
+                }
+            }
             return hasNeighbourOutOfBounds;
         }
 

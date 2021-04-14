@@ -719,9 +719,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22f3db87ed53fbc4baac6a5e47c73dd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  chunkPrefab: {fileID: 6601602498895254436, guid: e5c5c29a61bb59c4cae55c0ab8896713,
-    type: 3}
   threadedChunkPrefab: {fileID: 6601602498895254436, guid: 26a9ca0e8dc0e93438f20b94652e0608,
+    type: 3}
+  threadedCompressedChunkPrefab: {fileID: 6601602498895254436, guid: ff17ebd8b9d18994d8dd1a4a11d307c4,
     type: 3}
   blockAroundPlayer: 40
   marshShader: {fileID: 7200000, guid: 85821faa1826fb64b8a447b36cf4fae9, type: 3}
@@ -756,7 +756,7 @@ MonoBehaviour:
   chunkMaterial: {fileID: 2100000, guid: 97d2f9aa8d16b8241a90494b8d616c04, type: 2}
   surfaceLevel: 0.511
   player: {fileID: 1779183453}
-  buildAroundDistance: 500
+  buildAroundDistance: 1000
   totalTriBuild: 0
 --- !u!54 &1125545289
 Rigidbody:

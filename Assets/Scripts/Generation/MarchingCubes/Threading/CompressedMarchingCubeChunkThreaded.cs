@@ -7,7 +7,7 @@ using System.Threading;
 namespace MarchingCubes
 {
 
-    public class MarchingCubeChunkThreaded : MarchingCubeChunk
+    public class CompressedMarchingCubeChunkThreaded : CompressedMarchingCubeChunk
     {
 
 
@@ -71,17 +71,17 @@ namespace MarchingCubes
             }
         }
 
-        protected override void ResetAll()
-        {
-            if (isInOtherThread)
-            {
-                data.Clear();
-            }
-            else
-            {
-                base.ResetAll();
-            }
-        }
+        //protected override void ResetAll()
+        //{
+        //    if (isInOtherThread)
+        //    {
+        //        data.Clear();
+        //    }
+        //    else
+        //    {
+        //        base.ResetAll();
+        //    }
+        //}
 
 
         protected List<MeshData> data = new List<MeshData>();

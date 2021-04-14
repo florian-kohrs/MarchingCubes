@@ -17,13 +17,14 @@ namespace MarchingCubes
 
         public bool IsColliderActive => collider.sharedMesh != null;
 
-        protected BaseMeshChild(IMarchingCubeInteractableChunk chunk, GameObject g, Transform t) : this(g.AddComponent<MeshFilter>(), g.AddComponent<MeshRenderer>(), g.AddComponent<MeshCollider>(), new Mesh())
+        protected BaseMeshChild(IMarchingCubeChunk chunk, GameObject g, Transform t) : this(g.AddComponent<MeshFilter>(), g.AddComponent<MeshRenderer>(), g.AddComponent<MeshCollider>(), new Mesh())
         {
             g.transform.SetParent(t,false);
-            g.AddComponent<HasMarchingCube>().chunk = chunk;
+            if(chunk is IMarchingCubeInteractableChunk interactable)
+            g.AddComponent<HasMarchingCube>().chunk = interactable;
         }
 
-        public BaseMeshChild(IMarchingCubeInteractableChunk chunk, Transform t) : this(chunk, new GameObject(),t) { }
+        public BaseMeshChild(IMarchingCubeChunk chunk, Transform t) : this(chunk, new GameObject(),t) { }
 
         public void Reset()
         {
