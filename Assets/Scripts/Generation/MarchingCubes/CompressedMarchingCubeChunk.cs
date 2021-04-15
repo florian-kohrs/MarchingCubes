@@ -59,6 +59,8 @@ namespace MarchingCubes
 
         protected float[] points;
 
+        public float[] Points => points;
+
         protected int triCount;
 
         protected int connectorTriangleCount = 0;
@@ -408,11 +410,15 @@ namespace MarchingCubes
 
             int totalTreeCount = 0;
             int usedTriCount = 0;
-            foreach (MarchingCubeEntity t in neighbourChunksGlue.Values)
+
+            var outerEnum = neighbourChunksGlue.Values.GetEnumerator();
+            MarchingCubeEntity e;
+            while (outerEnum.MoveNext())
             {
-                for (int i = 0; i < t.triangles.Count; i++)
+                e = outerEnum.Current;
+                for (int i = 0; i < e.triangles.Count; i++)
                 {
-                    AddTriangleToMeshData(t.triangles[i], ref usedTriCount, ref totalTreeCount, false);
+                    AddTriangleToMeshData(e.triangles[i], ref usedTriCount, ref totalTreeCount, false);
                 }
             }
         }

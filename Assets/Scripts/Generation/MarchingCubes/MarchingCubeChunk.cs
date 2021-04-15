@@ -164,8 +164,12 @@ namespace MarchingCubes
 
             List<MissingNeighbourData> trisWithNeighboursOutOfBounds = new List<MissingNeighbourData>();
             MissingNeighbourData t;
-            foreach (MarchingCubeEntity e in cubeEntities.Values)
+
+            var @enum = cubeEntities.Values.GetEnumerator();
+            MarchingCubeEntity e;
+            while (@enum.MoveNext())
             {
+                e = @enum.Current;
                 e.BuildInternNeighbours();
                 if ((e.origin.x + e.origin.y + e.origin.z) % 2 == 0 || IsBorderCube(e.origin))
                 {
@@ -222,8 +226,12 @@ namespace MarchingCubes
             List<MissingNeighbourData> trisWithNeighboursOutOfBounds = new List<MissingNeighbourData>();
             MissingNeighbourData t;
             IMarchingCubeChunk c;
-            foreach (MarchingCubeEntity e in cubeEntities.Values)
+
+            var @enum = cubeEntities.Values.GetEnumerator();
+            MarchingCubeEntity e;
+            while (@enum.MoveNext())
             {
+                e = @enum.Current;
                 if (IsBorderCube(e.origin) && !e.FindMissingNeighbours(IsCubeInBounds, trisWithNeighboursOutOfBounds))
                 {
                     for (int i = 0; i < trisWithNeighboursOutOfBounds.Count; i++)
@@ -390,11 +398,14 @@ namespace MarchingCubes
             int totalTreeCount = 0;
             int usedTriCount = 0;
 
-            foreach (MarchingCubeEntity t in cubeEntities.Values)
+            var @enum = cubeEntities.Values.GetEnumerator();
+            MarchingCubeEntity e;
+            while (@enum.MoveNext())
             {
-                for (int i = 0; i < t.triangles.Count; i++)
+                e = @enum.Current;
+                for (int i = 0; i < e.triangles.Count; i++)
                 {
-                    AddTriangleToMeshData(t.triangles[i], ref usedTriCount, ref totalTreeCount, true);
+                    AddTriangleToMeshData(e.triangles[i], ref usedTriCount, ref totalTreeCount, true);
                 }
             }
         }

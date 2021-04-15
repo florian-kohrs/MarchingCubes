@@ -30,6 +30,8 @@ namespace MarchingCubes
 
         public Dictionary<Vector3Int, IMarchingCubeChunk> chunks = new Dictionary<Vector3Int, IMarchingCubeChunk>();
 
+        public Dictionary<Vector3Int, IMarchingCubeChunk> superChunks = new Dictionary<Vector3Int, IMarchingCubeChunk>();
+
         [Range(1, 253)]
         public int blockAroundPlayer = 16;
 
@@ -137,15 +139,22 @@ namespace MarchingCubes
         {
             if (chunk.NeighbourCount <= 0)
                 return;
+
+            Vector3Int v3;
+            Vector3Int newV3;
             do
             {
-                foreach (Vector3Int v3 in chunk.NeighbourIndices)
+                var outerEnum = chunk.NeighbourIndices.GetEnumerator();
+                while (outerEnum.MoveNext())
                 {
+                    v3 = outerEnum.Current;
                     if (!Chunks.ContainsKey(v3) && (startPos - AnchorFromChunkCoords(v3)).magnitude < maxChunkDistance)
                     {
                         IMarchingCubeChunk newChunk = CreateChunkAt(v3);
-                        foreach (Vector3Int newV3 in newChunk.NeighbourIndices)
+                        var innerEnum = newChunk.NeighbourIndices.GetEnumerator();
+                        while (innerEnum.MoveNext())
                         {
+                            newV3 = innerEnum.Current;
                             if (!Chunks.ContainsKey(newV3))
                             {
                                 neighbours.Enqueue(newV3);
@@ -212,9 +221,10 @@ namespace MarchingCubes
 
         public IEnumerator BuildRelevantChunksParallelAround(IMarchingCubeChunk chunk)
         {
-            foreach (var item in chunk.NeighbourIndices)
-            {
-                AddSortedNeighbour(0, item);
+            var e = chunk.NeighbourIndices.GetEnumerator();
+            while (e.MoveNext())
+            { 
+                AddSortedNeighbour(0, e.Current);
             }
             if (sortedNeighbourds.Count > 0)
             {
@@ -265,8 +275,11 @@ namespace MarchingCubes
         protected void OnChunkDoneCallBack(IMarchingCubeChunk chunk)
         {
             channeledChunks--;
-            foreach (Vector3Int v3 in chunk.NeighbourIndices)
+            var e = chunk.NeighbourIndices.GetEnumerator();
+            Vector3Int v3;
+            while(e.MoveNext())
             {
+                v3 = e.Current;
                 float distance = (startPos - AnchorFromChunkCoords(v3)).magnitude;
                 if (!Chunks.ContainsKey(v3) && distance < maxChunkDistance)
                 {
@@ -485,6 +498,18 @@ namespace MarchingCubes
         }
 
         protected void BuildChunkParallel(Vector3Int p, IMarchingCubeChunk chunk, Action OnDone, int lod)
+        {
+            int numTris = ApplyChunkDataAndDispatchAndGetShaderData(p, chunk, lod);
+            channeledChunks++;
+            chunk.InitializeWithMeshDataParallel(tris, pointsArray, this, GetNeighbourLODSFrom(p), surfaceLevel, OnDone);
+        }
+
+        //protected void RebuildChunkParallelAt(Vector3Int p, Action OnDone, int lod)
+        //{
+        //    RebuildChunkParallelAt(chunks[p]);
+        //}
+
+        protected void RebuildChunkParallelAt(Vector3Int p, IMarchingCubeChunk chunk, Action OnDone, int lod)
         {
             int numTris = ApplyChunkDataAndDispatchAndGetShaderData(p, chunk, lod);
             channeledChunks++;
