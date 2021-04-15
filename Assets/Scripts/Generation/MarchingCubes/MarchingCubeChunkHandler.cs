@@ -594,22 +594,25 @@ namespace MarchingCubes
 
         public void EditNeighbourChunksAt(Vector3Int chunkOffset, Vector3Int cubeOrigin, float delta)
         {
-            foreach (Vector3Int v in cubeOrigin.GetAllCombination())
+            Vector3Int[] combs = cubeOrigin.GetAllCombination();
+            Vector3Int v;
+            for (int i = 0; i < combs.Length; i++)
             {
+                v = combs[i];
                 bool allActiveIndicesHaveOffset = true;
                 Vector3Int offsetVector = new Vector3Int();
-                for (int i = 0; i < 3 && allActiveIndicesHaveOffset; i++)
+                for (int x = 0; x < 3 && allActiveIndicesHaveOffset; x++)
                 {
-                    if (v[i] != int.MinValue)
+                    if (v[x] != int.MinValue)
                     {
                         //offset is in range -1 to 1
-                        int offset = Mathf.CeilToInt((cubeOrigin[i] / (ChunkSize - 2f)) - 1);
+                        int offset = Mathf.CeilToInt((cubeOrigin[x] / (ChunkSize - 2f)) - 1);
                         allActiveIndicesHaveOffset = offset != 0;
-                        offsetVector[i] = offset;
+                        offsetVector[x] = offset;
                     }
                     else
                     {
-                        offsetVector[i] = 0;
+                        offsetVector[x] = 0;
                     }
                 }
                 if (allActiveIndicesHaveOffset)

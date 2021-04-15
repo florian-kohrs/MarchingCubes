@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 public class Path<T, J>
@@ -23,13 +22,21 @@ public class Path<T, J>
         distance = nav.DistanceToTarget(current, target);
     }
 
-    public IEnumerable<Path<T, J>> Advance()
+    public List<Path<T, J>> Advance()
     {
-        IEnumerable<T> circumjacent = nav.GetCircumjacent(current);
-        return circumjacent
-            .Where(c => parent == null || !nav.IsEqual(c, parent.current))
-            .Select(c => new Path<T, J>(
-                 c, this, previousDistance + nav.DistanceToField(current, c)));
+        List<Path<T, J>> result = new List<Path<T, J>>();
+        List<T> circumjacent = nav.GetCircumjacent(current);
+        T c;
+        for (int i = 0; i < circumjacent.Count; i++)
+        {
+            c = circumjacent[i];
+            if (parent == null || !nav.IsEqual(current, parent.current))
+            {
+                result.Add(new Path<T, J>(
+                    c, this, previousDistance + nav.DistanceToField(current, c)));
+            }
+        }
+        return result;
     }
 
     public Path<T, J> Advance(T t)

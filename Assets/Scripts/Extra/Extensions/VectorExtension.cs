@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 public static class VectorExtension
@@ -137,13 +136,18 @@ public static class VectorExtension
         return false;
     }
 
+    public static bool Contains(this Vector3 v1, float f)
+    {
+        return v1.x == f || v1.y == f || v1.z == f;
+    }
+
     public static bool SharesAnyNValuesWith(this Vector3 v1, Vector3 v2, int n)
     {
         int sameValues = 0;
 
         for (int i = 0; i < 3 && sameValues < n; i++)
         {
-            if (v2.Values().Contains(v1[i]))
+            if (v2.Contains(v1[i]))
             {
                 sameValues++;
             }
@@ -208,7 +212,7 @@ public static class VectorExtension
     {
         int sameValues = 0;
 
-        int start = v2.Values().ToList().IndexOf(v1.x);
+        int start = Array.IndexOf(v2.Values(),v1.x);
 
         for (int i = 0; i < 3 && sameValues < n && start != -1; i++)
         {
