@@ -20,6 +20,8 @@ namespace MarchingCubes
 
         public const int CHUNK_VOLUME = ChunkSize * ChunkSize * ChunkSize;
 
+        public const int DEFAULT_MIN_CHUNK_LOD_SIZE = 1;
+
         public GameObject threadedChunkPrefab;
 
         public GameObject threadedCompressedChunkPrefab;
@@ -54,7 +56,7 @@ namespace MarchingCubes
 
         public int GetLod(float sqrDistance)
         {
-            return RoundToPowerOf2(lodForDistances.Evaluate(sqrDistance / maxLodAtDistance));
+            return Mathf.Max(DEFAULT_MIN_CHUNK_LOD_SIZE, RoundToPowerOf2(lodForDistances.Evaluate(sqrDistance / maxLodAtDistance)));
         }
 
         protected int RoundToPowerOf2(float f)
@@ -363,7 +365,7 @@ namespace MarchingCubes
 
         protected IMarchingCubeChunk CreateChunkAt(Vector3Int p)
         {
-            int lod = 1;
+            int lod = DEFAULT_MIN_CHUNK_LOD_SIZE;
             IMarchingCubeChunk chunk = GetThreadedChunkObjectAt(p, lod);
             BuildChunk(p, chunk, lod);
             return chunk;
@@ -443,7 +445,7 @@ namespace MarchingCubes
 
         protected IMarchingCubeChunk GetThreadedChunkObjectAt(Vector3Int p, int lod)
         {
-            if(lod == 1)
+            if(lod <= DEFAULT_MIN_CHUNK_LOD_SIZE)
                 return GetChunkObjectAt(p, threadedChunkPrefab);
             else
                 return GetChunkObjectAt(p, threadedCompressedChunkPrefab);
@@ -646,7 +648,7 @@ namespace MarchingCubes
                     IMarchingCubeChunk neighbourChunk;
                     if (TryGetOrCreateChunk(chunkOffset + offsetVector, out neighbourChunk))
                     {
-                        if (neighbourChunk.LOD == 1)
+                        if (neighbourChunk.LOD <= DEFAULT_MIN_CHUNK_LOD_SIZE)
                         {
                             EditNeighbourChunkAt(neighbourChunk, cubeOrigin, offsetVector, delta);
                         }

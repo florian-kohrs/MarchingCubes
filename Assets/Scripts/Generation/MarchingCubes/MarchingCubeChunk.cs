@@ -35,7 +35,7 @@ namespace MarchingCubes
             //ResetAll();
             //BuildAll();
 
-            if (lod == 1)
+            if (lod <= MarchingCubeChunkHandler.DEFAULT_MIN_CHUNK_LOD_SIZE)
             {
                 BuildChunkEdges();
             }
