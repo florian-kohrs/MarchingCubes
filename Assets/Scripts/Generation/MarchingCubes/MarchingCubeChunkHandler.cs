@@ -460,8 +460,8 @@ namespace MarchingCubes
         protected MarchingCubeChunkNeighbourLODs GetNeighbourLODSFrom(Vector3Int coord)
         {
             MarchingCubeChunkNeighbourLODs result = new MarchingCubeChunkNeighbourLODs();
-            List<Vector3Int> coords = coord.GetAllDirectNeighboursAsList();
-            for (int i = 0; i < coords.Count; i++)
+            Vector3Int[] coords = coord.GetAllDirectNeighbours();
+            for (int i = 0; i < coords.Length; i++)
             {
                 int current;
                 IMarchingCubeChunk chunk;

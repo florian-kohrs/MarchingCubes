@@ -69,18 +69,22 @@ public static class VectorExtension
         return v.Map(Mathf.Abs);
     }
 
-    public static IEnumerable<int> Ints(this Vector3Int v)
+    public static int[] Ints(this Vector3Int v)
     {
-        yield return v.x;
-        yield return v.y;
-        yield return v.z;
+        int[] r = new int[3];
+        r[0] = v.x;
+        r[1] = v.y;
+        r[2] = v.z;
+        return r;
     }
 
-    public static IEnumerable<float> Values(this Vector3 v)
+    public static float[] Values(this Vector3 v)
     {
-        yield return v.x;
-        yield return v.y;
-        yield return v.z;
+        float[] r = new float[3];
+        r[0] = v.x;
+        r[1] = v.y;
+        r[2] = v.z;
+        return r;
     }
 
     public static List<float> ValueList(this Vector3 v)
@@ -99,7 +103,7 @@ public static class VectorExtension
                 if (v1[i] == v2[x])
                 {
                     sameValues++;
-                    if(sameValues == n)
+                    if (sameValues == n)
                     {
                         return true;
                     }
@@ -156,7 +160,7 @@ public static class VectorExtension
         for (int i = 0; i < 3; i++)
         {
             v1ConnectedVertices[i] = list.IndexOf(v1[i]);
-            
+
             if (v1ConnectedVertices[i] >= 0)
             {
                 v2ConnectedVertices[v1ConnectedVertices[i]] = i;
@@ -192,10 +196,10 @@ public static class VectorExtension
 
         for (int i = 0; i < 3 && sameValues < n; i++)
         {
-                if (v1[i] == v2[i])
-                {
-                    sameValues++;
-                }
+            if (v1[i] == v2[i])
+            {
+                sameValues++;
+            }
         }
         return sameValues >= n;
     }
@@ -287,36 +291,29 @@ public static class VectorExtension
             , (i % (size.x * size.y)) % size.y);
     }
 
-    public static IEnumerable<Vector3Int> GetAllCombination(this Vector3Int v)
+    public static Vector3Int[] GetAllCombination(this Vector3Int v)
     {
-        yield return new Vector3Int(v.x, int.MinValue, int.MinValue);
-        yield return new Vector3Int(v.x, v.y, int.MinValue);
-        yield return new Vector3Int(v.x, v.y, v.z);
-        yield return new Vector3Int(v.x, int.MinValue, v.z);
-        yield return new Vector3Int(int.MinValue, v.y, v.z);
-        yield return new Vector3Int(int.MinValue, v.y, int.MinValue);
-        yield return new Vector3Int(int.MinValue, int.MinValue, v.z);
+        Vector3Int[] r = new Vector3Int[7];
+        r[0] = new Vector3Int(v.x, int.MinValue, int.MinValue);
+        r[1] = new Vector3Int(v.x, v.y, int.MinValue);
+        r[2] = new Vector3Int(v.x, v.y, v.z);
+        r[3] = new Vector3Int(v.x, int.MinValue, v.z);
+        r[4] = new Vector3Int(int.MinValue, v.y, v.z);
+        r[5] = new Vector3Int(int.MinValue, v.y, int.MinValue);
+        r[6] = new Vector3Int(int.MinValue, int.MinValue, v.z);
+        return r;
     }
 
-    public static IEnumerable<Vector3Int> GetAllDirectNeighbours(this Vector3Int v3)
-    {
-        yield return new Vector3Int(v3.x - 1, v3.y, v3.z);
-        yield return new Vector3Int(v3.x + 1, v3.y, v3.z);
-        yield return new Vector3Int(v3.x, v3.y - 1, v3.z);
-        yield return new Vector3Int(v3.x, v3.y + 1, v3.z);
-        yield return new Vector3Int(v3.x, v3.y, v3.z - 1);
-        yield return new Vector3Int(v3.x, v3.y, v3.z + 1);
-    }
 
-    public static List<Vector3Int> GetAllDirectNeighboursAsList(this Vector3Int v3)
+    public static Vector3Int[] GetAllDirectNeighbours(this in Vector3Int v3)
     {
-        List<Vector3Int> r = new List<Vector3Int>(6);
-        r.Add(new Vector3Int(v3.x + 1, v3.y, v3.z));
-        r.Add(new Vector3Int(v3.x - 1, v3.y, v3.z));
-        r.Add(new Vector3Int(v3.x, v3.y + 1, v3.z));
-        r.Add(new Vector3Int(v3.x, v3.y - 1, v3.z));
-        r.Add(new Vector3Int(v3.x, v3.y, v3.z + 1));
-        r.Add(new Vector3Int(v3.x, v3.y, v3.z - 1));
+        Vector3Int[] r = new Vector3Int[6];
+        r[0] = new Vector3Int(v3.x + 1, v3.y, v3.z);
+        r[1] = new Vector3Int(v3.x - 1, v3.y, v3.z);
+        r[2] = new Vector3Int(v3.x, v3.y + 1, v3.z);
+        r[3] = new Vector3Int(v3.x, v3.y - 1, v3.z);
+        r[4] = new Vector3Int(v3.x, v3.y, v3.z + 1);
+        r[5] = new Vector3Int(v3.x, v3.y, v3.z - 1);
         return r;
     }
 

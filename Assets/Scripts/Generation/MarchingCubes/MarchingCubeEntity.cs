@@ -81,17 +81,21 @@ namespace MarchingCubes
         /// </summary>
         public void BuildInternNeighbours()
         {
-            foreach (var item in NeighbourData.InternNeighbourPairs)
+            IndexNeighbourPair item;
+            for (int i = 0;i< NeighbourData.InternNeighbourPairs.Count; i++)
             {
-                 triangles[item.first].SoftSetNeighbourTwoWay(triangles[item.second], item.firstEdgeIndices, item.sndEdgeIndice);
+                item = NeighbourData.InternNeighbourPairs[i];
+                triangles[item.first].SoftSetNeighbourTwoWay(triangles[item.second], item.firstEdgeIndices, item.sndEdgeIndice);
             }
         }
 
         public bool BuildNeighbours(Func<Vector3Int, MarchingCubeEntity> GetCube, Func<Vector3Int, bool> IsInBounds, List<MissingNeighbourData> addHere, bool overrideNeighbours = false)
         {
             bool hasNeighbourOutOfBounds = true;
-            foreach (OutsideEdgeNeighbourDirection neighbour in NeighbourData.OutsideNeighbours)
+            OutsideEdgeNeighbourDirection neighbour;
+            for (int i = 0; i < neighbourData.OutsideNeighbours.Count; i++)
             {
+                neighbour = neighbourData.OutsideNeighbours[i];
                 Vector3Int newPos = origin + neighbour.offset;
 
                 if (IsInBounds(newPos))
@@ -129,8 +133,10 @@ namespace MarchingCubes
         public bool FindMissingNeighbours(Func<Vector3Int, bool> IsInBounds, List<MissingNeighbourData> addHere)
         {
             bool hasNeighbourOutOfBounds = true;
-            foreach (OutsideEdgeNeighbourDirection neighbour in NeighbourData.OutsideNeighbours)
+            OutsideEdgeNeighbourDirection neighbour;
+            for (int i = 0; i < neighbourData.OutsideNeighbours.Count; i++)
             {
+                neighbour = neighbourData.OutsideNeighbours[i];
                 Vector3Int newPos = origin + neighbour.offset;
                 if (!IsInBounds(newPos))
                 {
@@ -146,8 +152,10 @@ namespace MarchingCubes
         {
             bool hasNeighbourOutOfBounds = true;
             TriangulationNeighbours neighbourData = TriangulationTableStaticData.GetNeighbourData(triangulationIndex);
-            foreach (OutsideEdgeNeighbourDirection neighbour in neighbourData.OutsideNeighbours)
+            OutsideEdgeNeighbourDirection neighbour;
+            for (int i = 0; i < neighbourData.OutsideNeighbours.Count; i++)
             {
+                neighbour = neighbourData.OutsideNeighbours[i];
                 Vector3Int newPos = origin + neighbour.offset;
                 if (!IsInBounds(newPos))
                 {

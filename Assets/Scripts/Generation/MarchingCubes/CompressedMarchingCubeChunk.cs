@@ -152,9 +152,10 @@ namespace MarchingCubes
             int usedTriCount = 0;
 
             List<MissingNeighbourData> trisWithNeighboursOutOfBounds = new List<MissingNeighbourData>();
-
-            foreach (TriangleBuilder t in ts)
+            TriangleBuilder t;
+            for (int i = 0; i < ts.Length; i++)
             {
+                t = ts[i];
                 Vector3Int currentOrigin = t.Origin;
                 if (!NeighboursReachableFrom.ContainsKey(currentOrigin))
                 {
@@ -407,7 +408,6 @@ namespace MarchingCubes
 
             int totalTreeCount = 0;
             int usedTriCount = 0;
-
             foreach (MarchingCubeEntity t in neighbourChunksGlue.Values)
             {
                 for (int i = 0; i < t.triangles.Count; i++)

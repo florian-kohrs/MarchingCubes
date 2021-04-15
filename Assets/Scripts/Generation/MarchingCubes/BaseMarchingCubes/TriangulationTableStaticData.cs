@@ -292,7 +292,7 @@ public class TriangulationTableStaticData : MonoBehaviour
 
     public static MirrorAxis AxisFromDir(Vector3Int dir)
     {
-        if(dir.x == 0)
+        if (dir.x == 0)
             return MirrorAxis.X;
         if (dir.y == 0)
             return MirrorAxis.Y;
@@ -347,11 +347,13 @@ public class TriangulationTableStaticData : MonoBehaviour
             TriangulationTable.triangulation[trianuglationIndex][triIndex * 3 + 2]);
     }
 
-    public static IEnumerable<Vector2Int> GetEdges(Vector3Int v3)
+    public static Vector2Int[] GetEdges(Vector3Int v3)
     {
-        yield return new Vector2Int(v3.x, v3.y);
-        yield return new Vector2Int(v3.y, v3.z);
-        yield return new Vector2Int(v3.z, v3.x);
+        Vector2Int[] edges = new Vector2Int[3];
+        edges[0] = new Vector2Int(v3.x, v3.y);
+        edges[1] = new Vector2Int(v3.y, v3.z);
+        edges[2] = new Vector2Int(v3.z, v3.x);
+        return edges;
     }
 
     private static void GetNeighbourOffsetForTriangle(int triangulationIndex, int index, List<OutsideEdgeNeighbourDirection> addResult)

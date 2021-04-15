@@ -365,8 +365,10 @@ namespace MarchingCubes
 
             MarchingCubeEntity cube;
             cubeEntities = new Dictionary<int, MarchingCubeEntity>(vertexSize * vertexSize * vertexSize / 15);
-            foreach (TriangleBuilder t in ts)
+            TriangleBuilder t;
+            for(int i = 0; i< ts.Length; i++) 
             {
+                t = ts[i];
                 if (!GetOrAddEntityAt(t.Origin, out cube))
                 {
                     cube.triangulationIndex = t.TriIndex;
@@ -465,26 +467,33 @@ namespace MarchingCubes
             BuildMeshFromCurrentTriangles();
         }
 
-        protected IEnumerable<Vector3Int> GetIndicesAround(MarchingCubeEntity e)
+        protected Vector3Int[] GetIndicesAround(MarchingCubeEntity e)
         {
-            Vector3Int r = e.origin;
-            yield return new Vector3Int(r.x - 1, r.y, r.z);
-            yield return new Vector3Int(r.x + 1, r.y, r.z);
-            yield return new Vector3Int(r.x, r.y - 1, r.z);
-            yield return new Vector3Int(r.x, r.y + 1, r.z);
-            yield return new Vector3Int(r.x, r.y, r.z - 1);
-            yield return new Vector3Int(r.x, r.y, r.z + 1);
+            Vector3Int v3 = e.origin;
+            Vector3Int[] r = new Vector3Int[6];
+            r[0] = new Vector3Int(v3.x + 1, v3.y, v3.z);
+            r[1] = new Vector3Int(v3.x - 1, v3.y, v3.z);
+            r[2] = new Vector3Int(v3.x, v3.y + 1, v3.z);
+            r[3] = new Vector3Int(v3.x, v3.y - 1, v3.z);
+            r[4] = new Vector3Int(v3.x, v3.y, v3.z + 1);
+            r[5] = new Vector3Int(v3.x, v3.y, v3.z - 1);
+            return r;
         }
 
-        protected IEnumerable<Vector3Int> GetValidIndicesAround(MarchingCubeEntity e)
+        protected List<Vector3Int> GetValidIndicesAround(MarchingCubeEntity e)
         {
-            foreach (Vector3Int v3 in GetIndicesAround(e))
+            Vector3Int[] aroundVertices = GetIndicesAround(e);
+            List<Vector3Int> r = new List<Vector3Int>(aroundVertices.Length);
+            Vector3Int v3;
+            for (int i = 0; i < aroundVertices.Length; i++)
             {
+                v3 = aroundVertices[i];
                 if (IsCubeInBounds(v3))
                 {
-                    yield return v3;
+                    r.Add(v3);
                 }
             }
+            return r;
         }
 
 
@@ -681,21 +690,23 @@ namespace MarchingCubes
         public void EditPointsNextToChunk(IMarchingCubeChunk chunk, Vector3Int entityOrigin, Vector3Int offset, float delta)
         {
             int[] cornerIndices = GetCubeCornerIndicesForPoint(entityOrigin);
-
-            foreach (int index in cornerIndices)
+            int length = cornerIndices.Length;
+            int index;
+            for (int i = 0; i < length; i++)
             {
+                index = cornerIndices[i];
                 Vector3Int indexPoint = CoordFromPointIndex(index);
                 Vector3Int pointOffset = new Vector3Int();
-                for (int i = 0; i < 3; i++)
+                for (int x = 0; x < 3; x++)
                 {
-                    if (offset[i] == 0)
+                    if (offset[x] == 0)
                     {
-                        pointOffset[i] = 0;
+                        pointOffset[x] = 0;
                     }
                     else
                     {
-                        int indexOffset = Mathf.CeilToInt((indexPoint[i] / (vertexSize - 2f)) - 1);
-                        pointOffset[i] = -indexOffset;
+                        int indexOffset = Mathf.CeilToInt((indexPoint[x] / (vertexSize - 2f)) - 1);
+                        pointOffset[x] = -indexOffset;
                     }
                 }
 

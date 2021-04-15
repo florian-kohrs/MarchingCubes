@@ -93,15 +93,17 @@ namespace MarchingCubes
         }
 
 
-        public IEnumerable<PathTriangle> GetCircumjacent(PathTriangle field)
+        public List<PathTriangle> GetCircumjacent(PathTriangle field)
         {
+            List<PathTriangle> result = new List<PathTriangle>(3);
             for (int i = 0; i < 3; i++)
             {
                 if(field.neighbours != null && field.Slope < MAX_SLOPE_TO_BE_USEABLE_IN_PATHFINDING)
                 {
-                    yield return field.neighbours[i];
+                    result.Add(field.neighbours[i]);
                 }
             }
+            return result;
         }
 
         public float DistanceToTarget(PathTriangle from, PathTriangle to)
