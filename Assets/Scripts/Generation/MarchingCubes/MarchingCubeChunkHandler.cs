@@ -30,9 +30,9 @@ namespace MarchingCubes
 
         public const int PointsPerChunkAxis = ChunkSize + 1;
 
-        public Dictionary<Vector3Int, IMarchingCubeChunk> chunks = new Dictionary<Vector3Int, IMarchingCubeChunk>();
+        public Dictionary<Vector3Int, IMarchingCubeChunk> chunks = new Dictionary<Vector3Int, IMarchingCubeChunk>(new Vector3EqualityComparer());
 
-        public Dictionary<Vector3Int, IMarchingCubeChunk> superChunks = new Dictionary<Vector3Int, IMarchingCubeChunk>();
+        public Dictionary<Vector3Int, IMarchingCubeChunk> superChunks = new Dictionary<Vector3Int, IMarchingCubeChunk>(new Vector3EqualityComparer());
 
         [Range(1, 253)]
         public int blockAroundPlayer = 16;
@@ -196,39 +196,16 @@ namespace MarchingCubes
         protected float maxChunkDistance;
         protected Queue<Vector3Int> neighbours = new Queue<Vector3Int>();
 
-        protected SortedDictionary<float, List<Vector3Int>> sortedNeighbourds = new SortedDictionary<float, List<Vector3Int>>();
-
-        protected void AddSortedNeighbour(float key, Vector3Int v)
-        {
-            List<Vector3Int> l;
-            if (!sortedNeighbourds.TryGetValue(key, out l))
-            {
-                l = new List<Vector3Int>();
-                sortedNeighbourds[key] = l;
-            }
-            l.Add(v);
-        }
-
-        protected Vector3Int RemoveFirst()
-        {
-            List<Vector3Int> l = sortedNeighbourds.Values.First();
-            Vector3Int r = l[l.Count - 1];
-            l.RemoveAt(l.Count - 1);
-            if (l.Count == 0)
-            {
-                sortedNeighbourds.Remove(sortedNeighbourds.Keys.First());
-            }
-            return r;
-        }
+        protected BinaryHeap<float, Vector3Int> closestNeighbours = new BinaryHeap<float, Vector3Int>(float.MinValue, float.MaxValue,200);
 
         public IEnumerator BuildRelevantChunksParallelAround(IMarchingCubeChunk chunk)
         {
             var e = chunk.NeighbourIndices.GetEnumerator();
             while (e.MoveNext())
             { 
-                AddSortedNeighbour(0, e.Current);
+                closestNeighbours.Enqueue(0, e.Current);
             }
-            if (sortedNeighbourds.Count > 0)
+            if (closestNeighbours.size > 0)
             {
                 yield return BuildRelevantChunksParallelAround();
             }
@@ -250,9 +227,9 @@ namespace MarchingCubes
 
             do
             {
-                next = RemoveFirst();
+                next = closestNeighbours.Dequeue();
                 isNextInProgress = HasChunkStartedAt(next);
-            } while (isNextInProgress && sortedNeighbourds.Count > 0);
+            } while (isNextInProgress && closestNeighbours.size> 0);
 
             if (!isNextInProgress)
             {
@@ -260,12 +237,12 @@ namespace MarchingCubes
             }
             if (totalTriBuild < maxTrianglesLeft)
             {
-                while ((sortedNeighbourds.Count == 0 && channeledChunks > 0)/* ||channeledChunks > maxRunningThreads*/)
+                while ((closestNeighbours.size == 0 && channeledChunks > 0)/* ||channeledChunks > maxRunningThreads*/)
                 {
                    // Debug.Log(channeledChunks);
                     yield return null;
                 }
-                if (sortedNeighbourds.Count > 0)
+                if (closestNeighbours.size > 0)
                 {
                     //yield return new WaitForSeconds(0.03f);
                     yield return BuildRelevantChunksParallelAround();
@@ -285,7 +262,7 @@ namespace MarchingCubes
                 float distance = (startPos - AnchorFromChunkCoords(v3)).magnitude;
                 if (!Chunks.ContainsKey(v3) && distance < maxChunkDistance)
                 {
-                    AddSortedNeighbour(distance, v3);
+                    closestNeighbours.Enqueue(distance, v3);
                 }
             }
         }

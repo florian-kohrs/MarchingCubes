@@ -80,7 +80,7 @@ namespace MarchingCubes
 
         public Dictionary<int, MarchingCubeEntity> cubeEntities = new Dictionary<int, MarchingCubeEntity>();
 
-        protected Dictionary<Vector3Int, MarchingCubeEntity> higherLodNeighbourCubes = new Dictionary<Vector3Int, MarchingCubeEntity>();
+        protected Dictionary<Vector3Int, MarchingCubeEntity> higherLodNeighbourCubes = new Dictionary<Vector3Int, MarchingCubeEntity>(new Vector3EqualityComparer());
 
         public MarchingCubeEntity GetEntityAt(Vector3Int v3)
         {
@@ -160,7 +160,7 @@ namespace MarchingCubes
             if (IsEmpty)
                 return;
 
-            lodNeighbourPointCorrectionLookUp = new Dictionary<Vector3, Vector3>();
+            lodNeighbourPointCorrectionLookUp = new Dictionary<Vector3, Vector3>(new Vector3EqualityComparer());
 
             List<MissingNeighbourData> trisWithNeighboursOutOfBounds = new List<MissingNeighbourData>();
             MissingNeighbourData t;
@@ -418,7 +418,7 @@ namespace MarchingCubes
         }
 
 
-        public void RebuildAround(MarchingCubeEntity e, in Vector3Int origin)
+        public void RebuildAround(MarchingCubeEntity e, Vector3Int origin)
         {
             //ResetAll();
             //BuildAll();

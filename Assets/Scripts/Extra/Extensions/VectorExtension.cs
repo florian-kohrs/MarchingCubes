@@ -309,7 +309,7 @@ public static class VectorExtension
     }
 
 
-    public static Vector3Int[] GetAllDirectNeighbours(this in Vector3Int v3)
+    public static Vector3Int[] GetAllDirectNeighbours(this Vector3Int v3)
     {
         Vector3Int[] r = new Vector3Int[6];
         r[0] = new Vector3Int(v3.x + 1, v3.y, v3.z);

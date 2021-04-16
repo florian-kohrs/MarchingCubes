@@ -89,7 +89,7 @@ namespace MarchingCubes
         public IMarchingCubeChunkHandler chunkHandler;
 
 
-        public Dictionary<Vector3Int, HashSet<MarchingCubeEntity>> NeighboursReachableFrom = new Dictionary<Vector3Int, HashSet<MarchingCubeEntity>>();
+        public Dictionary<Vector3Int, HashSet<MarchingCubeEntity>> NeighboursReachableFrom = new Dictionary<Vector3Int, HashSet<MarchingCubeEntity>>(new Vector3EqualityComparer());
 
         public IEnumerable<Vector3Int> NeighbourIndices => NeighboursReachableFrom.Keys;
 
