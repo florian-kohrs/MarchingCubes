@@ -11,16 +11,16 @@ namespace MarchingCubes
     {
 
 
-        private void Update()
+        protected IEnumerator WaitForParallelDone()
         {
-            if (multiThreadDone)
+            while (!multiThreadDone)
             {
-                isInOtherThread = false;
-                BuildAllMeshes();
-                enabled = false;
-                IsReady = true;
-                OnDone();
+                yield return null;
             }
+            isInOtherThread = false;
+            BuildAllMeshes();
+            IsReady = true;
+            OnDone();
         }
 
         protected Action OnDone;
@@ -30,11 +30,9 @@ namespace MarchingCubes
             HasStarted = true;
             chunkHandler = handler;
             this.OnDone = OnDone;
-            children.Add(new BaseMeshChild(GetComponent<MeshFilter>(), GetComponent<MeshRenderer>(), GetComponent<MeshCollider>(), new Mesh()));
-         
+            chunkHandler.StartWaitForParralelChunkDoneCoroutine(WaitForParallelDone());
             ThreadPool.QueueUserWorkItem((o) => RequestChunk(tris, handler, points, surfaceLevel, neighbourLODs, OnChunkDone));
         }
-
         protected bool isInOtherThread;
 
         protected void OnChunkDone()
@@ -63,7 +61,7 @@ namespace MarchingCubes
         {
             if (isInOtherThread)
             {
-                data.Add(new MeshData(meshTriangles, vertices, colorData, useCollider));
+                data.Add(new MeshData(meshTriangles, vertices, colorData, false));
             }
             else
             {
@@ -96,7 +94,7 @@ namespace MarchingCubes
 
         protected void ApplyChangesToMesh(in MeshData d)
         {
-            BaseMeshChild displayer = GetNextMeshDisplayer();
+            BaseMeshDisplayer displayer = GetMeshDisplayer();
             displayer.ApplyMesh(d.colorData, d.vertices, d.triangles, Material, d.useCollider);
         }
 

@@ -17,7 +17,6 @@ namespace MarchingCubes
 
         public override void InitializeWithMeshData(TriangleBuilder[] tris, float[] points, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel)
         {
-            children.Add(new BaseMeshChild(GetComponent<MeshFilter>(), GetComponent<MeshRenderer>(), GetComponent<MeshCollider>(), new Mesh()));
             BuildMeshData(tris, points, handler, neighbourLODs, surfaceLevel);
         }
 
@@ -68,15 +67,7 @@ namespace MarchingCubes
         //    IsReady = true;
         //}
 
-        protected void AddCurrentMeshDataChild()
-        {
-            GameObject g = new GameObject();
-            g.transform.parent = transform;
-            g.AddComponent<MeshFilter>();
-        }
-
         public IMarchingCubeInteractableChunk GetChunk => this;
-
 
         public Dictionary<int, MarchingCubeEntity> cubeEntities = new Dictionary<int, MarchingCubeEntity>();
 
@@ -305,7 +296,7 @@ namespace MarchingCubes
 
         protected virtual void ResetAll()
         {
-            ResetMeshDisplayers();
+            SoftResetMeshDisplayers();
             cubeEntities = new Dictionary<int, MarchingCubeEntity>();
             triCount = 0;
         }
@@ -462,7 +453,7 @@ namespace MarchingCubes
                 BuildEdgesFor(buildNeighbours[i], missingNeighbours, true);
             }
 
-            ResetMeshDisplayers();
+            SoftResetMeshDisplayers();
             BuildMeshFromCurrentTriangles();
         }
 
@@ -683,7 +674,7 @@ namespace MarchingCubes
 
         public Vector3 GetAnchorPosition()
         {
-            return transform.position + (chunkOffset * MarchingCubeChunkHandler.ChunkSize);
+            return chunkOffset * MarchingCubeChunkHandler.ChunkSize;
         }
 
         public void EditPointsNextToChunk(IMarchingCubeChunk chunk, Vector3Int entityOrigin, Vector3Int offset, float delta)

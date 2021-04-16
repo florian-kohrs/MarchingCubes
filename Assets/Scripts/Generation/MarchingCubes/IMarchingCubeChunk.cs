@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public interface IMarchingCubeChunk
+    public interface IMarchingCubeChunk 
     {
 
         bool IsReady { get; }
@@ -15,8 +15,6 @@ namespace MarchingCubes
         Vector3 AnchorPos { set; }
 
         bool HasStarted { get; }
-
-        void SetActive(bool b);
 
         Vector3Int ChunkOffset { get; set; }
 

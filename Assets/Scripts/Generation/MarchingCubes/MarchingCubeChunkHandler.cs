@@ -18,13 +18,11 @@ namespace MarchingCubes
 
         public const int ChunkSize = 64;
 
+        public const int SuperChunkSize = 512;
+
         public const int CHUNK_VOLUME = ChunkSize * ChunkSize * ChunkSize;
 
         public const int DEFAULT_MIN_CHUNK_LOD_SIZE = 1;
-
-        public GameObject threadedChunkPrefab;
-
-        public GameObject threadedCompressedChunkPrefab;
 
         // protected int maxRunningThreads = 0;
 
@@ -54,9 +52,85 @@ namespace MarchingCubes
 
         public Dictionary<Vector3Int, IMarchingCubeChunk> Chunks => chunks;
 
+        //protected HashSet<BaseMeshChild> inUseDisplayer = new HashSet<BaseMeshChild>();
+
+        protected Stack<BaseMeshDisplayer> unusedDisplayer = new Stack<BaseMeshDisplayer>();
+
+        protected Stack<BaseMeshDisplayer> unusedInteractableDisplayer = new Stack<BaseMeshDisplayer>();
+
+        public void StartWaitForParralelChunkDoneCoroutine(IEnumerator e)
+        {
+            StartCoroutine(e);
+        }
+
+
+        public BaseMeshDisplayer GetNextMeshDisplayer()
+        {
+
+            BaseMeshDisplayer displayer = null;
+            if (unusedDisplayer.Count > 0)
+            {
+                displayer = unusedDisplayer.Pop();
+            }
+            else
+            {
+                displayer = new BaseMeshDisplayer(transform);
+            }
+            return displayer;
+        }
+
+        public BaseMeshDisplayer GetNextInteractableMeshDisplayer(IMarchingCubeInteractableChunk forChunk)
+        {
+
+            BaseMeshDisplayer displayer = null;
+            if(unusedInteractableDisplayer.Count > 0)
+            {
+                displayer = unusedInteractableDisplayer.Pop();
+            }
+            else if(unusedDisplayer.Count > 0)
+            {
+                displayer = unusedDisplayer.Pop();
+                displayer.SetInteractableChunk(forChunk);
+            }
+            else
+            {
+                displayer = new BaseMeshDisplayer(forChunk, transform);
+            }
+            return displayer;
+        }
+
+
+
+        public void FreeMeshDisplayer(BaseMeshDisplayer display)
+        {
+            if (display.HasCollider)
+            {
+                unusedInteractableDisplayer.Push(display);
+            }
+            else
+            {
+                unusedDisplayer.Push(display);
+            }
+        }
+
+        public void FreeAllDisplayers(List<BaseMeshDisplayer> displayers)
+        {
+            for (int i = 0; i < displayers.Count; i++)
+            {
+                if (displayers[i].HasCollider)
+                {
+                    unusedInteractableDisplayer.Push(displayers[i]);
+                }
+                else
+                {
+                    unusedDisplayer.Push(displayers[i]);
+                }
+            }
+        }
+
         public int GetLod(float sqrDistance)
         {
-            return Mathf.Max(DEFAULT_MIN_CHUNK_LOD_SIZE, RoundToPowerOf2(lodForDistances.Evaluate(sqrDistance / maxLodAtDistance)));
+            return DEFAULT_MIN_CHUNK_LOD_SIZE * RoundToPowerOf2(lodForDistances.Evaluate(sqrDistance / maxLodAtDistance));
         }
 
         protected int RoundToPowerOf2(float f)
@@ -117,7 +191,6 @@ namespace MarchingCubes
             startPos = player.position;
             IMarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
             maxChunkDistance = buildAroundDistance;
-
             StartCoroutine(BuildRelevantChunksParallelAround(chunk));
         }
 
@@ -408,13 +481,9 @@ namespace MarchingCubes
             return false;
         }
 
-        protected IMarchingCubeChunk GetChunkObjectAt(Vector3Int p, GameObject prefab)
+        protected IMarchingCubeChunk GetChunkObjectAt<T>(Vector3Int p) where T : IMarchingCubeChunk, new()
         {
-            GameObject g = Instantiate(prefab, transform);
-            g.name = $"Chunk({p.x},{p.y},{p.z})";
-            //g.transform.position = AnchorFromChunkIndex(p);
-
-            IMarchingCubeChunk chunk = g.GetComponent<IMarchingCubeChunk>();
+            IMarchingCubeChunk chunk = new T();
             chunks.Add(p, chunk);
             chunk.ChunkOffset = p;
             return chunk;
@@ -423,9 +492,9 @@ namespace MarchingCubes
         protected IMarchingCubeChunk GetThreadedChunkObjectAt(Vector3Int p, int lod)
         {
             if(lod <= DEFAULT_MIN_CHUNK_LOD_SIZE)
-                return GetChunkObjectAt(p, threadedChunkPrefab);
+                return GetChunkObjectAt<MarchingCubeChunkThreaded>(p);
             else
-                return GetChunkObjectAt(p, threadedCompressedChunkPrefab);
+                return GetChunkObjectAt<CompressedMarchingCubeChunkThreaded>(p);
         }
 
         protected Vector3Int PositionToCoord(Vector3 pos)

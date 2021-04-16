@@ -12,4 +12,14 @@ public interface IMarchingCubeChunkHandler
 
     bool TryGetReadyChunkAt(Vector3Int p, out IMarchingCubeChunk chunk);
 
+    BaseMeshDisplayer GetNextMeshDisplayer();
+
+    BaseMeshDisplayer GetNextInteractableMeshDisplayer(IMarchingCubeInteractableChunk forChunk);
+
+    void StartWaitForParralelChunkDoneCoroutine(IEnumerator e);
+
+    void FreeMeshDisplayer(BaseMeshDisplayer display);
+
+    void FreeAllDisplayers(List<BaseMeshDisplayer> displayers);
+
 }

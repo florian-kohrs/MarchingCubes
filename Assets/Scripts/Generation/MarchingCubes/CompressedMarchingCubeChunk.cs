@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public class CompressedMarchingCubeChunk : MonoBehaviour, IMarchingCubeChunk
+    public class CompressedMarchingCubeChunk : IMarchingCubeChunk
     {
 
         public virtual void InitializeWithMeshDataParallel(TriangleBuilder[] tris, float[] points, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLod, float surfaceLevel, Action OnDone)
@@ -15,7 +15,6 @@ namespace MarchingCubes
 
         public virtual void InitializeWithMeshData(TriangleBuilder[] tris, float[] points, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLod, float surfaceLevel)
         {
-            children.Add(new BaseMeshChild(GetComponent<MeshFilter>(), GetComponent<MeshRenderer>(), GetComponent<MeshCollider>(), new Mesh()));
             BuildMeshData(tris, points, handler, neighbourLODs, surfaceLevel);
         }
 
@@ -41,6 +40,7 @@ namespace MarchingCubes
 
         protected int lod = 1;
 
+        protected List<BaseMeshDisplayer> activeDisplayers = new List<BaseMeshDisplayer>();
 
         public int LOD
         {
@@ -84,8 +84,6 @@ namespace MarchingCubes
 
         public Vector3Int ChunkOffset { get => chunkOffset; set => chunkOffset = value; }
 
-
-
         public IMarchingCubeChunkHandler chunkHandler;
 
 
@@ -103,7 +101,7 @@ namespace MarchingCubes
         /// </summary>
         protected Dictionary<int, List<MarchingCubeEntity>> cubesForNeighbourInDirection = new Dictionary<int, List<MarchingCubeEntity>>();
 
-        protected List<BaseMeshChild> children = new List<BaseMeshChild>();
+        //protected List<BaseMeshChild> children = new List<BaseMeshChild>();
         protected Vector3[] vertices;
         protected int[] meshTriangles;
         protected Color[] colorData;
@@ -317,34 +315,53 @@ namespace MarchingCubes
             }
         }
 
-
-        public BaseMeshChild GetNextMeshDisplayer()
+        protected BaseMeshDisplayer GetMeshDisplayer()
         {
+            BaseMeshDisplayer d = chunkHandler.GetNextMeshDisplayer();
+            activeDisplayers.Add(d);
+            return d;
+        }
 
-            BaseMeshChild displayer = null;
-            for (int i = 0; i < children.Count && displayer == null; i++)
+        protected BaseMeshDisplayer GetBestMeshDisplayer()
+        {
+            if(this is IMarchingCubeInteractableChunk i)
             {
-                if (!children[i].IsAppliedMesh)
-                {
-                    displayer = children[i];
-                }
+                return GetMeshInteractableDisplayer(i);
             }
-            if (displayer == null)
+            else
             {
-                displayer = new BaseMeshChild(this, transform);
-                children.Add(displayer);
+                return GetMeshDisplayer();
             }
-            return displayer;
+        }
+
+        protected BaseMeshDisplayer GetMeshInteractableDisplayer(IMarchingCubeInteractableChunk interactable)
+        {
+            BaseMeshDisplayer d = chunkHandler.GetNextInteractableMeshDisplayer(interactable);
+            activeDisplayers.Add(d);
+            return d;
         }
 
 
-        protected void ResetMeshDisplayers()
+        /// <summary>
+        /// only resets mesh with a collider active (does not include border connections meshed)
+        /// </summary>
+        protected void SoftResetMeshDisplayers()
         {
-            for (int i = 0; i < children.Count; i++)
+            for (int i = 0; i < activeDisplayers.Count; i++)
             {
-                if (children[i].IsColliderActive)
-                    children[i].Reset();
+                if (activeDisplayers[i].HasCollider)
+                    activeDisplayers[i].Reset();
             }
+        }
+
+        protected void FreeAllMeshes()
+        {
+            for (int i = 0; i < activeDisplayers.Count; i++)
+            {
+                activeDisplayers[i].Reset();
+            }
+            chunkHandler.FreeAllDisplayers(activeDisplayers);
+            activeDisplayers.Clear();
         }
 
 
@@ -363,7 +380,7 @@ namespace MarchingCubes
 
         protected virtual void SetCurrentMeshData(bool useCollider)
         {
-            BaseMeshChild displayer = GetNextMeshDisplayer();
+            BaseMeshDisplayer displayer = GetBestMeshDisplayer();
             displayer.ApplyMesh(colorData, vertices, meshTriangles, Material, useCollider);
         }
 
@@ -568,11 +585,6 @@ namespace MarchingCubes
                 PointIndexFromCoord(p.x + 1, p.y + 1, p.z + 1),
                 PointIndexFromCoord(p.x, p.y + 1, p.z + 1)
             };
-        }
-
-        public void SetActive(bool b)
-        {
-            gameObject.SetActive(b);
         }
 
 
