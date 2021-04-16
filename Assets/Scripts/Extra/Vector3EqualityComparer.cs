@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Vector3EqualityComparer : IEqualityComparer<Vector3>, IEqualityComparer<Vector3Int>
+public class Vector3EqualityComparer : /*IEqualityComparer<Vector3>,*/ IEqualityComparer<Vector3Int>
 {
     public bool Equals(Vector3 x, Vector3 y)
     {

@@ -160,8 +160,6 @@ namespace MarchingCubes
             if (IsEmpty)
                 return;
 
-            lodNeighbourPointCorrectionLookUp = new Dictionary<Vector3, Vector3>(new Vector3EqualityComparer());
-
             List<MissingNeighbourData> trisWithNeighboursOutOfBounds = new List<MissingNeighbourData>();
             MissingNeighbourData t;
 
@@ -274,8 +272,6 @@ namespace MarchingCubes
 
 
         //protected List<MissingNeighbourData> missingHigherLODNeighbour = new List<MissingNeighbourData>();
-
-        protected Dictionary<Vector3, Vector3> lodNeighbourPointCorrectionLookUp;
 
         protected bool GetPointWithCorner(MarchingCubeEntity e, int a, int b, out Vector3 result)
         {
