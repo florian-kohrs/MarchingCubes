@@ -57,15 +57,15 @@ namespace MarchingCubes
             }
         }
 
-        protected override void SetCurrentMeshData(bool useCollider)
+        protected override void SetCurrentMeshData(bool isBorderConnector)
         {
             if (isInOtherThread)
             {
-                data.Add(new MeshData(meshTriangles, vertices, colorData, useCollider));
+                data.Add(new MeshData(meshTriangles, vertices, colorData, !isBorderConnector, isBorderConnector));
             }
             else
             {
-                base.SetCurrentMeshData(useCollider);
+                base.SetCurrentMeshData(isBorderConnector);
             }
         }
 

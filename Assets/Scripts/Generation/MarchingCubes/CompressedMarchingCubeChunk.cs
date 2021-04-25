@@ -28,7 +28,21 @@ namespace MarchingCubes
 
         public bool HasStarted { get; protected set; }
 
-        public float Spacing { get; set; }
+        public int SizeGrower
+        {
+            get
+            {
+                return sizeGrower;
+            }
+            set
+            {
+                sizeGrower = value; 
+                vertexSize = MarchingCubeChunkHandler.ChunkSize / lod * sizeGrower;
+                pointsPerAxis = vertexSize + 1;
+            }
+        }
+
+        protected int sizeGrower = 1;
 
         protected float surfaceLevel;
 
@@ -51,7 +65,7 @@ namespace MarchingCubes
             set
             {
                 lod = value;
-                vertexSize = MarchingCubeChunkHandler.ChunkSize / lod;
+                vertexSize = MarchingCubeChunkHandler.ChunkSize / lod * SizeGrower;
                 pointsPerAxis = vertexSize + 1;
             }
         }
@@ -121,6 +135,7 @@ namespace MarchingCubes
 
         public Vector3 AnchorPos { get; set; }
 
+        int IMarchingCubeChunk.PointsPerAxis => pointsPerAxis;
 
         protected virtual void BuildMeshData(TriangleBuilder[] tris, float[] points, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel)
         {
@@ -277,7 +292,7 @@ namespace MarchingCubes
             }
         }
 
-        protected void AddTriangleToMeshData(PathTriangle tri, ref int usedTriCount, ref int totalTriCount, bool useCollider = true)
+        protected void AddTriangleToMeshData(PathTriangle tri, ref int usedTriCount, ref int totalTriCount, bool isBorderConnectionMesh = false)
         {
             for (int x = 0; x < 3; x++)
             {
@@ -289,7 +304,7 @@ namespace MarchingCubes
             totalTriCount++;
             if (usedTriCount >= MAX_TRIANGLES_PER_MESH || usedTriCount >= trisLeft)
             {
-                ApplyChangesToMesh(useCollider);
+                ApplyChangesToMesh(isBorderConnectionMesh);
                 usedTriCount = 0;
             }
         }
@@ -378,16 +393,16 @@ namespace MarchingCubes
 
 
 
-        protected virtual void SetCurrentMeshData(bool useCollider)
+        protected virtual void SetCurrentMeshData(bool isBorderConnectionMesh)
         {
             BaseMeshDisplayer displayer = GetBestMeshDisplayer();
-            displayer.ApplyMesh(colorData, vertices, meshTriangles, Material, useCollider);
+            displayer.ApplyMesh(colorData, vertices, meshTriangles, Material, !isBorderConnectionMesh);
         }
 
 
-        protected void ApplyChangesToMesh(bool useCollider)
+        protected void ApplyChangesToMesh(bool isBorderConnectionMesh)
         {
-            SetCurrentMeshData(useCollider);
+            SetCurrentMeshData(isBorderConnectionMesh);
             trisLeft -= meshTriangles.Length;
             if (trisLeft > 0)
             {
@@ -435,7 +450,7 @@ namespace MarchingCubes
                 e = outerEnum.Current;
                 for (int i = 0; i < e.triangles.Count; i++)
                 {
-                    AddTriangleToMeshData(e.triangles[i], ref usedTriCount, ref totalTreeCount, false);
+                    AddTriangleToMeshData(e.triangles[i], ref usedTriCount, ref totalTreeCount, true);
                 }
             }
         }

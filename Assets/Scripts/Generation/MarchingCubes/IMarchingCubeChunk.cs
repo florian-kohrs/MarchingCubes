@@ -10,7 +10,7 @@ namespace MarchingCubes
 
         bool IsReady { get; }
 
-        float Spacing { set; }
+        int SizeGrower { set; }
 
         Vector3 AnchorPos { set; }
 
@@ -33,6 +33,8 @@ namespace MarchingCubes
         Material Material { set; }
 
         float[] Points { get; }
+
+        int PointsPerAxis { get; }
 
        // void InitializeWithMeshData(Material mat, TriangleBuilder[] tris, int activeTris, float[] points, IMarchingCubeChunkHandler handler, float surfaceLevel);
 

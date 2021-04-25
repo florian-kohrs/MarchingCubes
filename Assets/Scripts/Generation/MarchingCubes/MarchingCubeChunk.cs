@@ -392,7 +392,7 @@ namespace MarchingCubes
                 e = @enum.Current;
                 for (int i = 0; i < e.triangles.Count; i++)
                 {
-                    AddTriangleToMeshData(e.triangles[i], ref usedTriCount, ref totalTreeCount, true);
+                    AddTriangleToMeshData(e.triangles[i], ref usedTriCount, ref totalTreeCount, false);
                 }
             }
         }

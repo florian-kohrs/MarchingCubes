@@ -4,6 +4,14 @@ using UnityEngine;
 
 public class Vector3EqualityComparer : /*IEqualityComparer<Vector3>,*/ IEqualityComparer<Vector3Int>
 {
+
+    public static Vector3EqualityComparer instance;
+
+    static Vector3EqualityComparer()
+    {
+        instance = new Vector3EqualityComparer();
+    }
+
     public bool Equals(Vector3 x, Vector3 y)
     {
         return x.x == y.x && x.y == y.y && x.z == y.z;
