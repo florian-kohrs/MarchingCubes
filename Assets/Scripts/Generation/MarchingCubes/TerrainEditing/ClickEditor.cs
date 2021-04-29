@@ -82,13 +82,13 @@ namespace MarchingCubes
 
                     if (chunk != null)
                     {
-                        MarchingCubeEntity e2 = chunk.GetClosestEntity(hit.point);
-                        
-                        PathTriangle tri = chunk.GetTriangleFromRayHit(hit);
-                        ps = tri.neighbours;
-                        p = tri;
-                        //e = chunk.GetClosestEntity(hit.point);
-                        //Debug.Log("NeighboursCount:" + tri.neighbours.Count + "tri index: " + e2.triangulationIndex + "interns" + e2.triangles.Count);
+                        //MarchingCubeEntity e2 = chunk.GetClosestEntity(hit.point);
+
+                        //PathTriangle tri = chunk.GetTriangleFromRayHit(hit);
+                        //ps = tri.neighbours;
+                        //p = tri;
+
+                        chunk.GetChunkHandler.DecreaseChunkLod(chunk, chunk.LOD * 2);
                     }
                 }
 

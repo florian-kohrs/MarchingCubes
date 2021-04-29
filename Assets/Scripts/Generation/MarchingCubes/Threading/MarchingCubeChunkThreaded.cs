@@ -20,12 +20,12 @@ namespace MarchingCubes
             isInOtherThread = false;
             BuildAllMeshes();
             IsReady = true;
-            OnDone();
+            OnDone?.Invoke();
         }
 
         protected Action OnDone;
 
-        public override void InitializeWithMeshDataParallel(TriangleBuilder[] tris, float[] points, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel, Action OnDone)
+        public override void InitializeWithMeshDataParallel(TriangleBuilder[] tris, float[] points, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel, Action OnDone = null)
         {
             HasStarted = true;
             chunkHandler = handler;

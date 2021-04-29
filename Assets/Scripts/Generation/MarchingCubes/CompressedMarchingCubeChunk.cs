@@ -8,7 +8,7 @@ namespace MarchingCubes
     public class CompressedMarchingCubeChunk : IMarchingCubeChunk
     {
 
-        public virtual void InitializeWithMeshDataParallel(TriangleBuilder[] tris, float[] points, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLod, float surfaceLevel, Action OnDone)
+        public virtual void InitializeWithMeshDataParallel(TriangleBuilder[] tris, float[] points, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLod, float surfaceLevel, Action OnDone = null)
         {
             throw new Exception("This class doesnt support concurrency");
         }
@@ -23,6 +23,14 @@ namespace MarchingCubes
         //    throw new NotImplementedException();
         //}
 
+        public void ResetChunk()
+        {
+            FreeAllMeshes();
+            OnResetChunk();
+            points = null;
+        }
+
+        protected virtual void OnResetChunk() { }
 
         public bool IsReady { get; protected set; }
 
@@ -100,6 +108,7 @@ namespace MarchingCubes
 
         public IMarchingCubeChunkHandler chunkHandler;
 
+        public IMarchingCubeChunkHandler GetChunkHandler => chunkHandler;
 
         public Dictionary<Vector3Int, HashSet<MarchingCubeEntity>> NeighboursReachableFrom = new Dictionary<Vector3Int, HashSet<MarchingCubeEntity>>(new Vector3EqualityComparer());
 
@@ -364,7 +373,7 @@ namespace MarchingCubes
         {
             for (int i = 0; i < activeDisplayers.Count; i++)
             {
-                if (activeDisplayers[i].HasCollider)
+                if (activeDisplayers[i].IsColliderActive)
                     activeDisplayers[i].Reset();
             }
         }
@@ -390,7 +399,6 @@ namespace MarchingCubes
             }
             cubes.Add(c);
         }
-
 
 
         protected virtual void SetCurrentMeshData(bool isBorderConnectionMesh)
@@ -430,7 +438,6 @@ namespace MarchingCubes
             vertices = new Vector3[size];
             colorData = new Color[size];
         }
-
 
 
         protected void BuildMeshToConnectHigherLodChunks()
@@ -571,6 +578,19 @@ namespace MarchingCubes
                 BuildVector4FromCoord(x, y + 1, z + 1)
             };
         }
+
+        protected static readonly Vector3[] CubeCornersOffset = 
+                new Vector3[]{
+                    new Vector3(0,0,0),
+                    new Vector3(1,0,0),
+                    new Vector3(1,0,1),
+                    new Vector3(0,0,1),
+                    new Vector3(0,1,0),
+                    new Vector3(1,1,0),
+                    new Vector3(1,1,1),
+                    new Vector3(0,1,1)
+            };
+        
 
         protected Vector4[] GetCubeCornersForPointWithLod(int x, int y, int z, int spacing)
         {

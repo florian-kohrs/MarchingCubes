@@ -22,4 +22,6 @@ public interface IMarchingCubeChunkHandler
 
     void FreeAllDisplayers(List<BaseMeshDisplayer> displayers);
 
+    void DecreaseChunkLod(IMarchingCubeChunk chunk, int toLod);
+
 }

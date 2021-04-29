@@ -20,5 +20,7 @@ namespace MarchingCubes
 
         MarchingCubeEntity GetEntityAt(int x, int y, int z);
 
+        IMarchingCubeChunkHandler GetChunkHandler { get; }
+
     }
 }

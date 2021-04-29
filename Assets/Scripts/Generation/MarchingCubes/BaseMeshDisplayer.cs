@@ -21,7 +21,7 @@ namespace MarchingCubes
 
         public bool HasCollider => collider != null;
 
-        public bool IsColliderActive => HasCollider && collider.sharedMaterial != null;
+        public bool IsColliderActive => HasCollider && collider.sharedMesh != null;
 
         protected BaseMeshDisplayer(IMarchingCubeInteractableChunk chunk, GameObject g, Transform t) : this(g, g.AddComponent<MeshFilter>(), g.AddComponent<MeshRenderer>(), new Mesh(), g.AddComponent<MeshCollider>())
         {
