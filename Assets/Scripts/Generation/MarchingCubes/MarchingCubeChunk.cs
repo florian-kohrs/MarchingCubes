@@ -34,7 +34,7 @@ namespace MarchingCubes
             //ResetAll();
             //BuildAll();
 
-            if (lod <= MarchingCubeChunkHandler.DEFAULT_MIN_CHUNK_LOD_SIZE)
+            if (LODPower <= MarchingCubeChunkHandler.DEFAULT_MIN_CHUNK_LOD_POWER)
             {
                 BuildChunkEdges();
             }
@@ -184,11 +184,7 @@ namespace MarchingCubes
                                     else if (c.LOD > lod)
                                     {
                                         Vector3Int pos = (e.origin + t.neighbour.offset).Map(ClampInChunk);
-
-                                        float lodDiff = c.LOD / lod;
-                                        ///pos needed to be divided by lodDiff or something
-                                        MarchingCubeEntity cube = c.GetEntityAt(pos);
-                                        CorrectMarchingCubeInDirection(e.origin, t, c.LOD, t.neighbour.offset);
+                                        CorrectMarchingCubeInDirection(e.origin, t, c, t.neighbour.offset);
                                     }
                                 }
                             }
@@ -197,7 +193,7 @@ namespace MarchingCubes
                                 int neighbourLod = neighbourLODs.GetLodFromNeighbourInDirection(t.neighbour.offset);
                                 if (neighbourLod > lod)
                                 {
-                                    CorrectMarchingCubeInDirection(e.origin, t, neighbourLod, t.neighbour.offset);
+                                    CorrectMarchingCubeInDirection(e.origin, t, neighbourLod, GetLODPowerFromLOD(neighbourLod), t.neighbour.offset);
                                 }
                             }
                         }
@@ -235,9 +231,7 @@ namespace MarchingCubes
                             {
                                 Vector3Int pos = (e.origin + t.neighbour.offset).Map(ClampInChunk);
 
-                                float lodDiff = c.LOD / lod;
-                                ///pos needed to be divided by lodDiff or something
-                                CorrectMarchingCubeInDirection(e.origin, t, c.LOD, t.neighbour.offset);
+                                CorrectMarchingCubeInDirection(e.origin, t, c, t.neighbour.offset);
                             }
                         }
                         else if (careAboutNeighbourLODS)
@@ -245,7 +239,7 @@ namespace MarchingCubes
                             int neighbourLod = neighbourLODs.GetLodFromNeighbourInDirection(t.neighbour.offset);
                             if (neighbourLod > lod)
                             {
-                                CorrectMarchingCubeInDirection(e.origin, t, neighbourLod, t.neighbour.offset);
+                                CorrectMarchingCubeInDirection(e.origin, t, neighbourLod, GetLODPowerFromLOD(neighbourLod), t.neighbour.offset);
                             }
                         }
                     }

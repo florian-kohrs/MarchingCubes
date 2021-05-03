@@ -60,9 +60,9 @@ namespace MarchingCubes
 
         protected bool careAboutNeighbourLODS;
 
-        protected int lod = 1;
-
         protected List<BaseMeshDisplayer> activeDisplayers = new List<BaseMeshDisplayer>();
+
+        protected int lod = 1;
 
         public int LOD
         {
@@ -78,6 +78,22 @@ namespace MarchingCubes
             }
         }
 
+        protected int lodPower;
+
+        public int LODPower
+        {
+            get
+            {
+                return lodPower;
+            }
+            set
+            {
+                lodPower = value;
+                LOD = (int)Mathf.Pow(2, lodPower);
+            }
+        }
+
+        protected int GetLODPowerFromLOD(int lod) => (int)Mathf.Log(lod, 2);
 
         protected float[] points;
 
@@ -207,9 +223,7 @@ namespace MarchingCubes
                     {
                         Vector3Int pos = (neighbour.originCubeEntity + neighbour.neighbour.offset).Map(ClampInChunk);
 
-                        float lodDiff = c.LOD / lod;
-                        ///pos needed to be divided by lodDiff or something
-                        CorrectMarchingCubeInDirection(neighbour.originCubeEntity, neighbour, c.LOD, neighbour.neighbour.offset);
+                        CorrectMarchingCubeInDirection(neighbour.originCubeEntity, neighbour, c, neighbour.neighbour.offset);
                     }
                 }
                 else if (careAboutNeighbourLODS)
@@ -217,12 +231,10 @@ namespace MarchingCubes
                     int neighbourLod = neighbourLODs.GetLodFromNeighbourInDirection(neighbour.neighbour.offset);
                     if (neighbourLod > lod)
                     {
-                        CorrectMarchingCubeInDirection(neighbour.originCubeEntity, neighbour, neighbourLod, neighbour.neighbour.offset);
+                        CorrectMarchingCubeInDirection(neighbour.originCubeEntity, neighbour, neighbourLod, (int)Mathf.Log(neighbourLod,2), neighbour.neighbour.offset);
                     }
                 }
             }
-
-
         }
 
 
@@ -280,8 +292,12 @@ namespace MarchingCubes
             return v + t * (v2.GetXYZ() - v);
         }
 
+        protected void CorrectMarchingCubeInDirection(Vector3Int origin, MissingNeighbourData missingData, IMarchingCubeChunk c, Vector3Int dir)
+        {
+            CorrectMarchingCubeInDirection(origin, missingData, c.LOD, c.LODPower, dir);
+        }
 
-        protected void CorrectMarchingCubeInDirection(Vector3Int origin, MissingNeighbourData missingData, int otherLod, Vector3Int dir)
+        protected void CorrectMarchingCubeInDirection(Vector3Int origin, MissingNeighbourData missingData, int otherLod, int otherLodPower, Vector3Int dir)
         {
             //Debug.Log("entitiy with neighbour in higher lod chunk");
             ///maybe add corrected triangles to extra mesh to not recompute them when chunk changes and easier remove /swap them if neihghbour changes lod
@@ -290,6 +306,7 @@ namespace MarchingCubes
 
             Vector3Int rightCubeIndex = origin.Map(f => f - f % lodDiff);
             int key = PointIndexFromCoord(rightCubeIndex);
+            key = (key << 3) + otherLodPower;
             if (!neighbourChunksGlue.ContainsKey(key))
             {
                 Vector3Int diff = origin - rightCubeIndex;

@@ -88,7 +88,7 @@ namespace MarchingCubes
                         //ps = tri.neighbours;
                         //p = tri;
 
-                        chunk.GetChunkHandler.DecreaseChunkLod(chunk, chunk.LOD * 2);
+                        chunk.GetChunkHandler.DecreaseChunkLod(chunk, 1);
                     }
                 }
 

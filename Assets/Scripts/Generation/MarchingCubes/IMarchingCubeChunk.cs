@@ -28,7 +28,9 @@ namespace MarchingCubes
 
         bool IsCompletlySolid { get; }
 
-        int LOD { get; set; }
+        int LOD { get; }
+
+        int LODPower { get; set; }
 
         Material Material { set; }
 
