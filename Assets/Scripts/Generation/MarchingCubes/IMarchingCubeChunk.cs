@@ -46,6 +46,8 @@ namespace MarchingCubes
 
         void ResetChunk();
 
+        void ChangeNeighbourLodTo(int newLodPower, Vector3Int dir);
+
         //void InitializeEmpty(IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel);
 
  

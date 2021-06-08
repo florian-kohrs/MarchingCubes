@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public class BaseMeshDisplayer
+    public class BaseMeshDisplayer : IHasInteractableMarchingCubeChunk
     {
 
         public Mesh mesh;
@@ -21,11 +21,15 @@ namespace MarchingCubes
 
         public bool HasCollider => collider != null;
 
+        public bool HasChunk => hasCube != null && hasCube.chunk != null;
+
         public bool IsColliderActive => HasCollider && collider.sharedMesh != null;
+
+        public IMarchingCubeInteractableChunk GetChunk => throw new System.NotImplementedException();
 
         protected BaseMeshDisplayer(IMarchingCubeInteractableChunk chunk, GameObject g, Transform t) : this(g, g.AddComponent<MeshFilter>(), g.AddComponent<MeshRenderer>(), new Mesh(), g.AddComponent<MeshCollider>())
         {
-            g.transform.SetParent(t,false);
+            g.transform.SetParent(t, false);
             if (chunk is IMarchingCubeInteractableChunk interactable)
             {
                 hasCube = g.AddComponent<HasMarchingCube>();
@@ -38,7 +42,7 @@ namespace MarchingCubes
             g.transform.SetParent(t, false);
         }
 
-        public BaseMeshDisplayer(IMarchingCubeInteractableChunk chunk, Transform t) : this(chunk, new GameObject(),t) { }
+        public BaseMeshDisplayer(IMarchingCubeInteractableChunk chunk, Transform t) : this(chunk, new GameObject($"{chunk.ChunkOffset.x},{chunk.ChunkOffset.y},{chunk.ChunkOffset.z} "),t) { }
 
         public BaseMeshDisplayer(Transform t) : this(new GameObject(),t) { }
 
@@ -54,6 +58,11 @@ namespace MarchingCubes
 
         public void Reset()
         {
+            if (hasCube != null)
+            {
+                hasCube.chunk = null;
+                //hasCube.chunk = null;
+            }
             if (collider != null)
             {
                 collider.sharedMesh = null;

@@ -184,16 +184,16 @@ namespace MarchingCubes
                                     else if (c.LOD > lod)
                                     {
                                         Vector3Int pos = (e.origin + t.neighbour.offset).Map(ClampInChunk);
-                                        CorrectMarchingCubeInDirection(e.origin, t, c, t.neighbour.offset);
+                                        CorrectMarchingCubeInDirection(e.origin, t, c.LODPower);
                                     }
                                 }
                             }
                             else if (careAboutNeighbourLODS)
                             {
-                                int neighbourLod = neighbourLODs.GetLodFromNeighbourInDirection(t.neighbour.offset);
-                                if (neighbourLod > lod)
+                                int neighbourLodPower = neighbourLODs.GetLodPowerFromNeighbourInDirection(t.neighbour.offset);
+                                if (neighbourLodPower > LODPower)
                                 {
-                                    CorrectMarchingCubeInDirection(e.origin, t, neighbourLod, GetLODPowerFromLOD(neighbourLod), t.neighbour.offset);
+                                    CorrectMarchingCubeInDirection(e.origin, t, neighbourLodPower);
                                 }
                             }
                         }
@@ -227,19 +227,19 @@ namespace MarchingCubes
 
                         if (chunkHandler.TryGetReadyChunkAt(target, out c))
                         {
-                            if (c.LOD > lod)
+                            if (c.LODPower > LODPower)
                             {
                                 Vector3Int pos = (e.origin + t.neighbour.offset).Map(ClampInChunk);
 
-                                CorrectMarchingCubeInDirection(e.origin, t, c, t.neighbour.offset);
+                                CorrectMarchingCubeInDirection(e.origin, t, c.LODPower);
                             }
                         }
                         else if (careAboutNeighbourLODS)
                         {
-                            int neighbourLod = neighbourLODs.GetLodFromNeighbourInDirection(t.neighbour.offset);
-                            if (neighbourLod > lod)
+                            int neighbourLodPower = neighbourLODs.GetLodPowerFromNeighbourInDirection(t.neighbour.offset);
+                            if (neighbourLodPower > LODPower)
                             {
-                                CorrectMarchingCubeInDirection(e.origin, t, neighbourLod, GetLODPowerFromLOD(neighbourLod), t.neighbour.offset);
+                                CorrectMarchingCubeInDirection(e.origin, t, neighbourLodPower);
                             }
                         }
                     }
@@ -630,7 +630,7 @@ namespace MarchingCubes
 
             for (int i = 0; i < cornerIndices.Length; i++)
             {
-                points[startPointIndex + LocalCornerIndexToGlobalDelta(i)] += cornerIndices[i] * delta;
+                points[startPointIndex + LocalCornerIndexToGlobalDelta(i)] += /*cornerIndices[i] **/ delta;
             }
 
             //foreach (int i in cornerIndices)

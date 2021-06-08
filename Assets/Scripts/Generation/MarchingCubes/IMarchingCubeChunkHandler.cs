@@ -3,25 +3,30 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public interface IMarchingCubeChunkHandler
+namespace MarchingCubes
 {
 
-    //Dictionary<Vector3Int, IMarchingCubeChunk> Chunks { get; }
+    public interface IMarchingCubeChunkHandler
+    {
 
-    void EditNeighbourChunksAt(Vector3Int chunkOffset, Vector3Int cubeOrigin, float delta);
+        //Dictionary<Vector3Int, IMarchingCubeChunk> Chunks { get; }
 
-    bool TryGetReadyChunkAt(Vector3Int p, out IMarchingCubeChunk chunk);
+        void EditNeighbourChunksAt(Vector3Int chunkOffset, Vector3Int cubeOrigin, float delta);
 
-    BaseMeshDisplayer GetNextMeshDisplayer();
+        bool TryGetReadyChunkAt(Vector3Int p, out IMarchingCubeChunk chunk);
 
-    BaseMeshDisplayer GetNextInteractableMeshDisplayer(IMarchingCubeInteractableChunk forChunk);
+        BaseMeshDisplayer GetNextMeshDisplayer();
 
-    void StartWaitForParralelChunkDoneCoroutine(IEnumerator e);
+        BaseMeshDisplayer GetNextInteractableMeshDisplayer(IMarchingCubeInteractableChunk forChunk);
 
-    void FreeMeshDisplayer(BaseMeshDisplayer display);
+        void StartWaitForParralelChunkDoneCoroutine(IEnumerator e);
 
-    void FreeAllDisplayers(List<BaseMeshDisplayer> displayers);
+        void FreeMeshDisplayer(BaseMeshDisplayer display);
 
-    void DecreaseChunkLod(IMarchingCubeChunk chunk, int toLodPower);
+        void FreeAllDisplayers(List<BaseMeshDisplayer> displayers);
+
+        void DecreaseChunkLod(IMarchingCubeChunk chunk, int toLodPower);
+
+    }
 
 }

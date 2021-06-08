@@ -219,19 +219,19 @@ namespace MarchingCubes
 
                 if (chunkHandler.TryGetReadyChunkAt(target, out c))
                 {
-                    if (c.LOD > lod)
+                    if (c.LODPower > LODPower)
                     {
                         Vector3Int pos = (neighbour.originCubeEntity + neighbour.neighbour.offset).Map(ClampInChunk);
 
-                        CorrectMarchingCubeInDirection(neighbour.originCubeEntity, neighbour, c, neighbour.neighbour.offset);
+                        CorrectMarchingCubeInDirection(neighbour.originCubeEntity, neighbour, c.LODPower);
                     }
                 }
                 else if (careAboutNeighbourLODS)
                 {
-                    int neighbourLod = neighbourLODs.GetLodFromNeighbourInDirection(neighbour.neighbour.offset);
-                    if (neighbourLod > lod)
+                    int neighbourLodPower = neighbourLODs.GetLodPowerFromNeighbourInDirection(neighbour.neighbour.offset);
+                    if (neighbourLodPower > lod)
                     {
-                        CorrectMarchingCubeInDirection(neighbour.originCubeEntity, neighbour, neighbourLod, (int)Mathf.Log(neighbourLod,2), neighbour.neighbour.offset);
+                        CorrectMarchingCubeInDirection(neighbour.originCubeEntity, neighbour, neighbourLodPower);
                     }
                 }
             }
@@ -292,30 +292,35 @@ namespace MarchingCubes
             return v + t * (v2.GetXYZ() - v);
         }
 
-        protected void CorrectMarchingCubeInDirection(Vector3Int origin, MissingNeighbourData missingData, IMarchingCubeChunk c, Vector3Int dir)
+        protected void CorrectMarchingCubeInDirection(Vector3Int origin, MissingNeighbourData missingData, IMarchingCubeChunk c)
         {
-            CorrectMarchingCubeInDirection(origin, missingData, c.LOD, c.LODPower, dir);
+            CorrectMarchingCubeInDirection(origin, missingData, c.LODPower);
         }
 
-        protected void CorrectMarchingCubeInDirection(Vector3Int origin, MissingNeighbourData missingData, int otherLod, int otherLodPower, Vector3Int dir)
+        protected void CorrectMarchingCubeInDirection(Vector3Int origin, MissingNeighbourData missingData, int otherLodPower)
         {
             //Debug.Log("entitiy with neighbour in higher lod chunk");
             ///maybe add corrected triangles to extra mesh to not recompute them when chunk changes and easier remove /swap them if neihghbour changes lod
 
-            int lodDiff = otherLod / lod;
+
+            int lodDiff = (int)Mathf.Pow(2, otherLodPower - lodPower);
 
             Vector3Int rightCubeIndex = origin.Map(f => f - f % lodDiff);
             int key = PointIndexFromCoord(rightCubeIndex);
             key = (key << 3) + otherLodPower;
             if (!neighbourChunksGlue.ContainsKey(key))
             {
-                Vector3Int diff = origin - rightCubeIndex;
                 //MarchingCubeEntity original = MarchAt(e.origin, 1);
                 MarchingCubeEntity bindWithNeighbour = MarchAt(rightCubeIndex, lodDiff);
                 neighbourChunksGlue.Add(key, bindWithNeighbour);
-                AddCubeForNeigbhourInDirection(neighbourLODs.GetIndexFromDirection(dir), bindWithNeighbour);
+                AddCubeForNeigbhourInDirection(neighbourLODs.GetIndexFromDirection(missingData.neighbour.offset), bindWithNeighbour);
                 connectorTriangleCount += bindWithNeighbour.triangles.Count * 3;
             }
+        }
+
+        public void NeighbourReplacedAtWithLodPower(int lodPower)
+        {
+
         }
 
         protected void AddTriangleToMeshData(PathTriangle tri, ref int usedTriCount, ref int totalTriCount, bool isBorderConnectionMesh = false)
@@ -391,16 +396,31 @@ namespace MarchingCubes
             for (int i = 0; i < activeDisplayers.Count; i++)
             {
                 if (activeDisplayers[i].IsColliderActive)
-                    activeDisplayers[i].Reset();
+                    FreeMeshDisplayerAt(ref i);
+            }
+        }
+
+        protected void FreeMeshDisplayerAt(ref int index)
+        {
+            chunkHandler.FreeMeshDisplayer(activeDisplayers[index]);
+            activeDisplayers.RemoveAt(index);
+            index -= 1;
+        }
+
+        /// <summary>
+        /// only resets mesh without attached chunks (border meshes)
+        /// </summary>
+        protected void ResetBorderGlueMesh()
+        {
+            for (int i = 0; i < activeDisplayers.Count; i++)
+            {
+                if (!activeDisplayers[i].HasChunk)
+                    FreeMeshDisplayerAt(ref i);
             }
         }
 
         protected void FreeAllMeshes()
         {
-            for (int i = 0; i < activeDisplayers.Count; i++)
-            {
-                activeDisplayers[i].Reset();
-            }
             chunkHandler.FreeAllDisplayers(activeDisplayers);
             activeDisplayers.Clear();
         }
@@ -639,7 +659,18 @@ namespace MarchingCubes
             };
         }
 
-
+        public void ChangeNeighbourLodTo(int newLodPower, Vector3Int dir)
+        {
+            int oldLodPower = neighbourLODs.GetLodPowerFromNeighbourInDirection(dir);
+            if(oldLodPower < LODPower)
+            {
+                //delete old glue mesh
+            }
+            if(newLodPower < LODPower)
+            {
+                //build new connection
+            }
+        }
     }
 
 }

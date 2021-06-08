@@ -16,7 +16,7 @@ namespace MarchingCubes
 
         protected const int threadGroupSize = 8;
 
-        public const int ChunkSize = 32;
+        public const int ChunkSize = 128;
 
         public const int SuperChunkSize = 512;
 
@@ -39,7 +39,7 @@ namespace MarchingCubes
 
         public ComputeShader marshShader;
 
-        public const int maxLodAtDistance = 50;
+        public const int maxLodAtDistance = 1000;
 
         [Header("Voxel Settings")]
         //public float boundsSize = 8;
@@ -80,10 +80,11 @@ namespace MarchingCubes
 
         public BaseMeshDisplayer GetNextInteractableMeshDisplayer(IMarchingCubeInteractableChunk forChunk)
         {
-            BaseMeshDisplayer displayer = null;
+            BaseMeshDisplayer displayer;
             if (unusedInteractableDisplayer.Count > 0)
             {
                 displayer = unusedInteractableDisplayer.Pop();
+                displayer.SetInteractableChunk(forChunk);
             }
             else if (unusedDisplayer.Count > 0)
             {
@@ -98,7 +99,6 @@ namespace MarchingCubes
         }
 
 
-
         public void FreeMeshDisplayer(BaseMeshDisplayer display)
         {
             if (display.HasCollider)
@@ -109,20 +109,14 @@ namespace MarchingCubes
             { 
                 unusedDisplayer.Push(display);
             }
+            display.Reset();
         }
 
         public void FreeAllDisplayers(List<BaseMeshDisplayer> displayers)
         {
             for (int i = 0; i < displayers.Count; i++)
             {
-                if (displayers[i].HasCollider)
-                {
-                    unusedInteractableDisplayer.Push(displayers[i]);
-                }
-                else
-                {
-                    unusedDisplayer.Push(displayers[i]);
-                }
+                FreeMeshDisplayer(displayers[i]);
             }
         }
 
@@ -565,17 +559,12 @@ namespace MarchingCubes
             Vector3Int[] coords = coord.GetAllDirectNeighbours();
             for (int i = 0; i < coords.Length; i++)
             {
-                int current;
-                IMarchingCubeChunk chunk;
-                if (Chunks.TryGetValue(coords[i], out chunk))
+                MarchingCubeNeighbour neighbour = new MarchingCubeNeighbour();
+                if (!Chunks.TryGetValue(coords[i], out neighbour.chunk))
                 {
-                    current = chunk.LOD;
+                    neighbour.estimatedLodPower = GetLodPowerAt(coords[i]);
                 }
-                else
-                {
-                    current = GetLodAt(coords[i]);
-                }
-                result[i] = current;
+                result[i] = neighbour;
             }
             return result;
         }
@@ -600,12 +589,6 @@ namespace MarchingCubes
         //    RebuildChunkParallelAt(chunks[p]);
         //}
 
-        protected void RebuildChunkParallelAt(Vector3Int p, IMarchingCubeChunk chunk, Action OnDone, int lod)
-        {
-            int numTris = ApplyChunkDataAndDispatchAndGetShaderData(p, chunk, lod);
-            channeledChunks++;
-            chunk.InitializeWithMeshDataParallel(tris, pointsArray, this, GetNeighbourLODSFrom(p), surfaceLevel, OnDone);
-        }
 
         protected int ApplyChunkDataAndDispatchAndGetShaderData(Vector3Int p, IMarchingCubeChunk chunk, int lod)
         {
@@ -687,6 +670,8 @@ namespace MarchingCubes
 
             int addCount = 0;
 
+            NotifyNeighbourChunksOnLodSwitch(chunk.ChunkOffset, toLodPower);
+
             for (int z = 0; z < originalPointsPerAxis; z += shrinkFactor)
             {
                 int zPoint = z * originalPointsPerAxis * originalPointsPerAxis;
@@ -737,6 +722,20 @@ namespace MarchingCubes
                 {
                     chunk.ResetChunk();
                 });
+        }
+
+        protected void NotifyNeighbourChunksOnLodSwitch(Vector3Int changedIndex, int newLodPower)
+        {
+            Vector3Int[] neighbourPositions = changedIndex.GetAllDirectNeighbours();
+            for (int i = 0; i < neighbourPositions.Length; i++)
+            {
+                Vector3Int v3 = neighbourPositions[i];
+                IMarchingCubeChunk c;
+                if(TryGetReadyChunkAt(changedIndex + v3, out c))
+                {
+                    c.ChangeNeighbourLodTo(newLodPower, v3);
+                }
+            }
         }
 
         //protected int buffersCreated = 0;

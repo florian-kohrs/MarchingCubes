@@ -4,56 +4,38 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public struct MarchingCubeChunkNeighbourLODs
+    public class MarchingCubeChunkNeighbourLODs
     {
-        public int rightNeighbourLod;
-        public int leftNeighbourLod;
-        public int upperNeighbourLod;
-        public int lowerNeighbourLod;
-        public int frontNeighbourLod;
-        public int backNeighbourLod;
+        public MarchingCubeNeighbour rightNeighbourLod;
+        public MarchingCubeNeighbour leftNeighbourLod;
+        public MarchingCubeNeighbour upperNeighbourLod;
+        public MarchingCubeNeighbour lowerNeighbourLod;
+        public MarchingCubeNeighbour frontNeighbourLod;
+        public MarchingCubeNeighbour backNeighbourLod;
 
-        public static MarchingCubeChunkNeighbourLODs One
+        public bool HasNeighbourWithHigherLOD(int lodPower)
         {
-            get
-            {
-                return new MarchingCubeChunkNeighbourLODs(1, 1, 1, 1, 1, 1);
-            }
+            return rightNeighbourLod.ActiveLodPower > lodPower
+                || leftNeighbourLod.ActiveLodPower > lodPower
+                || lowerNeighbourLod.ActiveLodPower > lodPower
+                || frontNeighbourLod.ActiveLodPower > lodPower
+                || backNeighbourLod.ActiveLodPower > lodPower;
         }
 
-        public static MarchingCubeChunkNeighbourLODs Two
-        {
-            get
-            {
-                return new MarchingCubeChunkNeighbourLODs(2,2,2,2,2,2);
-            }
-        }
-
-
-        public bool HasNeighbourWithHigherLOD(int lod)
-        {
-            return rightNeighbourLod > lod
-                || leftNeighbourLod > lod
-                || upperNeighbourLod > lod
-                || lowerNeighbourLod > lod
-                || frontNeighbourLod > lod
-                || backNeighbourLod > lod;
-        }
-
-        public int GetLodFromNeighbourInDirection(Vector3Int dir)
+        public int GetLodPowerFromNeighbourInDirection(Vector3Int dir)
         {
             if (dir.x > 0)
-                return rightNeighbourLod;
+                return rightNeighbourLod.ActiveLodPower;
             else if (dir.x < 0)
-                return leftNeighbourLod;
+                return leftNeighbourLod.ActiveLodPower;
             else if (dir.y > 0)
-                return upperNeighbourLod;
+                return upperNeighbourLod.ActiveLodPower;
             else if (dir.y < 0)
-                return lowerNeighbourLod;
+                return lowerNeighbourLod.ActiveLodPower;
             else if (dir.z > 0)
-                return frontNeighbourLod;
+                return frontNeighbourLod.ActiveLodPower;
             else
-                return backNeighbourLod;
+                return backNeighbourLod.ActiveLodPower;
             
         }
 
@@ -74,7 +56,7 @@ namespace MarchingCubes
 
         }
 
-        public int this[int i]
+        public MarchingCubeNeighbour this[int i]
         {
             get
             {
@@ -120,7 +102,12 @@ namespace MarchingCubes
             }
         }
 
-        public MarchingCubeChunkNeighbourLODs(int rightNeighbourLod, int leftNeighbourLod, int upperNeighbourLod, int lowerNeighbourLod, int frontNeighbourLod, int backNeighbourLod)
+        public MarchingCubeChunkNeighbourLODs() { }
+
+        public MarchingCubeChunkNeighbourLODs(
+            MarchingCubeNeighbour rightNeighbourLod, MarchingCubeNeighbour leftNeighbourLod,
+            MarchingCubeNeighbour upperNeighbourLod, MarchingCubeNeighbour lowerNeighbourLod, 
+            MarchingCubeNeighbour frontNeighbourLod, MarchingCubeNeighbour backNeighbourLod)
         {
             this.rightNeighbourLod = rightNeighbourLod;
             this.leftNeighbourLod = leftNeighbourLod;
@@ -129,5 +116,6 @@ namespace MarchingCubes
             this.frontNeighbourLod = frontNeighbourLod;
             this.backNeighbourLod = backNeighbourLod;
         }
+
     }
 }

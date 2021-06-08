@@ -22,7 +22,7 @@ namespace MarchingCubes
             IsReady = true;
             OnDone?.Invoke();
         }
-
+         
         protected Action OnDone;
 
         public override void InitializeWithMeshDataParallel(TriangleBuilder[] tris, float[] points, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel, Action OnDone = null)
