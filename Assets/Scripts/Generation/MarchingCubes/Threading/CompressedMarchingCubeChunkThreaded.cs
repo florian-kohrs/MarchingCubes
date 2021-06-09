@@ -53,7 +53,7 @@ namespace MarchingCubes
             }
             catch(Exception x)
             {
-
+                Debug.LogException(x);
             }
         }
 

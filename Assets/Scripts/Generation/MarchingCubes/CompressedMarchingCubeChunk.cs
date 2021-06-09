@@ -300,7 +300,7 @@ namespace MarchingCubes
         protected void CorrectMarchingCubeInDirection(Vector3Int origin, MissingNeighbourData missingData, int otherLodPower)
         {
             //Debug.Log("entitiy with neighbour in higher lod chunk");
-            ///maybe add corrected triangles to extra mesh to not recompute them when chunk changes and easier remove /swap them if neihghbour changes lod
+            ///maybe add corrected triangles to extra mesh to not recompute them when chunk changes and easier remove /swap them if neighbour changes lod
 
 
             int lodDiff = (int)Mathf.Pow(2, otherLodPower - lodPower);

@@ -17,6 +17,7 @@ namespace MarchingCubes
             {
                 yield return null;
             }
+
             isInOtherThread = false;
             BuildAllMeshes();
             IsReady = true;
@@ -53,7 +54,7 @@ namespace MarchingCubes
             }
             catch(Exception x)
             {
-
+                Debug.LogException(x);
             }
         }
 
@@ -80,7 +81,6 @@ namespace MarchingCubes
                 base.ResetAll();
             }
         }
-
 
         protected List<MeshData> data = new List<MeshData>();
 
