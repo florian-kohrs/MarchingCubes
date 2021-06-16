@@ -481,7 +481,6 @@ namespace MarchingCubes
         {
             trisLeft = connectorTriangleCount;
 
-
             ResetArrayData();
 
             int totalTreeCount = 0;

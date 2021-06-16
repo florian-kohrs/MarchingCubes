@@ -26,7 +26,7 @@ namespace MarchingCubes
             this.surfaceLevel = surfaceLevel;
             this.neighbourLODs = neighbourLODs;
             triCount = tris.Length * 3;
-            careAboutNeighbourLODS = neighbourLODs.HasNeighbourWithHigherLOD(lod);
+            careAboutNeighbourLODS = neighbourLODs.HasNeighbourWithHigherLOD(LODPower);
             chunkHandler = handler;
             this.points = points;
 
