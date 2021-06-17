@@ -48,7 +48,7 @@ namespace MarchingCubes
             try
             {
                 isInOtherThread = true;
-                BuildMeshData(tris, points, handler, neighbourLODs, surfaceLevel);
+                BuildChunkFromMeshData(tris, points, handler, neighbourLODs, surfaceLevel);
                 OnChunkDone();
             }
             catch(Exception x)

@@ -15,7 +15,7 @@ namespace MarchingCubes
 
         public virtual void InitializeWithMeshData(TriangleBuilder[] tris, float[] points, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLod, float surfaceLevel)
         {
-            BuildMeshData(tris, points, handler, neighbourLODs, surfaceLevel);
+            BuildChunkFromMeshData(tris, points, handler, neighbourLODs, surfaceLevel);
         }
 
         //public virtual void InitializeEmpty(IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel)
@@ -162,23 +162,25 @@ namespace MarchingCubes
 
         int IMarchingCubeChunk.PointsPerAxis => pointsPerAxis;
 
-        protected virtual void BuildMeshData(TriangleBuilder[] tris, float[] points, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel)
+        protected virtual void BuildChunkFromMeshData(TriangleBuilder[] tris, float[] points, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel)
         {
             HasStarted = true;
-            this.points = new float[1];
             this.points = points;
             this.surfaceLevel = surfaceLevel;
             this.neighbourLODs = neighbourLODs;
             triCount = tris.Length * 3;
-            careAboutNeighbourLODS = neighbourLODs.HasNeighbourWithHigherLOD(lod);
-            BuildFromTriangleArray(tris);
+            careAboutNeighbourLODS = neighbourLODs.HasNeighbourWithHigherLOD(LODPower);
             this.chunkHandler = handler;
-            //ResetAll();
-            //BuildAll();
+            BuildFromTriangleArray(tris);
 
-            BuildMeshToConnectHigherLodChunks();
+            WorkOnBuildedChunk();
 
             IsReady = true;
+        }
+
+        protected virtual void WorkOnBuildedChunk()
+        {
+            BuildMeshToConnectHigherLodChunks();
 
         }
 
@@ -229,7 +231,7 @@ namespace MarchingCubes
                 else if (careAboutNeighbourLODS)
                 {
                     int neighbourLodPower = neighbourLODs.GetLodPowerFromNeighbourInDirection(neighbour.neighbour.offset);
-                    if (neighbourLodPower > lod)
+                    if (neighbourLodPower > LODPower)
                     {
                         CorrectMarchingCubeInDirection(neighbour.originCubeEntity, neighbour, neighbourLodPower);
                     }

@@ -17,23 +17,11 @@ namespace MarchingCubes
 
         public override void InitializeWithMeshData(TriangleBuilder[] tris, float[] points, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel)
         {
-            BuildMeshData(tris, points, handler, neighbourLODs, surfaceLevel);
+            BuildChunkFromMeshData(tris, points, handler, neighbourLODs, surfaceLevel);
         }
 
-        protected override void BuildMeshData(TriangleBuilder[] tris, float[] points, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel)
+        protected override void WorkOnBuildedChunk()
         {
-            HasStarted = true;
-            this.surfaceLevel = surfaceLevel;
-            this.neighbourLODs = neighbourLODs;
-            triCount = tris.Length * 3;
-            careAboutNeighbourLODS = neighbourLODs.HasNeighbourWithHigherLOD(LODPower);
-            chunkHandler = handler;
-            this.points = points;
-
-            BuildFromTriangleArray(tris);
-            //ResetAll();
-            //BuildAll();
-
             if (LODPower <= MarchingCubeChunkHandler.DEFAULT_MIN_CHUNK_LOD_POWER)
             {
                 BuildChunkEdges();
@@ -43,16 +31,7 @@ namespace MarchingCubes
                 FindConnectedChunks();
             }
 
-            //  BuildMeshFromCurrentTriangles();
-
-            //if (careAboutNeighbourLODS)
-            //{
-            //    BuildMeshFromCurrentTriangles();
-            //}
-
             BuildMeshToConnectHigherLodChunks();
-
-            IsReady = true;
 
         }
 
@@ -175,13 +154,13 @@ namespace MarchingCubes
                             {
                                 if (chunk is IMarchingCubeInteractableChunk c)
                                 {
-                                    if (c.LOD == lod)
+                                    if (c.LODPower == LODPower)
                                     {
                                         Vector3Int pos = (e.origin + t.neighbour.offset).Map(ClampInChunk);
                                         MarchingCubeEntity cube = c.GetEntityAt(pos);
                                         e.BuildSpecificNeighbourInNeighbour(cube, e.triangles[t.neighbour.triangleIndex], t.neighbour.relevantVertexIndices, t.neighbour.rotatedEdgePair);
                                     }
-                                    else if (c.LOD > lod)
+                                    else if (c.LODPower > LODPower)
                                     {
                                         Vector3Int pos = (e.origin + t.neighbour.offset).Map(ClampInChunk);
                                         CorrectMarchingCubeInDirection(e.origin, t, c.LODPower);
