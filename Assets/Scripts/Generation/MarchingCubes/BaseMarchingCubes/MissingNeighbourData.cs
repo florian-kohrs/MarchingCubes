@@ -5,14 +5,14 @@ using UnityEngine;
 public struct MissingNeighbourData
 {
 
-    public OutsideEdgeNeighbourDirection neighbour;
+    public OutsideEdgeNeighbourDirection outsideNeighbour;
 
     public Vector3Int originCubeEntity;
 
 
     public MissingNeighbourData(OutsideEdgeNeighbourDirection neighbour, Vector3Int cubeEntity)
     {
-        this.neighbour = neighbour;
+        this.outsideNeighbour = neighbour;
         this.originCubeEntity = cubeEntity;
     }
 

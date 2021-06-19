@@ -16,13 +16,17 @@ namespace MarchingCubes
 
         protected const int threadGroupSize = 8;
 
-        public const int ChunkSize = 64;
+        public const int ChunkSize = 128;
 
         public const int SuperChunkSize = 512;
 
         public const int CHUNK_VOLUME = ChunkSize * ChunkSize * ChunkSize;
 
         public const int DEFAULT_MIN_CHUNK_LOD_POWER = 0;
+
+        public const int MAX_CHUNK_LOD_POWER = 7;
+
+        public const int MAX_CHUNK_LOD_BIT_REPRESENTATION_SIZE = 3;//(int)(Mathf.Log(2,MAX_CHUNK_LOD_POWER)) + 1;
 
         // protected int maxRunningThreads = 0;
 
@@ -35,11 +39,11 @@ namespace MarchingCubes
         [Range(1, 253)]
         public int blockAroundPlayer = 16;
 
-        private const int maxTrianglesLeft = 3000000;
+        private const int maxTrianglesLeft = 5000000;
 
         public ComputeShader marshShader;
 
-        public const int maxLodAtDistance = 1000;
+        public const int maxLodAtDistance = 2000;
 
         [Header("Voxel Settings")]
         //public float boundsSize = 8;
@@ -122,7 +126,7 @@ namespace MarchingCubes
 
         public int GetLod(float distance)
         {
-            return RoundToPowerOf2(Mathf.Max(DEFAULT_MIN_CHUNK_LOD_POWER, lodForDistances.Evaluate(distance / maxLodAtDistance)));
+            return RoundToPowerOf2(Mathf.Clamp(lodForDistances.Evaluate(distance / maxLodAtDistance), DEFAULT_MIN_CHUNK_LOD_POWER, MAX_CHUNK_LOD_POWER));
         }
 
         public int GetLodPower(float distance)

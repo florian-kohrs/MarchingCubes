@@ -147,7 +147,7 @@ namespace MarchingCubes
                         {
                             t = trisWithNeighboursOutOfBounds[i];
                             //Vector3Int offset = t.neighbour.offset.Map(Math.Sign);
-                            Vector3Int target = chunkOffset + t.neighbour.offset;
+                            Vector3Int target = chunkOffset + t.outsideNeighbour.offset;
                             IMarchingCubeChunk chunk;
                             AddNeighbourFromEntity(target, e);
                             if (chunkHandler.TryGetReadyChunkAt(target, out chunk))
@@ -156,20 +156,20 @@ namespace MarchingCubes
                                 {
                                     if (c.LODPower == LODPower)
                                     {
-                                        Vector3Int pos = (e.origin + t.neighbour.offset).Map(ClampInChunk);
+                                        Vector3Int pos = (e.origin + t.outsideNeighbour.offset).Map(ClampInChunk);
                                         MarchingCubeEntity cube = c.GetEntityAt(pos);
-                                        e.BuildSpecificNeighbourInNeighbour(cube, e.triangles[t.neighbour.triangleIndex], t.neighbour.relevantVertexIndices, t.neighbour.rotatedEdgePair);
+                                        e.BuildSpecificNeighbourInNeighbour(cube, e.triangles[t.outsideNeighbour.triangleIndex], t.outsideNeighbour.relevantVertexIndices, t.outsideNeighbour.rotatedEdgePair);
                                     }
                                     else if (c.LODPower > LODPower)
                                     {
-                                        Vector3Int pos = (e.origin + t.neighbour.offset).Map(ClampInChunk);
+                                        Vector3Int pos = (e.origin + t.outsideNeighbour.offset).Map(ClampInChunk);
                                         CorrectMarchingCubeInDirection(e.origin, t, c.LODPower);
                                     }
                                 }
                             }
                             else if (careAboutNeighbourLODS)
                             {
-                                int neighbourLodPower = neighbourLODs.GetLodPowerFromNeighbourInDirection(t.neighbour.offset);
+                                int neighbourLodPower = neighbourLODs.GetLodPowerFromNeighbourInDirection(t.outsideNeighbour.offset);
                                 if (neighbourLodPower > LODPower)
                                 {
                                     CorrectMarchingCubeInDirection(e.origin, t, neighbourLodPower);
@@ -201,21 +201,21 @@ namespace MarchingCubes
                     for (int i = 0; i < trisWithNeighboursOutOfBounds.Count; i++)
                     {
                         t = trisWithNeighboursOutOfBounds[i];
-                        Vector3Int target = chunkOffset + t.neighbour.offset;
+                        Vector3Int target = chunkOffset + t.outsideNeighbour.offset;
                         AddNeighbourFromEntity(target, e);
 
                         if (chunkHandler.TryGetReadyChunkAt(target, out c))
                         {
                             if (c.LODPower > LODPower)
                             {
-                                Vector3Int pos = (e.origin + t.neighbour.offset).Map(ClampInChunk);
+                                Vector3Int pos = (e.origin + t.outsideNeighbour.offset).Map(ClampInChunk);
 
                                 CorrectMarchingCubeInDirection(e.origin, t, c.LODPower);
                             }
                         }
                         else if (careAboutNeighbourLODS)
                         {
-                            int neighbourLodPower = neighbourLODs.GetLodPowerFromNeighbourInDirection(t.neighbour.offset);
+                            int neighbourLodPower = neighbourLODs.GetLodPowerFromNeighbourInDirection(t.outsideNeighbour.offset);
                             if (neighbourLodPower > LODPower)
                             {
                                 CorrectMarchingCubeInDirection(e.origin, t, neighbourLodPower);

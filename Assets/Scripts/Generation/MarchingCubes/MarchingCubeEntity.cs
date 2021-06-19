@@ -126,7 +126,7 @@ namespace MarchingCubes
         {
             if(e == null)
             {
-
+                Debug.Log("was null");
             }
             OutsideNeighbourConnectionInfo info = TriangulationTableStaticData.GetIndexWithEdges(e.triangulationIndex, rotatedEdge);
             tri.SoftSetNeighbourTwoWay(e.triangles[info.otherTriangleIndex], myEdgeIndices, info.outsideNeighbourEdgeIndices);

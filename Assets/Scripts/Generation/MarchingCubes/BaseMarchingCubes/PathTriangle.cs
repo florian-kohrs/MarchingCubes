@@ -17,6 +17,8 @@ namespace MarchingCubes
             slope = Mathf.Acos(Vector3.Dot(normal, middlePoint.normalized)) * 180 / Mathf.PI;
         }
 
+        public const int TRIANGLE_NEIGHBOUR_COUNT = 3;
+
         protected const float MAX_SLOPE_TO_BE_USEABLE_IN_PATHFINDING = 45;
 
         public Vector3 normal;
@@ -29,9 +31,9 @@ namespace MarchingCubes
 
         public Triangle tri;
 
-        public PathTriangle[] neighbours = new PathTriangle[3];
+        public PathTriangle[] neighbours = new PathTriangle[TRIANGLE_NEIGHBOUR_COUNT];
 
-        protected float[] neighbourDistanceMapping = new float[3];
+        protected float[] neighbourDistanceMapping = new float[TRIANGLE_NEIGHBOUR_COUNT];
 
 
         //public void AddNeighbourTwoWay(PathTriangle p, int myEdge1, int myEdge2, int otherEdge1, int otherEdge2)
@@ -94,8 +96,8 @@ namespace MarchingCubes
 
         public List<PathTriangle> GetCircumjacent(PathTriangle field)
         {
-            List<PathTriangle> result = new List<PathTriangle>(3);
-            for (int i = 0; i < 3; i++)
+            List<PathTriangle> result = new List<PathTriangle>(TRIANGLE_NEIGHBOUR_COUNT);
+            for (int i = 0; i < TRIANGLE_NEIGHBOUR_COUNT; i++)
             {
                 if(field.neighbours != null && field.Slope < MAX_SLOPE_TO_BE_USEABLE_IN_PATHFINDING)
                 {

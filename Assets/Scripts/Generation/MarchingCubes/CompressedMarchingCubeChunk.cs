@@ -216,21 +216,21 @@ namespace MarchingCubes
             for (int i = 0; i < trisWithNeighboursOutOfBounds.Count; i++)
             {
                 neighbour = trisWithNeighboursOutOfBounds[i];
-                Vector3Int target = chunkOffset + neighbour.neighbour.offset;
+                Vector3Int target = chunkOffset + neighbour.outsideNeighbour.offset;
                 AddNeighbourFromEntity(target, null);
 
                 if (chunkHandler.TryGetReadyChunkAt(target, out c))
                 {
                     if (c.LODPower > LODPower)
                     {
-                        Vector3Int pos = (neighbour.originCubeEntity + neighbour.neighbour.offset).Map(ClampInChunk);
+                        Vector3Int pos = (neighbour.originCubeEntity + neighbour.outsideNeighbour.offset).Map(ClampInChunk);
 
                         CorrectMarchingCubeInDirection(neighbour.originCubeEntity, neighbour, c.LODPower);
                     }
                 }
                 else if (careAboutNeighbourLODS)
                 {
-                    int neighbourLodPower = neighbourLODs.GetLodPowerFromNeighbourInDirection(neighbour.neighbour.offset);
+                    int neighbourLodPower = neighbourLODs.GetLodPowerFromNeighbourInDirection(neighbour.outsideNeighbour.offset);
                     if (neighbourLodPower > LODPower)
                     {
                         CorrectMarchingCubeInDirection(neighbour.originCubeEntity, neighbour, neighbourLodPower);
@@ -309,13 +309,13 @@ namespace MarchingCubes
 
             Vector3Int rightCubeIndex = origin.Map(f => f - f % lodDiff);
             int key = PointIndexFromCoord(rightCubeIndex);
-            key = (key << 3) + otherLodPower;
+            key = (key << MarchingCubeChunkHandler.MAX_CHUNK_LOD_BIT_REPRESENTATION_SIZE) + otherLodPower;
             if (!neighbourChunksGlue.ContainsKey(key))
             {
                 //MarchingCubeEntity original = MarchAt(e.origin, 1);
                 MarchingCubeEntity bindWithNeighbour = MarchAt(rightCubeIndex, lodDiff);
                 neighbourChunksGlue.Add(key, bindWithNeighbour);
-                AddCubeForNeigbhourInDirection(neighbourLODs.GetIndexFromDirection(missingData.neighbour.offset), bindWithNeighbour);
+                AddCubeForNeigbhourInDirection(neighbourLODs.GetIndexFromDirection(missingData.outsideNeighbour.offset), bindWithNeighbour);
                 connectorTriangleCount += bindWithNeighbour.triangles.Count * 3;
             }
         }
