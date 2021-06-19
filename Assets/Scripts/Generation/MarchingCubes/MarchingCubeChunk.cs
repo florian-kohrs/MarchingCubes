@@ -9,15 +9,15 @@ namespace MarchingCubes
     public class MarchingCubeChunk : CompressedMarchingCubeChunk, IMarchingCubeInteractableChunk, IHasInteractableMarchingCubeChunk
     {
 
-        public override void InitializeWithMeshDataParallel(TriangleBuilder[] tris, float[] points, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel, Action OnDone = null)
+        public override void InitializeWithMeshDataParallel(TriangleBuilder[] tris, float[] points, int size, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel, Action OnDone = null)
         {
             Debug.LogWarning("This class does not support concurrency! Will use base class instead. Use " + nameof(MarchingCubeChunkThreaded) + "instead!");
-            base.InitializeWithMeshDataParallel(tris, points, handler,neighbourLODs, surfaceLevel, OnDone);
+            base.InitializeWithMeshDataParallel(tris, points, size, handler,neighbourLODs, surfaceLevel, OnDone);
         }
 
-        public override void InitializeWithMeshData(TriangleBuilder[] tris, float[] points, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel)
+        public override void InitializeWithMeshData(TriangleBuilder[] tris, float[] points, int size, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel)
         {
-            BuildChunkFromMeshData(tris, points, handler, neighbourLODs, surfaceLevel);
+            BuildChunkFromMeshData(tris, points, size, handler, neighbourLODs, surfaceLevel);
         }
 
         protected override void WorkOnBuildedChunk()
@@ -647,7 +647,7 @@ namespace MarchingCubes
 
         public Vector3 GetAnchorPosition()
         {
-            return chunkOffset * MarchingCubeChunkHandler.ChunkSize;
+            return chunkOffset * chunkSize;
         }
 
         public void EditPointsNextToChunk(IMarchingCubeChunk chunk, Vector3Int entityOrigin, Vector3Int offset, float delta)

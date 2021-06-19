@@ -25,13 +25,13 @@ namespace MarchingCubes
          
         protected Action OnDone;
 
-        public override void InitializeWithMeshDataParallel(TriangleBuilder[] tris, float[] points, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel, Action OnDone = null)
+        public override void InitializeWithMeshDataParallel(TriangleBuilder[] tris, float[] points, int size, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel, Action OnDone = null)
         {
             HasStarted = true;
             chunkHandler = handler;
             this.OnDone = OnDone;
             chunkHandler.StartWaitForParralelChunkDoneCoroutine(WaitForParallelDone());
-            ThreadPool.QueueUserWorkItem((o) => RequestChunk(tris, handler, points, surfaceLevel, neighbourLODs, OnChunkDone));
+            ThreadPool.QueueUserWorkItem((o) => RequestChunk(tris, handler, points, size, surfaceLevel, neighbourLODs, OnChunkDone));
         }
         protected bool isInOtherThread;
 
@@ -42,13 +42,13 @@ namespace MarchingCubes
 
         private bool multiThreadDone = false;
 
-        protected void RequestChunk(TriangleBuilder[] tris, IMarchingCubeChunkHandler handler, float[] points, float surfaceLevel, MarchingCubeChunkNeighbourLODs neighbourLODs, Action OnChunkDone)
+        protected void RequestChunk(TriangleBuilder[] tris, IMarchingCubeChunkHandler handler, float[] points, int size, float surfaceLevel, MarchingCubeChunkNeighbourLODs neighbourLODs, Action OnChunkDone)
         {
             
             try
             {
                 isInOtherThread = true;
-                BuildChunkFromMeshData(tris, points, handler, neighbourLODs, surfaceLevel);
+                BuildChunkFromMeshData(tris, points, size, handler, neighbourLODs, surfaceLevel);
                 OnChunkDone();
             }
             catch(Exception x)

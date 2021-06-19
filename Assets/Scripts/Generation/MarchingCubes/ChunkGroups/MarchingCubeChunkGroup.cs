@@ -6,8 +6,12 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
+    [Serializable]
     public class MarchingCubeChunkGroup
     {
+
+        public Vector3 offset;
+
 
         int groupLod;
 

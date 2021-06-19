@@ -16,9 +16,11 @@ namespace MarchingCubes
 
         protected const int threadGroupSize = 8;
 
-        public const int ChunkSize = 128;
+        public const int MIN_CHUNK_SIZE = 8;
 
-        public const int SuperChunkSize = 512;
+        public const int MAX_CHUNK_SIZE = 1024;
+
+        public const int ChunkSize = 128;
 
         public const int CHUNK_VOLUME = ChunkSize * ChunkSize * ChunkSize;
 
@@ -456,6 +458,7 @@ namespace MarchingCubes
         {
             IMarchingCubeChunk chunk = new T();
             chunks.Add(p, chunk);
+            chunk.ChunkSize = ChunkSize;
             chunk.ChunkOffset = p;
             chunk.AnchorPos = AnchorFromChunkCoords(p);
             chunk.Material = chunkMaterial;
@@ -483,32 +486,11 @@ namespace MarchingCubes
             return result;
         }
 
-        protected Vector3Int PositionToSuperChunkCoord(Vector3 pos)
-        {
-            Vector3Int result = new Vector3Int();
-
-            for (int i = 0; i < 3; i++)
-            {
-                result[i] = (int)(pos[i] / SuperChunkSize);
-            }
-
-            return result;
-        }
-
-        public const int CHUNK_SIZE_DIFF = SuperChunkSize / ChunkSize;
 
         public MarchingCubeChunk GetChunkAt(Vector3 pos)
         {
             MarchingCubeChunk result = null;
-            Vector3Int superChunkPos = new Vector3Int();
-            Vector3Int chunkPos = new Vector3Int();
-            for (int i = 0; i < 3; i++)
-            {
-                chunkPos[i] = (int)(pos[i] / ChunkSize);
-                superChunkPos[i] = chunkPos[i] / CHUNK_SIZE_DIFF;
-                chunkPos[i] = chunkPos[i] % CHUNK_SIZE_DIFF;
-            }
-
+       
             return result;
         }
 
@@ -542,14 +524,14 @@ namespace MarchingCubes
         protected void BuildChunk(Vector3Int p, IMarchingCubeChunk chunk, int lod)
         {
             int numTris = ApplyChunkDataAndDispatchAndGetShaderData(p, chunk, lod);
-            chunk.InitializeWithMeshData(tris, pointsArray, this, GetNeighbourLODSFrom(p), surfaceLevel);
+            chunk.InitializeWithMeshData(tris, pointsArray, ChunkSize, this, GetNeighbourLODSFrom(p), surfaceLevel);
         }
 
         protected void BuildChunkParallel(Vector3Int p, IMarchingCubeChunk chunk, Action OnDone, int lod)
         {
             int numTris = ApplyChunkDataAndDispatchAndGetShaderData(p, chunk, lod);
             channeledChunks++;
-            chunk.InitializeWithMeshDataParallel(tris, pointsArray, this, GetNeighbourLODSFrom(p), surfaceLevel, OnDone);
+            chunk.InitializeWithMeshDataParallel(tris, pointsArray, ChunkSize, this, GetNeighbourLODSFrom(p), surfaceLevel, OnDone);
         }
 
         //protected void RebuildChunkParallelAt(Vector3Int p, Action OnDone, int lod)
@@ -685,7 +667,7 @@ namespace MarchingCubes
 
             chunks.Remove(chunk.ChunkOffset);
             IMarchingCubeChunk compressedChunk = GetThreadedChunkObjectAt(chunk.ChunkOffset, toLodPower);
-            compressedChunk.InitializeWithMeshDataParallel(tris, relevantPoints, this, GetNeighbourLODSFrom(chunk.ChunkOffset), surfaceLevel,
+            compressedChunk.InitializeWithMeshDataParallel(tris, relevantPoints, ChunkSize, this, GetNeighbourLODSFrom(chunk.ChunkOffset), surfaceLevel,
                 delegate
                 {
                     chunk.ResetChunk();
@@ -747,20 +729,6 @@ namespace MarchingCubes
         public Vector3 AnchorFromChunkCoords(Vector3Int v)
         {
             return new Vector3(v.x * ChunkSize, v.y * ChunkSize, v.z * ChunkSize);
-        }
-
-        public Vector3Int SuperChunkCoordFromNormalChunkCoord(Vector3Int v)
-        {
-            return new Vector3Int(
-                Mathf.FloorToInt(v.x * ChunkSize / SuperChunkSize),
-                Mathf.FloorToInt(v.y * ChunkSize / SuperChunkSize),
-                Mathf.FloorToInt(v.z * ChunkSize / SuperChunkSize)
-                );
-        }
-
-        public Vector3 SuperAnchorFromSuperChunkCoords(Vector3Int v)
-        {
-            return new Vector3(v.x * SuperChunkSize, v.y * SuperChunkSize, v.z * SuperChunkSize);
         }
 
 

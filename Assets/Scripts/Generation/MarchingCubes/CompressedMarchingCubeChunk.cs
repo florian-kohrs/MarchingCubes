@@ -8,14 +8,14 @@ namespace MarchingCubes
     public class CompressedMarchingCubeChunk : IMarchingCubeChunk
     {
 
-        public virtual void InitializeWithMeshDataParallel(TriangleBuilder[] tris, float[] points, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLod, float surfaceLevel, Action OnDone = null)
+        public virtual void InitializeWithMeshDataParallel(TriangleBuilder[] tris, float[] points, int size, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLod, float surfaceLevel, Action OnDone = null)
         {
             throw new Exception("This class doesnt support concurrency");
         }
 
-        public virtual void InitializeWithMeshData(TriangleBuilder[] tris, float[] points, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLod, float surfaceLevel)
+        public virtual void InitializeWithMeshData(TriangleBuilder[] tris, float[] points, int size, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLod, float surfaceLevel)
         {
-            BuildChunkFromMeshData(tris, points, handler, neighbourLODs, surfaceLevel);
+            BuildChunkFromMeshData(tris, points, size, handler, neighbourLODs, surfaceLevel);
         }
 
         //public virtual void InitializeEmpty(IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel)
@@ -45,7 +45,7 @@ namespace MarchingCubes
             set
             {
                 sizeGrower = value; 
-                vertexSize = MarchingCubeChunkHandler.ChunkSize / lod * sizeGrower;
+                vertexSize = chunkSize / lod * sizeGrower;
                 pointsPerAxis = vertexSize + 1;
             }
         }
@@ -73,7 +73,7 @@ namespace MarchingCubes
             set
             {
                 lod = value;
-                vertexSize = MarchingCubeChunkHandler.ChunkSize / lod * SizeGrower;
+                vertexSize = chunkSize / lod * SizeGrower;
                 pointsPerAxis = vertexSize + 1;
             }
         }
@@ -105,9 +105,11 @@ namespace MarchingCubes
 
         protected int trisLeft;
 
-        protected int vertexSize = MarchingCubeChunkHandler.ChunkSize;
+        protected int chunkSize;
 
-        protected int pointsPerAxis = MarchingCubeChunkHandler.ChunkSize + 1;
+        protected int vertexSize;
+
+        protected int pointsPerAxis;
 
         public int NeighbourCount => NeighboursReachableFrom.Count;
 
@@ -119,6 +121,8 @@ namespace MarchingCubes
 
 
         protected Vector3Int chunkOffset;
+
+        //protected Vector3Int chunkAnchorPosition;
 
         public Vector3Int ChunkOffset { get => chunkOffset; set => chunkOffset = value; }
 
@@ -162,9 +166,12 @@ namespace MarchingCubes
 
         int IMarchingCubeChunk.PointsPerAxis => pointsPerAxis;
 
-        protected virtual void BuildChunkFromMeshData(TriangleBuilder[] tris, float[] points, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel)
+        public int ChunkSize { get => chunkSize; set => chunkSize = value; }
+
+        protected virtual void BuildChunkFromMeshData(TriangleBuilder[] tris, float[] points, int size, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel)
         {
             HasStarted = true;
+            this.chunkSize = size;
             this.points = points;
             this.surfaceLevel = surfaceLevel;
             this.neighbourLODs = neighbourLODs;
