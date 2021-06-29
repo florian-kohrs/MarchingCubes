@@ -18,11 +18,13 @@ namespace MarchingCubes
 
         public const int MIN_CHUNK_SIZE = 8;
 
-        public const int MAX_CHUNK_SIZE = 1024;
+        public const int CHUNK_GROUP_SIZE = 1024;
 
-        public const int ChunkSize = 128;
+        public const int DEFAULT_CHUNK_SIZE = 128;
 
-        public const int CHUNK_VOLUME = ChunkSize * ChunkSize * ChunkSize;
+        //public const int ChunkSize = 128;
+
+        //public const int CHUNK_VOLUME = ChunkSize * ChunkSize * ChunkSize;
 
         public const int DEFAULT_MIN_CHUNK_LOD_POWER = 0;
 
@@ -32,11 +34,13 @@ namespace MarchingCubes
 
         // protected int maxRunningThreads = 0;
 
-        public const int PointsPerChunkAxis = ChunkSize + 1;
+        //public const int PointsPerChunkAxis = ChunkSize + 1;
 
-        public Dictionary<Vector3Int, IMarchingCubeChunk> chunks = new Dictionary<Vector3Int, IMarchingCubeChunk>(new Vector3EqualityComparer());
+        //public Dictionary<Vector3Int, IMarchingCubeChunk> chunks = new Dictionary<Vector3Int, IMarchingCubeChunk>(new Vector3EqualityComparer());
 
-        public Dictionary<Vector3Int, MarchingCubeChunkGroup> superChunks = new Dictionary<Vector3Int, MarchingCubeChunkGroup>(new Vector3EqualityComparer());
+        public Dictionary<Vector3Int, IChunkGroupRoot> chunkGroups = new Dictionary<Vector3Int, IChunkGroupRoot>(new Vector3EqualityComparer());
+
+        public Dictionary<Vector3Int, IChunkGroupRoot> ChunkGroups => chunkGroups;
 
         [Range(1, 253)]
         public int blockAroundPlayer = 16;
@@ -56,7 +60,7 @@ namespace MarchingCubes
 
         public AnimationCurve lodForDistances;
 
-        public Dictionary<Vector3Int, IMarchingCubeChunk> Chunks => chunks;
+        //public Dictionary<Vector3Int, IMarchingCubeChunk> Chunks => chunks;
 
         //protected HashSet<BaseMeshChild> inUseDisplayer = new HashSet<BaseMeshChild>();
 
@@ -142,6 +146,12 @@ namespace MarchingCubes
         }
 
 
+        public void GetSizeAndLodPowerForChunkPosition(Vector3Int chunkOrigin, out int size, out int lodPower)
+        {
+            lodPower = GetLodAt(chunkOrigin);
+            size = DEFAULT_CHUNK_SIZE;
+        }
+
         protected int RoundToPowerOf2(float f)
         {
             int r = (int)Mathf.Pow(2, Mathf.RoundToInt(f));
@@ -154,18 +164,18 @@ namespace MarchingCubes
             return GetLod((startPos - AnchorFromChunkCoords(v3)).magnitude);
         }
 
-        protected int NeededChunkAmount
-        {
-            get
-            {
-                int amount = Mathf.CeilToInt(blockAroundPlayer / PointsPerChunkAxis);
-                if (amount % 2 == 1)
-                {
-                    amount += 1;
-                }
-                return amount;
-            }
-        }
+        //protected int NeededChunkAmount
+        //{
+        //    get
+        //    {
+        //        int amount = Mathf.CeilToInt(blockAroundPlayer / PointsPerChunkAxis);
+        //        if (amount % 2 == 1)
+        //        {
+        //            amount += 1;
+        //        }
+        //        return amount;
+        //    }
+        //}
 
         //public PlanetMarchingCubeNoise noiseFilter;
 
@@ -178,7 +188,7 @@ namespace MarchingCubes
 
         public int deactivateAfterDistance = 40;
 
-        protected int DeactivatedChunkDistance => Mathf.CeilToInt(deactivateAfterDistance / PointsPerChunkAxis);
+        //protected int DeactivatedChunkDistance => Mathf.CeilToInt(deactivateAfterDistance / PointsPerChunkAxis);
 
         public Material chunkMaterial;
 
@@ -232,7 +242,7 @@ namespace MarchingCubes
                 IMarchingCubeChunk current = neighboursToBuild.Dequeue();
                 foreach (var v3 in current.NeighbourIndices)
                 {
-                    if (!Chunks.ContainsKey(v3) && (startPos - AnchorFromChunkCoords(v3)).magnitude < buildAroundDistance)
+                    if (!HasChunkAtPosition(v3) && (startPos - AnchorFromChunkCoords(v3)).magnitude < buildAroundDistance)
                     {
                         neighboursToBuild.Enqueue(CreateChunkAt(v3));
                         if (totalTriBuild >= maxTrianglesLeft)
@@ -250,7 +260,7 @@ namespace MarchingCubes
            
             Debug.Log("Total triangles: " + totalTriBuild);
 
-            Debug.Log($"Number of chunks: {Chunks.Count}");
+            Debug.Log($"Number of chunkgroups: {ChunkGroups.Count}");
         }
 
 
@@ -274,7 +284,7 @@ namespace MarchingCubes
             }
             Debug.Log("Total triangles: " + totalTriBuild);
 
-            Debug.Log($"Number of chunks: {Chunks.Count}");
+            Debug.Log($"Number of chunks: {ChunkGroups.Count}");
         }
 
         private IEnumerator BuildRelevantChunksParallelAround()
@@ -309,11 +319,12 @@ namespace MarchingCubes
             channeledChunks--;
             var e = chunk.NeighbourIndices.GetEnumerator();
             Vector3Int v3;
+            IMarchingCubeChunk neighbourChunk;
             while (e.MoveNext())
             {
                 v3 = e.Current;
-                float distance = (startPos - AnchorFromChunkCoords(v3)).magnitude;
-                if (!Chunks.ContainsKey(v3) && distance < buildAroundDistance)
+                if (!TryGetChunkAtPosition(v3, out neighbourChunk) 
+                    && (startPos - neighbourChunk.CenterPos).magnitude < buildAroundDistance)
                 {
                     closestNeighbours.Enqueue(distance, v3);
                 }
@@ -322,31 +333,31 @@ namespace MarchingCubes
 
         protected int channeledChunks = 0;
 
-        public void CheckChunksAround(Vector3 v)
-        {
-            Vector3Int chunkIndex = PositionToNormalCoord(v);
+        //public void CheckChunksAround(Vector3 v)
+        //{
+        //    Vector3Int chunkIndex = PositionToNormalCoord(v);
 
-            // SetActivationOfChunks(chunkIndex);
+        //    // SetActivationOfChunks(chunkIndex);
 
-            Vector3Int index = new Vector3Int();
-            for (int x = -NeededChunkAmount / 2; x < NeededChunkAmount / 2 + 1; x++)
-            {
-                index.x = x;
-                for (int y = Mathf.Max(-NeededChunkAmount / 2, -NeededChunkAmount / 2); y < NeededChunkAmount / 2 + 1; y++)
-                {
-                    index.y = y;
-                    for (int z = -NeededChunkAmount / 2; z < NeededChunkAmount / 2 + 1; z++)
-                    {
-                        index.z = z;
-                        Vector3Int shiftedIndex = index + chunkIndex;
-                        if (!chunks.ContainsKey(shiftedIndex))
-                        {
-                            CreateChunkAt(shiftedIndex);
-                        }
-                    }
-                }
-            }
-        }
+        //    Vector3Int index = new Vector3Int();
+        //    for (int x = -NeededChunkAmount / 2; x < NeededChunkAmount / 2 + 1; x++)
+        //    {
+        //        index.x = x;
+        //        for (int y = Mathf.Max(-NeededChunkAmount / 2, -NeededChunkAmount / 2); y < NeededChunkAmount / 2 + 1; y++)
+        //        {
+        //            index.y = y;
+        //            for (int z = -NeededChunkAmount / 2; z < NeededChunkAmount / 2 + 1; z++)
+        //            {
+        //                index.z = z;
+        //                Vector3Int shiftedIndex = index + chunkIndex;
+        //                if (!chunks.ContainsKey(shiftedIndex))
+        //                {
+        //                    CreateChunkAt(shiftedIndex);
+        //                }
+        //            }
+        //        }
+        //    }
+        //}
 
 
         protected IMarchingCubeChunk FindNonEmptyChunkAround(Vector3 pos)
@@ -373,6 +384,7 @@ namespace MarchingCubes
             return chunk;
         }
 
+     
 
         //protected void SetActivationOfChunks(Vector3Int center)
         //{
@@ -387,45 +399,100 @@ namespace MarchingCubes
 
         protected void CreateChunkParallelAt(Vector3Int p, Action<IMarchingCubeChunk> OnDone)
         {
-            int lodPower = GetLodPowerAt(p);
-            IMarchingCubeChunk chunk = GetThreadedChunkObjectAt(p, lodPower);
+            int lodPower;
+            int chunkSize;
+            GetSizeAndLodPowerForChunkPosition(p, out chunkSize, out lodPower);
+            IMarchingCubeChunk chunk = GetThreadedChunkObjectAt(p, lodPower, chunkSize);
             BuildChunkParallel(p, chunk, () => OnDone(chunk), RoundToPowerOf2(lodPower));
         }
 
         protected IMarchingCubeChunk CreateChunkAt(Vector3Int p)
         {
-            int lodPower = DEFAULT_MIN_CHUNK_LOD_POWER;
-            IMarchingCubeChunk chunk = GetThreadedChunkObjectAt(p, lodPower);
+            int lodPower;
+            int chunkSize;
+            GetSizeAndLodPowerForChunkPosition(p, out chunkSize, out lodPower);
+            IMarchingCubeChunk chunk = GetThreadedChunkObjectAt(p, lodPower, chunkSize);
             BuildChunk(p, chunk, RoundToPowerOf2(lodPower));
             return chunk;
         }
 
-        public bool TryGetReadyChunkAt(Vector3Int p, out IMarchingCubeChunk chunk)
+        protected IChunkGroupRoot CreateChunkGroupAtPosition(Vector3Int p)
         {
-            if (chunks.TryGetValue(p, out chunk))
+            return CreateChunkGroupAtCoordinate(PositionToNormalCoord(p));
+        }
+
+        protected IChunkGroupRoot CreateChunkGroupAtCoordinate(Vector3Int coord)
+        {
+            IChunkGroupRoot chunkGroup = new ChunkGroupRoot();
+            chunkGroups.Add(coord, chunkGroup);
+            return chunkGroup;
+        }
+
+        public bool TryGetChunkGroupAt(Vector3Int p, out IChunkGroupRoot chunkGroup)
+        {
+            Vector3Int coord = PositionToNormalCoord(p);
+            return chunkGroups.TryGetValue(coord, out chunkGroup);
+        }
+
+        public IChunkGroupRoot GetOrCreateChunkGroupAtCoordinate(Vector3Int p)
+        {
+            IChunkGroupRoot chunkGroup;
+            if (!TryGetChunkGroupAt(p, out chunkGroup))
             {
-                if (chunk.IsReady)
+                chunkGroup = CreateChunkGroupAtCoordinate(p);
+            }
+            return chunkGroup;
+        }
+
+        protected bool HasChunkAtPosition(Vector3Int v3)
+        {
+            IMarchingCubeChunk _;
+            return TryGetChunkAtPosition(v3, out _);
+        }
+
+        public bool TryGetChunkAtPosition(Vector3Int p, out IMarchingCubeChunk chunk)
+        {
+            Vector3Int _;
+            return TryGetChunkAtPosition(p, out chunk, out _);
+        }
+
+        public bool TryGetChunkAtPosition(Vector3Int p, out IMarchingCubeChunk chunk, out Vector3Int positionInOtherChunk)
+        {
+            Vector3Int coord = PositionToNormalCoord(p);
+            IChunkGroupRoot chunkGroup;
+            if (chunkGroups.TryGetValue(coord, out chunkGroup))
+            {
+                Vector3Int restPosition = p - chunkGroup.GroupAnchorPosition; 
+                if (chunkGroup.TryGetChunkAtLocalPosition(restPosition, out chunk))
                 {
+                    positionInOtherChunk = p - chunk.AnchorPos;
                     return true;
                 }
-                else
-                {
-                    chunk = null;
-                    return false;
-                }
             }
+            chunk = null;
+            positionInOtherChunk = default;
             return false;
         }
 
+        public bool TryGetReadyChunkAt(Vector3Int p, out IMarchingCubeChunk chunk)
+        {
+            return TryGetChunkAtPosition(p, out chunk) && chunk.IsReady;
+        }
+
+        public bool TryGetReadyChunkAt(Vector3Int p, out IMarchingCubeChunk chunk, out Vector3Int relativePositionInChunk)
+        {
+            return TryGetChunkAtPosition(p, out chunk, out relativePositionInChunk) && chunk.IsReady; 
+        }
+
         /// <summary>
-        /// gets or creates a chunk at position. Fails if at position a chunk is being created asynchronously
+        /// gets or creates a chunk at position. Fails if at position a chunk is being created
         /// </summary>
         /// <param name="p"></param>
         /// <param name="chunk"></param>
         /// <returns></returns>
         public bool TryGetOrCreateChunk(Vector3Int p, out IMarchingCubeChunk chunk)
         {
-            if (chunks.TryGetValue(p, out chunk))
+            if (TryGetChunkAtPosition(p, out chunk))
             {
                 if (chunk.IsReady)
                 {
@@ -440,52 +507,66 @@ namespace MarchingCubes
             else
             {
                 chunk = CreateChunkAt(p);
+                return true;
             }
-            return true;
         }
 
         public bool HasChunkStartedAt(Vector3Int p)
         {
             IMarchingCubeChunk chunk;
-            if (chunks.TryGetValue(p, out chunk))
+            if (TryGetChunkAtPosition(p, out chunk))
             {
                 return chunk.HasStarted;
             }
             return false;
         }
 
-        protected IMarchingCubeChunk GetChunkObjectAt<T>(Vector3Int p, int lodPower) where T : IMarchingCubeChunk, new()
+        protected IMarchingCubeChunk GetChunkObjectAt<T>(Vector3Int p, int lodPower, int chunkSize) where T : IMarchingCubeChunk, new()
         {
+            IChunkGroupRoot chunkGroup = GetOrCreateChunkGroupAtCoordinate(p);
             IMarchingCubeChunk chunk = new T();
-            chunks.Add(p, chunk);
-            chunk.ChunkSize = ChunkSize;
-            chunk.ChunkOffset = p;
-            chunk.AnchorPos = AnchorFromChunkCoords(p);
+            Vector3Int anchorPosition = chunkGroup.SetChunkAtGlobalPosition(p, chunkSize, lodPower, chunk);
+
+            chunk.ChunkSize = chunkSize;
+            chunk.AnchorPos = anchorPosition;
+            chunk.ChunkHandler = this;
             chunk.Material = chunkMaterial;
+            chunk.SurfaceLevel = surfaceLevel;
             chunk.LODPower = lodPower;
+
             return chunk;
         }
 
-        protected IMarchingCubeChunk GetThreadedChunkObjectAt(Vector3Int p, int lodPower)
+        protected IMarchingCubeChunk GetThreadedChunkObjectAt(Vector3Int p, int lodPower, int chunkSize)
         {
             if (lodPower <= DEFAULT_MIN_CHUNK_LOD_POWER)
-                return GetChunkObjectAt<MarchingCubeChunkThreaded>(p, lodPower);
+                return GetChunkObjectAt<MarchingCubeChunkThreaded>(p, lodPower, chunkSize);
             else
-                return GetChunkObjectAt<CompressedMarchingCubeChunkThreaded>(p, lodPower);
+                return GetChunkObjectAt<CompressedMarchingCubeChunkThreaded>(p, lodPower, chunkSize);
+        }
+
+        protected Vector3Int CoordToNormalPosition(Vector3Int coord)
+        {
+            return coord * CHUNK_GROUP_SIZE;
         }
 
         protected Vector3Int PositionToNormalCoord(Vector3 pos)
         {
-            Vector3Int result = new Vector3Int();
-
-            for (int i = 0; i < 3; i++)
-            {
-                result[i] = (int)(pos[i] / ChunkSize);
-            }
-
-            return result;
+            return PositionToNormalCoord((int)pos.x, (int)pos.y, (int)pos.z);
         }
 
+        protected Vector3Int PositionToNormalCoord(Vector3Int pos)
+        {
+            return PositionToNormalCoord(pos.x, pos.y, pos.z);
+        }
+
+        protected Vector3Int PositionToNormalCoord(int x, int y, int z)
+        {
+            return new Vector3Int(
+                (x / CHUNK_GROUP_SIZE),
+                (y / CHUNK_GROUP_SIZE),
+                (z / CHUNK_GROUP_SIZE));
+        }
 
         public MarchingCubeChunk GetChunkAt(Vector3 pos)
         {
@@ -510,7 +591,7 @@ namespace MarchingCubes
             for (int i = 0; i < coords.Length; i++)
             {
                 MarchingCubeNeighbour neighbour = new MarchingCubeNeighbour();
-                if (!Chunks.TryGetValue(coords[i], out neighbour.chunk))
+                if (!TryGetChunkAtPosition(coords[i], out neighbour.chunk))
                 {
                     neighbour.estimatedLodPower = GetLodPowerAt(coords[i]);
                 }
@@ -524,14 +605,14 @@ namespace MarchingCubes
         protected void BuildChunk(Vector3Int p, IMarchingCubeChunk chunk, int lod)
         {
             int numTris = ApplyChunkDataAndDispatchAndGetShaderData(p, chunk, lod);
-            chunk.InitializeWithMeshData(tris, pointsArray, ChunkSize, this, GetNeighbourLODSFrom(p), surfaceLevel);
+            chunk.InitializeWithMeshData(tris, pointsArray, GetNeighbourLODSFrom(p));
         }
 
         protected void BuildChunkParallel(Vector3Int p, IMarchingCubeChunk chunk, Action OnDone, int lod)
         {
             int numTris = ApplyChunkDataAndDispatchAndGetShaderData(p, chunk, lod);
             channeledChunks++;
-            chunk.InitializeWithMeshDataParallel(tris, pointsArray, ChunkSize, this, GetNeighbourLODSFrom(p), surfaceLevel, OnDone);
+            chunk.InitializeWithMeshDataParallel(tris, pointsArray, GetNeighbourLODSFrom(p), OnDone);
         }
 
         //protected void RebuildChunkParallelAt(Vector3Int p, Action OnDone, int lod)
@@ -542,14 +623,15 @@ namespace MarchingCubes
 
         protected int ApplyChunkDataAndDispatchAndGetShaderData(Vector3Int p, IMarchingCubeChunk chunk, int lod)
         {
-            if (ChunkSize % lod != 0)
+            int chunkSize = chunk.ChunkSize;
+            if (chunkSize % lod != 0)
                 throw new Exception("Lod must be divisor of chunksize");
 
             int extraSize = lod;
             extraSize = 1;
 
 
-            int numVoxelsPerAxis = ChunkSize / lod * extraSize;
+            int numVoxelsPerAxis = chunkSize / lod * extraSize;
             //int chunkVolume = numVoxelsPerAxis * numVoxelsPerAxis * numVoxelsPerAxis;
             int pointsPerAxis = numVoxelsPerAxis + 1;
             int pointsVolume = pointsPerAxis * pointsPerAxis * pointsPerAxis;
@@ -599,12 +681,12 @@ namespace MarchingCubes
         public void DecreaseChunkLod(IMarchingCubeChunk chunk, int toLodPower)
         {
             int toLod = RoundToPowerOf2(toLodPower);
-            if (toLod <= chunk.LOD || ChunkSize % toLod != 0)
+            if (toLod <= chunk.LOD || chunk.ChunkSize % toLod != 0)
                 throw new Exception("invalid new chunk lod");
 
             int shrinkFactor = toLod / chunk.LOD;
 
-            int numVoxelsPerAxis = ChunkSize / toLod;
+            int numVoxelsPerAxis = chunk.ChunkSize / toLod;
 
             CreateAllBuffersWithSizes(numVoxelsPerAxis);
 
@@ -620,7 +702,7 @@ namespace MarchingCubes
 
             int addCount = 0;
 
-            NotifyNeighbourChunksOnLodSwitch(chunk.ChunkOffset, toLodPower);
+            NotifyNeighbourChunksOnLodSwitch(chunk.ChunkAnchorPosition, toLodPower);
 
             for (int z = 0; z < originalPointsPerAxis; z += shrinkFactor)
             {
@@ -637,7 +719,7 @@ namespace MarchingCubes
             }
 
             pointsBuffer.SetData(relevantPoints);
-            Vector3 anchor = AnchorFromChunkCoords(chunk.ChunkOffset);
+            Vector3 anchor = chunk.ChunkAnchorPosition;
 
             int numThreadsPerAxis = Mathf.CeilToInt(numVoxelsPerAxis / (float)threadGroupSize);
 
@@ -664,7 +746,7 @@ namespace MarchingCubes
 
             totalTriBuild += numTris;
             ReleaseBuffers();
-
+            
             chunks.Remove(chunk.ChunkOffset);
             IMarchingCubeChunk compressedChunk = GetThreadedChunkObjectAt(chunk.ChunkOffset, toLodPower);
             compressedChunk.InitializeWithMeshDataParallel(tris, relevantPoints, ChunkSize, this, GetNeighbourLODSFrom(chunk.ChunkOffset), surfaceLevel,
@@ -724,11 +806,6 @@ namespace MarchingCubes
                 triangleBuffer = null;
             }
 
-        }
-
-        public Vector3 AnchorFromChunkCoords(Vector3Int v)
-        {
-            return new Vector3(v.x * ChunkSize, v.y * ChunkSize, v.z * ChunkSize);
         }
 
 

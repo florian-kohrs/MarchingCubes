@@ -120,11 +120,11 @@ namespace MarchingCubes
         protected int PointsPerAxis => pointsPerAxis;
 
 
-        protected Vector3Int chunkOffset;
+        //protected Vector3Int chunkOffset;
 
-        //protected Vector3Int chunkAnchorPosition;
+        protected Vector3Int chunkAnchorPosition;
 
-        public Vector3Int ChunkOffset { get => chunkOffset; set => chunkOffset = value; }
+        public Vector3Int ChunkAnchorPosition { get => chunkAnchorPosition; set => chunkAnchorPosition = value; }
 
         public IMarchingCubeChunkHandler chunkHandler;
 
@@ -162,11 +162,20 @@ namespace MarchingCubes
         public bool IsCompletlyAir => IsEmpty && points[0] < surfaceLevel;
 
 
-        public Vector3 AnchorPos { get; set; }
+        public Vector3Int AnchorPos { get; set; }
 
         int IMarchingCubeChunk.PointsPerAxis => pointsPerAxis;
 
         public int ChunkSize { get => chunkSize; set => chunkSize = value; }
+
+        protected Vector3Int GetGlobalPositionFromOffset(Vector3Int offset)
+        {
+            Vector3Int anchor = AnchorPos;
+            return new Vector3Int(
+                anchor.x + offset.x * chunkSize,
+                anchor.y + offset.y * chunkSize, 
+                anchor.z + offset.z * chunkSize);
+        }
 
         protected virtual void BuildChunkFromMeshData(TriangleBuilder[] tris, float[] points, int size, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel)
         {
@@ -223,7 +232,7 @@ namespace MarchingCubes
             for (int i = 0; i < trisWithNeighboursOutOfBounds.Count; i++)
             {
                 neighbour = trisWithNeighboursOutOfBounds[i];
-                Vector3Int target = chunkOffset + neighbour.outsideNeighbour.offset;
+                Vector3Int target = chunkAnchorPosition + neighbour.outsideNeighbour.offset;
                 AddNeighbourFromEntity(target, null);
 
                 if (chunkHandler.TryGetReadyChunkAt(target, out c))

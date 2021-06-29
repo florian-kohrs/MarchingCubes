@@ -125,6 +125,8 @@ namespace MarchingCubes
 
 
 
+
+
         protected void BuildChunkEdges()
         {
             if (IsEmpty)
@@ -147,7 +149,7 @@ namespace MarchingCubes
                         {
                             t = trisWithNeighboursOutOfBounds[i];
                             //Vector3Int offset = t.neighbour.offset.Map(Math.Sign);
-                            Vector3Int target = chunkOffset + t.outsideNeighbour.offset;
+                            Vector3Int target = GetGlobalPositionFromOffset(t.outsideNeighbour.offset); ;
                             IMarchingCubeChunk chunk;
                             AddNeighbourFromEntity(target, e);
                             if (chunkHandler.TryGetReadyChunkAt(target, out chunk))
@@ -162,7 +164,6 @@ namespace MarchingCubes
                                     }
                                     else if (c.LODPower > LODPower)
                                     {
-                                        Vector3Int pos = (e.origin + t.outsideNeighbour.offset).Map(ClampInChunk);
                                         CorrectMarchingCubeInDirection(e.origin, t, c.LODPower);
                                     }
                                 }
@@ -201,7 +202,7 @@ namespace MarchingCubes
                     for (int i = 0; i < trisWithNeighboursOutOfBounds.Count; i++)
                     {
                         t = trisWithNeighboursOutOfBounds[i];
-                        Vector3Int target = chunkOffset + t.outsideNeighbour.offset;
+                        Vector3Int target = GetGlobalPositionFromOffset(t.outsideNeighbour.offset);
                         AddNeighbourFromEntity(target, e);
 
                         if (chunkHandler.TryGetReadyChunkAt(target, out c))
@@ -209,7 +210,6 @@ namespace MarchingCubes
                             if (c.LODPower > LODPower)
                             {
                                 Vector3Int pos = (e.origin + t.outsideNeighbour.offset).Map(ClampInChunk);
-
                                 CorrectMarchingCubeInDirection(e.origin, t, c.LODPower);
                             }
                         }
@@ -624,7 +624,7 @@ namespace MarchingCubes
 
             if (IsBorderCube(e.origin))
             {
-                chunkHandler.EditNeighbourChunksAt(chunkOffset, e.origin, delta);
+                chunkHandler.EditNeighbourChunksAt(ChunkAnchorPosition, e.origin, delta);
             }
 
             RebuildAround(e, e.origin);
@@ -633,7 +633,7 @@ namespace MarchingCubes
 
         public MarchingCubeEntity GetClosestEntity(Vector3 v3)
         {
-            Vector3 rest = v3 - GetAnchorPosition();
+            Vector3 rest = v3 - chunkAnchorPosition;
             rest /= lod;
             return GetEntityAt((int)rest.x, (int)rest.y, (int)rest.z);
         }
@@ -643,12 +643,6 @@ namespace MarchingCubes
             return GetClosestEntity(hit.point);
         }
 
-        //protected float RelativeSpacing 0>
-
-        public Vector3 GetAnchorPosition()
-        {
-            return chunkOffset * chunkSize;
-        }
 
         public void EditPointsNextToChunk(IMarchingCubeChunk chunk, Vector3Int entityOrigin, Vector3Int offset, float delta)
         {

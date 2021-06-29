@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public interface IMarchingCubeChunk 
+    public interface IMarchingCubeChunk
     {
 
         bool IsReady { get; }
@@ -14,19 +14,25 @@ namespace MarchingCubes
 
         int ChunkSize { get; set; }
 
-        Vector3 AnchorPos { get; set; }
+        Vector3Int AnchorPos { get; set; }
+        
+        Vector3Int CenterPos { get; set; }
 
         bool HasStarted { get; }
 
-        Vector3Int ChunkOffset { get; set; }
+        Vector3Int ChunkAnchorPosition { get; set; }
 
         IEnumerable<Vector3Int> NeighbourIndices { get; }
 
         int NeighbourCount { get; }
 
+        IMarchingCubeChunkHandler ChunkHandler {set;}
+
         bool IsEmpty { get; }
 
         bool IsCompletlyAir { get; }
+
+        float SurfaceLevel { set; }
 
         bool IsCompletlySolid { get; }
 
@@ -42,9 +48,9 @@ namespace MarchingCubes
 
        // void InitializeWithMeshData(Material mat, TriangleBuilder[] tris, int activeTris, float[] points, IMarchingCubeChunkHandler handler, float surfaceLevel);
 
-        void InitializeWithMeshDataParallel(TriangleBuilder[] tris, float[] points, int size, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLod, float surfaceLevel, Action OnDone = null);
+        void InitializeWithMeshDataParallel(TriangleBuilder[] tris, float[] points, MarchingCubeChunkNeighbourLODs neighbourLod, Action OnDone = null);
 
-        void InitializeWithMeshData(TriangleBuilder[] tris, float[] points, int size, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLod, float surfaceLevel);
+        void InitializeWithMeshData(TriangleBuilder[] tris, float[] points, MarchingCubeChunkNeighbourLODs neighbourLod);
 
         void ResetChunk();
 

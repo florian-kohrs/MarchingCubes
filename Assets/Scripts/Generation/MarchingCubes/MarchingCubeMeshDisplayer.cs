@@ -42,7 +42,7 @@ namespace MarchingCubes
             g.transform.SetParent(t, false);
         }
 
-        public BaseMeshDisplayer(IMarchingCubeInteractableChunk chunk, Transform t) : this(chunk, new GameObject($"{chunk.ChunkOffset.x},{chunk.ChunkOffset.y},{chunk.ChunkOffset.z} "),t) { }
+        public BaseMeshDisplayer(IMarchingCubeInteractableChunk chunk, Transform t) : this(chunk, new GameObject($"{chunk.ChunkAnchorPosition.x},{chunk.ChunkAnchorPosition.y},{chunk.ChunkAnchorPosition.z} "),t) { }
 
         public BaseMeshDisplayer(Transform t) : this(new GameObject(),t) { }
 

@@ -15,6 +15,8 @@ namespace MarchingCubes
 
         bool TryGetReadyChunkAt(Vector3Int p, out IMarchingCubeChunk chunk);
 
+        bool TryGetReadyChunkAt(Vector3Int p, out IMarchingCubeChunk chunk, out Vector3Int positionInOtherChunk);
+
         BaseMeshDisplayer GetNextMeshDisplayer();
 
         BaseMeshDisplayer GetNextInteractableMeshDisplayer(IMarchingCubeInteractableChunk forChunk);
