@@ -57,9 +57,9 @@ namespace MarchingCubes
             }
         }
 
-        public void BuildNoiseAreaUnderWater(Vector4[] points, Vector3Int chunkOffset, Vector3 noiseOffset, int size, Func<Vector3Int, int> CoordToIndex)
+        public void BuildNoiseAreaUnderWater(Vector4[] points, Vector3Int chunkOffset, int chunkSize, Vector3 noiseOffset, int size, Func<Vector3Int, int> CoordToIndex)
         {
-            chunkOffset = chunkOffset * MarchingCubeChunkHandler.ChunkSize;
+            chunkOffset = chunkOffset * chunkSize;
             Vector3Int v = new Vector3Int();
             int shift = Mathf.FloorToInt((size + 1) / 2);
             Vector3Int vShift = new Vector3Int(shift, shift, shift);
@@ -98,9 +98,9 @@ namespace MarchingCubes
             }
         }
 
-        public void BuildNoiseAreaLand(Vector4[] points, Vector3Int chunkOffset, Vector3 noiseOffset, int size, Func<Vector3Int, int> CoordToIndex)
+        public void BuildNoiseAreaLand(Vector4[] points, Vector3Int chunkOffset, int chunkSize, Vector3 noiseOffset, int size, Func<Vector3Int, int> CoordToIndex)
         {
-            chunkOffset = chunkOffset * MarchingCubeChunkHandler.ChunkSize;
+            chunkOffset = chunkOffset * chunkSize;
             Vector3Int v = new Vector3Int();
             int shift = Mathf.FloorToInt((size + 1) / 2);
             Vector3Int vShift = new Vector3Int(shift, shift, shift);
@@ -151,9 +151,9 @@ namespace MarchingCubes
             return Mathf.Abs(SimplexNoise.SimplexNoise.Generate(p.x, p.y, p.z));
         }
 
-        public void BuildNoiseArea(Vector4[] points, Vector3Int chunkOffset, Vector3 noiseOffset, int size, Func<Vector3Int, int> CoordToIndex)
+        public void BuildNoiseArea(Vector4[] points, Vector3Int chunkOffset, int chunkSize, Vector3 noiseOffset, int size, Func<Vector3Int, int> CoordToIndex)
         {
-            BuildNoiseAreaLand(points, chunkOffset, noiseOffset, size, CoordToIndex);
+            BuildNoiseAreaLand(points, chunkOffset, chunkSize, noiseOffset, size, CoordToIndex);
         }
 
     }

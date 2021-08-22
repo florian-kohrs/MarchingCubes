@@ -5,7 +5,7 @@ using UnityEngine;
 namespace MarchingCubes
 {
 
-    public class ChunkGroupTreeLeaf : IChunkGroupOrganizer
+    public class ChunkGroupTreeLeaf : BaseChunkGroupOrganizer
     {
 
         public ChunkGroupTreeLeaf(IMarchingCubeChunk chunk)
@@ -13,48 +13,61 @@ namespace MarchingCubes
             this.chunk = chunk;
         }
 
-        public ChunkGroupTreeLeaf(IChunkBuilder chunkBuilder, Vector3Int anchorPoint, int size, int lodPower)
+        public ChunkGroupTreeLeaf(IChunkBuilder chunkBuilder, Vector3Int anchorPoint, Vector3Int relativeAnchorPoint, int size, int lodPower)
         {
+            this.size = size;
             ChunkBuilder = chunkBuilder;
             GroupAnchorPosition = anchorPoint;
-            Size = size;
+            groupRelativeAnchorPosition = relativeAnchorPoint; 
         }
+
+        int size;
+
+        public override int Size => size; 
 
         protected IMarchingCubeChunk chunk;
 
-        public IChunkBuilder ChunkBuilder { set; protected get; }
+        Vector3Int groupRelativeAnchorPosition;
 
-        public int Size { get; set; }
+        public bool IsEmpty => chunk != null;
 
-        public bool IsEmpty => true;
-
-        public Vector3Int GroupAnchorPosition { get; protected set; }
-        Vector3Int IChunkGroupOrganizer.GroupAnchorPosition { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
+        public override Vector3Int GroupRelativeAnchorPosition => groupRelativeAnchorPosition;
 
         public IMarchingCubeChunk GetChunkAtLocal(Vector3Int pos)
         {
             return chunk;
         }
 
-        public IMarchingCubeChunk GetChunkAtLocalPosition(Vector3Int pos)
+        public override IMarchingCubeChunk GetChunkAtLocalPosition(Vector3Int pos)
         {
             return chunk;
         }
 
-        public IMarchingCubeChunk BuildChunkAtLocalPosition(Vector3Int pos, int size, int lodPower)
+        public override void SetChunkAtLocalPosition(Vector3Int pos, int size, int lodPower, IMarchingCubeChunk chunk)
         {
-            throw new System.NotImplementedException();
+            chunk.AnchorPos = GroupAnchorPosition;
+            chunk.ChunkSize = Size;
+            this.chunk = chunk; 
         }
 
-        public bool TryGetChunkAtLocalPosition(Vector3Int pos, out IMarchingCubeChunk chunk)
+
+        public override bool TryGetChunkAtLocalPosition(Vector3Int pos, out IMarchingCubeChunk chunk)
         {
-            throw new System.NotImplementedException();
+            chunk = this.chunk;
+            return chunk != null;
         }
 
-        public bool RemoveChunkAt(Vector3Int pos)
+        public override bool RemoveChunkAtLocalPosition(Vector3Int pos)
         {
-            throw new System.NotImplementedException();
+            chunk.ResetChunk();
+            return true;
         }
+
+        public override bool HasChunkAtLocalPosition(Vector3Int pos)
+        {
+            return true;
+        }
+
     }
 
 }

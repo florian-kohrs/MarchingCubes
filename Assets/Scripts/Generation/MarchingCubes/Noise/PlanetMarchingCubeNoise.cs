@@ -15,9 +15,9 @@ namespace MarchingCubes
 
         public float noiseScale = 0.1f;
 
-        public void BuildNoiseArea(Vector4[] points, Vector3Int chunkOffset, Vector3 noiseOffset, int size, Func<Vector3Int, int> CoordToIndex)
+        public void BuildNoiseArea(Vector4[] points, Vector3Int chunkOffset, int chunkSize, Vector3 noiseOffset, int size, Func<Vector3Int, int> CoordToIndex)
         {
-            chunkOffset = chunkOffset * MarchingCubeChunkHandler.ChunkSize;
+            chunkOffset = chunkOffset * chunkSize;
             Vector3Int v = new Vector3Int();
             int shift = Mathf.FloorToInt((size + 1) / 2);
             Vector3Int vShift = new Vector3Int(shift, shift, shift);

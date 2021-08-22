@@ -13,7 +13,9 @@ namespace MarchingCubes
 
         IMarchingCubeChunk GetChunkAtLocalPosition(Vector3Int pos);
 
-        IMarchingCubeChunk SetChunkAtLocalPosition(Vector3Int pos, int size, int lodPower, IMarchingCubeChunk chunk);
+        void SetChunkAtLocalPosition(Vector3Int pos, int size, int lodPower, IMarchingCubeChunk chunk);
+
+        Vector3Int GroupRelativeAnchorPosition { get; }
 
         /// <summary>
         /// 
@@ -23,16 +25,14 @@ namespace MarchingCubes
         /// <returns></returns>
         bool TryGetChunkAtLocalPosition(Vector3Int pos, out IMarchingCubeChunk chunk);
 
-        bool HasChunkAt(Vector3Int pos);
+        bool HasChunkAtLocalPosition(Vector3Int pos);
 
 
-        bool RemoveChunkAt(Vector3Int pos);
+        bool RemoveChunkAtLocalPosition(Vector3Int pos);
 
         int Size { get; } 
 
-        bool IsEmpty { get; }
-
-        Vector3Int GroupAnchorPosition { get; set; }
+        Vector3Int GroupAnchorPosition { get; }
 
     }
 }

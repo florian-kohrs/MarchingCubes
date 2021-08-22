@@ -308,17 +308,26 @@ public static class VectorExtension
         return r;
     }
 
+    public static Vector3Int[] GetAllAdjacentDirections =
+        new Vector3Int[] {
+            new Vector3Int(1, 0, 0),
+            new Vector3Int(- 1, 0, 0),
+            new Vector3Int(0, 1, 0),
+            new Vector3Int(0, - 1, 0),
+            new Vector3Int(0, 0, + 1),
+            new Vector3Int(0, 0, - 1) };
+    
 
-    public static Vector3Int[] GetAllDirectNeighbours(this Vector3Int v3)
-    {
-        Vector3Int[] r = new Vector3Int[6];
-        r[0] = new Vector3Int(v3.x + 1, v3.y, v3.z);
-        r[1] = new Vector3Int(v3.x - 1, v3.y, v3.z);
-        r[2] = new Vector3Int(v3.x, v3.y + 1, v3.z);
-        r[3] = new Vector3Int(v3.x, v3.y - 1, v3.z);
-        r[4] = new Vector3Int(v3.x, v3.y, v3.z + 1);
-        r[5] = new Vector3Int(v3.x, v3.y, v3.z - 1);
-        return r;
-    }
+    //public static Vector3Int[] GetAllDirectNeighbours(this Vector3Int v3)
+    //{
+    //    Vector3Int[] r = new Vector3Int[6];
+    //    r[0] = new Vector3Int(v3.x + 1, v3.y, v3.z);
+    //    r[1] = new Vector3Int(v3.x - 1, v3.y, v3.z);
+    //    r[2] = new Vector3Int(v3.x, v3.y + 1, v3.z);
+    //    r[3] = new Vector3Int(v3.x, v3.y - 1, v3.z);
+    //    r[4] = new Vector3Int(v3.x, v3.y, v3.z + 1);
+    //    r[5] = new Vector3Int(v3.x, v3.y, v3.z - 1);
+    //    return r;
+    //}
 
 }

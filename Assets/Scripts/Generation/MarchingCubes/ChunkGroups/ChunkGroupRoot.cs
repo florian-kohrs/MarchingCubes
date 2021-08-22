@@ -4,48 +4,63 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public class ChunkGroupRoot : IChunkGroupRoot
+    public class ChunkGroupRoot : BaseChunkGroupOrganizer, IChunkGroupRoot
     {
 
-        public IChunkBuilder ChunkBuilder { protected get;  set; }
 
         protected IChunkGroupOrganizer child;
 
-        public int Size => MarchingCubeChunkHandler.CHUNK_GROUP_SIZE;
+        public override int Size => MarchingCubeChunkHandler.CHUNK_GROUP_SIZE;
 
-        public Vector3Int GroupAnchorPosition { get; set; }
+        public override Vector3Int GroupRelativeAnchorPosition => GroupAnchorPosition;
 
-        public IMarchingCubeChunk GetChunkAtLocalPosition(Vector3Int pos)
+        public override IMarchingCubeChunk GetChunkAtLocalPosition(Vector3Int pos)
         {
             return child.GetChunkAtLocalPosition(pos);
         }
 
-        public bool TryGetChunkAtLocalPosition(Vector3Int pos, out IMarchingCubeChunk chunk) => child.TryGetChunkAtLocalPosition(pos, out chunk);
+        public override bool TryGetChunkAtLocalPosition(Vector3Int pos, out IMarchingCubeChunk chunk) => child.TryGetChunkAtLocalPosition(pos, out chunk);
 
-        public IMarchingCubeChunk BuildChunkAtLocalPosition(Vector3Int globalPosition, int size, int lodPower)
+        public void SetChunkAtGlobalPosition(Vector3Int globalPosition, int size, int lodPower, IMarchingCubeChunk chunk)
+        {
+            SetChunkAtLocalPosition(globalPosition - GroupAnchorPosition, size, lodPower, chunk);
+        }
+            
+        public override void SetChunkAtLocalPosition(Vector3Int localPosition, int size, int lodPower, IMarchingCubeChunk chunk)
         {
             if (!HasChild)
             {
                 if(size == Size)
                 {
-                    child = new ChunkGroupTreeLeaf(ChunkBuilder, GroupAnchorPosition, size, lodPower);
+                    child = new ChunkGroupTreeLeaf(ChunkBuilder, GroupAnchorPosition, GroupAnchorPosition, size, lodPower);
                 }
                 else
                 {
-                    child = new ChunkGroupTreeNode(ChunkBuilder, GroupAnchorPosition, size);
+                    child = new ChunkGroupTreeNode(ChunkBuilder, GroupAnchorPosition, localPosition, size);
                 }
             }
-            return child.BuildChunkAtLocalPosition(globalPosition, size, lodPower);
+            child.SetChunkAtLocalPosition(localPosition, size, lodPower, chunk);
         }
 
-        public void SetRootChild(IChunkGroupOrganizer child)
+        public bool RemoveChunkAtGlobalPosition(Vector3Int pos)
         {
-            this.child = child;
+            return child.RemoveChunkAtLocalPosition(pos - GroupAnchorPosition);
         }
 
-        public bool RemoveChunkAt(Vector3Int pos)
+
+        public override bool RemoveChunkAtLocalPosition(Vector3Int pos)
         {
-            return child.RemoveChunkAt(pos);
+            return child.RemoveChunkAtLocalPosition(pos);
+        }
+
+        public override bool HasChunkAtLocalPosition(Vector3Int pos)
+        {
+            return child != null && child.HasChunkAtLocalPosition(pos);
+        }
+
+        public bool HasChunkAtGlobalPosition(Vector3Int globalPosition)
+        {
+            return HasChunkAtLocalPosition(globalPosition - GroupAnchorPosition);
         }
 
         public bool HasChild => child != null;

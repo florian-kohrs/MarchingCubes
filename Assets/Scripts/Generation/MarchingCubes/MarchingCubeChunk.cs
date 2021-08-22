@@ -5,19 +5,20 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
+
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
     public class MarchingCubeChunk : CompressedMarchingCubeChunk, IMarchingCubeInteractableChunk, IHasInteractableMarchingCubeChunk
     {
 
-        public override void InitializeWithMeshDataParallel(TriangleBuilder[] tris, float[] points, int size, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel, Action OnDone = null)
+        public override void InitializeWithMeshDataParallel(TriangleBuilder[] tris, float[] points, MarchingCubeChunkNeighbourLODs neighbourLODs, Action OnDone = null)
         {
             Debug.LogWarning("This class does not support concurrency! Will use base class instead. Use " + nameof(MarchingCubeChunkThreaded) + "instead!");
-            base.InitializeWithMeshDataParallel(tris, points, size, handler,neighbourLODs, surfaceLevel, OnDone);
+            base.InitializeWithMeshDataParallel(tris, points, neighbourLODs, OnDone);
         }
 
-        public override void InitializeWithMeshData(TriangleBuilder[] tris, float[] points, int size, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel)
+        public override void InitializeWithMeshData(TriangleBuilder[] tris, float[] points, MarchingCubeChunkNeighbourLODs neighbourLODs)
         {
-            BuildChunkFromMeshData(tris, points, size, handler, neighbourLODs, surfaceLevel);
+            BuildChunkFromMeshData(tris, points, neighbourLODs);
         }
 
         protected override void WorkOnBuildedChunk()

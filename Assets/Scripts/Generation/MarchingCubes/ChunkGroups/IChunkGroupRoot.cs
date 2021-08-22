@@ -6,7 +6,6 @@ namespace MarchingCubes
 {
     public interface IChunkGroupRoot : IChunkGroupOrganizer
     {
-        void SetRootChild(IChunkGroupOrganizer child);
 
         /// <summary>
         /// 
@@ -16,8 +15,13 @@ namespace MarchingCubes
         /// <param name="lodPower"></param>
         /// <param name="chunk"></param>
         /// <returns>returns the anchor position of the chunk</returns>
-        Vector3Int SetChunkAtGlobalPosition(Vector3Int pos, int size, int lodPower, IMarchingCubeChunk chunk);
+        void SetChunkAtGlobalPosition(Vector3Int pos, int size, int lodPower, IMarchingCubeChunk chunk);
 
         bool HasChild { get; }
+
+        bool HasChunkAtGlobalPosition(Vector3Int pos);
+
+        bool RemoveChunkAtGlobalPosition(Vector3Int pos);
+
     }
 }

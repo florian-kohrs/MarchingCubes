@@ -8,14 +8,14 @@ namespace MarchingCubes
     public class CompressedMarchingCubeChunk : IMarchingCubeChunk
     {
 
-        public virtual void InitializeWithMeshDataParallel(TriangleBuilder[] tris, float[] points, int size, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLod, float surfaceLevel, Action OnDone = null)
+        public virtual void InitializeWithMeshDataParallel(TriangleBuilder[] tris, float[] points, MarchingCubeChunkNeighbourLODs neighbourLod, Action OnDone = null)
         {
             throw new Exception("This class doesnt support concurrency");
         }
 
-        public virtual void InitializeWithMeshData(TriangleBuilder[] tris, float[] points, int size, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLod, float surfaceLevel)
+        public virtual void InitializeWithMeshData(TriangleBuilder[] tris, float[] points, MarchingCubeChunkNeighbourLODs neighbourLod)
         {
-            BuildChunkFromMeshData(tris, points, size, handler, neighbourLODs, surfaceLevel);
+            BuildChunkFromMeshData(tris, points, neighbourLODs);
         }
 
         //public virtual void InitializeEmpty(IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel)
@@ -124,9 +124,33 @@ namespace MarchingCubes
 
         protected Vector3Int chunkAnchorPosition;
 
-        public Vector3Int ChunkAnchorPosition { get => chunkAnchorPosition; set => chunkAnchorPosition = value; }
+        protected Vector3Int chunkCenterPosition;
+
+        public Vector3Int ChunkAnchorPosition 
+        {   
+            get => chunkAnchorPosition;
+            set
+            { 
+                chunkAnchorPosition = value;
+                int halfSize = ChunkSize / 2;
+                chunkCenterPosition = new Vector3Int(
+                    chunkAnchorPosition.x + halfSize,
+                    chunkAnchorPosition.y + halfSize,
+                    chunkAnchorPosition.z + halfSize);
+            }
+        }
+
+        public Vector3Int CenterPos => chunkCenterPosition;
 
         public IMarchingCubeChunkHandler chunkHandler;
+
+        public IMarchingCubeChunkHandler ChunkHandler
+        {
+            set
+            {
+                chunkHandler = value;
+            }
+        }
 
         public IMarchingCubeChunkHandler GetChunkHandler => chunkHandler;
 
@@ -168,6 +192,8 @@ namespace MarchingCubes
 
         public int ChunkSize { get => chunkSize; set => chunkSize = value; }
 
+        public float SurfaceLevel { set => surfaceLevel = value; }
+
         protected Vector3Int GetGlobalPositionFromOffset(Vector3Int offset)
         {
             Vector3Int anchor = AnchorPos;
@@ -177,16 +203,13 @@ namespace MarchingCubes
                 anchor.z + offset.z * chunkSize);
         }
 
-        protected virtual void BuildChunkFromMeshData(TriangleBuilder[] tris, float[] points, int size, IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel)
+        protected virtual void BuildChunkFromMeshData(TriangleBuilder[] tris, float[] points, MarchingCubeChunkNeighbourLODs neighbourLODs)
         {
             HasStarted = true;
-            this.chunkSize = size;
             this.points = points;
-            this.surfaceLevel = surfaceLevel;
             this.neighbourLODs = neighbourLODs;
             triCount = tris.Length * 3;
             careAboutNeighbourLODS = neighbourLODs.HasNeighbourWithHigherLOD(LODPower);
-            this.chunkHandler = handler;
             BuildFromTriangleArray(tris);
 
             WorkOnBuildedChunk();

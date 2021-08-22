@@ -16,7 +16,7 @@ namespace MarchingCubes
 
         Vector3Int AnchorPos { get; set; }
         
-        Vector3Int CenterPos { get; set; }
+        Vector3Int CenterPos { get; }
 
         bool HasStarted { get; }
 
