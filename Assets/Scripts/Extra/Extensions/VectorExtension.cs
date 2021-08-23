@@ -277,6 +277,11 @@ public static class VectorExtension
         return a.LerpAngle(b, t);
     }
 
+    public static Vector3Int ToVector3Int(Vector3 v)
+    {
+        return new Vector3Int((int)v.x, (int)v.y, (int)v.x);
+    }
+
     public static int ToInt(this Vector3 v, Vector3 size)
     {
         return (int)(v.x * size.x * size.y + v.y * size.y + v.z);

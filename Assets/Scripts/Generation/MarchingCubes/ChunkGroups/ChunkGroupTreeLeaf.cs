@@ -8,18 +8,12 @@ namespace MarchingCubes
     public class ChunkGroupTreeLeaf : BaseChunkGroupOrganizer
     {
 
-        public ChunkGroupTreeLeaf(IMarchingCubeChunk chunk)
+        public ChunkGroupTreeLeaf(IMarchingCubeChunk chunk, Vector3Int anchorPoint, Vector3Int relativeAnchorPoint)
         {
             this.chunk = chunk;
+            this.size = chunk.ChunkSize;
         }
 
-        public ChunkGroupTreeLeaf(IChunkBuilder chunkBuilder, Vector3Int anchorPoint, Vector3Int relativeAnchorPoint, int size, int lodPower)
-        {
-            this.size = size;
-            ChunkBuilder = chunkBuilder;
-            GroupAnchorPosition = anchorPoint;
-            groupRelativeAnchorPosition = relativeAnchorPoint; 
-        }
 
         int size;
 
@@ -43,7 +37,7 @@ namespace MarchingCubes
             return chunk;
         }
 
-        public override void SetChunkAtLocalPosition(Vector3Int pos, int size, int lodPower, IMarchingCubeChunk chunk)
+        public override void SetChunkAtLocalPosition(Vector3Int pos, IMarchingCubeChunk chunk)
         {
             chunk.AnchorPos = GroupAnchorPosition;
             chunk.ChunkSize = Size;

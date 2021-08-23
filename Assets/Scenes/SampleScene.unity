@@ -724,7 +724,7 @@ MonoBehaviour:
   blockAroundPlayer: 40
   marshShader: {fileID: 7200000, guid: 85821faa1826fb64b8a447b36cf4fae9, type: 3}
   noiseOffset: {x: 0, y: 0, z: 0}
-  lodForDistances:
+  lodPowerForDistances:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
@@ -737,10 +737,43 @@ MonoBehaviour:
       inWeight: 0
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 0.1
+      time: 0.15
       value: 0
       inSlope: -0
-      outSlope: 6.666667
+      outSlope: 4.705882
+      tangentMode: 69
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 4
+      inSlope: 4.705882
+      outSlope: 4.705882
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  chunkSizePowerForDistances:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 2
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.15
+      value: 2
+      inSlope: -0
+      outSlope: 4.705882
       tangentMode: 69
       weightedMode: 0
       inWeight: 0.33333334
@@ -748,8 +781,8 @@ MonoBehaviour:
     - serializedVersion: 3
       time: 1
       value: 6
-      inSlope: 6.666667
-      outSlope: 6.666667
+      inSlope: 4.705882
+      outSlope: 4.705882
       tangentMode: 34
       weightedMode: 0
       inWeight: 0.33333334

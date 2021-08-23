@@ -15,7 +15,7 @@ namespace MarchingCubes
         /// <param name="lodPower"></param>
         /// <param name="chunk"></param>
         /// <returns>returns the anchor position of the chunk</returns>
-        void SetChunkAtGlobalPosition(Vector3Int pos, int size, int lodPower, IMarchingCubeChunk chunk);
+        void SetChunkAtPosition(Vector3Int pos, IMarchingCubeChunk chunk);
 
         bool HasChild { get; }
 

@@ -7,6 +7,10 @@ namespace MarchingCubes
     public class ChunkGroupRoot : BaseChunkGroupOrganizer, IChunkGroupRoot
     {
 
+        public ChunkGroupRoot(Vector3Int coord)
+        {
+            GroupAnchorPosition = coord * MarchingCubeChunkHandler.CHUNK_GROUP_SIZE;
+        }
 
         protected IChunkGroupOrganizer child;
 
@@ -21,25 +25,25 @@ namespace MarchingCubes
 
         public override bool TryGetChunkAtLocalPosition(Vector3Int pos, out IMarchingCubeChunk chunk) => child.TryGetChunkAtLocalPosition(pos, out chunk);
 
-        public void SetChunkAtGlobalPosition(Vector3Int globalPosition, int size, int lodPower, IMarchingCubeChunk chunk)
+        public void SetChunkAtPosition(Vector3Int pos, IMarchingCubeChunk chunk)
         {
-            SetChunkAtLocalPosition(globalPosition - GroupAnchorPosition, size, lodPower, chunk);
+            SetChunkAtLocalPosition(pos - GroupAnchorPosition, chunk);
         }
             
-        public override void SetChunkAtLocalPosition(Vector3Int localPosition, int size, int lodPower, IMarchingCubeChunk chunk)
+        public override void SetChunkAtLocalPosition(Vector3Int localPosition, IMarchingCubeChunk chunk)
         {
             if (!HasChild)
             {
-                if(size == Size)
+                if(chunk.ChunkSize == Size)
                 {
-                    child = new ChunkGroupTreeLeaf(ChunkBuilder, GroupAnchorPosition, GroupAnchorPosition, size, lodPower);
+                    child = new ChunkGroupTreeLeaf(chunk, GroupAnchorPosition, GroupAnchorPosition);
                 }
                 else
                 {
-                    child = new ChunkGroupTreeNode(ChunkBuilder, GroupAnchorPosition, localPosition, size);
+                    child = new ChunkGroupTreeNode(GroupAnchorPosition, localPosition, Size);
                 }
             }
-            child.SetChunkAtLocalPosition(localPosition, size, lodPower, chunk);
+            child.SetChunkAtLocalPosition(localPosition, chunk);
         }
 
         public bool RemoveChunkAtGlobalPosition(Vector3Int pos)

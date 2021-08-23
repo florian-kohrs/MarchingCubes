@@ -13,7 +13,7 @@ namespace MarchingCubes
 
         IMarchingCubeChunk GetChunkAtLocalPosition(Vector3Int pos);
 
-        void SetChunkAtLocalPosition(Vector3Int pos, int size, int lodPower, IMarchingCubeChunk chunk);
+        void SetChunkAtLocalPosition(Vector3Int pos, IMarchingCubeChunk chunk);
 
         Vector3Int GroupRelativeAnchorPosition { get; }
 
