@@ -279,7 +279,7 @@ public static class VectorExtension
 
     public static Vector3Int ToVector3Int(Vector3 v)
     {
-        return new Vector3Int((int)v.x, (int)v.y, (int)v.x);
+        return new Vector3Int((int)v.x, (int)v.y, (int)v.z);
     }
 
     public static int ToInt(this Vector3 v, Vector3 size)

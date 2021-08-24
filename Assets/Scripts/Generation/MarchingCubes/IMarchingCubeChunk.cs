@@ -20,8 +20,6 @@ namespace MarchingCubes
 
         bool HasStarted { get; }
 
-        Vector3Int ChunkAnchorPosition { get; set; }
-
         IEnumerable<Vector3Int> NeighbourIndices { get; }
 
         int NeighbourCount { get; }

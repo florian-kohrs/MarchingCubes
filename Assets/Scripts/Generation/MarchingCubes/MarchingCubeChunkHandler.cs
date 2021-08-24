@@ -227,7 +227,7 @@ namespace MarchingCubes
             startPos = player.position;
             IMarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
             maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
-            //StartCoroutine(BuildRelevantChunksParallelAround(chunk));
+            StartCoroutine(BuildRelevantChunksParallelAround(chunk));
         }
 
         private void Update()
@@ -337,13 +337,12 @@ namespace MarchingCubes
             channeledChunks--;
             var e = chunk.NeighbourIndices.GetEnumerator();
             Vector3Int v3;
-            IMarchingCubeChunk neighbourChunk;
             while (e.MoveNext())
             {
                 v3 = e.Current;
-                if (!TryGetChunkAtPosition(v3, out neighbourChunk))
+                if (!HasChunkAtPosition(v3))
                 {
-                    float distance = (startPos - neighbourChunk.CenterPos).magnitude;
+                    float distance = (startPos - v3).magnitude;
                     if (distance <= buildAroundDistance)
                     {
                         closestNeighbours.Enqueue(distance, v3);
@@ -388,19 +387,18 @@ namespace MarchingCubes
             IMarchingCubeChunk chunk = null;
             while (isEmpty)
             {
+                chunkIndex = PositionToChunkGroupCoord(pos);
                 chunk = CreateChunkAt(pos, chunkIndex);
                 isEmpty = chunk.IsEmpty;
                 if (chunk.IsEmpty)
                 {
                     if (chunk.IsCompletlySolid)
                     {
-                        chunkIndex.y += 1;
-                        pos.y += CHUNK_GROUP_SIZE;
+                        pos.y += chunk.ChunkSize;
                     }
                     else
                     {
-                        chunkIndex.y -= 1;
-                        pos.y -= CHUNK_GROUP_SIZE;
+                        pos.y -= chunk.ChunkSize;
                     }
                 }
             }
@@ -431,7 +429,7 @@ namespace MarchingCubes
             int chunkSize;
             GetSizeAndLodPowerForChunkPosition(pos, out chunkSize, out lodPower);
             IMarchingCubeChunk chunk = GetThreadedChunkObjectAt(VectorExtension.ToVector3Int(pos), coord, lodPower, chunkSize);
-            BuildChunkParallel(coord, chunk, () => OnDone(chunk), RoundToPowerOf2(lodPower));
+            BuildChunkParallel(chunk, RoundToPowerOf2(lodPower), () => OnDone(chunk));
         }
 
         protected IMarchingCubeChunk CreateChunkAt(Vector3Int p)
@@ -445,7 +443,7 @@ namespace MarchingCubes
             int chunkSize;
             GetSizeAndLodPowerForChunkPosition(pos, out chunkSize, out lodPower);
             IMarchingCubeChunk chunk = GetThreadedChunkObjectAt(VectorExtension.ToVector3Int(pos), coord, lodPower, chunkSize);
-            BuildChunk(coord, chunk, RoundToPowerOf2(lodPower));
+            BuildChunk(chunk, RoundToPowerOf2(lodPower));
             return chunk;
         }
 
@@ -602,7 +600,7 @@ namespace MarchingCubes
 
         protected Vector3Int PositionToChunkGroupCoord(Vector3 pos)
         {
-            return PositionToChunkGroupCoord((int)pos.x, (int)pos.y, (int)pos.z);
+            return PositionToChunkGroupCoord(pos.x, pos.y, pos.z);
         }
 
         protected Vector3Int PositionToChunkGroupCoord(Vector3Int pos)
@@ -610,12 +608,12 @@ namespace MarchingCubes
             return PositionToChunkGroupCoord(pos.x, pos.y, pos.z);
         }
 
-        protected Vector3Int PositionToChunkGroupCoord(int x, int y, int z)
+        protected Vector3Int PositionToChunkGroupCoord(float x, float y, float z)
         {
             return new Vector3Int(
-                x / CHUNK_GROUP_SIZE,
-                y / CHUNK_GROUP_SIZE,
-                z / CHUNK_GROUP_SIZE);
+                Mathf.FloorToInt(x / CHUNK_GROUP_SIZE),
+                Mathf.FloorToInt(y / CHUNK_GROUP_SIZE),
+                Mathf.FloorToInt(z / CHUNK_GROUP_SIZE));
         }
 
 
@@ -632,29 +630,30 @@ namespace MarchingCubes
         protected MarchingCubeChunkNeighbourLODs GetNeighbourLODSFrom(IMarchingCubeChunk chunk)
         {
             MarchingCubeChunkNeighbourLODs result = new MarchingCubeChunkNeighbourLODs();
-            Vector3Int[] coords = VectorExtension.GetAllAdjacentDirections;
+            Vector3Int[] coords = VectorExtension.GetAllAdjacentDirections; 
             for (int i = 0; i < coords.Length; i++)
             {
                 MarchingCubeNeighbour neighbour = new MarchingCubeNeighbour();
-                if (!TryGetChunkAtPosition(coords[i], out neighbour.chunk))
+                Vector3Int neighbourPos = chunk.CenterPos + chunk.ChunkSize * coords[i];
+                if (!TryGetChunkAtPosition(neighbourPos, out neighbour.chunk))
                 {
                     //change name to extectedLodPower
-                    neighbour.estimatedLodPower = GetLodPowerAt(coords[i]);
+                    neighbour.estimatedLodPower = GetLodPowerAt(neighbourPos);
                 }
                 result[i] = neighbour;
             }
             return result;
         }
 
-        protected void BuildChunk(Vector3Int pos, IMarchingCubeChunk chunk, int lod)
+        protected void BuildChunk(IMarchingCubeChunk chunk, int lod)
         {
-            int numTris = ApplyChunkDataAndDispatchAndGetShaderData(pos, chunk, lod);
+            int numTris = ApplyChunkDataAndDispatchAndGetShaderData(chunk, lod);
             chunk.InitializeWithMeshData(tris, pointsArray, GetNeighbourLODSFrom(chunk));
         }
 
-        protected void BuildChunkParallel(Vector3Int pos, IMarchingCubeChunk chunk, Action OnDone, int lod)
+        protected void BuildChunkParallel(IMarchingCubeChunk chunk, int lod, Action OnDone)
         {
-            int numTris = ApplyChunkDataAndDispatchAndGetShaderData(pos, chunk, lod);
+            int numTris = ApplyChunkDataAndDispatchAndGetShaderData(chunk, lod);
             channeledChunks++;
             chunk.InitializeWithMeshDataParallel(tris, pointsArray, GetNeighbourLODSFrom(chunk), OnDone);
         }
@@ -665,7 +664,7 @@ namespace MarchingCubes
         //}
 
 
-        protected int ApplyChunkDataAndDispatchAndGetShaderData(Vector3Int pos, IMarchingCubeChunk chunk, int lod)
+        protected int ApplyChunkDataAndDispatchAndGetShaderData(IMarchingCubeChunk chunk, int lod)
         {
             int chunkSize = chunk.ChunkSize;
             if (chunkSize % lod != 0)

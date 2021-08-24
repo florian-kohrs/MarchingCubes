@@ -122,23 +122,7 @@ namespace MarchingCubes
 
         //protected Vector3Int chunkOffset;
 
-        protected Vector3Int chunkAnchorPosition;
-
         protected Vector3Int chunkCenterPosition;
-
-        public Vector3Int ChunkAnchorPosition 
-        {   
-            get => chunkAnchorPosition;
-            set
-            { 
-                chunkAnchorPosition = value;
-                int halfSize = ChunkSize / 2;
-                chunkCenterPosition = new Vector3Int(
-                    chunkAnchorPosition.x + halfSize,
-                    chunkAnchorPosition.y + halfSize,
-                    chunkAnchorPosition.z + halfSize);
-            }
-        }
 
         public Vector3Int CenterPos => chunkCenterPosition;
 
@@ -186,11 +170,34 @@ namespace MarchingCubes
         public bool IsCompletlyAir => IsEmpty && points[0] < surfaceLevel;
 
 
-        public Vector3Int AnchorPos { get; set; }
+        public Vector3Int AnchorPos
+        {
+            get
+            {
+                return anchorPos;
+            }
+            set
+            {
+                anchorPos = value;
+                UpdateChunkCenterPos();
+            }
+        }
+
+        private void UpdateChunkCenterPos()
+        {
+            int halfSize = ChunkSize / 2;
+            chunkCenterPosition = new Vector3Int(
+                anchorPos.x + halfSize,
+                anchorPos.y + halfSize,
+                anchorPos.z + halfSize);
+        }
+
+        private Vector3Int anchorPos;
 
         int IMarchingCubeChunk.PointsPerAxis => pointsPerAxis;
 
-        public int ChunkSize { get => chunkSize; set => chunkSize = value; }
+        public int ChunkSize { get => chunkSize; 
+            set { chunkSize = value; UpdateChunkCenterPos(); } }
 
         public float SurfaceLevel { set => surfaceLevel = value; }
 
@@ -255,7 +262,7 @@ namespace MarchingCubes
             for (int i = 0; i < trisWithNeighboursOutOfBounds.Count; i++)
             {
                 neighbour = trisWithNeighboursOutOfBounds[i];
-                Vector3Int target = chunkAnchorPosition + neighbour.outsideNeighbour.offset;
+                Vector3Int target = anchorPos + neighbour.outsideNeighbour.offset;
                 AddNeighbourFromEntity(target, null);
 
                 if (chunkHandler.TryGetReadyChunkAt(target, out c))

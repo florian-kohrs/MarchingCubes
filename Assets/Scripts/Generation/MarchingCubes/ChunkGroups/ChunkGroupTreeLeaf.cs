@@ -11,17 +11,17 @@ namespace MarchingCubes
         public ChunkGroupTreeLeaf(IMarchingCubeChunk chunk, Vector3Int anchorPoint, Vector3Int relativeAnchorPoint)
         {
             this.chunk = chunk;
-            this.size = chunk.ChunkSize;
+            chunk.AnchorPos = anchorPoint;
+            chunk.ChunkSize = Size;
+            groupRelativeAnchorPosition = relativeAnchorPoint;
         }
 
 
-        int size;
-
-        public override int Size => size; 
+        public override int Size => chunk.ChunkSize; 
 
         protected IMarchingCubeChunk chunk;
 
-        Vector3Int groupRelativeAnchorPosition;
+        public Vector3Int groupRelativeAnchorPosition;
 
         public bool IsEmpty => chunk != null;
 
@@ -39,11 +39,7 @@ namespace MarchingCubes
 
         public override void SetChunkAtLocalPosition(Vector3Int pos, IMarchingCubeChunk chunk)
         {
-            chunk.AnchorPos = GroupAnchorPosition;
-            chunk.ChunkSize = Size;
-            this.chunk = chunk; 
         }
-
 
         public override bool TryGetChunkAtLocalPosition(Vector3Int pos, out IMarchingCubeChunk chunk)
         {

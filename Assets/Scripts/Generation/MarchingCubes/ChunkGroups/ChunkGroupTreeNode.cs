@@ -28,7 +28,6 @@ namespace MarchingCubes
         protected const int bottomRightBack = 6;
         protected const int bottomRightFront = 7;
 
-
         public int size;
 
         protected int halfSize;
@@ -82,14 +81,17 @@ namespace MarchingCubes
             GetAnchorPositionForChunkAt(relativePosition, out childAnchorPosition, out childRelativeAnchorPosition);
             if (chunk.ChunkSize >= halfSize)
             {
+                if (children[childIndex] != null)
+                    throw new NotImplementedException("Wants to override children. not implemented!");
                 child = new ChunkGroupTreeLeaf(chunk, childAnchorPosition, childRelativeAnchorPosition);
             }
             else
             {
                 child = new ChunkGroupTreeNode(childAnchorPosition, childRelativeAnchorPosition, halfSize);
+                child.SetChunkAtLocalPosition(relativePosition - child.GroupRelativeAnchorPosition, chunk);
             }
             children[childIndex] = child;
-            child.SetChunkAtLocalPosition(child.GroupRelativeAnchorPosition - relativePosition, chunk);
+            
         }
 
         public override bool TryGetChunkAtLocalPosition(Vector3Int localPosition, out IMarchingCubeChunk chunk)

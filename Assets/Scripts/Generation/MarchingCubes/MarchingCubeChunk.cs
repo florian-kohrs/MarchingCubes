@@ -625,7 +625,7 @@ namespace MarchingCubes
 
             if (IsBorderCube(e.origin))
             {
-                chunkHandler.EditNeighbourChunksAt(ChunkAnchorPosition, e.origin, delta);
+                chunkHandler.EditNeighbourChunksAt(AnchorPos, e.origin, delta);
             }
 
             RebuildAround(e, e.origin);
@@ -634,7 +634,7 @@ namespace MarchingCubes
 
         public MarchingCubeEntity GetClosestEntity(Vector3 v3)
         {
-            Vector3 rest = v3 - chunkAnchorPosition;
+            Vector3 rest = v3 - AnchorPos;
             rest /= lod;
             return GetEntityAt((int)rest.x, (int)rest.y, (int)rest.z);
         }
