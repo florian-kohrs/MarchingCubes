@@ -55,7 +55,7 @@ namespace MarchingCubes
 
         public const int maxLodAtDistance = 2000;
 
-        public const int maxSizeAtDistance = 2000;
+        public const int maxSizeAtDistance = 200;
 
         [Header("Voxel Settings")]
         //public float boundsSize = 8;

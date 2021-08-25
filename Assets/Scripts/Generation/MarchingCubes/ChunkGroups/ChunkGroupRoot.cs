@@ -36,7 +36,7 @@ namespace MarchingCubes
             {
                 if(chunk.ChunkSize == Size)
                 {
-                    child = new ChunkGroupTreeLeaf(chunk, GroupAnchorPosition, GroupAnchorPosition);
+                    child = new ChunkGroupTreeLeaf(chunk, GroupAnchorPosition, Size);
                 }
                 else
                 {

@@ -74,24 +74,32 @@ namespace MarchingCubes
         public override void SetChunkAtLocalPosition(Vector3Int relativePosition, IMarchingCubeChunk chunk)
         {
             int childIndex = GetIndexForLocalPosition(relativePosition);
-            IChunkGroupOrganizer child;
-
-            Vector3Int childAnchorPosition;
-            Vector3Int childRelativeAnchorPosition;
-            GetAnchorPositionForChunkAt(relativePosition, out childAnchorPosition, out childRelativeAnchorPosition);
-            if (chunk.ChunkSize >= halfSize)
+            
+            if (chunk.ChunkSize >= halfSize && children[childIndex] == null)
             {
-                if (children[childIndex] != null)
-                    throw new NotImplementedException("Wants to override children. not implemented!");
-                child = new ChunkGroupTreeLeaf(chunk, childAnchorPosition, childRelativeAnchorPosition);
+                Vector3Int childAnchorPosition;
+                Vector3Int childRelativeAnchorPosition;
+                GetAnchorPositionForChunkAt(relativePosition, out childAnchorPosition, out childRelativeAnchorPosition);
+                children[childIndex] = new ChunkGroupTreeLeaf(chunk, childAnchorPosition, halfSize);
             }
             else
             {
-                child = new ChunkGroupTreeNode(childAnchorPosition, childRelativeAnchorPosition, halfSize);
+                IChunkGroupOrganizer child = GetOrCreateChildAt(childIndex, relativePosition);
+                //maybe let child substract anchor
                 child.SetChunkAtLocalPosition(relativePosition - child.GroupRelativeAnchorPosition, chunk);
             }
-            children[childIndex] = child;
-            
+        }
+
+        protected IChunkGroupOrganizer GetOrCreateChildAt(int index, Vector3Int relativePosition)
+        {
+            if(children[index] == null)
+            {
+                Vector3Int childAnchorPosition;
+                Vector3Int childRelativeAnchorPosition;
+                GetAnchorPositionForChunkAt(relativePosition, out childAnchorPosition, out childRelativeAnchorPosition);
+                children[index] = new ChunkGroupTreeNode(childAnchorPosition, childRelativeAnchorPosition, halfSize);
+            }
+            return children[index];
         }
 
         public override bool TryGetChunkAtLocalPosition(Vector3Int localPosition, out IMarchingCubeChunk chunk)
