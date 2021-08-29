@@ -320,7 +320,6 @@ namespace MarchingCubes
                     isNextInProgress = HasChunkStartedAt(next);
                 } while (isNextInProgress && closestNeighbours.size > 0);
 
-
                 if (!isNextInProgress)
                 {
                     CreateChunkParallelAt(next, OnChunkDoneCallBack);
@@ -348,7 +347,7 @@ namespace MarchingCubes
                 float sqrDist = (startPos - v3).sqrMagnitude;
 
                 ///only add neighbours if
-                if (sqrDist > orgSqrDistance 
+                if (sqrDist >= orgSqrDistance 
                     && sqrDist <= buildAroundSqrDistance 
                     && !HasChunkAtPosition(v3))
                 {
