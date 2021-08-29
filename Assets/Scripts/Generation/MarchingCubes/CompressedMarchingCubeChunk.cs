@@ -255,6 +255,55 @@ namespace MarchingCubes
             BuildMeshToConnectHigherLodChunks();
         }
 
+
+        protected Vector3Int TransformBorderPointToChunk(Vector3Int v3, Vector3Int dir, IMarchingCubeChunk neighbour)
+        {
+            Vector3Int result = FlipBorderCoordinateToNeighbourChunk(v3, dir, neighbour);
+
+            float sizeDiff = neighbour.ChunkSize / (float)ChunkSize;
+
+            Vector3Int transformedAnchorPosition;
+
+            if (IsDirectionOutOfChunk(dir))
+            {
+                transformedAnchorPosition = AnchorPos + neighbour.ChunkSize * dir;
+            }
+            else
+            {
+                transformedAnchorPosition = AnchorPos + ChunkSize * dir;
+            }
+
+
+            Vector3Int anchorDiff = transformedAnchorPosition - neighbour.AnchorPos;
+
+            result = result + anchorDiff;
+
+            return result;
+        }
+
+        protected bool IsDirectionOutOfChunk(Vector3Int v3)
+        {
+            return v3.x < 0 || v3.y < 0 || v3.z < 0;
+        }
+
+        protected Vector3Int FlipBorderCoordinateToNeighbourChunk(Vector3Int v3, Vector3Int dir, IMarchingCubeChunk neighbour)
+        {
+            Vector3Int result = v3;
+            if (dir.x < 0)
+                result.x = neighbour.ChunkSize - 1;
+            else if (dir.x > 0)
+                result.x = 0;
+            else if (dir.y < 0)
+                result.y = neighbour.ChunkSize - 1;
+            else if (dir.y > 0)
+                result.y = 0;
+            else if (dir.z < 0)
+                result.z = neighbour.ChunkSize - 1;
+            else if (dir.z > 0)
+                result.z = 0;
+            return result;
+        }
+
         protected virtual void BuildFromTriangleArray(TriangleBuilder[] ts, bool buildMeshAswell = true)
         {
             trisLeft = triCount;
@@ -287,15 +336,16 @@ namespace MarchingCubes
             for (int i = 0; i < trisWithNeighboursOutOfBounds.Count; i++)
             {
                 neighbour = trisWithNeighboursOutOfBounds[i];
-                Vector3Int target = anchorPos + neighbour.outsideNeighbour.offset;
-                ///TODO: check what this does, looks wrong
-                //AddNeighbourFromEntity(neighbour.outsideNeighbour.offset, target, null);
+                Vector3Int target = GetGlobalEstimatedNeighbourPositionFromOffset(neighbour.outsideNeighbour.offset);
+                Vector3Int border = neighbour.originCubeEntity + neighbour.outsideNeighbour.offset;
+
+                AddNeighbourFromEntity(neighbour.outsideNeighbour.offset, target, null);
 
                 if (chunkHandler.TryGetReadyChunkAt(target, out c))
                 {
                     if (c.LODPower > LODPower)
                     {
-                        Vector3Int pos = (neighbour.originCubeEntity + neighbour.outsideNeighbour.offset).Map(ClampInChunk);
+                        Vector3Int pos = TransformBorderPointToChunk(border, neighbour.outsideNeighbour.offset, c);
 
                         CorrectMarchingCubeInDirection(neighbour.originCubeEntity, neighbour, c.LODPower);
                     }

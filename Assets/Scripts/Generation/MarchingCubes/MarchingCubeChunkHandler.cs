@@ -53,9 +53,9 @@ namespace MarchingCubes
 
         public ComputeShader marshShader;
 
-        public const int maxLodAtDistance = 2000;
+        public const int maxLodAtDistance = 400;
 
-        public const int maxSizeAtDistance = 200;
+        public const int maxSizeAtDistance = 400;
 
         [Header("Voxel Settings")]
         //public float boundsSize = 8;
@@ -217,7 +217,7 @@ namespace MarchingCubes
 
         public int buildAroundDistance = 2;
 
-        protected int buildAroundSqrDistance;
+        protected long buildAroundSqrDistance;
 
         DateTime start;
         DateTime end;
@@ -225,7 +225,7 @@ namespace MarchingCubes
         private void Start()
         {
             start = DateTime.Now;
-            buildAroundSqrDistance = buildAroundDistance * buildAroundDistance;
+            buildAroundSqrDistance = (long)buildAroundDistance * buildAroundDistance;
             kernelId = marshShader.FindKernel("March");
             startPos = player.position;
             IMarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
