@@ -20,7 +20,7 @@ namespace MarchingCubes
 
         bool HasStarted { get; }
 
-        IEnumerable<Vector3Int> NeighbourIndices { get; }
+        List<Vector3Int> NeighbourIndices { get; }
 
         int NeighbourCount { get; }
 

@@ -126,11 +126,10 @@ namespace MarchingCubes
         {
             if(e == null)
             {
-                Debug.Log("was null");
+                Debug.LogError("was null");
             }
             OutsideNeighbourConnectionInfo info = TriangulationTableStaticData.GetIndexWithEdges(e.triangulationIndex, rotatedEdge);
             tri.SoftSetNeighbourTwoWay(e.triangles[info.otherTriangleIndex], myEdgeIndices, info.outsideNeighbourEdgeIndices);
-
         }
 
         public bool FindMissingNeighbours(Func<Vector3Int, bool> IsInBounds, List<MissingNeighbourData> addHere)

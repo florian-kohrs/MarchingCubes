@@ -44,9 +44,8 @@ namespace MarchingCubes
             }
             set
             {
-                sizeGrower = value; 
-                vertexSize = chunkSize / lod * sizeGrower;
-                pointsPerAxis = vertexSize + 1;
+                sizeGrower = value;
+                UpdateChunkData();
             }
         }
 
@@ -140,7 +139,22 @@ namespace MarchingCubes
 
         public Dictionary<Vector3Int, HashSet<MarchingCubeEntity>> NeighboursReachableFrom = new Dictionary<Vector3Int, HashSet<MarchingCubeEntity>>(new Vector3EqualityComparer());
 
-        public IEnumerable<Vector3Int> NeighbourIndices => NeighboursReachableFrom.Keys;
+        public List<Vector3Int> NeighbourIndices
+        {
+            get
+            {
+                List<Vector3Int> result = new List<Vector3Int>();
+                for (int i = 0; i < HasNeighbourInDirection.Length; i++)
+                {
+                    if (HasNeighbourInDirection[i] != null)
+                        result.Add(HasNeighbourInDirection[i].Value);
+                }
+                return result;
+            } 
+        }
+
+
+        public Vector3Int?[] HasNeighbourInDirection { get; private set;} = new Vector3Int?[6];
 
         /// <summary>
         /// stores chunkEntities based on their position as index
@@ -192,22 +206,34 @@ namespace MarchingCubes
                 anchorPos.z + halfSize);
         }
 
+        private void UpdateChunkData()
+        {
+            vertexSize = chunkSize / lod * sizeGrower;
+            pointsPerAxis = vertexSize + 1;
+        }
+
         private Vector3Int anchorPos;
 
         int IMarchingCubeChunk.PointsPerAxis => pointsPerAxis;
 
         public int ChunkSize { get => chunkSize; 
-            set { chunkSize = value; UpdateChunkCenterPos(); } }
+            set { chunkSize = value; UpdateChunkCenterPos(); UpdateChunkData(); } }
 
         public float SurfaceLevel { set => surfaceLevel = value; }
 
-        protected Vector3Int GetGlobalPositionFromOffset(Vector3Int offset)
+        protected Vector3Int GetGlobalEstimatedNeighbourPositionFromOffset(Vector3Int offset)
         {
-            Vector3Int anchor = AnchorPos;
-            return new Vector3Int(
-                anchor.x + offset.x * chunkSize,
-                anchor.y + offset.y * chunkSize, 
-                anchor.z + offset.z * chunkSize);
+            return CenterPos + offset * chunkSize;
+            //Vector3Int center = CenterPos;
+            //return new Vector3Int(
+            //    center.x + offset.x * chunkSize,
+            //    center.y + offset.y * chunkSize, 
+            //    center.z + offset.z * chunkSize);
+        }
+
+        protected Vector3Int GetGlobalNeighbourBorderPositionFromOffset(Vector3Int offset)
+        {
+            return CenterPos + offset * chunkSize / 2;
         }
 
         protected virtual void BuildChunkFromMeshData(TriangleBuilder[] tris, float[] points, MarchingCubeChunkNeighbourLODs neighbourLODs)
@@ -227,7 +253,6 @@ namespace MarchingCubes
         protected virtual void WorkOnBuildedChunk()
         {
             BuildMeshToConnectHigherLodChunks();
-
         }
 
         protected virtual void BuildFromTriangleArray(TriangleBuilder[] ts, bool buildMeshAswell = true)
@@ -263,7 +288,8 @@ namespace MarchingCubes
             {
                 neighbour = trisWithNeighboursOutOfBounds[i];
                 Vector3Int target = anchorPos + neighbour.outsideNeighbour.offset;
-                AddNeighbourFromEntity(target, null);
+                ///TODO: check what this does, looks wrong
+                //AddNeighbourFromEntity(neighbour.outsideNeighbour.offset, target, null);
 
                 if (chunkHandler.TryGetReadyChunkAt(target, out c))
                 {
@@ -361,7 +387,7 @@ namespace MarchingCubes
                 //MarchingCubeEntity original = MarchAt(e.origin, 1);
                 MarchingCubeEntity bindWithNeighbour = MarchAt(rightCubeIndex, lodDiff);
                 neighbourChunksGlue.Add(key, bindWithNeighbour);
-                AddCubeForNeigbhourInDirection(neighbourLODs.GetIndexFromDirection(missingData.outsideNeighbour.offset), bindWithNeighbour);
+                AddCubeForNeigbhourInDirection(VectorExtension.GetIndexFromDirection(missingData.outsideNeighbour.offset), bindWithNeighbour);
                 connectorTriangleCount += bindWithNeighbour.triangles.Count * 3;
             }
         }
@@ -555,8 +581,11 @@ namespace MarchingCubes
         }
 
 
-        public void AddNeighbourFromEntity(Vector3Int v3, MarchingCubeEntity from)
+        public void AddNeighbourFromEntity(Vector3Int offset, Vector3Int v3, MarchingCubeEntity from)
         {
+            HasNeighbourInDirection[VectorExtension.GetIndexFromDirection(offset)] = v3;
+
+            ///also save size to fill hirachy with smaller chunks
             HashSet<MarchingCubeEntity> r;
             if (!NeighboursReachableFrom.TryGetValue(v3, out r))
             {

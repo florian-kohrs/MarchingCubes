@@ -125,7 +125,53 @@ namespace MarchingCubes
         }
 
 
+        protected Vector3Int TransformBorderPointToChunk(Vector3Int v3, Vector3Int dir, IMarchingCubeChunk neighbour)
+        {
+            Vector3Int result = FlipBorderCoordinateToNeighbourChunk(v3, dir, neighbour);
 
+            float sizeDiff = neighbour.ChunkSize / (float)ChunkSize;
+
+            Vector3Int transformedAnchorPosition;
+
+            if (IsDirectionOutOfChunk(dir))
+            {
+                transformedAnchorPosition = AnchorPos + neighbour.ChunkSize * dir;
+            }
+            else
+            {
+                transformedAnchorPosition = AnchorPos + ChunkSize * dir;
+            }
+
+
+            Vector3Int anchorDiff = transformedAnchorPosition - neighbour.AnchorPos;
+
+            result = result + anchorDiff;
+
+            return result;
+        }
+
+        protected bool IsDirectionOutOfChunk(Vector3Int v3)
+        {
+            return v3.x < 0 || v3.y < 0 || v3.z < 0;
+        }
+
+        protected Vector3Int FlipBorderCoordinateToNeighbourChunk(Vector3Int v3, Vector3Int dir, IMarchingCubeChunk neighbour)
+        {
+            Vector3Int result = v3;
+            if (dir.x < 0)
+                result.x = neighbour.ChunkSize - 1;
+            else if(dir.x > 0)
+                result.x = 0;
+            else if(dir.y < 0)
+                result.y = neighbour.ChunkSize - 1;
+            else if (dir.y > 0)
+                result.y = 0;
+            else if (dir.z < 0)
+                result.z = neighbour.ChunkSize - 1;
+            else if (dir.z > 0)
+                result.z = 0;
+            return result;
+        }
 
 
         protected void BuildChunkEdges()
@@ -150,17 +196,22 @@ namespace MarchingCubes
                         {
                             t = trisWithNeighboursOutOfBounds[i];
                             //Vector3Int offset = t.neighbour.offset.Map(Math.Sign);
-                            Vector3Int target = GetGlobalPositionFromOffset(t.outsideNeighbour.offset); ;
+                            Vector3Int target = GetGlobalEstimatedNeighbourPositionFromOffset(t.outsideNeighbour.offset);
+                            Vector3Int border =  t.originCubeEntity + t.outsideNeighbour.offset;
                             IMarchingCubeChunk chunk;
-                            AddNeighbourFromEntity(target, e);
-                            if (chunkHandler.TryGetReadyChunkAt(target, out chunk))
+                            AddNeighbourFromEntity(t.outsideNeighbour.offset, target, e);
+                            if (chunkHandler.TryGetReadyChunkAt(AnchorPos + border, out chunk))
                             {
                                 if (chunk is IMarchingCubeInteractableChunk c)
                                 {
                                     if (c.LODPower == LODPower)
                                     {
-                                        Vector3Int pos = (e.origin + t.outsideNeighbour.offset).Map(ClampInChunk);
+                                        Vector3Int pos = TransformBorderPointToChunk(border, t.outsideNeighbour.offset, chunk);
                                         MarchingCubeEntity cube = c.GetEntityAt(pos);
+                                        if(cube == null)
+                                        {
+                                            cube = c.GetEntityAt(pos);
+                                        }
                                         e.BuildSpecificNeighbourInNeighbour(cube, e.triangles[t.outsideNeighbour.triangleIndex], t.outsideNeighbour.relevantVertexIndices, t.outsideNeighbour.rotatedEdgePair);
                                     }
                                     else if (c.LODPower > LODPower)
@@ -203,8 +254,8 @@ namespace MarchingCubes
                     for (int i = 0; i < trisWithNeighboursOutOfBounds.Count; i++)
                     {
                         t = trisWithNeighboursOutOfBounds[i];
-                        Vector3Int target = GetGlobalPositionFromOffset(t.outsideNeighbour.offset);
-                        AddNeighbourFromEntity(target, e);
+                        Vector3Int target = GetGlobalEstimatedNeighbourPositionFromOffset(t.outsideNeighbour.offset);
+                        AddNeighbourFromEntity(t.outsideNeighbour.offset, target, e);
 
                         if (chunkHandler.TryGetReadyChunkAt(target, out c))
                         {

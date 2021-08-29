@@ -217,12 +217,15 @@ namespace MarchingCubes
 
         public int buildAroundDistance = 2;
 
+        protected int buildAroundSqrDistance;
+
         DateTime start;
         DateTime end;
 
         private void Start()
         {
             start = DateTime.Now;
+            buildAroundSqrDistance = buildAroundDistance * buildAroundDistance;
             kernelId = marshShader.FindKernel("March");
             startPos = player.position;
             IMarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
@@ -285,10 +288,10 @@ namespace MarchingCubes
 
         public IEnumerator BuildRelevantChunksParallelAround(IMarchingCubeChunk chunk)
         {
-            var e = chunk.NeighbourIndices.GetEnumerator();
-            while (e.MoveNext())
+            List<Vector3Int> neighboours = chunk.NeighbourIndices;
+            for (int i = 0; i < neighboours.Count; i++)
             {
-                closestNeighbours.Enqueue(0, e.Current);
+                closestNeighbours.Enqueue(0, neighboours[i]);
             }
             if (closestNeighbours.size > 0)
             {
@@ -335,18 +338,21 @@ namespace MarchingCubes
         protected void OnChunkDoneCallBack(IMarchingCubeChunk chunk)
         {
             channeledChunks--;
-            var e = chunk.NeighbourIndices.GetEnumerator();
+
+            float orgSqrDistance = (startPos - chunk.CenterPos).sqrMagnitude;
             Vector3Int v3;
-            while (e.MoveNext())
-            {
-                v3 = e.Current;
-                if (!HasChunkAtPosition(v3))
+            List<Vector3Int> dirs = chunk.NeighbourIndices;
+            for(int i = 0; i < dirs.Count; i++)
+            { 
+                v3 = dirs[i];
+                float sqrDist = (startPos - v3).sqrMagnitude;
+
+                ///only add neighbours if
+                if (sqrDist > orgSqrDistance 
+                    && sqrDist <= buildAroundSqrDistance 
+                    && !HasChunkAtPosition(v3))
                 {
-                    float distance = (startPos - v3).magnitude;
-                    if (distance <= buildAroundDistance)
-                    {
-                        closestNeighbours.Enqueue(distance, v3);
-                    }
+                    closestNeighbours.Enqueue(sqrDist, v3);
                 }
             }
         }
