@@ -53,9 +53,9 @@ namespace MarchingCubes
 
         public ComputeShader marshShader;
 
-        public const int maxLodAtDistance = 400;
+        public const int maxLodAtDistance = 2000;
 
-        public const int maxSizeAtDistance = 400;
+        public const int maxSizeAtDistance = 2000;
 
         [Header("Voxel Settings")]
         //public float boundsSize = 8;
@@ -347,8 +347,7 @@ namespace MarchingCubes
                 float sqrDist = (startPos - v3).sqrMagnitude;
 
                 ///only add neighbours if
-                if (sqrDist >= orgSqrDistance 
-                    && sqrDist <= buildAroundSqrDistance 
+                if (sqrDist <= buildAroundSqrDistance 
                     && !HasChunkAtPosition(v3))
                 {
                     closestNeighbours.Enqueue(sqrDist, v3);
