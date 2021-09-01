@@ -145,7 +145,8 @@ namespace MarchingCubes
                 {
                     if (!e.BuildNeighbours(GetEntityAt, IsCubeInBounds, trisWithNeighboursOutOfBounds))
                     {
-                        for (int i = 0; i < trisWithNeighboursOutOfBounds.Count; i++)
+                        int count = trisWithNeighboursOutOfBounds.Count;
+                        for (int i = 0; i < count; i++)
                         {
                             t = trisWithNeighboursOutOfBounds[i];
                             //Vector3Int offset = t.neighbour.offset.Map(Math.Sign);
@@ -365,10 +366,12 @@ namespace MarchingCubes
 
             var @enum = cubeEntities.Values.GetEnumerator();
             MarchingCubeEntity e;
+            int count;
             while (@enum.MoveNext())
             {
                 e = @enum.Current;
-                for (int i = 0; i < e.triangles.Count; i++)
+                count = e.triangles.Count;
+                for (int i = 0; i < count; i++)
                 {
                     AddTriangleToMeshData(e.triangles[i], ref usedTriCount, ref totalTreeCount, false);
                 }
@@ -426,7 +429,8 @@ namespace MarchingCubes
                 }
             }
             List<MissingNeighbourData> missingNeighbours = new List<MissingNeighbourData>();
-            for (int i = 0; i < buildNeighbours.Count; i++)
+            int buildCount = buildNeighbours.Count;
+            for (int i = 0; i < buildCount; i++)
             {
                 BuildEdgesFor(buildNeighbours[i], missingNeighbours, true);
             }
