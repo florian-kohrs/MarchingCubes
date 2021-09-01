@@ -96,9 +96,10 @@ namespace MarchingCubes
 
         public void BuildDistance(PathTriangle p, int edge1, int edge2, int myKey, int otherKey)
         {
-            Vector3 middleEdgePoint = tri[edge1] + ((tri[edge2] - tri[edge1]) / 2);
-            float distance = (OriginalLocalMiddlePointOfTriangle - middleEdgePoint).magnitude;
-            distance += (OriginalLocalMiddlePointOfTriangle - p.OriginalLocalMiddlePointOfTriangle).magnitude;
+            //Vector3 middleEdgePoint = tri[edge1] + ((tri[edge2] - tri[edge1]) / 2);
+            //float distance = (middlePoint - middleEdgePoint).magnitude;
+            //distance += (middlePoint - p.middlePoint).magnitude;
+            float distance = 1;
             neighbourDistanceMapping[myKey] = distance;
             p.neighbourDistanceMapping[otherKey] = distance;
         }
