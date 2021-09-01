@@ -37,7 +37,7 @@ namespace MarchingCubes
                 }
                 else
                 {
-                    float distance = (triangles[i].OriginalLOcalMiddlePointOfTriangle - point).sqrMagnitude;
+                    float distance = (triangles[i].OriginalLocalMiddlePointOfTriangle - point).sqrMagnitude;
                     if (distance < closestSqr)
                     {
                         closestSqr = distance;

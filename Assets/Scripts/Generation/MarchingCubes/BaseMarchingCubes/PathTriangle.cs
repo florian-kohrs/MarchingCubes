@@ -8,12 +8,22 @@ namespace MarchingCubes
     public class PathTriangle : INavigatable<PathTriangle, PathTriangle>
     {
 
+
+
         public PathTriangle(/*MarchingCubeChunkObject chunk,*/ Triangle t)
         {
             //this.chunk = chunk;
             tri = t;
-            normal = (Vector3.Cross(tri.b - tri.a, tri.c - tri.a)).normalized;
-            middlePoint = (tri.a + tri.b + tri.c) / 3;
+            normal = (Vector3.Cross(tri.b - tri.a, tri.c - tri.a));
+            float normMagnitude = normal.magnitude;
+            normal.x /= normMagnitude;
+            normal.y /= normMagnitude;
+            normal.z /= normMagnitude;
+            //middlePoint = (tri.a + tri.b + tri.c) / 3;
+            middlePoint = new Vector3(
+                (tri.a.x + tri.b.x + tri.c.x) / 3,
+                (tri.a.y + tri.b.y + tri.c.y) / 3,
+                (tri.a.z + tri.b.z + tri.c.z) / 3);
             slope = Mathf.Acos(Vector3.Dot(normal, middlePoint.normalized)) * 180 / Mathf.PI;
         }
 
@@ -87,8 +97,8 @@ namespace MarchingCubes
         public void BuildDistance(PathTriangle p, int edge1, int edge2, int myKey, int otherKey)
         {
             Vector3 middleEdgePoint = tri[edge1] + ((tri[edge2] - tri[edge1]) / 2);
-            float distance = (OriginalLOcalMiddlePointOfTriangle - middleEdgePoint).magnitude;
-            distance += (OriginalLOcalMiddlePointOfTriangle - p.OriginalLOcalMiddlePointOfTriangle).magnitude;
+            float distance = (OriginalLocalMiddlePointOfTriangle - middleEdgePoint).magnitude;
+            distance += (OriginalLocalMiddlePointOfTriangle - p.OriginalLocalMiddlePointOfTriangle).magnitude;
             neighbourDistanceMapping[myKey] = distance;
             p.neighbourDistanceMapping[otherKey] = distance;
         }
@@ -99,7 +109,7 @@ namespace MarchingCubes
             List<PathTriangle> result = new List<PathTriangle>(TRIANGLE_NEIGHBOUR_COUNT);
             for (int i = 0; i < TRIANGLE_NEIGHBOUR_COUNT; i++)
             {
-                if(field.neighbours != null && field.Slope < MAX_SLOPE_TO_BE_USEABLE_IN_PATHFINDING)
+                if (field.neighbours != null && field.Slope < MAX_SLOPE_TO_BE_USEABLE_IN_PATHFINDING)
                 {
                     result.Add(field.neighbours[i]);
                 }
@@ -109,7 +119,7 @@ namespace MarchingCubes
 
         public float DistanceToTarget(PathTriangle from, PathTriangle to)
         {
-            return (to.OriginalLOcalMiddlePointOfTriangle - from.OriginalLOcalMiddlePointOfTriangle).magnitude;
+            return (to.OriginalLocalMiddlePointOfTriangle - from.OriginalLocalMiddlePointOfTriangle).magnitude;
         }
 
         public float DistanceToField(PathTriangle from, PathTriangle to)
@@ -132,7 +142,7 @@ namespace MarchingCubes
         public float Slope => slope;
 
 
-        public Vector3 OriginalLOcalMiddlePointOfTriangle => middlePoint;
+        public Vector3 OriginalLocalMiddlePointOfTriangle => middlePoint;
 
     }
 

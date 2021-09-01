@@ -85,7 +85,7 @@ namespace MarchingCubes
 
         public BaseMeshDisplayer GetNextMeshDisplayer()
         {
-            BaseMeshDisplayer displayer = null;
+            BaseMeshDisplayer displayer;
             if (unusedDisplayer.Count > 0)
             {
                 displayer = unusedDisplayer.Pop();
@@ -180,25 +180,6 @@ namespace MarchingCubes
             return Mathf.Max(1, r);
         }
 
-
-
-        //protected int NeededChunkAmount
-        //{
-        //    get
-        //    {
-        //        int amount = Mathf.CeilToInt(blockAroundPlayer / PointsPerChunkAxis);
-        //        if (amount % 2 == 1)
-        //        {
-        //            amount += 1;
-        //        }
-        //        return amount;
-        //    }
-        //}
-
-        //public PlanetMarchingCubeNoise noiseFilter;
-
-        //public TerrainNoise terrainNoise;
-
         public BaseDensityGenerator densityGenerator;
 
         public bool useTerrainNoise;
@@ -230,7 +211,8 @@ namespace MarchingCubes
             startPos = player.position;
             IMarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
             maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
-            StartCoroutine(BuildRelevantChunksParallelAround(chunk));
+            BuildRelevantChunksAround(chunk);
+            //StartCoroutine(BuildRelevantChunksParallelAround(chunk));
         }
 
         private void Update()
@@ -254,35 +236,35 @@ namespace MarchingCubes
 
         protected BinaryHeap<float, Vector3Int> closestNeighbours = new BinaryHeap<float, Vector3Int>(float.MinValue, float.MaxValue, 200);
 
-        //public void BuildRelevantChunksAround(IMarchingCubeChunk chunk)
-        //{
-        //    Queue<IMarchingCubeChunk> neighboursToBuild = new Queue<IMarchingCubeChunk>();
-        //    neighboursToBuild.Enqueue(chunk);
-        //    while (neighboursToBuild.Count > 0)
-        //    {
-        //        IMarchingCubeChunk current = neighboursToBuild.Dequeue();
-        //        foreach (var v3 in current.NeighbourIndices)
-        //        {
-        //            if (!HasChunkAtPosition(v3) && (startPos - AnchorFromChunkCoords(v3)).magnitude < buildAroundDistance)
-        //            {
-        //                neighboursToBuild.Enqueue(CreateChunkAt(v3));
-        //                if (totalTriBuild >= maxTrianglesLeft)
-        //                {
-        //                    Debug.Log("Aborted");
-        //                    neighboursToBuild.Clear();
-        //                    break;
-        //                }
-        //            }
-        //        }
-        //    }
+        public void BuildRelevantChunksAround(IMarchingCubeChunk chunk)
+        {
+            Queue<IMarchingCubeChunk> neighboursToBuild = new Queue<IMarchingCubeChunk>();
+            neighboursToBuild.Enqueue(chunk);
+            while (neighboursToBuild.Count > 0)
+            {
+                IMarchingCubeChunk current = neighboursToBuild.Dequeue();
+                foreach (var v3 in current.NeighbourIndices)
+                {
+                    if (!HasChunkAtPosition(v3) && (startPos - v3).magnitude < buildAroundDistance)
+                    {
+                        neighboursToBuild.Enqueue(CreateChunkAt(v3));
+                        if (totalTriBuild >= maxTrianglesLeft)
+                        {
+                            Debug.Log("Aborted");
+                            neighboursToBuild.Clear();
+                            break;
+                        }
+                    }
+                }
+            }
 
-        //    end = DateTime.Now;
-        //    Debug.Log("Total millis: " + (end - start).TotalMilliseconds);
+            end = DateTime.Now;
+            Debug.Log("Total millis: " + (end - start).TotalMilliseconds);
 
-        //    Debug.Log("Total triangles: " + totalTriBuild);
+            Debug.Log("Total triangles: " + totalTriBuild);
 
-        //    Debug.Log($"Number of chunkgroups: {ChunkGroups.Count}");
-        //}
+            Debug.Log($"Number of chunkgroups: {ChunkGroups.Count}");
+        }
 
 
 
@@ -438,7 +420,7 @@ namespace MarchingCubes
 
         protected IMarchingCubeChunk CreateChunkAt(Vector3Int p)
         {
-            return CreateChunkAt(CoordToPosition(p));
+            return CreateChunkAt(p, PositionToChunkGroupCoord(p));
         }
 
         protected IMarchingCubeChunk CreateChunkAt(Vector3 pos, Vector3Int coord)
@@ -451,10 +433,6 @@ namespace MarchingCubes
             return chunk;
         }
 
-        protected IChunkGroupRoot CreateChunkGroupAtPosition(Vector3Int p)
-        {
-            return CreateChunkGroupAtCoordinate(PositionToChunkGroupCoord(p));
-        }
 
         protected IChunkGroupRoot CreateChunkGroupAtCoordinate(Vector3Int coord)
         {
@@ -502,11 +480,18 @@ namespace MarchingCubes
             IChunkGroupRoot chunkGroup;
             if (chunkGroups.TryGetValue(coord, out chunkGroup))
             {
-                Vector3Int restPosition = p - chunkGroup.GroupAnchorPosition;
-                if (chunkGroup.TryGetChunkAtLocalPosition(restPosition, out chunk))
+                if (chunkGroup.HasChild)
                 {
-                    positionInOtherChunk = p - chunk.AnchorPos;
-                    return true;
+                    Vector3Int restPosition = p - chunkGroup.GroupAnchorPosition;
+                    if (/*chunkGroup.HasChild && */chunkGroup.TryGetChunkAtLocalPosition(restPosition, out chunk))
+                    {
+                        positionInOtherChunk = p - chunk.AnchorPos;
+                        return true;
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning("Chunk is nt set yet -> may loose neighbours");
                 }
             }
             chunk = null;
@@ -575,6 +560,7 @@ namespace MarchingCubes
 
         protected IMarchingCubeChunk GetChunkObjectAt<T>(Vector3Int position, Vector3Int coord, int lodPower, int chunkSize) where T : IMarchingCubeChunk, new()
         {
+            ///Pot racecondition
             IChunkGroupRoot chunkGroup = GetOrCreateChunkGroupAtCoordinate(coord);
             IMarchingCubeChunk chunk = new T();
             
@@ -646,12 +632,14 @@ namespace MarchingCubes
                 }
                 result[i] = neighbour;
             }
+        
             return result;
         }
 
         protected void BuildChunk(IMarchingCubeChunk chunk, int lod)
         {
             int numTris = ApplyChunkDataAndDispatchAndGetShaderData(chunk, lod);
+            MarchingCubeChunkNeighbourLODs l = GetNeighbourLODSFrom(chunk);
             chunk.InitializeWithMeshData(tris, pointsArray, GetNeighbourLODSFrom(chunk));
         }
 

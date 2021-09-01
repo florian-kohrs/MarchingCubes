@@ -550,17 +550,17 @@ namespace MarchingCubes
             else if (local == 1)
                 return 1;
             else if (local == 2)
-                return 1 + PointsPerAxis * PointsPerAxis;
+                return 1 + sqrPointsPerAxis;
             else if (local == 3)
-                return PointsPerAxis * PointsPerAxis;
+                return sqrPointsPerAxis;
             else if (local == 4)
-                return PointsPerAxis;
+                return pointsPerAxis;
             else if (local == 5)
-                return PointsPerAxis + 1;
+                return pointsPerAxis + 1;
             else if (local == 6)
-                return PointsPerAxis + PointsPerAxis * PointsPerAxis + 1;
+                return pointsPerAxis + sqrPointsPerAxis + 1;
             else if (local == 7)
-                return PointsPerAxis + PointsPerAxis * PointsPerAxis;
+                return pointsPerAxis + sqrPointsPerAxis;
             else
                 throw new Exception("Invalid value");
         }
@@ -577,19 +577,19 @@ namespace MarchingCubes
             }
             if (dir.y > 0)
             {
-                pointIndex -= PointsPerAxis * vertexSize;
+                pointIndex -= pointsPerAxis * vertexSize;
             }
             else if (dir.y < 0)
             {
-                pointIndex += PointsPerAxis * vertexSize;
+                pointIndex += pointsPerAxis * vertexSize;
             }
             if (dir.y > 0)
             {
-                pointIndex -= PointsPerAxis * PointsPerAxis * vertexSize;
+                pointIndex -= sqrPointsPerAxis * vertexSize;
             }
             else if (dir.y < 0)
             {
-                pointIndex += PointsPerAxis * PointsPerAxis * vertexSize;
+                pointIndex += sqrPointsPerAxis * vertexSize;
             }
             return pointIndex;
         }

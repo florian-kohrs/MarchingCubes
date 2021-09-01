@@ -15,7 +15,7 @@ namespace MarchingCubes
 
         public virtual void InitializeWithMeshData(TriangleBuilder[] tris, float[] points, MarchingCubeChunkNeighbourLODs neighbourLod)
         {
-            BuildChunkFromMeshData(tris, points, neighbourLODs);
+            BuildChunkFromMeshData(tris, points, neighbourLod);
         }
 
         //public virtual void InitializeEmpty(IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel)
@@ -109,6 +109,8 @@ namespace MarchingCubes
         protected int vertexSize;
 
         protected int pointsPerAxis;
+
+        protected int sqrPointsPerAxis;
 
         public int NeighbourCount => NeighboursReachableFrom.Count;
 
@@ -210,6 +212,7 @@ namespace MarchingCubes
         {
             vertexSize = chunkSize / lod * sizeGrower;
             pointsPerAxis = vertexSize + 1;
+            sqrPointsPerAxis = pointsPerAxis * pointsPerAxis;
         }
 
         private Vector3Int anchorPos;
@@ -242,6 +245,7 @@ namespace MarchingCubes
             this.points = points;
             this.neighbourLODs = neighbourLODs;
             triCount = tris.Length * 3;
+            
             careAboutNeighbourLODS = neighbourLODs.HasNeighbourWithHigherLOD(LODPower);
             BuildFromTriangleArray(tris);
 
@@ -467,7 +471,10 @@ namespace MarchingCubes
         protected void AddTriangleToMeshData(Triangle tri, ref int usedTriCount, ref int totalTriCount, bool useCollider = true)
         {
            Vector3 normal = (Vector3.Cross(tri.b - tri.a, tri.c - tri.a)).normalized;
-           Vector3 middlePoint = (tri.a + tri.b + tri.c) / 3;
+           Vector3 middlePoint = new Vector3(
+                (tri.a.x + tri.b.x + tri.c.x) / 3,
+                (tri.a.y + tri.b.y + tri.c.y) / 3,
+                (tri.a.z + tri.b.z + tri.c.z) / 3);
            float slope = Mathf.Acos(Vector3.Dot(normal, middlePoint.normalized)) * 180 / Mathf.PI;
 
             for (int x = 0; x < 3; x++)
@@ -580,6 +587,16 @@ namespace MarchingCubes
         }
 
         protected static Color brown = new Color(75, 44, 13, 1) / 255f;
+        protected static float brownR = 75 / 255f;
+        protected static float brownG = 44 / 255f;
+        protected static float brownB = 13 / 255f;
+
+        protected static Color green = Color.green;
+        protected static float greenR = Color.green.r / 255f;
+        protected static float greenG = Color.green.g / 255f;
+        protected static float greenB = Color.green.b / 255f;
+
+
 
         protected Color GetColor(PathTriangle t)
         {
@@ -588,8 +605,16 @@ namespace MarchingCubes
 
         protected Color GetColor(Vector3 normal, Vector3 middlePoint, float slope)
         {
+            Color result = new Color(0, 0, 0, 1);
+
             float slopeProgress = Mathf.InverseLerp(15, 45, slope);
-            return (Color.green * (1 - slopeProgress) + brown * slopeProgress) / 2;
+
+            result.g = ((1 - slopeProgress) + brownG * slopeProgress) / 2;
+            result.b = (brownB * slopeProgress) / 2;
+            result.r = (brownR * slopeProgress) / 2;
+
+            //return (Color.green * (1 - slopeProgress) + brown * slopeProgress) / 2;
+            return result;
         }
 
         protected void ResetArrayData()
@@ -672,15 +697,15 @@ namespace MarchingCubes
         protected Vector3Int CoordFromPointIndex(int i)
         {
             return new Vector3Int
-               ((i % (PointsPerAxis * PointsPerAxis) % PointsPerAxis)
-               , (i % (PointsPerAxis * PointsPerAxis) / PointsPerAxis)
-               , (i / (PointsPerAxis * PointsPerAxis))
+               (i % sqrPointsPerAxis % pointsPerAxis
+               , i % sqrPointsPerAxis / pointsPerAxis
+               , i / sqrPointsPerAxis
                );
         }
 
         protected int PointIndexFromCoord(int x, int y, int z)
         {
-            int index = z * PointsPerAxis * PointsPerAxis + y * PointsPerAxis + x;
+            int index = z * sqrPointsPerAxis + y * pointsPerAxis + x;
             return index;
         }
 
