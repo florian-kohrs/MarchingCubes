@@ -215,6 +215,7 @@ namespace MarchingCubes
                         {
                             if (c.LODPower > LODPower)
                             {
+                                //might need to use Transform position
                                 Vector3Int pos = (e.origin + t.outsideNeighbour.offset).Map(ClampInChunk);
                                 CorrectMarchingCubeInDirection(e.origin, t, c.LODPower);
                             }

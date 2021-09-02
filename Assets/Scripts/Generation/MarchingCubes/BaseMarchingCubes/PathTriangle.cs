@@ -43,8 +43,6 @@ namespace MarchingCubes
 
         public PathTriangle[] neighbours = new PathTriangle[TRIANGLE_NEIGHBOUR_COUNT];
 
-        protected float[] neighbourDistanceMapping = new float[TRIANGLE_NEIGHBOUR_COUNT];
-
 
         //public void AddNeighbourTwoWay(PathTriangle p, int myEdge1, int myEdge2, int otherEdge1, int otherEdge2)
         //{
@@ -64,7 +62,6 @@ namespace MarchingCubes
             int otherKey = (otherEdge1 + otherEdge2) % 3;
             neighbours[myKey] = p;
             p.neighbours[otherKey] = this;
-            BuildDistance(p, myEdge1, myEdge2, myKey, otherKey);
         }
 
         public void OverrideNeighbourTwoWay(PathTriangle p, int myEdge1, int myEdge2, int otherEdge1, int otherEdge2)
@@ -74,7 +71,6 @@ namespace MarchingCubes
             int otherKey = (otherEdge1 + otherEdge2) % 3;
             neighbours[myKey] = p;
             p.neighbours[otherKey] = this;
-            BuildDistance(p, myEdge1, myEdge2, myKey, otherKey);
         }
 
 
@@ -94,15 +90,6 @@ namespace MarchingCubes
         //    AddNeighbourTwoWay(p, edgeIndices.x, edgeIndices);
         //}
 
-        public void BuildDistance(PathTriangle p, int edge1, int edge2, int myKey, int otherKey)
-        {
-            //Vector3 middleEdgePoint = tri[edge1] + ((tri[edge2] - tri[edge1]) / 2);
-            //float distance = (middlePoint - middleEdgePoint).magnitude;
-            //distance += (middlePoint - p.middlePoint).magnitude;
-            float distance = 1;
-            neighbourDistanceMapping[myKey] = distance;
-            p.neighbourDistanceMapping[otherKey] = distance;
-        }
 
 
         public List<PathTriangle> GetCircumjacent(PathTriangle field)
@@ -125,7 +112,7 @@ namespace MarchingCubes
 
         public float DistanceToField(PathTriangle from, PathTriangle to)
         {
-            return from.neighbourDistanceMapping[Array.IndexOf(from.neighbours, to)];
+            return 1;
         }
 
         public bool ReachedTarget(PathTriangle current, PathTriangle destination)
