@@ -155,15 +155,28 @@ public static class VectorExtension
         return sameValues >= n;
     }
 
+    public static int IndexOf(float x, float y, float z, float of)
+    {
+        if (x == of)
+            return 0;
+        if (y == of)
+            return 1;
+        if (z == of)
+            return 2;
+        return -1;
+    }
+
     public static int CountAndMapIndiciesWithSameValues(this Vector3 v1, Vector3 v2, out Vector3Int v1ConnectedVertices, out Vector3Int v2ConnectedVertices)
     {
         int sameValues = 0;
         v1ConnectedVertices = new Vector3Int();
         v2ConnectedVertices = new Vector3Int(-1, -1, -1);
-        List<float> list = v2.ValueList();
+        float x = v2.x;
+        float y = v2.y;
+        float z = v2.z;
         for (int i = 0; i < 3; i++)
         {
-            v1ConnectedVertices[i] = list.IndexOf(v1[i]);
+            v1ConnectedVertices[i] = IndexOf(x,y,z,v1[i]);
 
             if (v1ConnectedVertices[i] >= 0)
             {
