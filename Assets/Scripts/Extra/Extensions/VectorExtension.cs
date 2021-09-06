@@ -226,12 +226,13 @@ public static class VectorExtension
         int sameValues = 0;
 
         int start = Array.IndexOf(v2.Values(),v1.x);
-
-        for (int i = 0; i < 3 && sameValues < n && start != -1; i++)
-        {
-            if (v1[i] == v2[(i + start) % 3])
+        if (start > -1) {
+            for (int i = 0; i < 3 && sameValues < n; i++)
             {
-                sameValues++;
+                if (v1[i] == v2[(i + start) % 3])
+                {
+                    sameValues++;
+                }
             }
         }
         return sameValues >= n;
