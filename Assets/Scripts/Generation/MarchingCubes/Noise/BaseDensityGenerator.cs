@@ -33,6 +33,52 @@ namespace MarchingCubes
 
         public int seed;
 
+
+        public virtual void TestGenerate(ComputeBuffer pointsBuffer)
+        {
+            List<float[]> points = new List<float[]>();
+            int num = 129;
+            int num2 = 128;
+            for (int i = 0; i < 2; i++)
+            {
+                ApplyShaderProperties(pointsBuffer, num, 1, new Vector3(i * num2, 65008,0), 1);
+
+                int numThreadsPerAxis = Mathf.CeilToInt(num / (float)threadGroupSize);
+
+                densityShader.Dispatch(0, numThreadsPerAxis, numThreadsPerAxis, numThreadsPerAxis);
+                var arr = new float[num * num * num];
+                pointsBuffer.GetData(arr);
+                points.Add(arr);
+                if (buffersToRelease != null)
+                {
+                    foreach (var b in buffersToRelease)
+                    {
+                        b.Release();
+                    }
+                    buffersToRelease.Clear();
+                }
+            }
+
+            for (int x = 0; x < num; x++)
+            {
+                for (int y = 0; y < num; y++)
+                {
+                    float n1 = 0, n2 = 0;
+                   
+                    Vector3Int ind1 = new Vector3Int(num2, x, y);
+                    Vector3Int ind2 = new Vector3Int(0, x, y);
+                    int i1 = ind1.z * num * num + ind1.y * num + ind1.x;
+                    int i2 = ind2.z * num * num + ind2.y * num + ind2.x;
+                    n1 = points[0][i1];
+                    n2 = points[1][i2];
+
+                    Debug.Log("Diff:" + Mathf.Abs(n1 - n2));
+                }
+            }
+            
+    }
+
+
         public virtual ComputeBuffer Generate(ComputeBuffer pointsBuffer, int numPointsPerAxis, float boundsSize, Vector3 anchor, float spacing)
         {
             ApplyShaderProperties(pointsBuffer, numPointsPerAxis, boundsSize, anchor, spacing);

@@ -26,6 +26,8 @@ namespace MarchingCubes
 
         IMarchingCubeChunkHandler ChunkHandler {set;}
 
+        int PointIndexFromCoord(Vector3Int coord);
+
         bool IsEmpty { get; }
 
         bool IsCompletlyAir { get; }

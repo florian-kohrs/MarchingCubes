@@ -670,6 +670,8 @@ namespace MarchingCubes
 
         protected int ApplyChunkDataAndDispatchAndGetShaderData(IMarchingCubeChunk chunk, int lod)
         {
+            ///Maybe read border noiose points from neighbour?
+
             int chunkSize = chunk.ChunkSize;
             if (chunkSize % lod != 0)
                 throw new Exception("Lod must be divisor of chunksize");
@@ -683,13 +685,15 @@ namespace MarchingCubes
             int pointsPerAxis = numVoxelsPerAxis + 1;
             int pointsVolume = pointsPerAxis * pointsPerAxis * pointsPerAxis;
 
-            CreateAllBuffersWithSizes(numVoxelsPerAxis);
+            CreateAllBuffersWithSizes(128);
 
             float spacing = lod;
             Vector3 anchor = chunk.AnchorPos;
 
             //chunk.SizeGrower = extraSize;
-
+            
+            densityGenerator.TestGenerate(pointsBuffer);
+            return -1;
             densityGenerator.Generate(pointsBuffer, pointsPerAxis, 0, anchor, spacing);
 
             int numThreadsPerAxis = Mathf.CeilToInt(numVoxelsPerAxis / (float)threadGroupSize);

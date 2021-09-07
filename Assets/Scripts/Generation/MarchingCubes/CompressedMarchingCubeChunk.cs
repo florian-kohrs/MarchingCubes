@@ -684,7 +684,7 @@ namespace MarchingCubes
             return index;
         }
 
-        protected int PointIndexFromCoord(Vector3Int v)
+        public int PointIndexFromCoord(Vector3Int v)
         {
             return PointIndexFromCoord(v.x, v.y, v.z);
         }

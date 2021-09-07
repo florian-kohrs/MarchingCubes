@@ -73,6 +73,10 @@ void Density (int3 id : SV_DispatchThreadID)
         frequency *= lacunarity;
     }
 
+    //uint noiseInt = noise * 56536;
+    //noise = noiseInt / 56536.;
+
+
     int index = indexFromCoord(id.x, id.y, id.z);
     //if (noise > 1 ||noise < -1)
     //    noise /= 32;

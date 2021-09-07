@@ -125,6 +125,69 @@ namespace MarchingCubes
         }
 
 
+        public void CompareNoiseValues(Vector3Int offset, IMarchingCubeChunk other, Vector3Int origin, Vector3Int otherPos)
+        {
+            Vector3Int ind1 = origin + offset.Map((f) => Mathf.Max(0, f));
+            Vector3Int ind2 = otherPos + offset.Map((f) => Mathf.Max(0, -f));
+            float noisePoint = points[PointIndexFromCoord(ind1)];
+            float otherNoise = other.Points[other.PointIndexFromCoord(ind2)];
+
+            var p = other.Points;
+            if (other.ChunkSize == ChunkSize)
+            {
+                for (int x = 0; x < ChunkSize; x++)
+                {
+                    for (int y = 0; y < ChunkSize; y++)
+                    {
+                        float n1 = 0, n2 = 0;
+                        if(offset.x < 0)
+                        {
+                            ind1 = new Vector3Int(0, x, y);
+                            ind2 = new Vector3Int(ChunkSize, x, y);
+                            n1 = points[PointIndexFromCoord(ind1)];
+                            n2 = other.Points[other.PointIndexFromCoord(ind2)];
+                        }
+                        else if (offset.x > 0)
+                        {
+                            ind1 = new Vector3Int(ChunkSize, x, y);
+                            ind2 = new Vector3Int(0, x, y);
+                            n1 = points[PointIndexFromCoord(ind1)];
+                            n2 = other.Points[other.PointIndexFromCoord(ind2)];
+                        }
+                        else if (offset.y < 0)
+                        {
+                            ind1 = new Vector3Int(x, 0, y);
+                            ind2 = new Vector3Int(x, ChunkSize, y);
+                            n1 = points[PointIndexFromCoord(ind1)];
+                            n2 = other.Points[other.PointIndexFromCoord(ind2)];
+                        }
+                        else if (offset.y > 0)
+                        {
+                            ind1 = new Vector3Int(x, ChunkSize, y);
+                            ind2 = new Vector3Int(x, 0, y);
+                            n1 = points[PointIndexFromCoord(ind1)];
+                            n2 = other.Points[other.PointIndexFromCoord(ind2)];
+                        }
+                        else if (offset.z < 0)
+                        {
+                            ind1 = new Vector3Int(x, y, 0);
+                            ind2 = new Vector3Int(x, y, ChunkSize);
+                            n1 = points[PointIndexFromCoord(ind1)];
+                            n2 = other.Points[other.PointIndexFromCoord(ind2)];
+                        }
+                        else if (offset.z > 0) 
+                        {
+                            ind1 = new Vector3Int(x, y, ChunkSize);
+                            ind2 = new Vector3Int(x, y, 0);
+                            n1 = points[PointIndexFromCoord(ind1)];
+                            n2 = other.Points[other.PointIndexFromCoord(ind2)];
+                        }
+                        Debug.Log("Diff:" + Mathf.Abs(n1 - n2));
+                    }
+                }
+            }
+        }
+
         public void FindTwoClosestVertices(MarchingCubeEntity t1, MarchingCubeEntity t2)
         {
             Vector3 closest1_1 = default;
@@ -213,6 +276,7 @@ namespace MarchingCubes
                                         int index = TriangulationTableStaticData.GetIndexWithEdges(cube.triangulationIndex, t.outsideNeighbour.rotatedEdgePair).otherTriangleIndex;
                                         if(cube.triangles.Count <= index)
                                         {
+                                            CompareNoiseValues(t.outsideNeighbour.offset, c, t.originCubeEntity, pos);
                                             FindTwoClosestVertices(cube, e);
                                         }
                                         e.BuildSpecificNeighbourInNeighbour(cube, e.triangles[t.outsideNeighbour.triangleIndex], t.outsideNeighbour.relevantVertexIndices, t.outsideNeighbour.rotatedEdgePair);
