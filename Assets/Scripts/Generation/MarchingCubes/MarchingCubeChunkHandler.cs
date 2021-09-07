@@ -678,7 +678,7 @@ namespace MarchingCubes
 
             //chunk.SizeGrower = extraSize;
 
-            densityGenerator.Generate(pointsBuffer, pointsPerAxis, 0, anchor, spacing);
+            densityGenerator.Generate(pointsBuffer, pointsPerAxis, anchor, spacing);
 
             int numThreadsPerAxis = Mathf.CeilToInt(numVoxelsPerAxis / (float)threadGroupSize);
 

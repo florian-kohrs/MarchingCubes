@@ -33,34 +33,32 @@ namespace MarchingCubes
 
         public int seed;
 
-        public virtual ComputeBuffer Generate(ComputeBuffer pointsBuffer, int numPointsPerAxis, float boundsSize, Vector3 anchor, float spacing)
+        public virtual ComputeBuffer Generate(ComputeBuffer pointsBuffer, int numPointsPerAxis, Vector3 anchor, float spacing)
         {
-            ApplyShaderProperties(pointsBuffer, numPointsPerAxis, boundsSize, anchor, spacing);
+            ApplyShaderProperties(pointsBuffer, numPointsPerAxis, anchor, spacing);
 
             int numThreadsPerAxis = Mathf.CeilToInt(numPointsPerAxis / (float)threadGroupSize);
 
             densityShader.Dispatch(0, numThreadsPerAxis, numThreadsPerAxis, numThreadsPerAxis);
 
-            if (buffersToRelease != null)
-            {
-                foreach (var b in buffersToRelease)
-                {
-                    b.Release();
-                }
-                buffersToRelease.Clear();
-            }
             // Return voxel data buffer so it can be used to generate mesh
             return pointsBuffer;
         }
 
 
-        protected void ApplyShaderProperties(ComputeBuffer pointsBuffer, int numPointsPerAxis, float boundsSize, Vector3 anchor, float spacing)
+        private void OnDestroy()
+        {
+
+            octaveOffsetsBuffer.Release();
+            octaveOffsetsBuffer = null;
+        }
+
+        protected void ApplyShaderProperties(ComputeBuffer pointsBuffer, int numPointsPerAxis, Vector3 anchor, float spacing)
         {
             ComputeBuffer octaveOffsetsBuffer = GetOctaveOffsetsBuffer();
 
             densityShader.SetBuffer(0, "points", pointsBuffer);
             densityShader.SetInt("numPointsPerAxis", numPointsPerAxis);
-            densityShader.SetFloat("boundsSize", boundsSize);
             densityShader.SetFloat("spacing", spacing);
             densityShader.SetVector("anchor", new Vector4(anchor.x, anchor.y, anchor.z));
             densityShader.SetVector("offset", new Vector4(offset.x, offset.y, offset.z));
@@ -76,9 +74,13 @@ namespace MarchingCubes
 
         }
 
+        protected ComputeBuffer octaveOffsetsBuffer;
 
         protected ComputeBuffer GetOctaveOffsetsBuffer()
         {
+            if (octaveOffsetsBuffer != null)
+                return octaveOffsetsBuffer;
+
             System.Random r = new System.Random(seed);
 
             Vector3[] offsets = new Vector3[octaves];
@@ -93,11 +95,10 @@ namespace MarchingCubes
                     (float)r.NextDouble() * 2 - 1) * offsetRange;
             }
 
-            ComputeBuffer offsetsBuffer = new ComputeBuffer(offsets.Length, sizeof(float) * 3);
-            offsetsBuffer.SetData(offsets);
-            buffersToRelease.Add(offsetsBuffer);
+            octaveOffsetsBuffer = new ComputeBuffer(offsets.Length, sizeof(float) * 3);
+            octaveOffsetsBuffer.SetData(offsets);
 
-            return offsetsBuffer;
+            return octaveOffsetsBuffer;
         }
 
     }
