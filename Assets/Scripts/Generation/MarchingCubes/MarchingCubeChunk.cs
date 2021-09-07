@@ -125,6 +125,50 @@ namespace MarchingCubes
         }
 
 
+        public void FindTwoClosestVertices(MarchingCubeEntity t1, MarchingCubeEntity t2)
+        {
+            Vector3 closest1_1 = default;
+            Vector3 closest1_2 = default;
+            float closest = Mathf.Infinity;
+            float sndClosest = Mathf.Infinity;
+            Vector3 closest2_1 = default;
+            Vector3 closest2_2 = default;
+            foreach (var i1 in t1.triangles)
+            {
+                foreach (var i2 in t2.triangles)
+                {
+                    for (int i = 0; i < 3; i++)
+                    {
+                        Vector3 v3 = i1.tri[i];
+                        for (int x = 0; x < 3; x++)
+                        {
+                            Vector3 v23 = i2.tri[x];
+                            float dist = Vector3.Magnitude(v3 - v23);
+                            if (dist < closest)
+                            {
+                                sndClosest = closest;
+                                closest = dist;
+                                closest2_1 = closest1_1;
+                                closest2_2 = closest1_2;
+                                closest1_1 = v3;
+                                closest1_2 = v23;
+                            }
+                        }
+                    }
+                }
+            }
+            Debug.Log("Closest Verts with dist: " + closest);
+            PrintV3(closest1_1);
+            PrintV3(closest1_2);
+            Debug.Log("Snd closest Verts with dist: " + sndClosest);
+            PrintV3(closest2_1);
+            PrintV3(closest2_2);
+        }
+
+        void PrintV3(Vector3 v3)
+        {
+            Debug.Log(v3.x + "," + v3.y + "," + v3.z);
+        }
 
 
         protected void BuildChunkEdges()
@@ -164,6 +208,12 @@ namespace MarchingCubes
                                         if(cube == null)
                                         {
                                             cube = c.GetEntityAt(pos);
+                                        }
+                                        ///print vertex positions of triangles in neighbour entities
+                                        int index = TriangulationTableStaticData.GetIndexWithEdges(cube.triangulationIndex, t.outsideNeighbour.rotatedEdgePair).otherTriangleIndex;
+                                        if(cube.triangles.Count <= index)
+                                        {
+                                            FindTwoClosestVertices(cube, e);
                                         }
                                         e.BuildSpecificNeighbourInNeighbour(cube, e.triangles[t.outsideNeighbour.triangleIndex], t.outsideNeighbour.relevantVertexIndices, t.outsideNeighbour.rotatedEdgePair);
                                     }
