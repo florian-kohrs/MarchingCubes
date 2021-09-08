@@ -341,13 +341,13 @@ namespace MarchingCubes
             float orgSqrDistance = (startPos - chunk.CenterPos).sqrMagnitude;
             Vector3Int v3;
             List<Vector3Int> dirs = chunk.NeighbourIndices;
-            for(int i = 0; i < dirs.Count; i++)
-            { 
+            for (int i = 0; i < dirs.Count; i++)
+            {
                 v3 = dirs[i];
                 float sqrDist = (startPos - v3).sqrMagnitude;
 
                 ///only add neighbours if
-                if (sqrDist <= buildAroundSqrDistance 
+                if (sqrDist <= buildAroundSqrDistance
                     && !HasChunkAtPosition(v3))
                 {
                     closestNeighbours.Enqueue(sqrDist, v3);
@@ -426,7 +426,7 @@ namespace MarchingCubes
         {
             CreateChunkParallelAt(pos, PositionToChunkGroupCoord(pos), OnDone);
         }
-        
+
         protected void CreateChunkParallelAt(Vector3 pos, Vector3Int coord, Action<IMarchingCubeChunk> OnDone)
         {
             int lodPower;
@@ -631,10 +631,97 @@ namespace MarchingCubes
         private ComputeBuffer triCountBuffer;
 
 
+        protected void CompareNeighboursNoise(IMarchingCubeChunk chunk)
+        {
+            try
+            {
+                CreateAllBuffersWithSizes(4);
+                Vector3Int[] coords = VectorExtension.GetAllAdjacentDirections;
+                for (int i = 0; i < coords.Length; i++)
+                {
+                    IMarchingCubeChunk other;
+                    Vector3Int neighbourPos = chunk.CenterPos + chunk.ChunkSize * coords[i];
+                    if (TryGetReadyChunkAt(neighbourPos, out other))
+                    {
+                        CompareNoiseValues(coords[i], chunk, other);
+                    }
+                }
+            }
+            catch (Exception xx)
+            {
+                Debug.Log("why?");
+            }
+            finally{
+                ReleaseBuffers();
+            }
+        }
+
+        public void CompareNoiseValues(Vector3Int offset, IMarchingCubeChunk chunk, IMarchingCubeChunk other)
+        {
+            Vector3Int ind1 = default, ind2 = default;
+            var p = other.Points;
+            if (other.ChunkSize == chunk.ChunkSize)
+            {
+                for (int x = 0; x < chunk.ChunkSize; x++)
+                {
+                    for (int y = 0; y < chunk.ChunkSize; y++)
+                    {
+                        float n1 = 0, n2 = 0;
+                        if (offset.x < 0)
+                        {
+                            ind1 = new Vector3Int(0, x, y);
+                            ind2 = new Vector3Int(chunk.ChunkSize, x, y);
+                        }
+                        else if (offset.x > 0)
+                        {
+                            ind1 = new Vector3Int(chunk.ChunkSize, x, y);
+                            ind2 = new Vector3Int(0, x, y);
+                        }
+                        else if (offset.y < 0)
+                        {
+                            ind1 = new Vector3Int(x, 0, y);
+                            ind2 = new Vector3Int(x, chunk.ChunkSize, y);
+                        }
+                        else if (offset.y > 0)
+                        {
+                            ind1 = new Vector3Int(x, chunk.ChunkSize, y);
+                            ind2 = new Vector3Int(x, 0, y);
+                        }
+                        else if (offset.z < 0)
+                        {
+                            ind1 = new Vector3Int(x, y, 0);
+                            ind2 = new Vector3Int(x, y, chunk.ChunkSize);
+                        }
+                        else if (offset.z > 0)
+                        {
+                            ind1 = new Vector3Int(x, y, chunk.ChunkSize);
+                            ind2 = new Vector3Int(x, y, 0);
+                        }
+
+                        n1 = chunk.Points[chunk.PointIndexFromCoord(ind1)];
+                        n2 = other.Points[other.PointIndexFromCoord(ind2)];
+                        float diff = Mathf.Abs(n1 - n2);
+                        if (diff > 0)
+                        {
+                            densityGenerator.TestGenerateAt(pointsBuffer, chunk.AnchorPos + ind1, n1, n2);
+                            Debug.Log("Diff:" + diff);
+                            return;
+                        }
+                        //else
+                        //{
+                        //    Debug.Log("All good");
+                        //}
+
+
+                    }
+                }
+            }
+        }
+
         protected MarchingCubeChunkNeighbourLODs GetNeighbourLODSFrom(IMarchingCubeChunk chunk)
         {
             MarchingCubeChunkNeighbourLODs result = new MarchingCubeChunkNeighbourLODs();
-            Vector3Int[] coords = VectorExtension.GetAllAdjacentDirections; 
+            Vector3Int[] coords = VectorExtension.GetAllAdjacentDirections;
             for (int i = 0; i < coords.Length; i++)
             {
                 MarchingCubeNeighbour neighbour = new MarchingCubeNeighbour();
@@ -660,6 +747,7 @@ namespace MarchingCubes
             int numTris = ApplyChunkDataAndDispatchAndGetShaderData(chunk, lod);
             channeledChunks++;
             chunk.InitializeWithMeshDataParallel(tris, pointsArray, GetNeighbourLODSFrom(chunk), OnDone);
+            CompareNeighboursNoise(chunk);
         }
 
         //protected void RebuildChunkParallelAt(Vector3Int p, Action OnDone, int lod)
@@ -691,9 +779,9 @@ namespace MarchingCubes
             Vector3 anchor = chunk.AnchorPos;
 
             //chunk.SizeGrower = extraSize;
-            
-            densityGenerator.TestGenerate(pointsBuffer);
-            return -1;
+
+            //densityGenerator.TestGenerate(pointsBuffer);
+            //return -1;
             densityGenerator.Generate(pointsBuffer, pointsPerAxis, 0, anchor, spacing);
 
             int numThreadsPerAxis = Mathf.CeilToInt(numVoxelsPerAxis / (float)threadGroupSize);

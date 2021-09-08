@@ -34,6 +34,26 @@ namespace MarchingCubes
         public int seed;
 
 
+        public virtual void TestGenerateAt(ComputeBuffer pointsBuffer, Vector3 pos, float f1, float f2)
+        {
+                ApplyShaderProperties(pointsBuffer, 4, 1f, pos, 1f);
+
+                int numThreadsPerAxis = Mathf.CeilToInt(4 / (float)threadGroupSize);
+
+                densityShader.Dispatch(0, numThreadsPerAxis, numThreadsPerAxis, numThreadsPerAxis);
+                var arr = new float[4*4*4];
+                pointsBuffer.GetData(arr);
+                if (buffersToRelease != null)
+                {
+                    foreach (var b in buffersToRelease)
+                    {
+                        b.Release();
+                    }
+                    buffersToRelease.Clear();
+                }
+            }
+        
+
         public virtual void TestGenerate(ComputeBuffer pointsBuffer)
         {
             List<float[]> points = new List<float[]>();
