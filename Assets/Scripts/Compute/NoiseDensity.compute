@@ -16,7 +16,6 @@ float radius;
 
 RWStructuredBuffer<float> points;
 int numPointsPerAxis;
-float boundsSize;
 float3 anchor;
 float3 offset;
 float spacing;
