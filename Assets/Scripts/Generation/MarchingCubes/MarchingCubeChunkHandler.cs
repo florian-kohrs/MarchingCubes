@@ -82,6 +82,7 @@ namespace MarchingCubes
             StartCoroutine(e);
         }
 
+        
 
         public BaseMeshDisplayer GetNextMeshDisplayer()
         {
@@ -205,6 +206,7 @@ namespace MarchingCubes
 
         private void Start()
         {
+            CreateAllBuffersWithSizes(128);
             start = DateTime.Now;
             buildAroundSqrDistance = (long)buildAroundDistance * buildAroundDistance;
             kernelId = marshShader.FindKernel("March");
@@ -636,6 +638,8 @@ namespace MarchingCubes
             return result;
         }
 
+        
+
         protected void BuildChunk(IMarchingCubeChunk chunk, int lod)
         {
             int numTris = ApplyChunkDataAndDispatchAndGetShaderData(chunk, lod);
@@ -671,7 +675,6 @@ namespace MarchingCubes
             int pointsPerAxis = numVoxelsPerAxis + 1;
             int pointsVolume = pointsPerAxis * pointsPerAxis * pointsPerAxis;
 
-            CreateAllBuffersWithSizes(numVoxelsPerAxis);
 
             float spacing = lod;
             Vector3 anchor = chunk.AnchorPos;
@@ -708,10 +711,11 @@ namespace MarchingCubes
             pointsBuffer.GetData(pointsArray, 0, 0, pointsArray.Length);
 
             totalTriBuild += numTris;
-            ReleaseBuffers();
 
             return numTris;
         }
+
+        
 
         public void DecreaseChunkLod(IMarchingCubeChunk chunk, int toLodPower)
         {
