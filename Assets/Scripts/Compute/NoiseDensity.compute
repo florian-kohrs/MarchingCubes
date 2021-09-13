@@ -15,6 +15,7 @@ float scale;
 float radius;
 
 RWStructuredBuffer<float> points;
+RWStructuredBuffer<float3> pointsPos;
 int numPointsPerAxis;
 float boundsSize;
 float3 anchor;
@@ -81,6 +82,7 @@ void Density (int3 id : SV_DispatchThreadID)
     //if (noise > 1 ||noise < -1)
     //    noise /= 32;
 
+    pointsPos[index] = pos;
     points[index] = noise;
     
 }

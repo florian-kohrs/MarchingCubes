@@ -220,6 +220,8 @@ namespace MarchingCubes
             set { chunkSize = value; UpdateChunkCenterPos(); UpdateChunkData(); } }
 
         public float SurfaceLevel { set => surfaceLevel = value; }
+        public Vector3[] PointsPos { get => pointsPos; set => pointsPos = value; }
+        public Vector3[] pointsPos;
 
         protected Vector3Int GetGlobalEstimatedNeighbourPositionFromOffset(Vector3Int offset)
         {

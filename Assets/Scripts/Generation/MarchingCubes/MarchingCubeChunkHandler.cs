@@ -577,7 +577,7 @@ namespace MarchingCubes
         {
             IChunkGroupRoot chunkGroup = GetOrCreateChunkGroupAtCoordinate(coord);
             IMarchingCubeChunk chunk = new T();
-            
+
             chunk.ChunkHandler = this;
             chunk.ChunkSize = chunkSize;
             chunk.Material = chunkMaterial;
@@ -625,19 +625,21 @@ namespace MarchingCubes
 
         TriangleBuilder[] tris;// = new TriangleBuilder[CHUNK_VOLUME * 5];
         float[] pointsArray;
+        Vector3[] pointsPosArray;
 
         private ComputeBuffer triangleBuffer;
         private ComputeBuffer pointsBuffer;
+        private ComputeBuffer pointsPositionBuffer;
         private ComputeBuffer triCountBuffer;
 
 
         protected void CompareNeighboursNoise(IMarchingCubeChunk chunk)
         {
-            try
+
+            Vector3Int[] coords = VectorExtension.GetAllAdjacentDirections;
+            for (int i = 0; i < coords.Length; i++)
             {
-                CreateAllBuffersWithSizes(4);
-                Vector3Int[] coords = VectorExtension.GetAllAdjacentDirections;
-                for (int i = 0; i < coords.Length; i++)
+                try
                 {
                     IMarchingCubeChunk other;
                     Vector3Int neighbourPos = chunk.CenterPos + chunk.ChunkSize * coords[i];
@@ -646,14 +648,24 @@ namespace MarchingCubes
                         CompareNoiseValues(coords[i], chunk, other);
                     }
                 }
+                catch (Exception xx)
+                {
+                    try
+                    {
+                        IMarchingCubeChunk other;
+                        Vector3Int neighbourPos = chunk.CenterPos + chunk.ChunkSize * coords[i];
+                        if (TryGetReadyChunkAt(neighbourPos, out other))
+                        {
+                            CompareNoiseValues(coords[i], chunk, other);
+                        }
+                    }
+                    catch (Exception x)
+                    {
+                        Debug.Log("why?");
+                    }
+                }
             }
-            catch (Exception xx)
-            {
-                Debug.Log("why?");
-            }
-            finally{
-                ReleaseBuffers();
-            }
+
         }
 
         public void CompareNoiseValues(Vector3Int offset, IMarchingCubeChunk chunk, IMarchingCubeChunk other)
@@ -697,14 +709,19 @@ namespace MarchingCubes
                             ind1 = new Vector3Int(x, y, chunk.ChunkSize);
                             ind2 = new Vector3Int(x, y, 0);
                         }
-
-                        n1 = chunk.Points[chunk.PointIndexFromCoord(ind1)];
-                        n2 = other.Points[other.PointIndexFromCoord(ind2)];
+                        int index1 = chunk.PointIndexFromCoord(ind1);
+                        int index2 = other.PointIndexFromCoord(ind2);
+                        n1 = chunk.Points[index1];
+                        n2 = other.Points[index2];
                         float diff = Mathf.Abs(n1 - n2);
                         if (diff > 0)
                         {
-                            densityGenerator.TestGenerateAt(pointsBuffer, chunk.AnchorPos + ind1, n1, n2);
-                            Debug.Log("Diff:" + diff);
+                            Vector3 pos1 = chunk.PointsPos[index2];
+                            Vector3 pos2 = other.PointsPos[index2];
+                            float distance = (pos1 - pos2).magnitude;
+                            Debug.Log("DIstance:" + distance);
+                            //densityGenerator.TestGenerateAt(pointsBuffer, chunk.AnchorPos + ind1, n1, n2);
+                            //Debug.Log("Diff:" + diff);
                             return;
                         }
                         //else
@@ -782,7 +799,7 @@ namespace MarchingCubes
 
             //densityGenerator.TestGenerate(pointsBuffer);
             //return -1;
-            densityGenerator.Generate(pointsBuffer, pointsPerAxis, 0, anchor, spacing);
+            densityGenerator.Generate(pointsBuffer, pointsPositionBuffer, pointsPerAxis, 0, anchor, spacing);
 
             int numThreadsPerAxis = Mathf.CeilToInt(numVoxelsPerAxis / (float)threadGroupSize);
 
@@ -808,8 +825,11 @@ namespace MarchingCubes
             triangleBuffer.GetData(tris, 0, 0, numTris);
 
             pointsArray = new float[pointsVolume];
+            pointsPosArray = new Vector3[pointsVolume];
 
             pointsBuffer.GetData(pointsArray, 0, 0, pointsArray.Length);
+            pointsPositionBuffer.GetData(pointsPosArray, 0, 0, pointsPosArray.Length);
+            chunk.PointsPos = pointsPosArray;
 
             totalTriBuild += numTris;
             ReleaseBuffers();
@@ -929,6 +949,7 @@ namespace MarchingCubes
             //        ReleaseBuffers();
             //    }
             pointsBuffer = new ComputeBuffer(numPoints, sizeof(float) * 1);
+            pointsPositionBuffer = new ComputeBuffer(numPoints, sizeof(float) * 3);
             triangleBuffer = new ComputeBuffer(maxTriangleCount, TriangleBuilder.SIZE_OF_TRI_BUILD, ComputeBufferType.Append);
             triCountBuffer = new ComputeBuffer(1, sizeof(int), ComputeBufferType.Raw);
 
@@ -942,6 +963,7 @@ namespace MarchingCubes
             if (triangleBuffer != null)
             {
                 triangleBuffer.Release();
+                pointsPositionBuffer.Release();
                 pointsBuffer.Release();
                 triCountBuffer.Release();
                 triangleBuffer = null;

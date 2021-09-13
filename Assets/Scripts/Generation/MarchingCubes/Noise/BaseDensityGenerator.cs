@@ -34,9 +34,9 @@ namespace MarchingCubes
         public int seed;
 
 
-        public virtual void TestGenerateAt(ComputeBuffer pointsBuffer, Vector3 pos, float f1, float f2)
+        public virtual void TestGenerateAt(ComputeBuffer pointsBuffer, ComputeBuffer pointsPosBuffer, Vector3 pos, float f1, float f2)
         {
-                ApplyShaderProperties(pointsBuffer, 4, 1f, pos, 1f);
+                ApplyShaderProperties(pointsBuffer, pointsPosBuffer, 4, 1f, pos, 1f);
 
                 int numThreadsPerAxis = Mathf.CeilToInt(4 / (float)threadGroupSize);
 
@@ -54,14 +54,14 @@ namespace MarchingCubes
             }
         
 
-        public virtual void TestGenerate(ComputeBuffer pointsBuffer)
+        public virtual void TestGenerate(ComputeBuffer pointsBuffer, ComputeBuffer pointsPosBuffer)
         {
             List<float[]> points = new List<float[]>();
             int num = 129;
             int num2 = 128;
             for (int i = 0; i < 2; i++)
             {
-                ApplyShaderProperties(pointsBuffer, num, 1, new Vector3(i * num2, 65008,0), 1);
+                ApplyShaderProperties(pointsBuffer, pointsPosBuffer, num, 1, new Vector3(i * num2, 65008,0), 1);
 
                 int numThreadsPerAxis = Mathf.CeilToInt(num / (float)threadGroupSize);
 
@@ -99,9 +99,9 @@ namespace MarchingCubes
     }
 
 
-        public virtual ComputeBuffer Generate(ComputeBuffer pointsBuffer, int numPointsPerAxis, float boundsSize, Vector3 anchor, float spacing)
+        public virtual ComputeBuffer Generate(ComputeBuffer pointsBuffer, ComputeBuffer pointsPosBuffer, int numPointsPerAxis, float boundsSize, Vector3 anchor, float spacing)
         {
-            ApplyShaderProperties(pointsBuffer, numPointsPerAxis, boundsSize, anchor, spacing);
+            ApplyShaderProperties(pointsBuffer, pointsPosBuffer, numPointsPerAxis, boundsSize, anchor, spacing);
 
             int numThreadsPerAxis = Mathf.CeilToInt(numPointsPerAxis / (float)threadGroupSize);
 
@@ -120,11 +120,12 @@ namespace MarchingCubes
         }
 
 
-        protected void ApplyShaderProperties(ComputeBuffer pointsBuffer, int numPointsPerAxis, float boundsSize, Vector3 anchor, float spacing)
+        protected void ApplyShaderProperties(ComputeBuffer pointsBuffer, ComputeBuffer pointsPosBuffer, int numPointsPerAxis, float boundsSize, Vector3 anchor, float spacing)
         {
             ComputeBuffer octaveOffsetsBuffer = GetOctaveOffsetsBuffer();
 
             densityShader.SetBuffer(0, "points", pointsBuffer);
+            densityShader.SetBuffer(0, "pointsPos", pointsPosBuffer);
             densityShader.SetInt("numPointsPerAxis", numPointsPerAxis);
             densityShader.SetFloat("boundsSize", boundsSize);
             densityShader.SetFloat("spacing", spacing);
