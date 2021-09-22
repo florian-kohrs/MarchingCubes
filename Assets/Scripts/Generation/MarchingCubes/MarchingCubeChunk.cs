@@ -51,7 +51,7 @@ namespace MarchingCubes
 
         public Dictionary<int, MarchingCubeEntity> cubeEntities = new Dictionary<int, MarchingCubeEntity>();
 
-        protected Dictionary<Vector3Int, MarchingCubeEntity> higherLodNeighbourCubes = new Dictionary<Vector3Int, MarchingCubeEntity>(new Vector3EqualityComparer());
+        protected Dictionary<Vector3Int, MarchingCubeEntity> higherLodNeighbourCubes = new Dictionary<Vector3Int, MarchingCubeEntity>();
 
         public MarchingCubeEntity GetEntityAt(Vector3Int v3)
         {

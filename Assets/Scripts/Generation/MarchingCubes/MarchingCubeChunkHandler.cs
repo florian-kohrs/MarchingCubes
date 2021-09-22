@@ -42,7 +42,7 @@ namespace MarchingCubes
 
         //public Dictionary<Vector3Int, IMarchingCubeChunk> chunks = new Dictionary<Vector3Int, IMarchingCubeChunk>(new Vector3EqualityComparer());
 
-        public Dictionary<Vector3Int, IChunkGroupRoot> chunkGroups = new Dictionary<Vector3Int, IChunkGroupRoot>(new Vector3EqualityComparer());
+        public Dictionary<Vector3Int, IChunkGroupRoot> chunkGroups = new Dictionary<Vector3Int, IChunkGroupRoot>();
 
         public Dictionary<Vector3Int, IChunkGroupRoot> ChunkGroups => chunkGroups;
 

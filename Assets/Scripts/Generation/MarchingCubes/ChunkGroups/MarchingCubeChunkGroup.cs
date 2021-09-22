@@ -15,7 +15,7 @@ namespace MarchingCubes
 
         int groupLod;
 
-        protected Dictionary<Vector3Int, IMarchingCubeChunk> GroupChunks = new Dictionary<Vector3Int, IMarchingCubeChunk>(Vector3EqualityComparer.instance);
+        protected Dictionary<Vector3Int, IMarchingCubeChunk> GroupChunks = new Dictionary<Vector3Int, IMarchingCubeChunk>();
 
       
         public void InsertChunkAt(Vector3Int coord, IMarchingCubeChunk chunk, int extraSize)
