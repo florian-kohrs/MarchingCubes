@@ -108,7 +108,7 @@ public class Pathfinder<T, J>
         usedFields.Add(closest.current);
         List<T> circumjacent = nav.GetCircumjacent(closest.current);
         T t;
-        for (int i = 0; i < circumjacent.Count; i++)
+        for (int i = 0; i < circumjacent.Count; ++i)
         {
             t = circumjacent[i];
             if (!usedFields.Contains(t))

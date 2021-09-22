@@ -133,7 +133,7 @@ namespace MarchingCubes
 
         public void FreeAllDisplayers(List<BaseMeshDisplayer> displayers)
         {
-            for (int i = 0; i < displayers.Count; i++)
+            for (int i = 0; i < displayers.Count; ++i)
             {
                 FreeMeshDisplayer(displayers[i]);
             }
@@ -271,7 +271,7 @@ namespace MarchingCubes
         public IEnumerator BuildRelevantChunksParallelAround(IMarchingCubeChunk chunk)
         {
             List<Vector3Int> neighboours = chunk.NeighbourIndices;
-            for (int i = 0; i < neighboours.Count; i++)
+            for (int i = 0; i < neighboours.Count; ++i)
             {
                 closestNeighbours.Enqueue(0, neighboours[i]);
             }
@@ -323,7 +323,7 @@ namespace MarchingCubes
             float orgSqrDistance = (startPos - chunk.CenterPos).sqrMagnitude;
             Vector3Int v3;
             List<Vector3Int> dirs = chunk.NeighbourIndices;
-            for(int i = 0; i < dirs.Count; i++)
+            for(int i = 0; i < dirs.Count; ++i)
             { 
                 v3 = dirs[i];
                 float sqrDist = (startPos - v3).sqrMagnitude;
@@ -621,7 +621,7 @@ namespace MarchingCubes
         {
             MarchingCubeChunkNeighbourLODs result = new MarchingCubeChunkNeighbourLODs();
             Vector3Int[] coords = VectorExtension.GetAllAdjacentDirections; 
-            for (int i = 0; i < coords.Length; i++)
+            for (int i = 0; i < coords.Length; ++i)
             {
                 MarchingCubeNeighbour neighbour = new MarchingCubeNeighbour();
                 Vector3Int neighbourPos = chunk.CenterPos + chunk.ChunkSize * coords[i];
@@ -796,7 +796,7 @@ namespace MarchingCubes
         //protected void NotifyNeighbourChunksOnLodSwitch(Vector3Int changedIndex, int newLodPower)
         //{
         //    Vector3Int[] neighbourPositions = changedIndex.GetAllAdjacentDirections();
-        //    for (int i = 0; i < neighbourPositions.Length; i++)
+        //    for (int i = 0; i < neighbourPositions.Length; ++i)
         //    {
         //        Vector3Int v3 = neighbourPositions[i];
         //        IMarchingCubeChunk c;
@@ -856,7 +856,7 @@ namespace MarchingCubes
             throw new NotImplementedException();
             //Vector3Int[] combs = cubeOrigin.GetAllCombination();
             //Vector3Int v;
-            //for (int i = 0; i < combs.Length; i++)
+            //for (int i = 0; i < combs.Length; ++i)
             //{
             //    v = combs[i];
             //    bool allActiveIndicesHaveOffset = true;

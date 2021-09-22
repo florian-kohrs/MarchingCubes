@@ -85,7 +85,7 @@ namespace MarchingCubes
 
         protected void BuildAllMeshes()
         {
-            for (int i = 0; i < data.Count; i++)
+            for (int i = 0; i < data.Count; ++i)
             {
                 ApplyChangesToMesh(data[i]);
             }

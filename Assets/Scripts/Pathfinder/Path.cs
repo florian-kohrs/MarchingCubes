@@ -27,7 +27,7 @@ public class Path<T, J>
         List<Path<T, J>> result = new List<Path<T, J>>();
         List<T> circumjacent = nav.GetCircumjacent(current);
         T c;
-        for (int i = 0; i < circumjacent.Count; i++)
+        for (int i = 0; i < circumjacent.Count; ++i)
         {
             c = circumjacent[i];
             if (parent == null || !nav.IsEqual(current, parent.current))

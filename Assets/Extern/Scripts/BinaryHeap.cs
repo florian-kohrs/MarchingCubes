@@ -106,7 +106,7 @@ public class BinaryHeap<K, V> where K : System.IComparable
     {
         capacity = capacity * 2;
         Element[] resized = new Element[capacity + 2];
-        for (int i = 0; i < data.Length; i++)
+        for (int i = 0; i < data.Length; ++i)
         {
             resized[i] = data[i];
         }

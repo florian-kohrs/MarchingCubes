@@ -146,7 +146,7 @@ namespace MarchingCubes
             get
             {
                 List<Vector3Int> result = new List<Vector3Int>();
-                for (int i = 0; i < HasNeighbourInDirection.Length; i++)
+                for (int i = 0; i < HasNeighbourInDirection.Length; ++i)
                 {
                     if (HasNeighbourInDirection[i] != null)
                         result.Add(HasNeighbourInDirection[i].Value);
@@ -319,7 +319,7 @@ namespace MarchingCubes
 
             List<MissingNeighbourData> trisWithNeighboursOutOfBounds = new List<MissingNeighbourData>();
             TriangleBuilder t;
-            for (int i = 0; i < ts.Length; i++)
+            for (int i = 0; i < ts.Length; ++i)
             {
                 t = ts[i];
                 Vector3Int currentOrigin = t.Origin;
@@ -337,7 +337,7 @@ namespace MarchingCubes
             MissingNeighbourData neighbour;
             IMarchingCubeChunk c;
 
-            for (int i = 0; i < trisWithNeighboursOutOfBounds.Count; i++)
+            for (int i = 0; i < trisWithNeighboursOutOfBounds.Count; ++i)
             {
                 neighbour = trisWithNeighboursOutOfBounds[i];
                 Vector3Int target = GetGlobalEstimatedNeighbourPositionFromOffset(neighbour.outsideNeighbour.offset);
@@ -524,7 +524,7 @@ namespace MarchingCubes
         /// </summary>
         protected void SoftResetMeshDisplayers()
         {
-            for (int i = 0; i < activeDisplayers.Count; i++)
+            for (int i = 0; i < activeDisplayers.Count; ++i)
             {
                 if (activeDisplayers[i].IsColliderActive)
                     FreeMeshDisplayerAt(ref i);
@@ -543,7 +543,7 @@ namespace MarchingCubes
         /// </summary>
         protected void ResetBorderGlueMesh()
         {
-            for (int i = 0; i < activeDisplayers.Count; i++)
+            for (int i = 0; i < activeDisplayers.Count; ++i)
             {
                 if (!activeDisplayers[i].HasChunk)
                     FreeMeshDisplayerAt(ref i);
@@ -640,7 +640,7 @@ namespace MarchingCubes
             while (outerEnum.MoveNext())
             {
                 e = outerEnum.Current;
-                for (int i = 0; i < e.triangles.Count; i++)
+                for (int i = 0; i < e.triangles.Count; ++i)
                 {
                     AddTriangleToMeshData(e.triangles[i], ref usedTriCount, ref totalTreeCount, true);
                 }

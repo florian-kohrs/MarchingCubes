@@ -95,7 +95,7 @@ namespace MarchingCubes
         public List<PathTriangle> GetCircumjacent(PathTriangle field)
         {
             List<PathTriangle> result = new List<PathTriangle>(TRIANGLE_NEIGHBOUR_COUNT);
-            for (int i = 0; i < TRIANGLE_NEIGHBOUR_COUNT; i++)
+            for (int i = 0; i < TRIANGLE_NEIGHBOUR_COUNT; ++i)
             {
                 if (field.neighbours != null && field.Slope < MAX_SLOPE_TO_BE_USEABLE_IN_PATHFINDING)
                 {

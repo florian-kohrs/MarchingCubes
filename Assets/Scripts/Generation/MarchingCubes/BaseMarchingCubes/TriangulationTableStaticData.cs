@@ -78,7 +78,7 @@ public class TriangulationTableStaticData : MonoBehaviour
         {
             Dictionary<int, bool> changes = new Dictionary<int, bool>();
 
-            for (int i = 0; i < Length; i++)
+            for (int i = 0; i < Length; ++i)
             {
                 if (this[i])
                 {
@@ -200,7 +200,7 @@ public class TriangulationTableStaticData : MonoBehaviour
 
     public static int GetEdgeIndex(int triangulationIndex, int triIndex, int edgeValue)
     {
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 3; ++i)
         {
             if (TriangulationTable.triangulation[triangulationIndex][triIndex * 3 + i] == edgeValue)
                 return i;
@@ -358,7 +358,7 @@ public class TriangulationTableStaticData : MonoBehaviour
 
     private static void GetNeighbourOffsetForTriangle(int triangulationIndex, int index, List<OutsideEdgeNeighbourDirection> addResult)
     {
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 3; ++i)
         {
             Vector3Int offset = Vector3Int.zero;
             Vector2Int edgeVertices = new Vector2Int(TriangulationTable.triangulation[triangulationIndex][index + i], TriangulationTable.triangulation[triangulationIndex][index + ((i + 1) % 3)]);
@@ -580,7 +580,7 @@ public class TriangulationTableStaticData : MonoBehaviour
     protected static void BuildInternNeighbours()
     {
         internNeighbours = new Dictionary<int, TriangulationNeighbours>();
-        for (int i = 1; i < TriangulationTable.triangulation.Count - 1; i++)
+        for (int i = 1; i < TriangulationTable.triangulation.Count - 1; ++i)
         {
             TriangulationNeighbours currentNeighbours = new TriangulationNeighbours();
             internNeighbours.Add(i, currentNeighbours);

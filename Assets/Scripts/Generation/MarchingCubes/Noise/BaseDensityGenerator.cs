@@ -87,7 +87,7 @@ namespace MarchingCubes
 
             float offsetRange = 1000;
 
-            for (int i = 0; i < octaves; i++)
+            for (int i = 0; i < octaves; ++i)
             {
                 offsets[i] = new Vector3(
                     (float)r.NextDouble() * 2 - 1,

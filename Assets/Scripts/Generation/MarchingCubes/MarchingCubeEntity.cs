@@ -16,7 +16,7 @@ namespace MarchingCubes
         public int GetTriangleIndexWithNormal(Vector3 normal)
         {
             int triCount = triangles.Count;
-            for (int i = 0; i < triCount; i++)
+            for (int i = 0; i < triCount; ++i)
             {
                 if (triangles[i].Normal == normal)
                 {
@@ -30,7 +30,7 @@ namespace MarchingCubes
         {
             float closestSqr = float.MaxValue;
             int closestIndex = -1;
-            for (int i = 0; i < triangles.Count; i++)
+            for (int i = 0; i < triangles.Count; ++i)
             {
                 if (triangles[i].Normal == normal)
                 {
@@ -84,7 +84,7 @@ namespace MarchingCubes
             IndexNeighbourPair item;
             List<IndexNeighbourPair> neighbours = NeighbourData.InternNeighbourPairs;
             int count = neighbours.Count;
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < count; ++i)
             {
                 item = neighbours[i];
                 triangles[item.first].SoftSetNeighbourTwoWay(triangles[item.second], item.firstEdgeIndices, item.sndEdgeIndice);
@@ -97,7 +97,7 @@ namespace MarchingCubes
             OutsideEdgeNeighbourDirection neighbour;
             List<OutsideEdgeNeighbourDirection> edgeDirs = neighbourData.OutsideNeighbours;
             int count = edgeDirs.Count;
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < count; ++i)
             {
                 neighbour = edgeDirs[i];
                 Vector3Int newPos = origin + neighbour.offset;
@@ -142,7 +142,7 @@ namespace MarchingCubes
             bool hasNeighbourOutOfBounds = true;
             OutsideEdgeNeighbourDirection neighbour;
             int count = neighbourData.OutsideNeighbours.Count;
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < count; ++i)
             {
                 neighbour = neighbourData.OutsideNeighbours[i];
                 Vector3Int newPos = origin + neighbour.offset;
@@ -162,7 +162,7 @@ namespace MarchingCubes
             TriangulationNeighbours neighbourData = TriangulationTableStaticData.GetNeighbourData(triangulationIndex);
             OutsideEdgeNeighbourDirection neighbour;
             int count = neighbourData.OutsideNeighbours.Count;
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < count; ++i)
             {
                 neighbour = neighbourData.OutsideNeighbours[i];
                 Vector3Int newPos = origin + neighbour.offset;

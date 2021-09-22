@@ -146,7 +146,7 @@ namespace MarchingCubes
                     if (!e.BuildNeighbours(GetEntityAt, IsCubeInBounds, trisWithNeighboursOutOfBounds))
                     {
                         int count = trisWithNeighboursOutOfBounds.Count;
-                        for (int i = 0; i < count; i++)
+                        for (int i = 0; i < count; ++i)
                         {
                             t = trisWithNeighboursOutOfBounds[i];
                             //Vector3Int offset = t.neighbour.offset.Map(Math.Sign);
@@ -205,7 +205,7 @@ namespace MarchingCubes
                 e = @enum.Current;
                 if (IsBorderCube(e.origin) && !e.FindMissingNeighbours(IsCubeInBounds, trisWithNeighboursOutOfBounds))
                 {
-                    for (int i = 0; i < trisWithNeighboursOutOfBounds.Count; i++)
+                    for (int i = 0; i < trisWithNeighboursOutOfBounds.Count; ++i)
                     {
                         t = trisWithNeighboursOutOfBounds[i];
                         Vector3Int target = GetGlobalEstimatedNeighbourPositionFromOffset(t.outsideNeighbour.offset);
@@ -246,7 +246,7 @@ namespace MarchingCubes
 
         protected bool GetPointWithCorner(MarchingCubeEntity e, int a, int b, out Vector3 result)
         {
-            for (int i = 0; i < e.triangles.Count; i++)
+            for (int i = 0; i < e.triangles.Count; ++i)
             {
                 for (int x = 0; x < 3; x++)
                 {
@@ -340,7 +340,7 @@ namespace MarchingCubes
             MarchingCubeEntity cube;
             cubeEntities = new Dictionary<int, MarchingCubeEntity>(vertexSize * vertexSize * vertexSize / 15);
             TriangleBuilder t;
-            for(int i = 0; i< ts.Length; i++) 
+            for(int i = 0; i< ts.Length; ++i) 
             {
                 t = ts[i];
                 if (!GetOrAddEntityAt(t.Origin, out cube))
@@ -372,7 +372,7 @@ namespace MarchingCubes
             {
                 e = @enum.Current;
                 count = e.triangles.Count;
-                for (int i = 0; i < count; i++)
+                for (int i = 0; i < count; ++i)
                 {
                     AddTriangleToMeshData(e.triangles[i], ref usedTriCount, ref totalTreeCount, false);
                 }
@@ -431,7 +431,7 @@ namespace MarchingCubes
             }
             List<MissingNeighbourData> missingNeighbours = new List<MissingNeighbourData>();
             int buildCount = buildNeighbours.Count;
-            for (int i = 0; i < buildCount; i++)
+            for (int i = 0; i < buildCount; ++i)
             {
                 BuildEdgesFor(buildNeighbours[i], missingNeighbours, true);
             }
@@ -458,7 +458,7 @@ namespace MarchingCubes
             Vector3Int[] aroundVertices = GetIndicesAround(e);
             List<Vector3Int> r = new List<Vector3Int>(aroundVertices.Length);
             Vector3Int v3;
-            for (int i = 0; i < aroundVertices.Length; i++)
+            for (int i = 0; i < aroundVertices.Length; ++i)
             {
                 v3 = aroundVertices[i];
                 if (IsCubeInBounds(v3))
@@ -605,11 +605,11 @@ namespace MarchingCubes
             int triIndex = e.GetTriangleIndexWithNormalOrClosest(hit.normal, hit.point) * 3;
             int startPointIndex = PointIndexFromCoord(e.origin);
             float[] cornerIndices = new float[8];
-            for (int i = 0; i < cornerIndices.Length; i++)
+            for (int i = 0; i < cornerIndices.Length; ++i)
             {
                 cornerIndices[i] = 0.4f;
             }
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < 3; ++i)
             {
                 int cornerA = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[e.triangulationIndex][triIndex + i]];
                 int cornerB = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[e.triangulationIndex][triIndex + i]];
@@ -617,7 +617,7 @@ namespace MarchingCubes
                 cornerIndices[cornerB] += 0.2f;
             }
 
-            for (int i = 0; i < cornerIndices.Length; i++)
+            for (int i = 0; i < cornerIndices.Length; ++i)
             {
                 points[startPointIndex + LocalCornerIndexToGlobalDelta(i)] += /*cornerIndices[i] **/ delta;
             }
@@ -627,7 +627,7 @@ namespace MarchingCubes
             //    points[i] += delta;
             //}
 
-            //for (int i = 0; i < points.Length; i++)
+            //for (int i = 0; i < points.Length; ++i)
             //{
             //    points[i] += delta;
             //}
@@ -659,7 +659,7 @@ namespace MarchingCubes
             int[] cornerIndices = GetCubeCornerIndicesForPoint(entityOrigin);
             int length = cornerIndices.Length;
             int index;
-            for (int i = 0; i < length; i++)
+            for (int i = 0; i < length; ++i)
             {
                 index = cornerIndices[i];
                 Vector3Int indexPoint = CoordFromPointIndex(index);

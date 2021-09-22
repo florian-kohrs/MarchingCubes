@@ -95,7 +95,7 @@ public static class VectorExtension
     {
         int sameValues = 0;
 
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 3; ++i)
         {
             for (int x = 0; x < 3; x++)
             {
@@ -117,7 +117,7 @@ public static class VectorExtension
     {
         int sameValues = 0;
         sharedIndices = new Vector2Int();
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 3; ++i)
         {
             for (int x = 0; x < 3; x++)
             {
@@ -145,7 +145,7 @@ public static class VectorExtension
     {
         int sameValues = 0;
 
-        for (int i = 0; i < 3 && sameValues < n; i++)
+        for (int i = 0; i < 3 && sameValues < n; ++i)
         {
             if (v2.Contains(v1[i]))
             {
@@ -174,7 +174,7 @@ public static class VectorExtension
         float x = v2.x;
         float y = v2.y;
         float z = v2.z;
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 3; ++i)
         {
             v1ConnectedVertices[i] = IndexOf(x,y,z,v1[i]);
 
@@ -196,7 +196,7 @@ public static class VectorExtension
     {
         Vector2Int r = new Vector2Int();
         int used = 0;
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 3; ++i)
         {
             if (p(v3[i]))
             {
@@ -211,7 +211,7 @@ public static class VectorExtension
     {
         int sameValues = 0;
 
-        for (int i = 0; i < 3 && sameValues < n; i++)
+        for (int i = 0; i < 3 && sameValues < n; ++i)
         {
             if (v1[i] == v2[i])
             {
@@ -227,7 +227,7 @@ public static class VectorExtension
 
         int start = Array.IndexOf(v2.Values(),v1.x);
         if (start > -1) {
-            for (int i = 0; i < 3 && sameValues < n; i++)
+            for (int i = 0; i < 3 && sameValues < n; ++i)
             {
                 if (v1[i] == v2[(i + start) % 3])
                 {
