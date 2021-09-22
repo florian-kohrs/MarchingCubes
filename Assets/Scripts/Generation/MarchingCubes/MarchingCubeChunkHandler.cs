@@ -222,8 +222,11 @@ namespace MarchingCubes
         DateTime start;
         DateTime end;
 
+        public static MarchingCubeChunkHandler instance;
+
         private void Start()
         {
+            instance = this;
             start = DateTime.Now;
             buildAroundSqrDistance = (long)buildAroundDistance * buildAroundDistance;
             kernelId = marshShader.FindKernel("March");
@@ -345,6 +348,7 @@ namespace MarchingCubes
             {
                 v3 = dirs[i];
                 float sqrDist = (startPos - v3).sqrMagnitude;
+
 
                 ///only add neighbours if
                 if (sqrDist <= buildAroundSqrDistance
@@ -633,7 +637,7 @@ namespace MarchingCubes
         private ComputeBuffer triCountBuffer;
 
 
-        protected void CompareNeighboursNoise(IMarchingCubeChunk chunk)
+        public static void CompareNeighboursNoise(IMarchingCubeChunk chunk)
         {
 
             Vector3Int[] coords = VectorExtension.GetAllAdjacentDirections;
@@ -643,7 +647,7 @@ namespace MarchingCubes
                 {
                     IMarchingCubeChunk other;
                     Vector3Int neighbourPos = chunk.CenterPos + chunk.ChunkSize * coords[i];
-                    if (TryGetReadyChunkAt(neighbourPos, out other))
+                    if (instance.TryGetReadyChunkAt(neighbourPos, out other))
                     {
                         CompareNoiseValues(coords[i], chunk, other);
                     }
@@ -654,7 +658,7 @@ namespace MarchingCubes
                     {
                         IMarchingCubeChunk other;
                         Vector3Int neighbourPos = chunk.CenterPos + chunk.ChunkSize * coords[i];
-                        if (TryGetReadyChunkAt(neighbourPos, out other))
+                        if (instance.TryGetReadyChunkAt(neighbourPos, out other))
                         {
                             CompareNoiseValues(coords[i], chunk, other);
                         }
@@ -668,7 +672,7 @@ namespace MarchingCubes
 
         }
 
-        public void CompareNoiseValues(Vector3Int offset, IMarchingCubeChunk chunk, IMarchingCubeChunk other)
+        public static void CompareNoiseValues(Vector3Int offset, IMarchingCubeChunk chunk, IMarchingCubeChunk other)
         {
             Vector3Int ind1 = default, ind2 = default;
             var p = other.Points;
@@ -716,10 +720,10 @@ namespace MarchingCubes
                         float diff = Mathf.Abs(n1 - n2);
                         if (diff > 0)
                         {
-                            Vector3 pos1 = chunk.PointsPos[index2];
+                            Vector3 pos1 = chunk.PointsPos[index1];
                             Vector3 pos2 = other.PointsPos[index2];
                             float distance = (pos1 - pos2).magnitude;
-                            Debug.Log("DIstance:" + distance);
+                            Debug.Log("DIstance:" + distance + " with diff:" + diff);
                             //densityGenerator.TestGenerateAt(pointsBuffer, chunk.AnchorPos + ind1, n1, n2);
                             //Debug.Log("Diff:" + diff);
                             return;
@@ -764,7 +768,7 @@ namespace MarchingCubes
             int numTris = ApplyChunkDataAndDispatchAndGetShaderData(chunk, lod);
             channeledChunks++;
             chunk.InitializeWithMeshDataParallel(tris, pointsArray, GetNeighbourLODSFrom(chunk), OnDone);
-            CompareNeighboursNoise(chunk);
+            //CompareNeighboursNoise(chunk);
         }
 
         //protected void RebuildChunkParallelAt(Vector3Int p, Action OnDone, int lod)

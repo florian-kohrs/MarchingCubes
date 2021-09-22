@@ -63,9 +63,12 @@ void Density (int3 id : SV_DispatchThreadID)
 
 
 
-
+    float3 noisePos;
+    float3 totalPos = float3(0,0,0);
     for (int j =0; j < octaves; j ++) {
-        float n = snoise((pos * frequency) / scale + octaveOffsets[j] + offset);
+        noisePos = (pos * frequency) / scale + octaveOffsets[j] + offset;
+        float n = snoise(noisePos);
+        totalPos += noisePos;
         n *= localAmplitude;
 
         noise += n;
@@ -82,7 +85,7 @@ void Density (int3 id : SV_DispatchThreadID)
     //if (noise > 1 ||noise < -1)
     //    noise /= 32;
 
-    pointsPos[index] = pos;
+    pointsPos[index] = totalPos;
     points[index] = noise;
     
 }

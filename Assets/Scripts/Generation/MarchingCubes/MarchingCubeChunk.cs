@@ -276,8 +276,9 @@ namespace MarchingCubes
                                         int index = TriangulationTableStaticData.GetIndexWithEdges(cube.triangulationIndex, t.outsideNeighbour.rotatedEdgePair).otherTriangleIndex;
                                         if(cube.triangles.Count <= index)
                                         {
-                                            CompareNoiseValues(t.outsideNeighbour.offset, c, t.originCubeEntity, pos);
-                                            FindTwoClosestVertices(cube, e);
+                                            MarchingCubeChunkHandler.CompareNoiseValues(t.outsideNeighbour.offset, this, chunk);
+                                            //CompareNoiseValues(t.outsideNeighbour.offset, c, t.originCubeEntity, pos);
+                                            //FindTwoClosestVertices(cube, e);
                                         }
                                         e.BuildSpecificNeighbourInNeighbour(cube, e.triangles[t.outsideNeighbour.triangleIndex], t.outsideNeighbour.relevantVertexIndices, t.outsideNeighbour.rotatedEdgePair);
                                     }
