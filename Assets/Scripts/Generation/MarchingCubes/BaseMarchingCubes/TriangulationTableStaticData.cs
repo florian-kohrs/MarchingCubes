@@ -335,9 +335,11 @@ public class TriangulationTableStaticData : MonoBehaviour
 
     protected static Dictionary<NeighbourKey, int> neighbourTable;
     /// <summary>
-    /// key is combination of triiangulationindex and triangleindex
+    /// key is combination of triangulationindex and triangleindex
     /// </summary>
     protected static Dictionary<int, TriangulationNeighbours> internNeighbours;
+
+    protected static Dictionary<int, OutsideNeighbourConnectionInfo> externNeighboursLookup = new Dictionary<int, OutsideNeighbourConnectionInfo>();
 
     public static Vector3Int GetTriangleAt(int trianuglationIndex, int triIndex)
     {
@@ -356,7 +358,7 @@ public class TriangulationTableStaticData : MonoBehaviour
         return edges;
     }
 
-    private static void GetNeighbourOffsetForTriangle(int triangulationIndex, int index, List<OutsideEdgeNeighbourDirection> addResult)
+    public static void GetNeighbourForAllPossibleNeighbours(int triangulationIndex, int index, List<OutsideEdgeNeighbourDirection> addResult)
     {
         for (int i = 0; i < 3; ++i)
         {
@@ -371,7 +373,19 @@ public class TriangulationTableStaticData : MonoBehaviour
                   Mathf.Abs(offset.z) == 2 ? (int)Mathf.Sign(offset.z) : 0);
             if (offset != Vector3.zero)
             {
-                addResult.Add(new OutsideEdgeNeighbourDirection(index / 3, edgeVertices.x, edgeVertices.y, i, (i + 1) % 3, offset));
+                //try find edge for every other comb if exists
+                OutsideEdgeNeighbourDirection neighbour = new OutsideEdgeNeighbourDirection(index / 3, edgeVertices.x, edgeVertices.y, i, (i + 1) % 3, offset);
+                addResult.Add(neighbour);
+                
+                for (int otherTriIndex = 1; otherTriIndex < 255; otherTriIndex++)
+                {
+                    OutsideNeighbourConnectionInfo info;
+                    if (TryGetIndexWithEdges(otherTriIndex, neighbour.rotatedEdgePair.x, neighbour.rotatedEdgePair.y, out info))
+                    {
+                        int key = BuildIndexForOutsideNeighbour(triangulationIndex, otherTriIndex, index, i, (i + 1) % 3);
+                        externNeighboursLookup[key] = info;
+                    }
+                }
             }
         }
     }
@@ -458,6 +472,12 @@ public class TriangulationTableStaticData : MonoBehaviour
         }
     }
 
+    public static bool TryGetNeighbourTriangleIndex(int triangulationIndex, int otherTriangulationIndex, int triangleIndex, int edge1, int edge2, out OutsideNeighbourConnectionInfo result)
+    {
+        int key = BuildIndexForOutsideNeighbour(triangulationIndex, otherTriangulationIndex, triangleIndex, edge1, edge2);
+        return externNeighboursLookup.TryGetValue(key, out result);
+    }
+
     public static OutsideNeighbourConnectionInfo GetIndexWithEdges(int index, Vector2Int edge)
     {
         return GetIndexWithEdges(index, edge.x, edge.y);
@@ -467,39 +487,56 @@ public class TriangulationTableStaticData : MonoBehaviour
 
     protected static int BuildIndexWithEdgeKey(int a, int b, int c) => (a << 16) + (b << 8) + c;
 
-    public static OutsideNeighbourConnectionInfo GetIndexWithEdges(int index, int edge1, int edge2)
+
+    protected static int BuildIndexForOutsideNeighbour(int triangulationIndex, int otherTriangulationIndex, int triIndex, int edge1, int edge2) => 
+        (edge2 << 28) + (edge1 << 24) + (triangulationIndex << 16) + (otherTriangulationIndex << 8) + triIndex;
+
+
+
+    public static bool TryGetIndexWithEdges(int index, int edge1, int edge2, out OutsideNeighbourConnectionInfo result)
     {
 
         int key = BuildIndexWithEdgeKey(index, edge1, edge2);
         Vector3 edge = new Vector3(edge1, edge2, -1);
-        OutsideNeighbourConnectionInfo result;
+        bool found = false;
 
         if (indexWithEdges.TryGetValue(key, out result))
-            return result;
+            return true;
 
         result = new OutsideNeighbourConnectionInfo();
         Vector3 v = new Vector3Int();
-        for (int i = 0; i < TRIANGULATION_ENTRY_SIZE; i += 3)
+        int[] triangulation = TriangulationTable.triangulation[index];
+        for (int i = 0; i < TRIANGULATION_ENTRY_SIZE && triangulation[i] >= 0; i += 3)
         {
-            v.x = TriangulationTable.triangulation[index][i];
-            v.y = TriangulationTable.triangulation[index][i + 1];
-            v.z = TriangulationTable.triangulation[index][i + 2];
+            v.x = triangulation[i];
+            v.y = triangulation[i + 1];
+            v.z = triangulation[i + 2];
             Vector2Int sharedIndices;
             if (v.SharesExactThisNValuesWith(edge, out sharedIndices, SAME_VERTICES_TO_BE_NEIGHBOURS))
             {
                 result.outsideNeighbourEdgeIndices = sharedIndices;
                 result.otherTriangleIndex = i / 3;
+                found = true;
                 break;
             }
         }
-        if (result.otherTriangleIndex == -1)
-        {
-            throw new Exception("no triangle found in " + index + " with the edges " + edge1 + "," + edge2);
-        }
-        //lock (indexWithEdges)
+        if (found)
         {
             indexWithEdges[key] = result;
         }
+        return found;
+    }
+
+    public static OutsideNeighbourConnectionInfo GetIndexWithEdges(int index, int edge1, int edge2)
+    {
+        OutsideNeighbourConnectionInfo result;
+
+
+        if (!TryGetIndexWithEdges(index, edge1, edge2, out result))
+        {
+            throw new Exception("no triangle found in " + index + " with the edges " + edge1 + "," + edge2);
+        }
+
         return result;
     }
 
@@ -512,11 +549,12 @@ public class TriangulationTableStaticData : MonoBehaviour
     {
         result = -1;
         Vector3 v = new Vector3Int();
-        for (int i = 0; i < TRIANGULATION_ENTRY_SIZE && result < 0; i += 3)
+        int[] triangulation = TriangulationTable.triangulation[index];
+        for (int i = 0; i < TRIANGULATION_ENTRY_SIZE && triangulation[i] >= 0 && result < 0; i += 3)
         {
-            v.x = TriangulationTable.triangulation[index][i];
-            v.y = TriangulationTable.triangulation[index][i + 1];
-            v.z = TriangulationTable.triangulation[index][i + 2];
+            v.x = triangulation[i];
+            v.y = triangulation[i + 1];
+            v.z = triangulation[i + 2];
             if (v.SharesExactNValuesWith(new Vector3(edge1, edge2, -1), 2))
             {
                 result = i / 3;
@@ -589,7 +627,7 @@ public class TriangulationTableStaticData : MonoBehaviour
             {
                 int firstIndex = triIndex1 / 3;
 
-                GetNeighbourOffsetForTriangle(i, triIndex1, currentNeighbours.OutsideNeighbours);
+                GetNeighbourForAllPossibleNeighbours(i, triIndex1, currentNeighbours.OutsideNeighbours);
 
                 Vector3 v1 = new Vector3(
                        TriangulationTable.triangulation[i][triIndex1],

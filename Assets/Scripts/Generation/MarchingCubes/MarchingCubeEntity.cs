@@ -91,7 +91,8 @@ namespace MarchingCubes
             }
         }
 
-        public bool BuildNeighbours(Func<Vector3Int, MarchingCubeEntity> GetCube, Func<Vector3Int, bool> IsInBounds, List<MissingNeighbourData> addHere, bool overrideNeighbours = false)
+
+        public bool BuildNeighbours(bool isBorderPoint, Func<Vector3Int, MarchingCubeEntity> GetCube, Func<Vector3Int, bool> IsInBounds, List<MissingNeighbourData> addHere, bool overrideNeighbours = false)
         {
             bool hasNeighbourOutOfBounds = true;
             OutsideEdgeNeighbourDirection neighbour;
@@ -102,18 +103,30 @@ namespace MarchingCubes
                 neighbour = edgeDirs[i];
                 Vector3Int newPos = origin + neighbour.offset;
 
-                if (IsInBounds(newPos))
+                if (!isBorderPoint || IsInBounds(newPos))
                 {
                     MarchingCubeEntity neighbourCube = GetCube(newPos);
 
-                    OutsideNeighbourConnectionInfo info = TriangulationTableStaticData.GetIndexWithEdges(neighbourCube.triangulationIndex, neighbour.rotatedEdgePair);
-                    if (overrideNeighbours)
+                    ///save offset in dict to not need outside neighbours
+
+                    //OutsideNeighbourConnectionInfo info = TriangulationTableStaticData.GetIndexWithEdges(neighbourCube.triangulationIndex, neighbour.rotatedEdgePair);
+                    OutsideNeighbourConnectionInfo info;
+                    if (TriangulationTableStaticData.TryGetNeighbourTriangleIndex(
+                        triangulationIndex,
+                        neighbourCube.triangulationIndex,
+                        neighbour.triangleIndex * 3,
+                        neighbour.relevantVertexIndices.x,
+                        neighbour.relevantVertexIndices.y,
+                        out info))
                     {
-                        triangles[neighbour.triangleIndex].OverrideNeighbourTwoWay(neighbourCube.triangles[info.otherTriangleIndex], neighbour.relevantVertexIndices, info.outsideNeighbourEdgeIndices);
-                    }
-                    else
-                    {
-                        triangles[neighbour.triangleIndex].SoftSetNeighbourTwoWay(neighbourCube.triangles[info.otherTriangleIndex], neighbour.relevantVertexIndices, info.outsideNeighbourEdgeIndices);
+                        if (overrideNeighbours)
+                        {
+                            triangles[neighbour.triangleIndex].OverrideNeighbourTwoWay(neighbourCube.triangles[info.otherTriangleIndex], neighbour.relevantVertexIndices, info.outsideNeighbourEdgeIndices);
+                        }
+                        else
+                        {
+                            triangles[neighbour.triangleIndex].SoftSetNeighbourTwoWay(neighbourCube.triangles[info.otherTriangleIndex], neighbour.relevantVertexIndices, info.outsideNeighbourEdgeIndices);
+                        }
                     }
                 }
                 else
@@ -121,6 +134,12 @@ namespace MarchingCubes
                     hasNeighbourOutOfBounds = false;
                     addHere.Add(new MissingNeighbourData(neighbour, origin));
                 }
+
+                
+            }
+            if (!isBorderPoint && triangles[0].neighbours[0] == null)
+            {
+
             }
             neighbourData = null;
             return hasNeighbourOutOfBounds;

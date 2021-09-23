@@ -143,7 +143,7 @@ namespace MarchingCubes
                 e.BuildInternNeighbours();
                 if ((e.origin.x + e.origin.y + e.origin.z) % 2 == 0 || IsBorderCube(e.origin))
                 {
-                    if (!e.BuildNeighbours(GetEntityAt, IsCubeInBounds, trisWithNeighboursOutOfBounds))
+                    if (!e.BuildNeighbours(IsBorderCube(e.origin) ,GetEntityAt, IsCubeInBounds, trisWithNeighboursOutOfBounds))
                     {
                         int count = trisWithNeighboursOutOfBounds.Count;
                         for (int i = 0; i < count; ++i)
@@ -238,7 +238,7 @@ namespace MarchingCubes
             int currentCount = addMissingNeighboursHere.Count;
 
             e.BuildInternNeighbours();
-            e.BuildNeighbours(GetEntityAt, IsCubeInBounds, addMissingNeighboursHere, overrideEdges);
+            e.BuildNeighbours(IsBorderCube(e.origin), GetEntityAt, IsCubeInBounds, addMissingNeighboursHere, overrideEdges);
         }
 
 

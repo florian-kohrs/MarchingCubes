@@ -104,7 +104,9 @@ namespace MarchingCubes
             int myKey = (myEdge1 + myEdge2) % 3;
 
             if (neighbours[myKey] != null)
+            {
                 return;
+            }
 
             int otherKey = (otherEdge1 + otherEdge2) % 3;
             neighbours[myKey] = p;
