@@ -112,7 +112,7 @@ namespace MarchingCubes
                 tri.c = InterpolateVerts(cubeCorners[a0], cubeCorners[b0]);
                 tri.b = InterpolateVerts(cubeCorners[a1], cubeCorners[b1]);
                 tri.a = InterpolateVerts(cubeCorners[a2], cubeCorners[b2]);
-                e.triangles.Add(new PathTriangle(tri));
+                e.triangles.Add(new PathTriangle(tri, GetColor));
                 triCount += 3;
 
             }
@@ -347,11 +347,11 @@ namespace MarchingCubes
                 {
                     cube.triangulationIndex = t.TriIndex;
                 }
-                PathTriangle pathTri = new PathTriangle(t.tri);
+                PathTriangle pathTri = new PathTriangle(t.tri, t.steepnessAndColorData);
                 cube.triangles.Add(pathTri);
                 if (buildMeshAswell)
                 {
-                    AddTriangleToMeshData(pathTri, ref usedTriCount, ref totalTreeCount);
+                    AddTriangleToMeshData(pathTri, t.GetColor(), ref usedTriCount, ref totalTreeCount);
                 }
             }
         }
@@ -374,7 +374,7 @@ namespace MarchingCubes
                 count = e.triangles.Count;
                 for (int i = 0; i < count; ++i)
                 {
-                    AddTriangleToMeshData(e.triangles[i], ref usedTriCount, ref totalTreeCount, false);
+                    AddTriangleToMeshData(e.triangles[i], e.triangles[i].GetColor(), ref usedTriCount, ref totalTreeCount, false);
                 }
             }
         }

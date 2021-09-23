@@ -798,6 +798,10 @@ MonoBehaviour:
   player: {fileID: 1779183453}
   buildAroundDistance: 60
   totalTriBuild: 0
+  minSteepness: 15
+  maxSteepness: 50
+  flatColor: {x: 0, y: 1, z: 0}
+  steepColor: {x: 17, y: 44, z: 13}
 --- !u!54 &1125545289
 Rigidbody:
   m_ObjectHideFlags: 0

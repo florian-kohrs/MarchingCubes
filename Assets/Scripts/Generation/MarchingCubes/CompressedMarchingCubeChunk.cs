@@ -330,7 +330,7 @@ namespace MarchingCubes
 
                 if (buildMeshAswell)
                 {
-                    AddTriangleToMeshData(t.tri, ref usedTriCount, ref totalTreeCount);
+                    AddTriangleToMeshData(t.tri, t.GetColor(), ref usedTriCount, ref totalTreeCount);
                 }
             }
 
@@ -403,7 +403,7 @@ namespace MarchingCubes
                 tri.b = InterpolateVerts(cubeCorners[a1], cubeCorners[b1]);
                 tri.a = InterpolateVerts(cubeCorners[a2], cubeCorners[b2]);
 
-                e.triangles.Add(new PathTriangle(tri));
+                e.triangles.Add(new PathTriangle(tri, GetColor));
             }
             return e;
         }
@@ -451,13 +451,13 @@ namespace MarchingCubes
 
         }
 
-        protected void AddTriangleToMeshData(PathTriangle tri, ref int usedTriCount, ref int totalTriCount, bool isBorderConnectionMesh = false)
+        protected void AddTriangleToMeshData(PathTriangle tri, Color c, ref int usedTriCount, ref int totalTriCount, bool isBorderConnectionMesh = false)
         {
             for (int x = 0; x < 3; x++)
             {
                 meshTriangles[usedTriCount + x] = usedTriCount + x;
                 vertices[usedTriCount + x] = tri.tri[x];
-                colorData[usedTriCount + x] = GetColor(tri);
+                colorData[usedTriCount + x] = c;
             }
             usedTriCount += 3;
             totalTriCount++;
@@ -468,7 +468,7 @@ namespace MarchingCubes
             }
         }
 
-        protected void AddTriangleToMeshData(Triangle tri, ref int usedTriCount, ref int totalTriCount, bool useCollider = true)
+        protected void AddTriangleToMeshData(Triangle tri, Color c, ref int usedTriCount, ref int totalTriCount, bool useCollider = true)
         {
            Vector3 normal = (Vector3.Cross(tri.b - tri.a, tri.c - tri.a)).normalized;
            Vector3 middlePoint = new Vector3(
@@ -481,7 +481,7 @@ namespace MarchingCubes
             {
                 meshTriangles[usedTriCount + x] = usedTriCount + x;
                 vertices[usedTriCount + x] = tri[x];
-                colorData[usedTriCount + x] = GetColor(normal,middlePoint,slope);
+                colorData[usedTriCount + x] = c;
             }
             usedTriCount += 3;
             totalTriCount++;
@@ -601,7 +601,7 @@ namespace MarchingCubes
         protected Color GetColor(PathTriangle t)
         {
             ///have color calculated in shader?
-            return GetColor(t.normal, t.middlePoint, t.slope);
+            return GetColor(t.normal, t.middlePoint, t.steepnessAndColorData);
         }
 
         protected Color GetColor(Vector3 normal, Vector3 middlePoint, float slope)
@@ -643,7 +643,7 @@ namespace MarchingCubes
                 e = outerEnum.Current;
                 for (int i = 0; i < e.triangles.Count; ++i)
                 {
-                    AddTriangleToMeshData(e.triangles[i], ref usedTriCount, ref totalTreeCount, true);
+                    AddTriangleToMeshData(e.triangles[i], GetColor(e.triangles[i]), ref usedTriCount, ref totalTreeCount, true);
                 }
             }
         }

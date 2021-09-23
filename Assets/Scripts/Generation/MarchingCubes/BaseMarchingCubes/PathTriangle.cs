@@ -9,10 +9,22 @@ namespace MarchingCubes
     {
 
 
-
-        public PathTriangle(/*MarchingCubeChunkObject chunk,*/ Triangle t)
+        public PathTriangle(Triangle t, Func<PathTriangle, Color> f)
         {
-            //this.chunk = chunk;
+            ComputeStuff(t);
+            int steepness = (int)(Mathf.Acos(Vector3.Dot(normal, middlePoint.normalized)) * 180 / Mathf.PI);
+            Color c = f(this);
+            steepnessAndColorData = TriangleBuilder.zipData(steepness, (int)(c.r * 255), (int)(c.g * 255), (int)(c.b * 255));
+        }
+
+        public PathTriangle(Triangle t, uint steepnessAndColorData)
+        {
+            this.steepnessAndColorData = steepnessAndColorData;
+            ComputeStuff(t);
+        }
+
+        private void ComputeStuff(Triangle t)
+        {
             tri = t;
             normal = (Vector3.Cross(tri.b - tri.a, tri.c - tri.a));
             float normMagnitude = normal.magnitude;
@@ -24,8 +36,14 @@ namespace MarchingCubes
                 (tri.a.x + tri.b.x + tri.c.x) / 3,
                 (tri.a.y + tri.b.y + tri.c.y) / 3,
                 (tri.a.z + tri.b.z + tri.c.z) / 3);
-            slope = Mathf.Acos(Vector3.Dot(normal, middlePoint.normalized)) * 180 / Mathf.PI;
+            Color c = GetColor();
+            int steepness = (int)(Mathf.Acos(Vector3.Dot(normal, middlePoint.normalized)) * 180 / Mathf.PI);
+
         }
+
+
+        public int Steepness => (int)(steepnessAndColorData >> 24);
+
 
         public const int TRIANGLE_NEIGHBOUR_COUNT = 3;
 
@@ -44,12 +62,24 @@ namespace MarchingCubes
         /// <summary>
         /// just give steepness in 8 bit int?
         /// </summary>
-        public float slope;
+        public uint steepnessAndColorData;
+
+
+        public Color GetColor()
+        {
+            Color c = new Color(0, 0, 0, 1);
+            int step = 1 << 8;
+            c.r = (int)(steepnessAndColorData % step) /*/ 255f*/;
+            c.g = (int)((steepnessAndColorData >> 8) % step) /*/ 255f*/;
+            c.b = (int)((steepnessAndColorData >> 16) % step) /*/ 255f*/;
+            return c;
+        }
+
 
         //MarchingCubeChunkObject chunk;
 
         /// <summary>
-        /// maybe stop storing 
+        /// maybe stop storing? but couldnt recalculate normal
         /// </summary>
         public Triangle tri;
 
@@ -155,7 +185,7 @@ namespace MarchingCubes
 
         public Vector3 Normal => normal;
 
-        public float Slope => slope;
+        public float Slope => steepnessAndColorData;
 
 
         public Vector3 OriginalLocalMiddlePointOfTriangle => middlePoint;

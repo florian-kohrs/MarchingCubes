@@ -211,8 +211,8 @@ namespace MarchingCubes
             startPos = player.position;
             IMarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
             maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
-            //BuildRelevantChunksAround(chunk);
-            StartCoroutine(BuildRelevantChunksParallelAround(chunk));
+            BuildRelevantChunksAround(chunk);
+            //StartCoroutine(BuildRelevantChunksParallelAround(chunk));
         }
 
         private void Update()
@@ -655,6 +655,11 @@ namespace MarchingCubes
         //    RebuildChunkParallelAt(chunks[p]);
         //}
 
+        public int minSteepness = 15;
+        public int maxSteepness = 50;
+        private Vector3Int flatColor = new Vector3Int(0, 255, 0);
+        private Vector3Int steepColor = new Vector3Int(75, 44, 13);
+
 
         protected int ApplyChunkDataAndDispatchAndGetShaderData(IMarchingCubeChunk chunk, int lod)
         {
@@ -684,6 +689,10 @@ namespace MarchingCubes
 
             triangleBuffer.SetCounterValue(0);
             marshShader.SetBuffer(0, "points", pointsBuffer);
+            marshShader.SetInt("minSteepness", minSteepness);
+            marshShader.SetInt("maxSteepness", maxSteepness);
+            marshShader.SetInts("flatColor", flatColor.x, flatColor.y, flatColor.z);
+            marshShader.SetInts("steepColor", steepColor.x, steepColor.y, steepColor.z);
             marshShader.SetBuffer(0, "triangles", triangleBuffer);
             marshShader.SetInt("numPointsPerAxis", pointsPerAxis);
             marshShader.SetFloat("surfaceLevel", surfaceLevel);

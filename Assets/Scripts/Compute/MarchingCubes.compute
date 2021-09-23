@@ -9,12 +9,18 @@ struct Triangle
 	float3 vertexC;
 	float3 vertexB;
 	float3 vertexA;
-	uint data;
+	uint cubeData;
+	uint colorAndSteepness;
 };
 
 
 AppendStructuredBuffer<Triangle> triangles;
 RWStructuredBuffer<float> points;
+
+int3 flatColor;
+int3 steepColor;
+int minSteepness;
+int maxSteepness;
 
 float3 anchor;
 float spacing;
@@ -35,8 +41,8 @@ int indexFromCoord(int x, int y, int z)
 }
 
 
-int zipData(int x, int y, int z, int triIndex) {
-	return (triIndex << 24) + (x << 16) + (y << 8) + z;
+int zipData(int x, int y, int z, int w) {
+	return (w << 24) + (x << 16) + (y << 8) + z;
 }
 
 //int angle(int3 a, int3 b) 
@@ -59,6 +65,8 @@ void March(int3 id : SV_DispatchThreadID)
 	{
 		return;
 	}
+
+	float rad = 180 / PI;
 
 	// 8 corners of the current cube
 	float4 cubeCorners[8] =
@@ -88,7 +96,7 @@ void March(int3 id : SV_DispatchThreadID)
 	if (cubeCorners[6].w < surfaceLevel) cubeIndex |= 64;
 	if (cubeCorners[7].w < surfaceLevel) cubeIndex |= 128;
 
-	int zipedData = zipData(id.x, id.y, id.z, cubeIndex);
+	int zipedCubeData = zipData(id.x, id.y, id.z, cubeIndex);
 
 	// Create triangles for current cube configuration
 	for (int i = 0; triangulation[cubeIndex][i] != -1; i += 3)
@@ -105,15 +113,26 @@ void March(int3 id : SV_DispatchThreadID)
 		int b2 = cornerIndexBFromEdge[triangulation[cubeIndex][i + 2]];
 
 		Triangle tri;
-		tri.data = zipedData;
+		tri.cubeData = zipedCubeData;
 		tri.vertexA = interpolateVerts(cubeCorners[a0], cubeCorners[b0]);
 		tri.vertexB = interpolateVerts(cubeCorners[a1], cubeCorners[b1]);
 		tri.vertexC = interpolateVerts(cubeCorners[a2], cubeCorners[b2]);
 
-		/*float3 normal = normalize(cross(tri.vertexB - tri.vertexA, tri.vertexC - tri.vertexA));
+		float3 normal = normalize(cross(tri.vertexB - tri.vertexA, tri.vertexC - tri.vertexA));
 		float3 middlePoint = (tri.vertexA + tri.vertexB + tri.vertexC) / 3;
-		float angleFromCenter = acos(dot(normal, normalize(middlePoint))) * 180 / PI;*/
+		float angleFromCenter = 180 - (acos(dot(normal, normalize(middlePoint))) * rad);
 
+		float invLerp = (angleFromCenter - minSteepness) / (maxSteepness - minSteepness);
+		if(invLerp < 0)
+			invLerp = 0;
+		else if(invLerp > 1)
+			invLerp = 1;
+		int colorR = (invLerp * steepColor.x + (1 - invLerp) * flatColor.x);
+		int colorG = (invLerp * steepColor.y + (1 - invLerp) * flatColor.y);
+		int colorB = (invLerp * steepColor.z + (1 - invLerp) * flatColor.z);
+		
+		tri.colorAndSteepness = zipData(colorB, colorG, colorR, (int)angleFromCenter);
+		//tri.colorAndSteepness = 0;
 		triangles.Append(tri);
 	}
 
