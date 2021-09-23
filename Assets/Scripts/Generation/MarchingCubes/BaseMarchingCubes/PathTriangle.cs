@@ -71,9 +71,9 @@ namespace MarchingCubes
         {
             Color c = new Color(0, 0, 0, 1);
             int step = 1 << 8;
-            c.r = (int)(steepnessAndColorData % step) /*/ 255f*/;
-            c.g = (int)((steepnessAndColorData >> 8) % step) /*/ 255f*/;
-            c.b = (int)((steepnessAndColorData >> 16) % step) /*/ 255f*/;
+            c.r = (int)(steepnessAndColorData % step) / 255f;
+            c.g = (int)((steepnessAndColorData >> 8) % step) / 255f;
+            c.b = (int)((steepnessAndColorData >> 16) % step) / 255f;
             return c;
         }
 
