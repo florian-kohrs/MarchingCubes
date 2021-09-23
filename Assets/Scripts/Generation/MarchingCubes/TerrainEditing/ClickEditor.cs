@@ -24,13 +24,13 @@ namespace MarchingCubes
                 {
                     if (p != null)
                     {
-                        Gizmos.DrawSphere(p.OriginalLocalMiddlePointOfTriangle, 0.4f);
+                        Gizmos.DrawSphere(p.MiddlePoint, 0.4f);
                     }
                 }
             }
             if(p != null)
             {
-                Gizmos.DrawCube(p.OriginalLocalMiddlePointOfTriangle, Vector3.one * 0.4f);
+                Gizmos.DrawCube(p.MiddlePoint, Vector3.one * 0.4f);
             }
         }
 

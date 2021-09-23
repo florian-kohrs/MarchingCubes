@@ -601,7 +601,7 @@ namespace MarchingCubes
         protected Color GetColor(PathTriangle t)
         {
             ///have color calculated in shader?
-            return GetColor(t.normal, t.middlePoint, t.steepnessAndColorData);
+            return GetColor(t.Normal, t.MiddlePoint, t.steepnessAndColorData);
         }
 
         protected Color GetColor(Vector3 normal, Vector3 middlePoint, float slope)
@@ -643,7 +643,7 @@ namespace MarchingCubes
                 e = outerEnum.Current;
                 for (int i = 0; i < e.triangles.Count; ++i)
                 {
-                    AddTriangleToMeshData(e.triangles[i], GetColor(e.triangles[i]), ref usedTriCount, ref totalTreeCount, true);
+                    AddTriangleToMeshData(e.triangles[i], e.triangles[i].GetColor(), ref usedTriCount, ref totalTreeCount, true);
                 }
             }
         }
