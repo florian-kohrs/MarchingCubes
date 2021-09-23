@@ -600,6 +600,7 @@ namespace MarchingCubes
 
         protected Color GetColor(PathTriangle t)
         {
+            ///have color calculated in shader?
             return GetColor(t.normal, t.middlePoint, t.slope);
         }
 

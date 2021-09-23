@@ -31,16 +31,31 @@ namespace MarchingCubes
 
         protected const float MAX_SLOPE_TO_BE_USEABLE_IN_PATHFINDING = 45;
 
+        /// <summary>
+        /// doesnt need to store normal -> cube is found by position and normal can be recalculated for each tri in cube
+        /// </summary>
         public Vector3 normal;
 
+        /// <summary>
+        /// only used for distance for pathfinding -> maybe navigate over cubes?
+        /// </summary>
         public Vector3 middlePoint;
 
+        /// <summary>
+        /// just give steepness in 8 bit int?
+        /// </summary>
         public float slope;
 
         //MarchingCubeChunkObject chunk;
 
+        /// <summary>
+        /// maybe stop storing 
+        /// </summary>
         public Triangle tri;
 
+        /// <summary>
+        /// dont need if this is in lookup table
+        /// </summary>
         public PathTriangle[] neighbours = new PathTriangle[TRIANGLE_NEIGHBOUR_COUNT];
 
 
@@ -123,6 +138,19 @@ namespace MarchingCubes
         public bool IsEqual(PathTriangle t1, PathTriangle t2)
         {
             return t1 == t2;
+        }
+
+        public Vector3 LazyNormal
+        {
+            get
+            {
+                Vector3 normal = (Vector3.Cross(tri.b - tri.a, tri.c - tri.a));
+                float normMagnitude = normal.magnitude;
+                normal.x /= normMagnitude;
+                normal.y /= normMagnitude;
+                normal.z /= normMagnitude;
+                return normal;
+            }
         }
 
         public Vector3 Normal => normal;

@@ -1,0 +1,1 @@
+Store for each cube index for each entry point a bool to each exit point so i dont need neighbours or pot path triangles

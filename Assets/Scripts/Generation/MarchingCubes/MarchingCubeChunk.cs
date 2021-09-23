@@ -244,25 +244,25 @@ namespace MarchingCubes
 
         //protected List<MissingNeighbourData> missingHigherLODNeighbour = new List<MissingNeighbourData>();
 
-        protected bool GetPointWithCorner(MarchingCubeEntity e, int a, int b, out Vector3 result)
-        {
-            for (int i = 0; i < e.triangles.Count; ++i)
-            {
-                for (int x = 0; x < 3; x++)
-                {
-                    Vector3 v = e.triangles[i].tri[x];
-                    int aIndex = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[e.triangulationIndex][i * 3 + x]];
-                    int bIndex = TriangulationTable.cornerIndexBFromEdge[TriangulationTable.triangulation[e.triangulationIndex][i * 3 + x]];
-                    if (aIndex == a && bIndex == b)
-                    {
-                        result = v;
-                        return true;
-                    }
-                }
-            }
-            result = Vector3.zero;
-            return false;
-        }
+        //protected bool GetPointWithCorner(MarchingCubeEntity e, int a, int b, out Vector3 result)
+        //{
+        //    for (int i = 0; i < e.triangles.Count; ++i)
+        //    {
+        //        for (int x = 0; x < 3; x++)
+        //        {
+        //            Vector3 v = e.triangles[i].tri[x];
+        //            int aIndex = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[e.triangulationIndex][i * 3 + x]];
+        //            int bIndex = TriangulationTable.cornerIndexBFromEdge[TriangulationTable.triangulation[e.triangulationIndex][i * 3 + x]];
+        //            if (aIndex == a && bIndex == b)
+        //            {
+        //                result = v;
+        //                return true;
+        //            }
+        //        }
+        //    }
+        //    result = Vector3.zero;
+        //    return false;
+        //}
 
 
 
