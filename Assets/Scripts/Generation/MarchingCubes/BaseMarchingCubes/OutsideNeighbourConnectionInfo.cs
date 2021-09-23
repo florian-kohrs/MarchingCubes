@@ -5,12 +5,14 @@ using UnityEngine;
 namespace MarchingCubes 
 {
 
+    [System.Serializable]
     public struct OutsideNeighbourConnectionInfo
     {
 
         public int otherTriangleIndex;
 
-        public Vector2Int outsideNeighbourEdgeIndices;
+        public int outsideNeighbourEdgeIndicesX;
+        public int outsideNeighbourEdgeIndicesY;
 
     }
 

@@ -317,24 +317,9 @@ public class TriangulationTableStaticData : MonoBehaviour
         return ((long)i1 << 32) + i2;
     }
 
-    public struct NeighbourKey
-    {
-        public NeighbourKey(int from, int tri, int to)
-        {
-            fromIndex = from;
-            fromTriIndex = tri;
-            toIndex = to;
-        }
-
-        public int fromIndex;
-        public int fromTriIndex;
-        public int toIndex;
-    }
 
     private const int SAME_VERTICES_TO_BE_NEIGHBOURS = 2;
 
-    protected static Dictionary<NeighbourKey, int> neighbourTable;
-    /// <summary>
     /// key is combination of triangulationindex and triangleindex
     /// </summary>
     protected static Dictionary<int, TriangulationNeighbours> internNeighbours;
@@ -514,7 +499,8 @@ public class TriangulationTableStaticData : MonoBehaviour
             Vector2Int sharedIndices;
             if (v.SharesExactThisNValuesWith(edge, out sharedIndices, SAME_VERTICES_TO_BE_NEIGHBOURS))
             {
-                result.outsideNeighbourEdgeIndices = sharedIndices;
+                result.outsideNeighbourEdgeIndicesX = sharedIndices.x;
+                result.outsideNeighbourEdgeIndicesY = sharedIndices.y;
                 result.otherTriangleIndex = i / 3;
                 found = true;
                 break;
@@ -720,10 +706,6 @@ public class TriangulationTableStaticData : MonoBehaviour
     //}
 
 
-    protected static void Add(NeighbourKey key, int i)
-    {
-        neighbourTable[key] = i;
-    }
 
 
     public static readonly List<Vector3Int> offsetFromCornerIndex = new List<Vector3Int>(8)

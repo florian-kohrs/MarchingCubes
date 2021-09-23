@@ -121,11 +121,21 @@ namespace MarchingCubes
                     {
                         if (overrideNeighbours)
                         {
-                            triangles[neighbour.triangleIndex].OverrideNeighbourTwoWay(neighbourCube.triangles[info.otherTriangleIndex], neighbour.relevantVertexIndices, info.outsideNeighbourEdgeIndices);
+                            triangles[neighbour.triangleIndex].OverrideNeighbourTwoWay(
+                                neighbourCube.triangles[info.otherTriangleIndex], 
+                                neighbour.relevantVertexIndices.x, 
+                                neighbour.relevantVertexIndices.y, 
+                                info.outsideNeighbourEdgeIndicesX, 
+                                info.outsideNeighbourEdgeIndicesY);
                         }
                         else
                         {
-                            triangles[neighbour.triangleIndex].SoftSetNeighbourTwoWay(neighbourCube.triangles[info.otherTriangleIndex], neighbour.relevantVertexIndices, info.outsideNeighbourEdgeIndices);
+                            triangles[neighbour.triangleIndex].SoftSetNeighbourTwoWay(
+                                neighbourCube.triangles[info.otherTriangleIndex], 
+                                neighbour.relevantVertexIndices.x, 
+                                neighbour.relevantVertexIndices.y, 
+                                info.outsideNeighbourEdgeIndicesX, 
+                                info.outsideNeighbourEdgeIndicesY);
                         }
                     }
                 }
@@ -136,10 +146,6 @@ namespace MarchingCubes
                 }
 
                 
-            }
-            if (!isBorderPoint && triangles[0].neighbours[0] == null)
-            {
-
             }
             neighbourData = null;
             return hasNeighbourOutOfBounds;
@@ -153,7 +159,7 @@ namespace MarchingCubes
                 Debug.LogError("was null");
             }
             OutsideNeighbourConnectionInfo info = TriangulationTableStaticData.GetIndexWithEdges(e.triangulationIndex, rotatedEdge);
-            tri.SoftSetNeighbourTwoWay(e.triangles[info.otherTriangleIndex], myEdgeIndices, info.outsideNeighbourEdgeIndices);
+            tri.SoftSetNeighbourTwoWay(e.triangles[info.otherTriangleIndex], myEdgeIndices.x, myEdgeIndices.y, info.outsideNeighbourEdgeIndicesX, info.outsideNeighbourEdgeIndicesY);
         }
 
         public bool FindMissingNeighbours(Func<Vector3Int, bool> IsInBounds, List<MissingNeighbourData> addHere)
