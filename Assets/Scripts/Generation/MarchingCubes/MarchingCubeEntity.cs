@@ -94,7 +94,7 @@ namespace MarchingCubes
 
         public bool BuildNeighbours(bool isBorderPoint, Func<Vector3Int, MarchingCubeEntity> GetCube, Func<Vector3Int, bool> IsInBounds, List<MissingNeighbourData> addHere, bool overrideNeighbours = false)
         {
-            bool hasNeighbourOutOfBounds = true;
+            bool allNeighboursInBound = true;
             OutsideEdgeNeighbourDirection neighbour;
             List<OutsideEdgeNeighbourDirection> edgeDirs = neighbourData.OutsideNeighbours;
             if((neighbourData.InternNeighbourPairs.Count * 2 +  NeighbourData.OutsideNeighbours.Count)  /  triangles.Count != 3)
@@ -146,7 +146,7 @@ namespace MarchingCubes
                 }
                 else
                 {
-                    hasNeighbourOutOfBounds = false;
+                    allNeighboursInBound = false;
                     addHere.Add(new MissingNeighbourData(neighbour, origin));
                 }
 
@@ -154,7 +154,7 @@ namespace MarchingCubes
             }
             
             neighbourData = null;
-            return hasNeighbourOutOfBounds;
+            return allNeighboursInBound;
         }
 
 

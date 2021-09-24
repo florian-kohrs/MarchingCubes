@@ -105,10 +105,6 @@ namespace MarchingCubes
 
             if (neighbours[myKey] != null)
             {
-                if(p!= neighbours[myKey])
-                {
-                    Debug.Log("Bad!");
-                }
                 return;
             }
 
