@@ -368,7 +368,7 @@ namespace MarchingCubes
 
         public virtual MarchingCubeEntity MarchAt(Vector3Int v3, int lod)
         {
-            MarchingCubeEntity e = new MarchingCubeEntity();
+            MarchingCubeEntity e = new MarchingCubeEntity(null);
             e.origin = v3;
 
             Vector4[] cubeCorners = GetCubeCornersForPoint(v3.x, v3.y, v3.z, lod);
@@ -403,7 +403,7 @@ namespace MarchingCubes
                 tri.b = InterpolateVerts(cubeCorners[a1], cubeCorners[b1]);
                 tri.a = InterpolateVerts(cubeCorners[a2], cubeCorners[b2]);
 
-                e.triangles.Add(new PathTriangle(tri, GetColor));
+                e.triangles.Add(new PathTriangle(null, tri, GetColor));
             }
             return e;
         }

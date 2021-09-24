@@ -8,6 +8,13 @@ namespace MarchingCubes
     public class MarchingCubeEntity //: ICubeEntity
     {
 
+        public MarchingCubeEntity(MarchingCubeChunk chunk)
+        {
+            this.chunk = chunk;
+        }
+
+        protected MarchingCubeChunk chunk;
+
         public PathTriangle GetTriangleWithNormal(Vector3 normal)
         {
             return triangles[GetTriangleIndexWithNormal(normal)];

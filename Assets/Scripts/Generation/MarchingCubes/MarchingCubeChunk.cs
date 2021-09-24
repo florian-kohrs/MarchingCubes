@@ -78,7 +78,7 @@ namespace MarchingCubes
 
         public virtual MarchingCubeEntity March(Vector3Int p)
         {
-            MarchingCubeEntity e = new MarchingCubeEntity();
+            MarchingCubeEntity e = new MarchingCubeEntity(this);
             e.origin = p;
             Vector4[] cubeCorners = GetCubeCornersForPoint(p);
 
@@ -112,7 +112,7 @@ namespace MarchingCubes
                 tri.c = InterpolateVerts(cubeCorners[a0], cubeCorners[b0]);
                 tri.b = InterpolateVerts(cubeCorners[a1], cubeCorners[b1]);
                 tri.a = InterpolateVerts(cubeCorners[a2], cubeCorners[b2]);
-                e.triangles.Add(new PathTriangle(tri, GetColor));
+                e.triangles.Add(new PathTriangle(e, tri, GetColor));
                 triCount += 3;
 
             }
@@ -310,22 +310,17 @@ namespace MarchingCubes
             // BuildMeshFromCurrentTriangles();
         }
 
-        protected bool GetOrAddEntityAt(int x, int y, int z, out MarchingCubeEntity e)
+        protected bool GetOrAddEntityAt(Vector3Int v3, out MarchingCubeEntity e)
         {
-            int key = PointIndexFromCoord(x, y, z);
+            int key = PointIndexFromCoord(v3.x, v3.y, v3.z);
             if (!cubeEntities.TryGetValue(key, out e))
             {
-                e = new MarchingCubeEntity();
-                e.origin = new Vector3Int(x, y, z);
+                e = new MarchingCubeEntity(this);
+                e.origin = v3;
                 cubeEntities[key] = e;
                 return false;
             }
             return true;
-        }
-
-        protected bool GetOrAddEntityAt(Vector3Int v3, out MarchingCubeEntity e)
-        {
-            return GetOrAddEntityAt(v3.x, v3.y, v3.z, out e);
         }
 
         protected override void BuildFromTriangleArray(TriangleBuilder[] ts, bool buildMeshAswell = true)
@@ -347,7 +342,7 @@ namespace MarchingCubes
                 {
                     cube.triangulationIndex = t.TriIndex;
                 }
-                PathTriangle pathTri = new PathTriangle(t.tri, t.steepnessAndColorData);
+                PathTriangle pathTri = new PathTriangle(cube, t.tri, t.steepnessAndColorData);
                 cube.triangles.Add(pathTri);
                 if (buildMeshAswell)
                 {

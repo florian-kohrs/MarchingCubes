@@ -9,17 +9,18 @@ namespace MarchingCubes
     {
 
 
-        public PathTriangle(Triangle t, Func<PathTriangle, Color> f)
+        public PathTriangle(MarchingCubeEntity e, Triangle t, Func<PathTriangle, Color> f)
         {
-
+            this.e = e;
             tri = t;
             int steepness = (int)(Mathf.Acos(Vector3.Dot(Normal, MiddlePoint.normalized)) * 180 / Mathf.PI);
             Color c = f(this);
             steepnessAndColorData = TriangleBuilder.zipData(steepness, (int)(c.r * 255), (int)(c.g * 255), (int)(c.b * 255));
         }
 
-        public PathTriangle(Triangle t, uint steepnessAndColorData)
+        public PathTriangle(MarchingCubeEntity e, Triangle t, uint steepnessAndColorData)
         {
+            this.e = e;
             this.steepnessAndColorData = steepnessAndColorData;
             tri = t;
         }
@@ -35,6 +36,9 @@ namespace MarchingCubes
                 (tri.a.z + tri.b.z + tri.c.z) / 3);
             }
         }
+
+
+        private MarchingCubeEntity e;
 
         public int Steepness => (int)(steepnessAndColorData >> 24);
 
