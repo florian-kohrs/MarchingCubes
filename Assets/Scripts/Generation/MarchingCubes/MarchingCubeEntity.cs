@@ -153,14 +153,28 @@ namespace MarchingCubes
         }
 
 
-        public void BuildSpecificNeighbourInNeighbour(MarchingCubeEntity e, PathTriangle tri, Vector2Int myEdgeIndices, Vector2Int rotatedEdge)
+        public void BuildSpecificNeighbourInNeighbour(MarchingCubeEntity e, int triIndex, Vector2Int myEdgeIndices, Vector2Int rotatedEdge)
         {
             if(e == null)
             {
                 Debug.LogError("was null");
             }
-            OutsideNeighbourConnectionInfo info = TriangulationTableStaticData.GetIndexWithEdges(e.triangulationIndex, rotatedEdge);
-            tri.SoftSetNeighbourTwoWay(e.triangles[info.otherTriangleIndex], myEdgeIndices.x, myEdgeIndices.y, info.outsideNeighbourEdgeIndicesX, info.outsideNeighbourEdgeIndicesY);
+            else
+            {
+                OutsideNeighbourConnectionInfo info;
+                if (TriangulationTableStaticData.TryGetNeighbourTriangleIndex(
+                    e.triangulationIndex,
+                    myEdgeIndices.x,
+                    myEdgeIndices.y,
+                    out info))
+                {
+                    triangles[triIndex].SoftSetNeighbourTwoWay(e.triangles[info.otherTriangleIndex], myEdgeIndices.x, myEdgeIndices.y, info.outsideNeighbourEdgeIndicesX, info.outsideNeighbourEdgeIndicesY);
+                }
+                else
+                {
+                    Debug.LogWarning("Missed Neighbour!");
+                }
+            }
         }
 
         public bool FindMissingNeighbours(Func<Vector3Int, bool> IsInBounds, List<MissingNeighbourData> addHere)

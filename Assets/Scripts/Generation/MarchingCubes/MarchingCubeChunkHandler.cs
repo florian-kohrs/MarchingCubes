@@ -211,8 +211,8 @@ namespace MarchingCubes
             startPos = player.position;
             IMarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
             maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
-            BuildRelevantChunksAround(chunk);
-            //StartCoroutine(BuildRelevantChunksParallelAround(chunk));
+            //BuildRelevantChunksAround(chunk);
+            StartCoroutine(BuildRelevantChunksParallelAround(chunk));
         }
 
         private void Update()
