@@ -166,7 +166,7 @@ namespace MarchingCubes
                                         {
                                             cube = c.GetEntityAt(pos);
                                         }
-                                        e.BuildSpecificNeighbourInNeighbour(cube, t.outsideNeighbour.triangleIndex, t.outsideNeighbour.originalEdgePair, t.outsideNeighbour.rotatedEdgePair);
+                                        e.BuildSpecificNeighbourInNeighbour(cube, t.outsideNeighbour.triangleIndex, t.outsideNeighbour.originalEdgePair, t.outsideNeighbour.relevantVertexIndices, t.outsideNeighbour.rotatedEdgePair);
                                     }
                                     else if (c.LODPower > LODPower)
                                     {

@@ -97,6 +97,10 @@ namespace MarchingCubes
             bool hasNeighbourOutOfBounds = true;
             OutsideEdgeNeighbourDirection neighbour;
             List<OutsideEdgeNeighbourDirection> edgeDirs = neighbourData.OutsideNeighbours;
+            if((neighbourData.InternNeighbourPairs.Count * 2 +  NeighbourData.OutsideNeighbours.Count)  /  triangles.Count != 3)
+            {
+                Debug.Log("Too few neighbours!");
+            }
             int count = edgeDirs.Count;
             for (int i = 0; i < count; ++i)
             {
@@ -148,12 +152,13 @@ namespace MarchingCubes
 
                 
             }
+            
             neighbourData = null;
             return hasNeighbourOutOfBounds;
         }
 
 
-        public void BuildSpecificNeighbourInNeighbour(MarchingCubeEntity e, int triIndex, Vector2Int myEdgeIndices, Vector2Int rotatedEdge)
+        public void BuildSpecificNeighbourInNeighbour(MarchingCubeEntity e, int triIndex,  Vector2Int myEdgeIndices, Vector2Int myVertexIndices, Vector2Int rotatedEdge)
         {
             if(e == null)
             {
@@ -168,7 +173,7 @@ namespace MarchingCubes
                     myEdgeIndices.y,
                     out info))
                 {
-                    triangles[triIndex].SoftSetNeighbourTwoWay(e.triangles[info.otherTriangleIndex], myEdgeIndices.x, myEdgeIndices.y, info.outsideNeighbourEdgeIndicesX, info.outsideNeighbourEdgeIndicesY);
+                    triangles[triIndex].SoftSetNeighbourTwoWay(e.triangles[info.otherTriangleIndex], myVertexIndices.x, myVertexIndices.y, info.outsideNeighbourEdgeIndicesX, info.outsideNeighbourEdgeIndicesY);
                 }
                 else
                 {

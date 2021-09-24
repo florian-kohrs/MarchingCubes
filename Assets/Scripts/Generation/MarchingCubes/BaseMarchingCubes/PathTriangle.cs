@@ -105,6 +105,10 @@ namespace MarchingCubes
 
             if (neighbours[myKey] != null)
             {
+                if(p!= neighbours[myKey])
+                {
+                    Debug.Log("Bad!");
+                }
                 return;
             }
 
@@ -187,7 +191,7 @@ namespace MarchingCubes
             }
         }
 
-        public float Slope => steepnessAndColorData;
+        public float Slope => (int)(steepnessAndColorData >> 24);
 
         public Vector3 EstimatedMiddlePoint => tri.a;
 
