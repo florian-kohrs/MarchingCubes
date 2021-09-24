@@ -18,12 +18,10 @@ namespace MarchingCubes
         {
             get
             {
-                Vector3Int r = new Vector3Int();
-                int step = 1 << 8;
-                r.z = (int)(cubeData % step);
-                r.y = (int)((cubeData >> 8) % step);
-                r.x = (int)((cubeData >> 16) % step);
-                return r;
+                return new Vector3Int(
+                    (int)((cubeData >> 16) % step),
+                    (int)((cubeData >> 8) % step),
+                    (int)(cubeData % step));
             }
         }
 
@@ -31,13 +29,15 @@ namespace MarchingCubes
         {
             return (uint)((triIndex << 24) + (x << 16) + (y << 8) + z);
         }
+
+        private const int step = 1 << 8;
+
         public Color GetColor()
         {
-            Color c = new Color(0, 0, 0, 1);
-            int step = 1 << 8;
-            c.r = (int)(steepnessAndColorData % step) / 255f;
-            c.g = (int)((steepnessAndColorData >> 8) % step) / 255f;
-            c.b = (int)((steepnessAndColorData >> 16) % step) / 255f;
+            Color c = new Color(
+                (int)(steepnessAndColorData % step) / 255f,
+                (int)((steepnessAndColorData >> 8) % step) / 255f,
+                (int)((steepnessAndColorData >> 16) % step) / 255f, 1);
             return c;
         }
 

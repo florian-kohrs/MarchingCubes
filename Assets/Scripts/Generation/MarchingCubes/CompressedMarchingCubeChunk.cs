@@ -606,13 +606,12 @@ namespace MarchingCubes
 
         protected Color GetColor(Vector3 normal, Vector3 middlePoint, float slope)
         {
-            Color result = new Color(0, 0, 0, 1);
-
             float slopeProgress = Mathf.InverseLerp(15, 45, slope);
 
-            result.g = ((1 - slopeProgress) + brownG * slopeProgress) / 2;
-            result.b = (brownB * slopeProgress) / 2;
-            result.r = (brownR * slopeProgress) / 2;
+            Color result = new Color(
+                brownR * slopeProgress,
+                1 - slopeProgress + brownG * slopeProgress,
+                brownB * slopeProgress / 2);
 
             //return (Color.green * (1 - slopeProgress) + brown * slopeProgress) / 2;
             return result;

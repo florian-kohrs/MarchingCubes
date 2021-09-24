@@ -71,13 +71,14 @@ namespace MarchingCubes
         public uint steepnessAndColorData;
 
 
+        private const int step = 1 << 8;
+
         public Color GetColor()
         {
-            Color c = new Color(0, 0, 0, 1);
-            int step = 1 << 8;
-            c.r = (int)(steepnessAndColorData % step) / 255f;
-            c.g = (int)((steepnessAndColorData >> 8) % step) / 255f;
-            c.b = (int)((steepnessAndColorData >> 16) % step) / 255f;
+            Color c = new Color(
+                (int)(steepnessAndColorData % step) / 255f,
+                (int)((steepnessAndColorData >> 8) % step) / 255f,
+                (int)((steepnessAndColorData >> 16) % step) / 255f, 1);
             return c;
         }
 
