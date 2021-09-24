@@ -364,7 +364,7 @@ public class TriangulationTableStaticData : MonoBehaviour
                 OutsideEdgeNeighbourDirection neighbour = new OutsideEdgeNeighbourDirection(index / 3, edgeVertices.x, edgeVertices.y, i, (i + 1) % 3, offset);
                 addResult.Add(neighbour);
 
-                int vertexKey = BuildIndexWithEdgeKey(edgeVertices.x, edgeVertices.y, 0);
+                int vertexKey = BuildSmallKeyFromEdgeIndices(edgeVertices.x, edgeVertices.y);
 
                 if (!hasNeighoursComputedForVertexPair.Contains(vertexKey))
                 {
@@ -374,7 +374,7 @@ public class TriangulationTableStaticData : MonoBehaviour
                         OutsideNeighbourConnectionInfo info;
                         if (TryGetIndexWithEdges(otherTriangulationIndex, neighbour.rotatedEdgePair.x, neighbour.rotatedEdgePair.y, out info))
                         {
-                            int key = BuildIndexWithEdgeKey(otherTriangulationIndex, edgeVertices.x, edgeVertices.y);
+                            int key = BuildKeyFromEdgeIndices(otherTriangulationIndex, edgeVertices.x, edgeVertices.y);
                             externNeighboursLookup[key] = info;
                         }
                     }
@@ -467,7 +467,7 @@ public class TriangulationTableStaticData : MonoBehaviour
 
     public static bool TryGetNeighbourTriangleIndex(int otherTriangulationIndex, int vertex1, int vertex2, out OutsideNeighbourConnectionInfo result)
     {
-        int key = BuildIndexWithEdgeKey(otherTriangulationIndex, vertex1, vertex2);
+        int key = BuildKeyFromEdgeIndices(otherTriangulationIndex, vertex1, vertex2);
         return externNeighboursLookup.TryGetValue(key, out result);
     }
 
@@ -478,34 +478,31 @@ public class TriangulationTableStaticData : MonoBehaviour
 
     protected static Dictionary<int, OutsideNeighbourConnectionInfo> indexWithEdges = new Dictionary<int, OutsideNeighbourConnectionInfo>(1000);
 
-    protected static int BuildIndexWithEdgeKey(int a, int b, int c) => (a << 16) + (b << 8) + c;
+    protected static int BuildKeyFromEdgeIndices(int a, int b, int c) => (a << 16) + (b << 8) + c;
 
-
-    protected static int BuildIndexForOutsideNeighbour(int triangulationIndex, int otherTriangulationIndex, int triIndex, int edge1, int edge2) => 
-        (edge2 << 28) + (edge1 << 24) + (triangulationIndex << 16) + (otherTriangulationIndex << 8) + triIndex;
-
+    protected static int BuildSmallKeyFromEdgeIndices(int a, int b) => (a << 8) + b;
 
 
     public static bool TryGetIndexWithEdges(int index, int edge1, int edge2, out OutsideNeighbourConnectionInfo result)
     {
 
-        int key = BuildIndexWithEdgeKey(index, edge1, edge2);
-        Vector3 edge = new Vector3(edge1, edge2, -1);
+        int key = BuildKeyFromEdgeIndices(index, edge1, edge2);
+        float[] edge = new float[] {edge1, edge2};
         bool found = false;
 
         if (indexWithEdges.TryGetValue(key, out result))
             return true;
 
         result = new OutsideNeighbourConnectionInfo();
-        Vector3 v = new Vector3Int();
+        float[] v = new float[3];
         int[] triangulation = TriangulationTable.triangulation[index];
         for (int i = 0; i < TRIANGULATION_ENTRY_SIZE && triangulation[i] >= 0; i += 3)
         {
-            v.x = triangulation[i];
-            v.y = triangulation[i + 1];
-            v.z = triangulation[i + 2];
+            v[0] = triangulation[i];
+            v[1] = triangulation[i + 1];
+            v[2] = triangulation[i + 2];
             Vector2Int sharedIndices;
-            if (v.SharesExactThisNValuesWith(edge, out sharedIndices, SAME_VERTICES_TO_BE_NEIGHBOURS))
+            if (VectorExtension.SharesExactNValuesWith(v, edge, out sharedIndices, SAME_VERTICES_TO_BE_NEIGHBOURS))
             {
                 result.outsideNeighbourEdgeIndicesX = sharedIndices.x;
                 result.outsideNeighbourEdgeIndicesY = sharedIndices.y;
@@ -532,29 +529,6 @@ public class TriangulationTableStaticData : MonoBehaviour
         }
 
         return result;
-    }
-
-    public static bool TryGetIndexWithEdges(int index, Vector2Int edge, out int result)
-    {
-        return TryGetIndexWithEdges(index, edge.x, edge.y, out result);
-    }
-
-    public static bool TryGetIndexWithEdges(int index, int edge1, int edge2, out int result)
-    {
-        result = -1;
-        Vector3 v = new Vector3Int();
-        int[] triangulation = TriangulationTable.triangulation[index];
-        for (int i = 0; i < TRIANGULATION_ENTRY_SIZE && triangulation[i] >= 0 && result < 0; i += 3)
-        {
-            v.x = triangulation[i];
-            v.y = triangulation[i + 1];
-            v.z = triangulation[i + 2];
-            if (v.SharesExactNValuesWith(new Vector3(edge1, edge2, -1), 2))
-            {
-                result = i / 3;
-            }
-        }
-        return result >= 0;
     }
 
     protected static void GetEdgeAxisDirection(ref Vector3Int v3, int edge)

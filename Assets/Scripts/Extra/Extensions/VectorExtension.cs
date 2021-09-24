@@ -79,11 +79,7 @@ public static class VectorExtension
 
     public static float[] Values(this Vector3 v)
     {
-        float[] r = new float[3];
-        r[0] = v.x;
-        r[1] = v.y;
-        r[2] = v.z;
-        return r;
+        return new float[] { v.x, v.y, v.z };
     }
 
     public static List<float> ValueList(this Vector3 v)
@@ -91,37 +87,18 @@ public static class VectorExtension
         return new List<float>() { v.x, v.y, v.z };
     }
 
-    public static bool SharesExactNValuesWith(this Vector3 v1, Vector3 v2, int n)
+ 
+
+    public static bool SharesExactNValuesWith(float[] f1, float[] f2, out Vector2Int sharedIndices, int n)
     {
         int sameValues = 0;
 
-        for (int i = 0; i < 3; ++i)
-        {
-            for (int x = 0; x < 3; x++)
-            {
-                if (v1[i] == v2[x])
-                {
-                    sameValues++;
-                    if (sameValues == n)
-                    {
-                        return true;
-                    }
-                    break;
-                }
-            }
-        }
-        return false;
-    }
-
-    public static bool SharesExactThisNValuesWith(this Vector3 v1, Vector3 v2, out Vector2Int sharedIndices, int n)
-    {
-        int sameValues = 0;
         sharedIndices = new Vector2Int();
         for (int i = 0; i < 3; ++i)
         {
-            for (int x = 0; x < 3; x++)
+            for (int x = 0; x < 2; x++)
             {
-                if (v1[i] == v2[x])
+                if (f1[i] == f2[x])
                 {
                     sharedIndices[sameValues] = i;
                     sameValues++;
@@ -135,6 +112,7 @@ public static class VectorExtension
         }
         return false;
     }
+
 
     public static bool Contains(this Vector3 v1, float f)
     {
