@@ -343,6 +343,8 @@ public class TriangulationTableStaticData : MonoBehaviour
         return edges;
     }
 
+    public static HashSet<int> hasNeighoursComputedForVertexPair = new HashSet<int>();
+
     public static void GetNeighbourForAllPossibleNeighbours(int triangulationIndex, int index, List<OutsideEdgeNeighbourDirection> addResult)
     {
         for (int i = 0; i < 3; ++i)
@@ -361,14 +363,20 @@ public class TriangulationTableStaticData : MonoBehaviour
                 //try find edge for every other comb if exists
                 OutsideEdgeNeighbourDirection neighbour = new OutsideEdgeNeighbourDirection(index / 3, edgeVertices.x, edgeVertices.y, i, (i + 1) % 3, offset);
                 addResult.Add(neighbour);
-                
-                for (int otherTriIndex = 1; otherTriIndex < 255; otherTriIndex++)
+
+                int vertexKey = BuildIndexWithEdgeKey(edgeVertices.x, edgeVertices.y, 0);
+
+                if (!hasNeighoursComputedForVertexPair.Contains(vertexKey))
                 {
-                    OutsideNeighbourConnectionInfo info;
-                    if (TryGetIndexWithEdges(otherTriIndex, neighbour.rotatedEdgePair.x, neighbour.rotatedEdgePair.y, out info))
+                    hasNeighoursComputedForVertexPair.Add(vertexKey);
+                    for (int otherTriangulationIndex = 1; otherTriangulationIndex < 255; otherTriangulationIndex++)
                     {
-                        int key = BuildIndexForOutsideNeighbour(triangulationIndex, otherTriIndex, index, i, (i + 1) % 3);
-                        externNeighboursLookup[key] = info;
+                        OutsideNeighbourConnectionInfo info;
+                        if (TryGetIndexWithEdges(otherTriangulationIndex, neighbour.rotatedEdgePair.x, neighbour.rotatedEdgePair.y, out info))
+                        {
+                            int key = BuildIndexWithEdgeKey(otherTriangulationIndex, edgeVertices.x, edgeVertices.y);
+                            externNeighboursLookup[key] = info;
+                        }
                     }
                 }
             }
@@ -457,9 +465,9 @@ public class TriangulationTableStaticData : MonoBehaviour
         }
     }
 
-    public static bool TryGetNeighbourTriangleIndex(int triangulationIndex, int otherTriangulationIndex, int triangleIndex, int edge1, int edge2, out OutsideNeighbourConnectionInfo result)
+    public static bool TryGetNeighbourTriangleIndex(int otherTriangulationIndex, int vertex1, int vertex2, out OutsideNeighbourConnectionInfo result)
     {
-        int key = BuildIndexForOutsideNeighbour(triangulationIndex, otherTriangulationIndex, triangleIndex, edge1, edge2);
+        int key = BuildIndexWithEdgeKey(otherTriangulationIndex, vertex1, vertex2);
         return externNeighboursLookup.TryGetValue(key, out result);
     }
 

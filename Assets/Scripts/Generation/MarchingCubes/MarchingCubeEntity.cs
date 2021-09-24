@@ -109,15 +109,20 @@ namespace MarchingCubes
 
                     ///save offset in dict to not need outside neighbours
 
-                    //OutsideNeighbourConnectionInfo info = TriangulationTableStaticData.GetIndexWithEdges(neighbourCube.triangulationIndex, neighbour.rotatedEdgePair);
+                    OutsideNeighbourConnectionInfo info2 = TriangulationTableStaticData.GetIndexWithEdges(neighbourCube.triangulationIndex, neighbour.rotatedEdgePair);
                     OutsideNeighbourConnectionInfo info;
-                    if (TriangulationTableStaticData.TryGetNeighbourTriangleIndex(
-                        triangulationIndex,
+                    if (!TriangulationTableStaticData.TryGetNeighbourTriangleIndex(
                         neighbourCube.triangulationIndex,
-                        neighbour.triangleIndex * 3,
-                        neighbour.relevantVertexIndices.x,
-                        neighbour.relevantVertexIndices.y,
-                        out info))
+                        neighbour.originalEdgePair.x,
+                        neighbour.originalEdgePair.y,
+                        out info) || info2.otherTriangleIndex != info.otherTriangleIndex)
+                    {
+
+                        TriangulationTableStaticData.GetNeighbourForAllPossibleNeighbours(triangulationIndex, neighbour.triangleIndex, new List<OutsideEdgeNeighbourDirection>());
+                        info2 = TriangulationTableStaticData.GetIndexWithEdges(neighbourCube.triangulationIndex, neighbour.rotatedEdgePair);
+                        Debug.Log("):");
+                    }
+                    else
                     {
                         if (overrideNeighbours)
                         {
