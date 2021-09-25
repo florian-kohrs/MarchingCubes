@@ -8,9 +8,7 @@ namespace MarchingCubes
     public interface ICubeEntity
     {
 
-        void UpdateMesh();
-
-        IList<ICubeEntity> Neighbours { get; }
+        List<PathTriangle> GetNeighboursOf(PathTriangle tri);
 
     }
 }

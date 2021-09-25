@@ -5,15 +5,15 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public class MarchingCubeEntity //: ICubeEntity
+    public class MarchingCubeEntity : ICubeEntity
     {
 
-        public MarchingCubeEntity(MarchingCubeChunk chunk)
+        public MarchingCubeEntity(ICubeNeighbourFinder cubeFinder)
         {
-            this.chunk = chunk;
+            this.cubeFinder = cubeFinder;
         }
 
-        protected MarchingCubeChunk chunk;
+        protected ICubeNeighbourFinder cubeFinder;
 
         public PathTriangle GetTriangleWithNormal(Vector3 normal)
         {
@@ -30,7 +30,7 @@ namespace MarchingCubes
                     return i;
                 }
             }
-            throw new System.Exception("No triangle with same normal found!");
+            throw new Exception("No triangle with same normal found!");
         }
 
         public int GetTriangleIndexWithNormalOrClosest(Vector3 normal, Vector3 point)
@@ -69,6 +69,7 @@ namespace MarchingCubes
 
         protected TriangulationNeighbours neighbourData;
 
+
         protected TriangulationNeighbours NeighbourData
         {
             get
@@ -81,12 +82,55 @@ namespace MarchingCubes
             }
         }
 
+        public List<PathTriangle> GetNeighboursOf(PathTriangle tri)
+        {
+            List<PathTriangle> result = new List<PathTriangle>();
+            int index = triangles.IndexOf(tri);
+            GetInternNeighbours(result, index);
+            ///improve lookup table to give neighbouors for specific tri index
+
+            OutsideEdgeNeighbourDirection neighbour;
+            List<OutsideEdgeNeighbourDirection> edgeDirs = neighbourData.OutsideNeighbours;
+            int count = edgeDirs.Count;
+            for (int i = 0; i < count; ++i)
+            {
+                neighbour = edgeDirs[i];
+
+                if (neighbour.triangleIndex != index)
+                {
+                    continue;
+                }
+                Vector3Int newPos = origin + neighbour.offset;
+                MarchingCubeEntity cubeNeighbour;
+                //TODO: store if it is boundary cube else check not necessary
+                if (cubeFinder.IsCubeInBounds(newPos.x, newPos.y, newPos.z))
+                {
+                    cubeNeighbour = cubeFinder.GetEntityAt(newPos);
+                }
+                else
+                {
+                    cubeNeighbour = cubeFinder.GetEntityInNeighbourAt(newPos, neighbour.offset);
+                }
+                OutsideNeighbourConnectionInfo info;
+                if (TriangulationTableStaticData.TryGetNeighbourTriangleIndex(
+                    cubeNeighbour.triangulationIndex,
+                    neighbour.originalEdgePair.x,
+                    neighbour.originalEdgePair.y,
+                    out info))
+                {
+                    result.Add(cubeNeighbour.triangles[info.otherTriangleIndex]);
+                }
+            }
+
+                return result;
+        }
+
         /// <summary>
         /// generate a matrix in the beginning, saying which triangulation has neighbours in which triangulation,
         /// also with offsets at exactly one difference with the abs value of 1 in a single axis 
         /// (see for edgeindex reference:http://paulbourke.net/geometry/polygonise/)
         /// </summary>
-        public void BuildInternNeighbours()
+        public void GetInternNeighbours(List<PathTriangle> result, int triIndex)
         {
             IndexNeighbourPair item;
             List<IndexNeighbourPair> neighbours = NeighbourData.InternNeighbourPairs;
@@ -94,97 +138,13 @@ namespace MarchingCubes
             for (int i = 0; i < count; ++i)
             {
                 item = neighbours[i];
-                triangles[item.first].SoftSetNeighbourTwoWay(triangles[item.second], item.firstEdgeIndices, item.sndEdgeIndice);
-            }
-        }
-
-
-        public bool BuildNeighbours(bool isBorderPoint, Func<Vector3Int, MarchingCubeEntity> GetCube, Func<Vector3Int, bool> IsInBounds, List<MissingNeighbourData> addHere, bool overrideNeighbours = false)
-        {
-            bool allNeighboursInBound = true;
-            OutsideEdgeNeighbourDirection neighbour;
-            List<OutsideEdgeNeighbourDirection> edgeDirs = neighbourData.OutsideNeighbours;
-            if((neighbourData.InternNeighbourPairs.Count * 2 +  NeighbourData.OutsideNeighbours.Count)  /  triangles.Count != 3)
-            {
-                Debug.Log("Too few neighbours!");
-            }
-            int count = edgeDirs.Count;
-            for (int i = 0; i < count; ++i)
-            {
-                neighbour = edgeDirs[i];
-                Vector3Int newPos = origin + neighbour.offset;
-
-                if (!isBorderPoint || IsInBounds(newPos))
+                if(item.first == triIndex)
                 {
-                    MarchingCubeEntity neighbourCube = GetCube(newPos);
-
-                    ///save offset in dict to not need outside neighbours
-
-                    OutsideNeighbourConnectionInfo info;
-                    if (TriangulationTableStaticData.TryGetNeighbourTriangleIndex(
-                        neighbourCube.triangulationIndex,
-                        neighbour.originalEdgePair.x,
-                        neighbour.originalEdgePair.y,
-                        out info))
-                    {
-                        if (overrideNeighbours)
-                        {
-                            triangles[neighbour.triangleIndex].OverrideNeighbourTwoWay(
-                                neighbourCube.triangles[info.otherTriangleIndex], 
-                                neighbour.relevantVertexIndices.x, 
-                                neighbour.relevantVertexIndices.y, 
-                                info.outsideNeighbourEdgeIndicesX, 
-                                info.outsideNeighbourEdgeIndicesY);
-                        }
-                        else
-                        {
-                            triangles[neighbour.triangleIndex].SoftSetNeighbourTwoWay(
-                                neighbourCube.triangles[info.otherTriangleIndex], 
-                                neighbour.relevantVertexIndices.x, 
-                                neighbour.relevantVertexIndices.y, 
-                                info.outsideNeighbourEdgeIndicesX, 
-                                info.outsideNeighbourEdgeIndicesY);
-                        }
-                    }
-                    else
-                    {
-                        Debug.LogWarning("Missed Neighbour!");
-                    }
+                    result.Add(triangles[item.second]);
                 }
-                else
+                else if(item.second  == triIndex)
                 {
-                    allNeighboursInBound = false;
-                    addHere.Add(new MissingNeighbourData(neighbour, origin));
-                }
-
-                
-            }
-            
-            neighbourData = null;
-            return allNeighboursInBound;
-        }
-
-
-        public void BuildSpecificNeighbourInNeighbour(MarchingCubeEntity e, int triIndex,  Vector2Int myEdgeIndices, Vector2Int myVertexIndices, Vector2Int rotatedEdge)
-        {
-            if(e == null)
-            {
-                Debug.LogError("was null");
-            }
-            else
-            {
-                OutsideNeighbourConnectionInfo info;
-                if (TriangulationTableStaticData.TryGetNeighbourTriangleIndex(
-                    e.triangulationIndex,
-                    myEdgeIndices.x,
-                    myEdgeIndices.y,
-                    out info))
-                {
-                    triangles[triIndex].SoftSetNeighbourTwoWay(e.triangles[info.otherTriangleIndex], myVertexIndices.x, myVertexIndices.y, info.outsideNeighbourEdgeIndicesX, info.outsideNeighbourEdgeIndicesY);
-                }
-                else
-                {
-                    Debug.LogWarning("Missed Neighbour!");
+                    result.Add(triangles[item.first]);
                 }
             }
         }

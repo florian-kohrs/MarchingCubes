@@ -642,12 +642,12 @@ namespace MarchingCubes
             }
         }
 
-        protected bool IsCubeInBounds(Vector3Int v)
+        public bool IsCubeInBounds(Vector3Int v)
         {
             return IsCubeInBounds(v.x, v.y, v.z);
         }
 
-        protected bool IsCubeInBounds(int  x,int   y,int z)
+        public bool IsCubeInBounds(int  x,int   y,int z)
         {
             return
                 x >= 0 && x < vertexSize
@@ -655,7 +655,7 @@ namespace MarchingCubes
                 && z >= 0 && z < vertexSize;
         }
 
-        protected bool IsCubeInBounds(int[] v)
+        public bool IsCubeInBounds(int[] v)
         {
             return IsCubeInBounds(v[0], v[1], v[2]);
         }

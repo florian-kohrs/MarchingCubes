@@ -7,7 +7,7 @@ namespace MarchingCubes
 {
 
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
-    public class MarchingCubeChunk : CompressedMarchingCubeChunk, IMarchingCubeInteractableChunk, IHasInteractableMarchingCubeChunk
+    public class MarchingCubeChunk : CompressedMarchingCubeChunk, IMarchingCubeInteractableChunk, IHasInteractableMarchingCubeChunk, ICubeNeighbourFinder
     {
 
         public override void InitializeWithMeshDataParallel(TriangleBuilder[] tris, float[] points, MarchingCubeChunkNeighbourLODs neighbourLODs, Action OnDone = null)
@@ -51,8 +51,6 @@ namespace MarchingCubes
 
         public MarchingCubeEntity[,,] cubeEntities;
 
-        protected List<MarchingCubeEntity> entities;
-
         //public Dictionary<int, MarchingCubeEntity> cubeEntities = new Dictionary<int, MarchingCubeEntity>();
 
         protected Dictionary<Vector3Int, MarchingCubeEntity> higherLodNeighbourCubes = new Dictionary<Vector3Int, MarchingCubeEntity>();
@@ -94,7 +92,6 @@ namespace MarchingCubes
 
         public void AddEntityAt(int x, int y, int z, MarchingCubeEntity e)
         {
-            entities.Add(e);
             cubeEntities[x, y, z] = e;
         }
 
@@ -163,77 +160,21 @@ namespace MarchingCubes
         }
 
 
-
-
-        protected void BuildChunkEdges()
+        public MarchingCubeEntity GetEntityInNeighbourAt(Vector3Int outsidePos, Vector3Int offset)
         {
-            if (IsEmpty)
-                return;
-
-            List<MissingNeighbourData> trisWithNeighboursOutOfBounds = new List<MissingNeighbourData>();
-            MissingNeighbourData t;
-            MarchingCubeEntity e;
-
-            
-            for (int x = 0; x < chunkSize; x++)
+            IMarchingCubeChunk chunk;
+            if (chunkHandler.TryGetReadyChunkAt(AnchorPos + outsidePos, out chunk))
             {
-                for (int y = 0; y < chunkSize; y++)
+                if (chunk is IMarchingCubeInteractableChunk c)
                 {
-                    for (int z = 0; z < chunkSize; z++)
-                    {
-                        if(TryGetEntitiyAt(x,y,z, out e))
-                        {
-                            e.BuildInternNeighbours();
-                            if ((e.origin.x + e.origin.y + e.origin.z) % 2 == 0 || IsBorderCube(x,y,z))
-                            {
-                                if (!e.BuildNeighbours(IsBorderCube(e.origin), GetEntityAt, IsCubeInBounds, trisWithNeighboursOutOfBounds))
-                                {
-                                    int count = trisWithNeighboursOutOfBounds.Count;
-                                    for (int i = 0; i < count; ++i)
-                                    {
-                                        t = trisWithNeighboursOutOfBounds[i];
-                                        //Vector3Int offset = t.neighbour.offset.Map(Math.Sign);
-                                        Vector3Int target = GetGlobalEstimatedNeighbourPositionFromOffset(t.outsideNeighbour.offset);
-                                        Vector3Int border = t.originCubeEntity + t.outsideNeighbour.offset;
-                                        IMarchingCubeChunk chunk;
-                                        AddNeighbourFromEntity(t.outsideNeighbour.offset);
-                                        if (chunkHandler.TryGetReadyChunkAt(AnchorPos + border, out chunk))
-                                        {
-                                            if (chunk is IMarchingCubeInteractableChunk c)
-                                            {
-                                                if (c.LODPower == LODPower)
-                                                {
-                                                    Vector3Int pos = TransformBorderPointToChunk(border, t.outsideNeighbour.offset, chunk);
-                                                    MarchingCubeEntity cube = c.GetEntityAt(pos);
-                                                    if (cube == null)
-                                                    {
-                                                        cube = c.GetEntityAt(pos);
-                                                    }
-                                                    e.BuildSpecificNeighbourInNeighbour(cube, t.outsideNeighbour.triangleIndex, t.outsideNeighbour.originalEdgePair, t.outsideNeighbour.relevantVertexIndices, t.outsideNeighbour.rotatedEdgePair);
-                                                }
-                                                else if (c.LODPower > LODPower)
-                                                {
-                                                    BuildMarchingCubeChunkTransitionInDirection(e.origin, t, c.LODPower);
-                                                }
-                                            }
-                                        }
-                                        else if (careAboutNeighbourLODS)
-                                        {
-                                            int neighbourLodPower = neighbourLODs.GetLodPowerFromNeighbourInDirection(t.outsideNeighbour.offset);
-                                            if (neighbourLodPower > LODPower)
-                                            {
-                                                BuildMarchingCubeChunkTransitionInDirection(e.origin, t, neighbourLodPower);
-                                            }
-                                        }
-                                    }
-                                    trisWithNeighboursOutOfBounds = new List<MissingNeighbourData>();
-                                }
-                            }
-                        }
-                    }
+                    Vector3Int pos = TransformBorderPointToChunk(outsidePos, offset, chunk);
+                    return c.GetEntityAt(pos);
                 }
             }
+            return null;
         }
+
+
 
         protected void FindConnectedChunks()
         {
@@ -352,14 +293,6 @@ namespace MarchingCubes
             return result;
         }
 
-        protected void BuildEdgesFor(MarchingCubeEntity e, List<MissingNeighbourData> addMissingNeighboursHere, bool overrideEdges)
-        {
-            int currentCount = addMissingNeighboursHere.Count;
-
-            e.BuildInternNeighbours();
-            e.BuildNeighbours(IsBorderCube(e.origin), GetEntityAt, IsCubeInBounds, addMissingNeighboursHere, overrideEdges);
-        }
-
 
         //protected List<MissingNeighbourData> missingHigherLODNeighbour = new List<MissingNeighbourData>();
 
@@ -453,7 +386,6 @@ namespace MarchingCubes
 
             MarchingCubeEntity cube;
             cubeEntities = new MarchingCubeEntity[ChunkSize, ChunkSize, ChunkSize];
-            entities = new List<MarchingCubeEntity>();
             TriangleBuilder t;
             for(int i = 0; i< ts.Length; ++i) 
             {
@@ -556,7 +488,8 @@ namespace MarchingCubes
             int buildCount = buildNeighbours.Count;
             for (int i = 0; i < buildCount; ++i)
             {
-                BuildEdgesFor(buildNeighbours[i], missingNeighbours, true);
+                //TODO:Check if neighbourchunk connection needs to be build
+                //BuildEdgesFor(buildNeighbours[i], missingNeighbours, true);
             }
 
             SoftResetMeshDisplayers();
@@ -813,7 +746,6 @@ namespace MarchingCubes
             RebuildAround(GetEntityAt(entityOrigin), entityOrigin);
         }
 
-
-
+      
     }
 }

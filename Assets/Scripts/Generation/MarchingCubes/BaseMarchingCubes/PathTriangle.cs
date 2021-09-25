@@ -9,7 +9,7 @@ namespace MarchingCubes
     {
 
 
-        public PathTriangle(MarchingCubeEntity e, Triangle t, Func<PathTriangle, Color> f)
+        public PathTriangle(ICubeEntity e, Triangle t, Func<PathTriangle, Color> f)
         {
             this.e = e;
             tri = t;
@@ -18,7 +18,7 @@ namespace MarchingCubes
             steepnessAndColorData = TriangleBuilder.zipData(steepness, (int)(c.r * 255), (int)(c.g * 255), (int)(c.b * 255));
         }
 
-        public PathTriangle(MarchingCubeEntity e, Triangle t, uint steepnessAndColorData)
+        public PathTriangle(ICubeEntity e, Triangle t, uint steepnessAndColorData)
         {
             this.e = e;
             this.steepnessAndColorData = steepnessAndColorData;
@@ -38,7 +38,7 @@ namespace MarchingCubes
         }
 
 
-        private MarchingCubeEntity e;
+        protected ICubeEntity e;
 
         public int Steepness => (int)(steepnessAndColorData >> 24);
 
@@ -87,73 +87,23 @@ namespace MarchingCubes
 
         /// <summary>
         /// maybe stop storing? but couldnt recalculate normal
+        /// since every point is shared at least three times maybe reference points? (store less)
         /// </summary>
         public Triangle tri;
 
-        /// <summary>
-        /// dont need if this is in lookup table
-        /// </summary>
-        public PathTriangle[] neighbours = new PathTriangle[TRIANGLE_NEIGHBOUR_COUNT];
+        public List<PathTriangle> Neighbours => GetCircumjacent(this);
 
-
-        //public void AddNeighbourTwoWay(PathTriangle p, int myEdge1, int myEdge2, int otherEdge1, int otherEdge2)
-        //{
-        //    if (!neighbours.Contains(p))
-        //    {
-        //        AddNeighbourTwoWayUnchecked(p, myEdge1, myEdge2, otherEdge1, otherEdge2);
-        //    }
-        //}
-
-        public void SoftSetNeighbourTwoWay(PathTriangle p, int myEdge1, int myEdge2, int otherEdge1, int otherEdge2)
+        public virtual List<PathTriangle> GetCircumjacent(PathTriangle field)
         {
-            int myKey = (myEdge1 + myEdge2) % 3;
-
-            if (neighbours[myKey] != null)
+            List<PathTriangle> result = e.GetNeighboursOf(this);
+            int count = result.Count;
+            PathTriangle tri;
+            for (int i = 0; i < count; ++i)
             {
-                return;
-            }
-
-            int otherKey = (otherEdge1 + otherEdge2) % 3;
-            neighbours[myKey] = p;
-            p.neighbours[otherKey] = this;
-        }
-
-        public void OverrideNeighbourTwoWay(PathTriangle p, int myEdge1, int myEdge2, int otherEdge1, int otherEdge2)
-        {
-            int myKey = (myEdge1 + myEdge2) % 3;
-
-            int otherKey = (otherEdge1 + otherEdge2) % 3;
-            neighbours[myKey] = p;
-            p.neighbours[otherKey] = this;
-        }
-
-
-        public void SoftSetNeighbourTwoWay(PathTriangle p, Vector2Int myEdges, Vector2Int otherEdges)
-        {
-            SoftSetNeighbourTwoWay(p, myEdges.x, myEdges.y, otherEdges.x, otherEdges.y);
-        }
-
-
-        public void OverrideNeighbourTwoWay(PathTriangle p, Vector2Int myEdges, Vector2Int otherEdges)
-        {
-            OverrideNeighbourTwoWay(p, myEdges.x, myEdges.y, otherEdges.x, otherEdges.y);
-        }
-
-        //public void AddNeighbourTwoWay(PathTriangle p, Vector2Int edgeIndices)
-        //{
-        //    AddNeighbourTwoWay(p, edgeIndices.x, edgeIndices);
-        //}
-
-
-
-        public List<PathTriangle> GetCircumjacent(PathTriangle field)
-        {
-            List<PathTriangle> result = new List<PathTriangle>(TRIANGLE_NEIGHBOUR_COUNT);
-            for (int i = 0; i < TRIANGLE_NEIGHBOUR_COUNT; ++i)
-            {
-                if (field.neighbours != null && field.Slope < MAX_SLOPE_TO_BE_USEABLE_IN_PATHFINDING)
+                tri = result[i];
+                if (tri != null && tri.Slope < MAX_SLOPE_TO_BE_USEABLE_IN_PATHFINDING)
                 {
-                    result.Add(field.neighbours[i]);
+                    result.Add(tri);
                 }
             }
             return result;

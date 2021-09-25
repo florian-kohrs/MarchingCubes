@@ -85,7 +85,7 @@ namespace MarchingCubes
                         //MarchingCubeEntity e2 = chunk.GetClosestEntity(hit.point);
 
                         PathTriangle tri = chunk.GetTriangleFromRayHit(hit);
-                        ps = tri.neighbours;
+                        ps = tri.Neighbours;
                         p = tri;
 
                         // chunk.GetChunkHandler.DecreaseChunkLod(chunk, 1);
