@@ -87,7 +87,7 @@ public static class VectorExtension
         return new List<float>() { v.x, v.y, v.z };
     }
 
- 
+
 
     public static bool SharesExactNValuesWith(float[] f1, float[] f2, out Vector2Int sharedIndices, int n)
     {
@@ -154,7 +154,7 @@ public static class VectorExtension
         float z = v2.z;
         for (int i = 0; i < 3; ++i)
         {
-            v1ConnectedVertices[i] = IndexOf(x,y,z,v1[i]);
+            v1ConnectedVertices[i] = IndexOf(x, y, z, v1[i]);
 
             if (v1ConnectedVertices[i] >= 0)
             {
@@ -203,8 +203,9 @@ public static class VectorExtension
     {
         int sameValues = 0;
 
-        int start = Array.IndexOf(v2.Values(),v1.x);
-        if (start > -1) {
+        int start = Array.IndexOf(v2.Values(), v1.x);
+        if (start > -1)
+        {
             for (int i = 0; i < 3 && sameValues < n; ++i)
             {
                 if (v1[i] == v2[(i + start) % 3])
@@ -328,6 +329,25 @@ public static class VectorExtension
             return 4;
         else
             return 5;
+    }
+
+    public static Vector3Int GetDirectionFromIndex(int index)
+    {
+        switch (index)
+        {
+            case 0:
+                return new Vector3Int(1, 0, 0);
+            case 1:
+                return new Vector3Int(-1, 0, 0);
+            case 2:
+                return new Vector3Int(0, 1, 0);
+            case 3:
+                return new Vector3Int(0, -1, 0);
+            case 4:
+                return new Vector3Int(0, 0, 1);
+            default:
+                return new Vector3Int(0, 0, -1);
+        }
     }
 
     //public static Vector3Int[] GetAllDirectNeighbours(this Vector3Int v3)

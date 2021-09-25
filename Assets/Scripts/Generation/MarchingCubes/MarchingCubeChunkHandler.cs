@@ -243,8 +243,11 @@ namespace MarchingCubes
             while (neighboursToBuild.Count > 0)
             {
                 IMarchingCubeChunk current = neighboursToBuild.Dequeue();
-                foreach (var v3 in current.NeighbourIndices)
+                List<Vector3Int> neighbours = current.NeighbourIndices;
+                int count = neighbours.Count;
+                for (int i = 0; i < count; i++)
                 {
+                    Vector3Int v3 = neighbours[i] * (current.ChunkSize + 1) + current.CenterPos; 
                     if (!HasChunkAtPosition(v3) && (startPos - v3).magnitude < buildAroundDistance)
                     {
                         neighboursToBuild.Enqueue(CreateChunkAt(v3));

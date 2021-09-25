@@ -189,16 +189,15 @@ namespace MarchingCubes
             }
         }
 
-        public bool FindMissingNeighbours(Func<Vector3Int, bool> IsInBounds, List<MissingNeighbourData> addHere)
+        public bool FindMissingNeighbours(Func<int,int,int, bool> IsInBounds, List<MissingNeighbourData> addHere)
         {
             bool hasNeighbourOutOfBounds = true;
             OutsideEdgeNeighbourDirection neighbour;
-            int count = neighbourData.OutsideNeighbours.Count;
+            int count = NeighbourData.OutsideNeighbours.Count;
             for (int i = 0; i < count; ++i)
             {
                 neighbour = neighbourData.OutsideNeighbours[i];
-                Vector3Int newPos = origin + neighbour.offset;
-                if (!IsInBounds(newPos))
+                if (!IsInBounds(origin.x + neighbour.offset.x, origin.y + neighbour.offset.y, origin.z + neighbour.offset.z))
                 {
                     hasNeighbourOutOfBounds = false;
                     addHere.Add(new MissingNeighbourData(neighbour, origin));

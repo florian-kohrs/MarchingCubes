@@ -22,8 +22,6 @@ namespace MarchingCubes
 
         List<Vector3Int> NeighbourIndices { get; }
 
-        int NeighbourCount { get; }
-
         IMarchingCubeChunkHandler ChunkHandler {set;}
 
         bool IsEmpty { get; }
