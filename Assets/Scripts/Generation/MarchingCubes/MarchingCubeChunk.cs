@@ -327,22 +327,24 @@ namespace MarchingCubes
                     MissingNeighbourData t = trisWithNeighboursOutOfBounds[i];
                     Vector3Int target = GetGlobalEstimatedNeighbourPositionFromOffset(t.outsideNeighbour.offset);
                     AddNeighbourFromEntity(t.outsideNeighbour.offset);
-                    IMarchingCubeChunk c;
-                    if (chunkHandler.TryGetReadyChunkAt(target, out c))
-                    {
-                        if (c.LODPower > LODPower)
+                    if (careAboutNeighbourLODS) {
+                        IMarchingCubeChunk c;
+                        //TODO: may also take non ready chunks!
+                        if (chunkHandler.TryGetReadyChunkAt(target, out c))
                         {
-                            //might need to use Transform position
-                            Vector3Int pos = (e.origin + t.outsideNeighbour.offset).Map(ClampInChunk);
-                            BuildMarchingCubeChunkTransitionInDirection(e.origin, t, c.LODPower);
+                            if (c.LODPower > LODPower)
+                            {
+                                Vector3Int pos = TransformBorderPointToChunk(e.origin, t.outsideNeighbour.offset, c);
+                                BuildMarchingCubeChunkTransitionInDirection(e.origin, t, c.LODPower);
+                            }
                         }
-                    }
-                    else if (careAboutNeighbourLODS)
-                    {
-                        int neighbourLodPower = neighbourLODs.GetLodPowerFromNeighbourInDirection(t.outsideNeighbour.offset);
-                        if (neighbourLodPower > LODPower)
+                        else
                         {
-                            BuildMarchingCubeChunkTransitionInDirection(e.origin, t, neighbourLodPower);
+                            int neighbourLodPower = neighbourLODs.GetLodPowerFromNeighbourInDirection(t.outsideNeighbour.offset);
+                            if (neighbourLodPower > LODPower)
+                            {
+                                BuildMarchingCubeChunkTransitionInDirection(e.origin, t, neighbourLodPower);
+                            }
                         }
                     }
                 }
