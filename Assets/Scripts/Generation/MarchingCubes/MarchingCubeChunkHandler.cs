@@ -657,8 +657,8 @@ namespace MarchingCubes
 
         public int minSteepness = 15;
         public int maxSteepness = 50;
-        private Vector3Int flatColor = new Vector3Int(0, 255, 0);
-        private Vector3Int steepColor = new Vector3Int(75, 44, 13);
+        public Color flatColor = new Color(0, 255 / 255f, 0,1);
+        public Color steepColor = new Color(75 /  255f, 44 / 255f, 13 / 255f, 1);
 
 
         protected int ApplyChunkDataAndDispatchAndGetShaderData(IMarchingCubeChunk chunk, int lod)
@@ -691,8 +691,8 @@ namespace MarchingCubes
             marshShader.SetBuffer(0, "points", pointsBuffer);
             marshShader.SetInt("minSteepness", minSteepness);
             marshShader.SetInt("maxSteepness", maxSteepness);
-            marshShader.SetInts("flatColor", flatColor.x, flatColor.y, flatColor.z);
-            marshShader.SetInts("steepColor", steepColor.x, steepColor.y, steepColor.z);
+            marshShader.SetInts("flatColor", Mathf.RoundToInt(flatColor.r * 255) , Mathf.RoundToInt(flatColor.g * 255), Mathf.RoundToInt(flatColor.b * 255));
+            marshShader.SetInts("steepColor", Mathf.RoundToInt(steepColor.r*255), Mathf.RoundToInt(steepColor.g * 255), Mathf.RoundToInt(steepColor.b * 255));
             marshShader.SetBuffer(0, "triangles", triangleBuffer);
             marshShader.SetInt("numPointsPerAxis", pointsPerAxis);
             marshShader.SetFloat("surfaceLevel", surfaceLevel);
