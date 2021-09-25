@@ -441,10 +441,6 @@ namespace MarchingCubes
             }
         }
 
-        public void NeighbourReplacedAtWithLodPower(int lodPower)
-        {
-
-        }
 
         protected void AddTriangleToMeshData(PathTriangle tri, Color c, ref int usedTriCount, ref int totalTriCount, bool isBorderConnectionMesh = false)
         {

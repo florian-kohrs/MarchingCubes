@@ -147,10 +147,6 @@ public class BinaryHeap<K, V> where K : System.IComparable
             succ <<= 1;
         }
 
-        if (sz < 0)
-        {
-
-        }
         K bubble = dat[sz].key;
         int pred = hole >> 1;
         while (dat[pred].key.CompareTo(bubble) > 0)

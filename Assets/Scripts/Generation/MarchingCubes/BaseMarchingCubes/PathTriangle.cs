@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public class PathTriangle : INavigatable<PathTriangle, PathTriangle>
+    public class PathTriangle : INavField
     {
 
 
@@ -37,7 +37,6 @@ namespace MarchingCubes
             }
         }
 
-
         protected ICubeEntity e;
 
         public int Steepness => (int)(steepnessAndColorData >> 24);
@@ -46,11 +45,6 @@ namespace MarchingCubes
         public const int TRIANGLE_NEIGHBOUR_COUNT = 3;
 
         protected const float MAX_SLOPE_TO_BE_USEABLE_IN_PATHFINDING = 45;
-
-        /// <summary>
-        /// doesnt need to store normal -> cube is found by position and normal can be recalculated for each tri in cube
-        /// </summary>
-        //public Vector3 normal;
 
         public Vector3 Normal
         {
@@ -65,9 +59,6 @@ namespace MarchingCubes
             }
         }
 
-        /// <summary>
-        /// just give steepness in 8 bit int?
-        /// </summary>
         public uint steepnessAndColorData;
 
 
@@ -83,17 +74,17 @@ namespace MarchingCubes
         }
 
 
-        //MarchingCubeChunkObject chunk;
-
         /// <summary>
-        /// maybe stop storing? but couldnt recalculate normal
+        /// maybe stop storing? but couldnt recalculate normal.
         /// since every point is shared at least three times maybe reference points? (store less)
         /// </summary>
         public Triangle tri;
 
-        public List<PathTriangle> Neighbours => GetCircumjacent(this);
+        public int activeInPathIteration;
 
-        public virtual List<PathTriangle> GetCircumjacent(PathTriangle field)
+        public List<PathTriangle> Neighbours => GetCircumjacent();
+
+        public virtual List<PathTriangle> GetCircumjacent()
         {
             List<PathTriangle> result = e.GetNeighboursOf(this);
             int count = result.Count;
@@ -101,33 +92,37 @@ namespace MarchingCubes
             for (int i = 0; i < count; ++i)
             {
                 tri = result[i];
-                if (tri != null && tri.Slope < MAX_SLOPE_TO_BE_USEABLE_IN_PATHFINDING)
+                if (tri.Slope > MAX_SLOPE_TO_BE_USEABLE_IN_PATHFINDING)
                 {
-                    result.Add(tri);
+                    result.RemoveAt(i);
+                    i--;
+                    count--;
                 }
+            }
+            if (result.Count == 0)
+            {
+                Debug.Log("empty");
             }
             return result;
         }
 
-        public float DistanceToTarget(PathTriangle from, PathTriangle to)
+        public float DistanceToTarget(PathTriangle to)
         {
-            return (to.EstimatedMiddlePoint - from.EstimatedMiddlePoint).magnitude;
+            return (to.EstimatedMiddlePoint - EstimatedMiddlePoint).magnitude;
         }
 
-        public float DistanceToField(PathTriangle from, PathTriangle to)
+        public bool IsEqual(PathTriangle t2)
         {
-            return 1;
+            return this == t2;
         }
 
-        public bool ReachedTarget(PathTriangle current, PathTriangle destination)
+        public void SetUsedInPathIteration(int iteration)
         {
-            return current == destination;
+            activeInPathIteration = iteration;
         }
 
-        public bool IsEqual(PathTriangle t1, PathTriangle t2)
-        {
-            return t1 == t2;
-        }
+        public int LastUsedInPathIteration => activeInPathIteration;
+        
 
         public Vector3 LazyNormal
         {

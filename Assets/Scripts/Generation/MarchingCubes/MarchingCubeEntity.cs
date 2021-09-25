@@ -87,7 +87,7 @@ namespace MarchingCubes
             List<PathTriangle> result = new List<PathTriangle>();
             int index = triangles.IndexOf(tri);
             GetInternNeighbours(result, index);
-            ///improve lookup table to give neighbouors for specific tri index
+            //TODO:improve lookup table to give neighbouors for specific tri index
 
             OutsideEdgeNeighbourDirection neighbour;
             List<OutsideEdgeNeighbourDirection> edgeDirs = neighbourData.OutsideNeighbours;
@@ -110,6 +110,8 @@ namespace MarchingCubes
                 else
                 {
                     cubeNeighbour = cubeFinder.GetEntityInNeighbourAt(newPos, neighbour.offset);
+                    if(cubeNeighbour == null)
+                        continue;
                 }
                 OutsideNeighbourConnectionInfo info;
                 if (TriangulationTableStaticData.TryGetNeighbourTriangleIndex(
@@ -121,8 +123,7 @@ namespace MarchingCubes
                     result.Add(cubeNeighbour.triangles[info.otherTriangleIndex]);
                 }
             }
-
-                return result;
+            return result;
         }
 
         /// <summary>

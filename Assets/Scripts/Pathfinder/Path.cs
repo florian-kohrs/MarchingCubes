@@ -1,80 +1,80 @@
-﻿using System.Collections.Generic;
+﻿using MarchingCubes;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class Path<T, J>
+namespace PathFinding
 {
-
-    public Path(INavigatable<T, J> assistant, T current, J target)
+    public class Path
     {
-        nav = assistant;
-        parent = null;
-        this.current = current;
-        this.target = target;
-    }
 
-    public Path(T current, Path<T, J> parent, float distanceToNode)
-    {
-        this.current = current;
-        target = parent.target;
-        this.parent = parent;
-        nav = parent.nav;
-        previousDistance = distanceToNode;
-        distance = nav.DistanceToTarget(current, target);
-    }
-
-    public List<Path<T, J>> Advance()
-    {
-        List<Path<T, J>> result = new List<Path<T, J>>();
-        List<T> circumjacent = nav.GetCircumjacent(current);
-        T c;
-        for (int i = 0; i < circumjacent.Count; ++i)
+        public Path(PathTriangle current, PathTriangle target)
         {
-            c = circumjacent[i];
-            if (parent == null || !nav.IsEqual(current, parent.current))
+            parent = null;
+            this.current = current;
+            this.target = target;
+        }
+
+        public Path(PathTriangle current, Path parent, float distanceToNode)
+        {
+            this.current = current;
+            target = parent.target;
+            this.parent = parent;
+            previousDistance = distanceToNode;
+            distance = current.DistanceToTarget(target);
+        }
+
+        public List<Path> Advance()
+        {
+            List<Path> result = new List<Path>();
+            List<PathTriangle> circumjacent = current.GetCircumjacent();
+            PathTriangle c;
+            for (int i = 0; i < circumjacent.Count; ++i)
             {
-                result.Add(new Path<T, J>(
-                    c, this, previousDistance + nav.DistanceToField(current, c)));
+                c = circumjacent[i];
+                if (parent == null || !current.IsEqual(parent.current))
+                {
+                    result.Add(new Path(c, this, previousDistance + 1));
+                }
+            }
+            return result;
+        }
+
+        public Path Advance(PathTriangle t)
+        {
+            return new Path(t, this, previousDistance + 1);
+        }
+
+        public PathTriangle current;
+
+        public PathTriangle target;
+
+        public Path parent;
+
+        public float distance;
+
+        public float previousDistance;
+
+        public float TotalMinimumDistance => distance + previousDistance;
+
+        public float TotalEstimatedMinimumDistance(float accuracyFactor)
+        {
+            return distance + (accuracyFactor * previousDistance);
+        }
+
+        public void BuildPath(ref IList<PathTriangle> result)
+        {
+            result.Insert(0, current);
+            if (parent != null)
+            {
+                parent.BuildPath(ref result);
             }
         }
-        return result;
-    }
 
-    public Path<T, J> Advance(T t)
-    {
-        return new Path<T, J>(t, this, previousDistance + nav.DistanceToField(current, t));
-    }
-
-    public INavigatable<T, J> nav;
-
-    public T current;
-
-    public J target;
-
-    public Path<T, J> parent;
-
-    public float distance;
-
-    public float previousDistance;
-
-    public float TotalMinimumDistance => distance + previousDistance;
-
-    public float TotalEstimatedMinimumDistance(float accuracyFactor)
-    {
-        return distance + (accuracyFactor * previousDistance);
-    }
-
-    public void BuildPath(ref IList<T> result)
-    {
-        result.Insert(0, current);
-        if (parent != null)
+        public override int GetHashCode()
         {
-            parent.BuildPath(ref result);
+            return (int)(distance * Mathf.Pow(2, 24) + previousDistance * Mathf.Pow(2, 16));
         }
-    }
 
-    public override int GetHashCode()
-    {
-        return (int)(distance * Mathf.Pow(2, 24) + previousDistance * Mathf.Pow(2, 16));
     }
 
 }

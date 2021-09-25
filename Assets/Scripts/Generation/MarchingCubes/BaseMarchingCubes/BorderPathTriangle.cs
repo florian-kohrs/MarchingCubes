@@ -22,7 +22,7 @@ namespace MarchingCubes
         {
         }
 
-        public override List<PathTriangle> GetCircumjacent(PathTriangle field)
+        public override List<PathTriangle> GetCircumjacent()
         {
             List<PathTriangle> result = new List<PathTriangle>();
 
