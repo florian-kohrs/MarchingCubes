@@ -444,12 +444,21 @@ namespace MarchingCubes
 
         protected void AddTriangleToMeshData(PathTriangle tri, Color c, ref int usedTriCount, ref int totalTriCount, bool isBorderConnectionMesh = false)
         {
-            for (int x = 0; x < 3; x++)
-            {
-                meshTriangles[usedTriCount + x] = usedTriCount + x;
-                vertices[usedTriCount + x] = tri.tri[x];
-                colorData[usedTriCount + x] = c;
-            }
+            Triangle t = tri.tri;
+
+            meshTriangles[usedTriCount] = usedTriCount;
+            meshTriangles[usedTriCount + 1] = usedTriCount + 1;
+            meshTriangles[usedTriCount + 2] = usedTriCount + 2;
+
+            colorData[usedTriCount] = c;
+            colorData[usedTriCount + 1] = c;
+            colorData[usedTriCount + 2] = c;
+
+            vertices[usedTriCount] = t.a;
+            vertices[usedTriCount + 1] = t.b;
+            vertices[usedTriCount + 2] = t.c;
+
+
             usedTriCount += 3;
             totalTriCount++;
             if (usedTriCount >= MAX_TRIANGLES_PER_MESH || usedTriCount >= trisLeft)
@@ -461,19 +470,19 @@ namespace MarchingCubes
 
         protected void AddTriangleToMeshData(Triangle tri, Color c, ref int usedTriCount, ref int totalTriCount, bool useCollider = true)
         {
-           Vector3 normal = (Vector3.Cross(tri.b - tri.a, tri.c - tri.a)).normalized;
-           Vector3 middlePoint = new Vector3(
-                (tri.a.x + tri.b.x + tri.c.x) / 3,
-                (tri.a.y + tri.b.y + tri.c.y) / 3,
-                (tri.a.z + tri.b.z + tri.c.z) / 3);
-           float slope = Mathf.Acos(Vector3.Dot(normal, middlePoint.normalized)) * 180 / Mathf.PI;
 
-            for (int x = 0; x < 3; x++)
-            {
-                meshTriangles[usedTriCount + x] = usedTriCount + x;
-                vertices[usedTriCount + x] = tri[x];
-                colorData[usedTriCount + x] = c;
-            }
+            meshTriangles[usedTriCount] = usedTriCount;
+            meshTriangles[usedTriCount + 1] = usedTriCount + 1;
+            meshTriangles[usedTriCount + 2] = usedTriCount + 2;
+
+            colorData[usedTriCount] = c;
+            colorData[usedTriCount + 1] = c;
+            colorData[usedTriCount + 2] = c;
+
+            vertices[usedTriCount] = tri.a;
+            vertices[usedTriCount + 1] = tri.b;
+            vertices[usedTriCount + 2] = tri.c;
+
             usedTriCount += 3;
             totalTriCount++;
             if (usedTriCount >= MAX_TRIANGLES_PER_MESH || usedTriCount >= trisLeft)
