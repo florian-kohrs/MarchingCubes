@@ -9,14 +9,14 @@ namespace MarchingCubes
     {
 
         public ChunkGroupTreeNode(
-            Vector3Int anchorPosition, 
-            Vector3Int relativeAnchorPosition, 
+            int[] anchorPosition,
+            int[] relativeAnchorPosition, 
             int size)
         {
             this.size = size;
             halfSize = size / 2;
             GroupAnchorPosition = anchorPosition;
-            groupRelativeAnchorPosition = relativeAnchorPosition; 
+            groupRelativeAnchorPosition = relativeAnchorPosition;
         }
 
         protected const int topLeftBack = 0;
@@ -34,26 +34,30 @@ namespace MarchingCubes
 
         public IChunkGroupOrganizer[] children = new IChunkGroupOrganizer[8];
 
-        Vector3Int groupRelativeAnchorPosition;
+        int[] groupRelativeAnchorPosition;
 
-        public override Vector3Int GroupRelativeAnchorPosition => groupRelativeAnchorPosition;
+        public override int[] GroupRelativeAnchorPosition => groupRelativeAnchorPosition;
 
-        protected int GetIndexForLocalPosition(Vector3Int position)
+        protected int GetIndexForLocalPosition(int[] position)
         {
             int result = 0;
-            if (position.z >= halfSize) result |= 1;
-            if (position.x >= halfSize) result |= 2;
-            if (position.y >= halfSize) result |= 4;
+            if (position[2] >= halfSize) result |= 1;
+            if (position[0] >= halfSize) result |= 2;
+            if (position[1] >= halfSize) result |= 4;
             return result;
         }
 
-        protected void GetAnchorPositionForChunkAt(Vector3Int position, out Vector3Int anchorPos, out Vector3Int relAchorPos)
+        protected void GetAnchorPositionForChunkAt(int[] position, out int[] anchorPos, out int[] relAchorPos)
         {
-            relAchorPos = new Vector3Int();
-            if (position.z >= halfSize) relAchorPos.z += halfSize;
-            if (position.x >= halfSize) relAchorPos.x += halfSize;
-            if (position.y >= halfSize) relAchorPos.y += halfSize;
-            anchorPos = relAchorPos + GroupAnchorPosition;
+            relAchorPos = new int[3];
+            if (position[2] >= halfSize) relAchorPos[2] += halfSize;
+            if (position[0] >= halfSize) relAchorPos[0] += halfSize;
+            if (position[1] >= halfSize) relAchorPos[1] += halfSize;
+            anchorPos = new int[] { 
+                relAchorPos[0] + GroupAnchorPosition [0], 
+                relAchorPos[1] + GroupAnchorPosition[1], 
+                relAchorPos[2] + GroupAnchorPosition[2] 
+            };
         }
 
         public override int Size
@@ -65,20 +69,26 @@ namespace MarchingCubes
         }
 
 
-        public override IMarchingCubeChunk GetChunkAtLocalPosition(Vector3Int pos)
+        public override IMarchingCubeChunk GetChunkAtLocalPosition(int[] pos)
         {
             IChunkGroupOrganizer child = children[GetIndexForLocalPosition(pos)];
-            return child.GetChunkAtLocalPosition(pos - child.GroupAnchorPosition);
+            pos[0] -= GroupAnchorPosition[0];
+            pos[1] -= GroupAnchorPosition[1];
+            pos[2] -= GroupAnchorPosition[2];
+            return child.GetChunkAtLocalPosition(pos);
         }
 
-        public override void SetChunkAtLocalPosition(Vector3Int relativePosition, IMarchingCubeChunk chunk)
+        public override void SetChunkAtLocalPosition(int[] relativePosition, IMarchingCubeChunk chunk)
         {
+            relativePosition[0] -= GroupRelativeAnchorPosition[0];
+            relativePosition[1] -= GroupRelativeAnchorPosition[1];
+            relativePosition[2] -= GroupRelativeAnchorPosition[2];
             int childIndex = GetIndexForLocalPosition(relativePosition);
             
             if (chunk.ChunkSize >= halfSize && children[childIndex] == null)
             {
-                Vector3Int childAnchorPosition;
-                Vector3Int childRelativeAnchorPosition;
+                int[] childAnchorPosition;
+                int[] childRelativeAnchorPosition;
                 GetAnchorPositionForChunkAt(relativePosition, out childAnchorPosition, out childRelativeAnchorPosition);
                 children[childIndex] = new ChunkGroupTreeLeaf(chunk, childAnchorPosition, halfSize);
             }
@@ -86,24 +96,27 @@ namespace MarchingCubes
             {
                 IChunkGroupOrganizer child = GetOrCreateChildAt(childIndex, relativePosition);
                 //maybe let child substract anchor
-                child.SetChunkAtLocalPosition(relativePosition - child.GroupRelativeAnchorPosition, chunk);
+                child.SetChunkAtLocalPosition(relativePosition, chunk);
             }
         }
 
-        protected IChunkGroupOrganizer GetOrCreateChildAt(int index, Vector3Int relativePosition)
+        protected IChunkGroupOrganizer GetOrCreateChildAt(int index, int[] relativePosition)
         {
             if(children[index] == null)
             {
-                Vector3Int childAnchorPosition;
-                Vector3Int childRelativeAnchorPosition;
+                int[] childAnchorPosition;
+                int[] childRelativeAnchorPosition;
                 GetAnchorPositionForChunkAt(relativePosition, out childAnchorPosition, out childRelativeAnchorPosition);
                 children[index] = new ChunkGroupTreeNode(childAnchorPosition, childRelativeAnchorPosition, halfSize);
             }
             return children[index];
         }
 
-        public override bool TryGetChunkAtLocalPosition(Vector3Int localPosition, out IMarchingCubeChunk chunk)
+        public override bool TryGetChunkAtLocalPosition(int[] localPosition, out IMarchingCubeChunk chunk)
         {
+            localPosition[0] -= GroupRelativeAnchorPosition[0];
+            localPosition[1] -= GroupRelativeAnchorPosition[1];
+            localPosition[2] -= GroupRelativeAnchorPosition[2];
             IChunkGroupOrganizer child = children[GetIndexForLocalPosition(localPosition)];
             if (child == null)
             {
@@ -112,12 +125,15 @@ namespace MarchingCubes
             }
             else
             {
-                return child.TryGetChunkAtLocalPosition(localPosition - child.GroupRelativeAnchorPosition, out chunk);
+                return child.TryGetChunkAtLocalPosition(localPosition, out chunk);
             }
         }
 
-        public override bool RemoveChunkAtLocalPosition(Vector3Int relativePosition)
+        public override bool RemoveChunkAtLocalPosition(int[] relativePosition)
         {
+            relativePosition[0] -= GroupRelativeAnchorPosition[0];
+            relativePosition[1] -= GroupRelativeAnchorPosition[1];
+            relativePosition[2] -= GroupRelativeAnchorPosition[2];
             IChunkGroupOrganizer child = children[GetIndexForLocalPosition(relativePosition)];
             if (child is ChunkGroupTreeLeaf)
             {
@@ -126,16 +142,18 @@ namespace MarchingCubes
             }
             else
             {
-                return child != null && child.RemoveChunkAtLocalPosition(relativePosition - child.GroupRelativeAnchorPosition);
+                return child != null && child.RemoveChunkAtLocalPosition(relativePosition);
             }
         }
 
-        public override bool HasChunkAtLocalPosition(Vector3Int relativePosition)
+        public override bool HasChunkAtLocalPosition(int[] relativePosition)
         {
+            relativePosition[0] -= GroupRelativeAnchorPosition[0];
+            relativePosition[1] -= GroupRelativeAnchorPosition[1];
+            relativePosition[2] -= GroupRelativeAnchorPosition[2];
             IChunkGroupOrganizer child = children[GetIndexForLocalPosition(relativePosition)];
-            return child != null && 
-                (child is ChunkGroupTreeLeaf || child.HasChunkAtLocalPosition(relativePosition - child.GroupRelativeAnchorPosition));
 
+            return (child == null && (child is ChunkGroupTreeLeaf || child.HasChunkAtLocalPosition(relativePosition)));
         }
     }
 }

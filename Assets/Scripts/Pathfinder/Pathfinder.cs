@@ -114,7 +114,8 @@ namespace PathFinding
             Path closest = GetClosest();
             List<PathTriangle> circumjacent = closest.current.GetCircumjacent();
             PathTriangle t;
-            for (int i = 0; i < circumjacent.Count; ++i)
+            int count = circumjacent.Count;
+            for (int i = 0; i < count; ++i)
             {
                 t = circumjacent[i];
                 if (t.LastUsedInPathIteration < pathIteration)
@@ -131,7 +132,7 @@ namespace PathFinding
 
 
 
-        public bool ReachedTarget => pathTails.Peek().current.IsEqual(target);
+        public bool ReachedTarget => pathTails.Peek().current == target;
 
 
         public void AddTailUnchecked(Path p)

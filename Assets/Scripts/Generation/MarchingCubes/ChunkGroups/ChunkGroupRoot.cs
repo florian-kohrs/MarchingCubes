@@ -4,67 +4,75 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public class ChunkGroupRoot : BaseChunkGroupOrganizer, IChunkGroupRoot
+    public class ChunkGroupRoot : IChunkGroupRoot
     {
 
-        public ChunkGroupRoot(Vector3Int coord)
+        public ChunkGroupRoot(int[] coord)
         {
-            GroupAnchorPosition = coord * MarchingCubeChunkHandler.CHUNK_GROUP_SIZE;
+            GroupAnchorPosition = new int[]{
+            coord[0] * MarchingCubeChunkHandler.CHUNK_GROUP_SIZE,
+            coord[1] * MarchingCubeChunkHandler.CHUNK_GROUP_SIZE,
+            coord[2] * MarchingCubeChunkHandler.CHUNK_GROUP_SIZE
+            };
         }
+        public int[] GroupAnchorPosition { get; set; }
+
+        public IChunkBuilder ChunkBuilder { protected get; set; }
 
         protected IChunkGroupOrganizer child;
 
-        public override int Size => MarchingCubeChunkHandler.CHUNK_GROUP_SIZE;
+        public int Size => MarchingCubeChunkHandler.CHUNK_GROUP_SIZE;
 
-        public override Vector3Int GroupRelativeAnchorPosition => GroupAnchorPosition;
+        public int[] GroupRelativeAnchorPosition => GroupAnchorPosition;
 
-        public override IMarchingCubeChunk GetChunkAtLocalPosition(Vector3Int pos)
+        public IMarchingCubeChunk GetChunkAtLocalPosition(int[] pos)
         {
             return child.GetChunkAtLocalPosition(pos);
         }
 
-        public override bool TryGetChunkAtLocalPosition(Vector3Int pos, out IMarchingCubeChunk chunk) => child.TryGetChunkAtLocalPosition(pos, out chunk);
+        public bool TryGetChunkAtLocalPosition(int[] pos, out IMarchingCubeChunk chunk) => child.TryGetChunkAtLocalPosition(pos, out chunk);
 
-        public void SetChunkAtPosition(Vector3Int pos, IMarchingCubeChunk chunk)
-        {
-            SetChunkAtLocalPosition(pos - GroupAnchorPosition, chunk);
-        }
-            
-        public override void SetChunkAtLocalPosition(Vector3Int localPosition, IMarchingCubeChunk chunk)
+        public void SetChunkAtPosition(int[] pos, IMarchingCubeChunk chunk)
         {
             if (!HasChild)
             {
-                if(chunk.ChunkSize == Size)
+                if (chunk.ChunkSize == Size)
                 {
                     child = new ChunkGroupTreeLeaf(chunk, GroupAnchorPosition, Size);
                 }
                 else
                 {
-                    child = new ChunkGroupTreeNode(GroupAnchorPosition, localPosition, Size);
+                    child = new ChunkGroupTreeNode(GroupAnchorPosition, GroupAnchorPosition, Size);
                 }
             }
-            child.SetChunkAtLocalPosition(localPosition, chunk);
+            child.SetChunkAtLocalPosition(pos, chunk);
         }
+            
 
-        public bool RemoveChunkAtGlobalPosition(Vector3Int pos)
-        {
-            return child.RemoveChunkAtLocalPosition(pos - GroupAnchorPosition);
-        }
-
-
-        public override bool RemoveChunkAtLocalPosition(Vector3Int pos)
+        public bool RemoveChunkAtGlobalPosition(int[] pos)
         {
             return child.RemoveChunkAtLocalPosition(pos);
         }
 
-        public override bool HasChunkAtLocalPosition(Vector3Int pos)
+
+        public bool HasChunkAtGlobalPosition(int[] globalPosition)
         {
-            return child != null && child.HasChunkAtLocalPosition(pos);
+            return child != null && child.HasChunkAtLocalPosition(globalPosition);
         }
 
-        public bool HasChunkAtGlobalPosition(Vector3Int globalPosition)
+        public bool TryGetChunkAtGlobalPosition(int[] pos, out IMarchingCubeChunk chunk)
         {
-            return HasChunkAtLocalPosition(globalPosition - GroupAnchorPosition);
+            return child.TryGetChunkAtLocalPosition(pos, out chunk);
+        }
+
+        public bool TryGetChunkAtGlobalPosition(Vector3Int pos, out IMarchingCubeChunk chunk)
+        {
+            return TryGetChunkAtGlobalPosition(new int[]{ pos.x,pos.y,pos.z}, out chunk);
+        }
+
+        public bool RemoveChunkAtGlobalPosition(Vector3Int pos)
+        {
+            return RemoveChunkAtGlobalPosition(new int[] { pos.x, pos.y, pos.z });
         }
 
         public bool HasChild => child != null;

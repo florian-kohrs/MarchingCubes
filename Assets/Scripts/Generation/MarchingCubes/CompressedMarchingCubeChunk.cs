@@ -251,6 +251,7 @@ namespace MarchingCubes
 
         protected virtual void WorkOnBuildedChunk()
         {
+            
             BuildMeshToConnectHigherLodChunks();
         }
 
@@ -318,11 +319,9 @@ namespace MarchingCubes
             {
                 t = ts[i];
                 Vector3Int currentOrigin = t.Origin;
-                //if (!NeighboursReachableFrom.ContainsKey(currentOrigin))
-                //{
-                //    MarchingCubeEntity.FindMissingNeighboursAt(t.TriIndex, currentOrigin, IsCubeInBounds, trisWithNeighboursOutOfBounds);
-                //}
 
+                MarchingCubeEntity.FindMissingNeighboursAt(t.TriIndex, currentOrigin, IsCubeInBounds, HasNeighbourInDirection);
+                
                 if (buildMeshAswell)
                 {
                     AddTriangleToMeshData(t.tri, t.GetColor(), ref usedTriCount, ref totalTreeCount);
@@ -332,7 +331,8 @@ namespace MarchingCubes
             MissingNeighbourData neighbour;
             IMarchingCubeChunk c;
 
-            for (int i = 0; i < trisWithNeighboursOutOfBounds.Count; ++i)
+            int missingNeighbourCount = trisWithNeighboursOutOfBounds.Count;
+            for (int i = 0; i < missingNeighbourCount; ++i)
             {
                 neighbour = trisWithNeighboursOutOfBounds[i];
                 Vector3Int target = GetGlobalEstimatedNeighbourPositionFromOffset(neighbour.outsideNeighbour.offset);

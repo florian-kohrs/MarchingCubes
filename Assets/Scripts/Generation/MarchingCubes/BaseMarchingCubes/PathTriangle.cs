@@ -81,27 +81,27 @@ namespace MarchingCubes
         public Triangle tri;
 
         public int activeInPathIteration;
+        public List<PathTriangle> neighbours;
+
 
         public List<PathTriangle> Neighbours => GetCircumjacent();
 
         public virtual List<PathTriangle> GetCircumjacent()
         {
-            List<PathTriangle> result = e.GetNeighboursOf(this);
-            int count = result.Count;
+            if (neighbours == null)
+            {
+                neighbours = e.GetNeighboursOf(this);
+            }
+            List<PathTriangle> result = new List<PathTriangle>();
+            int count = neighbours.Count;
             PathTriangle tri;
             for (int i = 0; i < count; ++i)
             {
-                tri = result[i];
-                if (tri.Slope > MAX_SLOPE_TO_BE_USEABLE_IN_PATHFINDING)
+                tri = neighbours[i];
+                if (tri.Slope < MAX_SLOPE_TO_BE_USEABLE_IN_PATHFINDING)
                 {
-                    result.RemoveAt(i);
-                    i--;
-                    count--;
+                    result.Add(tri);
                 }
-            }
-            if (result.Count == 0)
-            {
-                Debug.Log("empty");
             }
             return result;
         }
@@ -135,6 +135,11 @@ namespace MarchingCubes
                 normal.z /= normMagnitude;
                 return normal;
             }
+        }
+
+        public float DistanceTo(PathTriangle tri)
+        {
+            return 0.5f;/*(e.Origin - tri.e.Origin).magnitude;*/
         }
 
         public float Slope => (int)(steepnessAndColorData >> 24);

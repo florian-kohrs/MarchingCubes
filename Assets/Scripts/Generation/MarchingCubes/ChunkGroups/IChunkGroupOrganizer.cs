@@ -11,11 +11,11 @@ namespace MarchingCubes
         IChunkBuilder ChunkBuilder { set; }
 
 
-        IMarchingCubeChunk GetChunkAtLocalPosition(Vector3Int pos);
+        IMarchingCubeChunk GetChunkAtLocalPosition(int[] pos);
 
-        void SetChunkAtLocalPosition(Vector3Int pos, IMarchingCubeChunk chunk);
+        void SetChunkAtLocalPosition(int[] pos, IMarchingCubeChunk chunk);
 
-        Vector3Int GroupRelativeAnchorPosition { get; }
+        int[] GroupRelativeAnchorPosition { get; }
 
         /// <summary>
         /// 
@@ -23,16 +23,16 @@ namespace MarchingCubes
         /// <param name="pos">relative position from group anchor point</param>
         /// <param name="chunk"></param>
         /// <returns></returns>
-        bool TryGetChunkAtLocalPosition(Vector3Int pos, out IMarchingCubeChunk chunk);
+        bool TryGetChunkAtLocalPosition(int[] pos, out IMarchingCubeChunk chunk);
 
-        bool HasChunkAtLocalPosition(Vector3Int pos);
+        bool HasChunkAtLocalPosition(int[] pos);
 
 
-        bool RemoveChunkAtLocalPosition(Vector3Int pos);
+        bool RemoveChunkAtLocalPosition(int[] pos);
 
-        int Size { get; } 
+        int Size { get; }
 
-        Vector3Int GroupAnchorPosition { get; }
+        int[] GroupAnchorPosition { get; }
 
     }
 }

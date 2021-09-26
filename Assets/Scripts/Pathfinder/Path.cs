@@ -4,6 +4,7 @@ using UnityEngine;
 
 namespace PathFinding
 {
+
     public class Path
     {
 
@@ -33,7 +34,7 @@ namespace PathFinding
                 c = circumjacent[i];
                 if (parent == null || !current.IsEqual(parent.current))
                 {
-                    result.Add(new Path(c, this, previousDistance + 1));
+                    result.Add(new Path(c, this, previousDistance + c.DistanceTo(current)));
                 }
             }
             return result;
@@ -41,7 +42,7 @@ namespace PathFinding
 
         public Path Advance(PathTriangle t)
         {
-            return new Path(t, this, previousDistance + 1);
+            return new Path(t, this, previousDistance + t.DistanceTo(current));
         }
 
         public PathTriangle current;

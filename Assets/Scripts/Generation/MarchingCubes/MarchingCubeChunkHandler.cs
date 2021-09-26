@@ -211,8 +211,8 @@ namespace MarchingCubes
             startPos = player.position;
             IMarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
             maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
-            BuildRelevantChunksAround(chunk);
-            //StartCoroutine(BuildRelevantChunksParallelAround(chunk));
+            //BuildRelevantChunksAround(chunk);
+            StartCoroutine(BuildRelevantChunksParallelAround(chunk));
         }
 
         private void Update()
@@ -247,7 +247,7 @@ namespace MarchingCubes
                 int count = neighbours.Count;
                 for (int i = 0; i < count; i++)
                 {
-                    Vector3Int v3 = neighbours[i] * (current.ChunkSize + 1) + current.CenterPos; 
+                    Vector3Int v3 = neighbours[i] * (current.ChunkSize + 1) + current.CenterPos;
                     if (!HasChunkAtPosition(v3) && (startPos - v3).magnitude < buildAroundDistance)
                     {
                         neighboursToBuild.Enqueue(CreateChunkAt(v3));
@@ -274,9 +274,11 @@ namespace MarchingCubes
         public IEnumerator BuildRelevantChunksParallelAround(IMarchingCubeChunk chunk)
         {
             List<Vector3Int> neighboours = chunk.NeighbourIndices;
-            for (int i = 0; i < neighboours.Count; ++i)
+            int count = neighboours.Count;
+            for (int i = 0; i < count; ++i)
             {
-                closestNeighbours.Enqueue(0, neighboours[i]);
+                Vector3Int v3 = neighboours[i] * (chunk.ChunkSize + 1) + chunk.CenterPos;
+                closestNeighbours.Enqueue(0, v3);
             }
             if (closestNeighbours.size > 0)
             {
@@ -323,16 +325,15 @@ namespace MarchingCubes
         {
             channeledChunks--;
 
-            float orgSqrDistance = (startPos - chunk.CenterPos).sqrMagnitude;
             Vector3Int v3;
             List<Vector3Int> dirs = chunk.NeighbourIndices;
-            for(int i = 0; i < dirs.Count; ++i)
-            { 
-                v3 = dirs[i];
+            for (int i = 0; i < dirs.Count; ++i)
+            {
+                v3 = dirs[i] * (chunk.ChunkSize + 1) + chunk.CenterPos;
                 float sqrDist = (startPos - v3).sqrMagnitude;
 
                 ///only add neighbours if
-                if (sqrDist <= buildAroundSqrDistance 
+                if (sqrDist <= buildAroundSqrDistance
                     && !HasChunkAtPosition(v3))
                 {
                     closestNeighbours.Enqueue(sqrDist, v3);
@@ -411,7 +412,7 @@ namespace MarchingCubes
         {
             CreateChunkParallelAt(pos, PositionToChunkGroupCoord(pos), OnDone);
         }
-        
+
         protected void CreateChunkParallelAt(Vector3 pos, Vector3Int coord, Action<IMarchingCubeChunk> OnDone)
         {
             int lodPower;
@@ -439,7 +440,7 @@ namespace MarchingCubes
 
         protected IChunkGroupRoot CreateChunkGroupAtCoordinate(Vector3Int coord)
         {
-            IChunkGroupRoot chunkGroup = new ChunkGroupRoot(coord);
+            IChunkGroupRoot chunkGroup = new ChunkGroupRoot(new int[] { coord.x, coord.y, coord.z });
             chunkGroups.Add(coord, chunkGroup);
             return chunkGroup;
         }
@@ -485,8 +486,7 @@ namespace MarchingCubes
             {
                 if (chunkGroup.HasChild)
                 {
-                    Vector3Int restPosition = p - chunkGroup.GroupAnchorPosition;
-                    if (/*chunkGroup.HasChild && */chunkGroup.TryGetChunkAtLocalPosition(restPosition, out chunk))
+                    if (/*chunkGroup.HasChild && */chunkGroup.TryGetChunkAtGlobalPosition(p, out chunk))
                     {
                         positionInOtherChunk = p - chunk.AnchorPos;
                         return true;
@@ -508,8 +508,7 @@ namespace MarchingCubes
             IChunkGroupRoot chunkGroup;
             if (chunkGroups.TryGetValue(coord, out chunkGroup))
             {
-                Vector3Int restPosition = chunk.AnchorPos - chunkGroup.GroupAnchorPosition;
-                chunkGroup.RemoveChunkAtGlobalPosition(restPosition);
+                chunkGroup.RemoveChunkAtGlobalPosition(chunk.AnchorPos);
             }
         }
 
@@ -573,7 +572,7 @@ namespace MarchingCubes
             chunk.SurfaceLevel = surfaceLevel;
             chunk.LODPower = lodPower;
 
-            chunkGroup.SetChunkAtPosition(position, chunk);
+            chunkGroup.SetChunkAtPosition(new int[] { position.x, position.y, position.z }, chunk);
 
             return chunk;
         }

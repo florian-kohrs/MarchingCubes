@@ -10,5 +10,7 @@ namespace MarchingCubes
 
         List<PathTriangle> GetNeighboursOf(PathTriangle tri);
 
+        Vector3Int Origin { get; }
+
     }
 }

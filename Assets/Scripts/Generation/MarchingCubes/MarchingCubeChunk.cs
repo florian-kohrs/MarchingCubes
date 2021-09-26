@@ -49,6 +49,7 @@ namespace MarchingCubes
 
         public IMarchingCubeInteractableChunk GetChunk => this;
 
+        //TODO: Use array of arrays instead, or single array?
         public MarchingCubeEntity[,,] cubeEntities;
 
         //public Dictionary<int, MarchingCubeEntity> cubeEntities = new Dictionary<int, MarchingCubeEntity>();

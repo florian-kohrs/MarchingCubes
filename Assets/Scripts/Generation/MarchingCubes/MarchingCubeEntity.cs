@@ -65,6 +65,8 @@ namespace MarchingCubes
 
         public Vector3Int origin;
 
+        public Vector3Int Origin => origin;
+
         public int triangulationIndex;
 
         protected TriangulationNeighbours neighbourData;
@@ -110,7 +112,7 @@ namespace MarchingCubes
                 else
                 {
                     cubeNeighbour = cubeFinder.GetEntityInNeighbourAt(newPos, neighbour.offset);
-                    if(cubeNeighbour == null)
+                    if (cubeNeighbour == null)
                         continue;
                 }
                 OutsideNeighbourConnectionInfo info;
@@ -139,18 +141,18 @@ namespace MarchingCubes
             for (int i = 0; i < count; ++i)
             {
                 item = neighbours[i];
-                if(item.first == triIndex)
+                if (item.first == triIndex)
                 {
                     result.Add(triangles[item.second]);
                 }
-                else if(item.second  == triIndex)
+                else if (item.second == triIndex)
                 {
                     result.Add(triangles[item.first]);
                 }
             }
         }
 
-        public bool FindMissingNeighbours(Func<int,int,int, bool> IsInBounds, List<MissingNeighbourData> addHere)
+        public bool FindMissingNeighbours(Func<int, int, int, bool> IsInBounds, List<MissingNeighbourData> addHere)
         {
             bool hasNeighbourOutOfBounds = true;
             OutsideEdgeNeighbourDirection neighbour;
@@ -168,7 +170,7 @@ namespace MarchingCubes
             return hasNeighbourOutOfBounds;
         }
 
-        public static bool FindMissingNeighboursAt(int triangulationIndex, Vector3Int origin, Func<Vector3Int, bool> IsInBounds, List<MissingNeighbourData> addHere)
+        public static bool FindMissingNeighboursAt(int triangulationIndex, Vector3Int origin, Func<Vector3Int, bool> IsInBounds, bool[] hasNeighbourInDirection)
         {
             bool hasNeighbourOutOfBounds = true;
             TriangulationNeighbours neighbourData = TriangulationTableStaticData.GetNeighbourData(triangulationIndex);
@@ -181,7 +183,7 @@ namespace MarchingCubes
                 if (!IsInBounds(newPos))
                 {
                     hasNeighbourOutOfBounds = false;
-                    addHere.Add(new MissingNeighbourData(neighbour, origin));
+                    hasNeighbourInDirection[VectorExtension.GetIndexFromDirection(neighbour.offset)] = true;
                 }
             }
             return hasNeighbourOutOfBounds;
