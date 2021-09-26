@@ -17,6 +17,7 @@ namespace PathFinding
 
         public Path(PathTriangle current, Path parent, float distanceToNode)
         {
+            depth = parent.depth + 1;
             this.current = current;
             target = parent.target;
             this.parent = parent;
@@ -44,6 +45,8 @@ namespace PathFinding
         {
             return new Path(t, this, previousDistance + t.DistanceTo(current));
         }
+
+        public int depth = 1;
 
         public PathTriangle current;
 

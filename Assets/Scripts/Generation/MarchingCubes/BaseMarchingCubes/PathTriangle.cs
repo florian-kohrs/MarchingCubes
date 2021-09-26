@@ -81,17 +81,26 @@ namespace MarchingCubes
         public Triangle tri;
 
         public int activeInPathIteration;
-        public List<PathTriangle> neighbours;
+        public int activeInBackwardsPathIteration;
+        public PathTriangle pathParent;
+        public float prevDistance;
+        //public List<PathTriangle> neighbours;
 
+        public void BuildPath(List<PathTriangle> result)
+        {
+            result.Add(this);
+            if (pathParent != null)
+                pathParent.BuildPath(result);
+        }
 
         public List<PathTriangle> Neighbours => GetCircumjacent();
 
         public virtual List<PathTriangle> GetCircumjacent()
         {
-            if (neighbours == null)
-            {
-                neighbours = e.GetNeighboursOf(this);
-            }
+            //if (neighbours == null)
+            //{
+            List<PathTriangle> neighbours = e.GetNeighboursOf(this);
+            //}
             List<PathTriangle> result = new List<PathTriangle>();
             int count = neighbours.Count;
             PathTriangle tri;
@@ -142,11 +151,16 @@ namespace MarchingCubes
             return 0.5f;/*(e.Origin - tri.e.Origin).magnitude;*/
         }
 
+        public void SetUsedInBackwardsPathIteration(int iteration)
+        {
+            activeInBackwardsPathIteration = iteration;
+        }
+
         public float Slope => (int)(steepnessAndColorData >> 24);
 
         public Vector3 EstimatedMiddlePoint => tri.a;
 
-        //public Vector3 OriginalLocalMiddlePointOfTriangle => MiddlePoint;
+        public int LastUsedInBackwardsPathIteration => activeInBackwardsPathIteration;
 
     }
 

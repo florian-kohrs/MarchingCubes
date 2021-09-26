@@ -115,7 +115,7 @@ namespace MarchingCubes
 
         public void BuildPath(PathTriangle from, PathTriangle to)
         {
-            ps = Pathfinder.FindPath(from, to, PathAccuracy.NotSoGoodAnymore);
+            ps = MarchingCubesPathfinder.FindPath(from, to, PathAccuracy.NotSoGoodAnymore);
         }
 
     }
