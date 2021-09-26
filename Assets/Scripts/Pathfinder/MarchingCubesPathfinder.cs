@@ -71,7 +71,8 @@ namespace PathFinding
             pathAccuracy = AccuracyFactor(accuracy);
             float estimatedLength = start.DistanceToTarget(target);
             int estimatedQueueSize = (int)Mathf.Clamp(estimatedStepProgress * estimatedLength * (1 - (pathAccuracy / 2)), 10, 10000);
-            pathTails = new BinaryHeap<float, PathTriangle>(float.MinValue, float.MaxValue, estimatedQueueSize);
+            pathTails = new BinaryHeap<float, PathTriangle>(float.MinValue, float.MaxValue, estimatedQueueSize / 2);
+            backwardsTails = new BinaryHeap<float, PathTriangle>(float.MinValue, float.MaxValue, estimatedQueueSize / 2);
         }
 
         float pathAccuracy;
@@ -92,7 +93,7 @@ namespace PathFinding
             start.activeInPathIteration = pathIteration;
             start.prevDistance = 0;
             start.pathParent = null;
-            target.activeInPathIteration = pathIteration;
+            target.activeInBackwardsPathIteration = pathIteration;
             target.prevDistance = 0;
             target.pathParent = null;
             AddTailUnchecked(start, pathTails);
@@ -161,6 +162,7 @@ namespace PathFinding
                     }
                     else
                     {
+                        t.SetUsedInPathIteration(pathIteration);
                         t.pathParent = closest;
                         t.prevDistance = closest.prevDistance + closest.DistanceTo(t);
                         AddTailUnchecked(t, pathTails);
@@ -190,6 +192,7 @@ namespace PathFinding
                     }
                     else
                     {
+                        t.SetUsedInBackwardsPathIteration(pathIteration);
                         t.pathParent = closest;
                         t.prevDistance = closest.prevDistance + closest.DistanceTo(t);
                         AddTailUnchecked(t, backwardsTails);
@@ -207,7 +210,6 @@ namespace PathFinding
 
         public void AddTailUnchecked(PathTriangle p, BinaryHeap<float, PathTriangle>addHere)
         {
-            p.SetUsedInPathIteration(pathIteration);
             float key = p.prevDistance * pathAccuracy + p.DistanceToTarget(target);
             addHere.Enqueue(key, p);
         }
