@@ -380,18 +380,20 @@ namespace MarchingCubes
 
             e.triangulationIndex = cubeIndex;
 
-            for (int i = 0; TriangulationTable.triangulation[cubeIndex][i] != -1; i += 3)
+            int[] triangulation = TriangulationTable.triangulation[cubeIndex];
+            int count = triangulation.Length;
+            for (int i = 0; i < count; i += 3)
             {
                 // Get indices of corner points A and B for each of the three edges
                 // of the cube that need to be joined to form the triangle.
-                int a0 = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[cubeIndex][i]];
-                int b0 = TriangulationTable.cornerIndexBFromEdge[TriangulationTable.triangulation[cubeIndex][i]];
+                int a0 = TriangulationTable.cornerIndexAFromEdge[triangulation[i]];
+                int b0 = TriangulationTable.cornerIndexBFromEdge[triangulation[i]];
 
-                int a1 = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[cubeIndex][i + 1]];
-                int b1 = TriangulationTable.cornerIndexBFromEdge[TriangulationTable.triangulation[cubeIndex][i + 1]];
+                int a1 = TriangulationTable.cornerIndexAFromEdge[triangulation[i + 1]];
+                int b1 = TriangulationTable.cornerIndexBFromEdge[triangulation[i + 1]];
 
-                int a2 = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[cubeIndex][i + 2]];
-                int b2 = TriangulationTable.cornerIndexBFromEdge[TriangulationTable.triangulation[cubeIndex][i + 2]];
+                int a2 = TriangulationTable.cornerIndexAFromEdge[triangulation[i + 2]];
+                int b2 = TriangulationTable.cornerIndexBFromEdge[triangulation[i + 2]];
 
                 Triangle tri = new Triangle();
                 tri.c = InterpolateVerts(cubeCorners[a0], cubeCorners[b0]);

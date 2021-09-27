@@ -383,8 +383,6 @@ public class TriangulationTableStaticData : MonoBehaviour
         }
     }
 
-    protected const int TRIANGULATION_ENTRY_SIZE = 15;
-
     public static Vector2Int RotateVector2OnDelta(Vector3Int delta, Vector2Int v2)
     {
         IEnumerable<int> r = RotateValuesOnDelta(delta, v2.x, v2.y);
@@ -496,7 +494,8 @@ public class TriangulationTableStaticData : MonoBehaviour
         result = new OutsideNeighbourConnectionInfo();
         float[] v = new float[3];
         int[] triangulation = TriangulationTable.triangulation[index];
-        for (int i = 0; i < TRIANGULATION_ENTRY_SIZE && triangulation[i] >= 0; i += 3)
+        int count = triangulation.Length;
+        for (int i = 0; i < count ; i += 3)
         {
             v[0] = triangulation[i];
             v[1] = triangulation[i + 1];
@@ -590,24 +589,27 @@ public class TriangulationTableStaticData : MonoBehaviour
         {
             TriangulationNeighbours currentNeighbours = new TriangulationNeighbours();
             internNeighbours.Add(i, currentNeighbours);
+
+            int[] triangulation = TriangulationTable.triangulation[i];
+            int count = triangulation.Length;
             //also stop when 3 neighbours are found
-            for (int triIndex1 = 0; triIndex1 < 15 && TriangulationTable.triangulation[i][triIndex1] >= 0; triIndex1 += 3)
+            for (int triIndex1 = 0; triIndex1 < count; triIndex1 += 3)
             {
                 int firstIndex = triIndex1 / 3;
 
                 GetNeighbourForAllPossibleNeighbours(i, triIndex1, currentNeighbours.OutsideNeighbours);
-
+                
                 Vector3 v1 = new Vector3(
-                       TriangulationTable.triangulation[i][triIndex1],
-                       TriangulationTable.triangulation[i][triIndex1 + 1],
-                       TriangulationTable.triangulation[i][triIndex1 + 2]);
-                for (int triIndex2 = triIndex1 + 3; triIndex2 < 15 && TriangulationTable.triangulation[i][triIndex2] >= 0; triIndex2 += 3)
+                       triangulation[triIndex1],
+                       triangulation[triIndex1 + 1],
+                       triangulation[triIndex1 + 2]);
+                for (int triIndex2 = triIndex1 + 3; triIndex2 < count; triIndex2 += 3)
                 {
                     int secondIndex = triIndex2 / 3;
                     Vector3 v2 = new Vector3(
-                         TriangulationTable.triangulation[i][triIndex2],
-                         TriangulationTable.triangulation[i][triIndex2 + 1],
-                         TriangulationTable.triangulation[i][triIndex2 + 2]);
+                         triangulation[triIndex2],
+                         triangulation[triIndex2 + 1],
+                         triangulation[triIndex2 + 2]);
 
                     Vector3Int v1ConnectedIndices;
                     Vector3Int v2ConnectedIndices;
