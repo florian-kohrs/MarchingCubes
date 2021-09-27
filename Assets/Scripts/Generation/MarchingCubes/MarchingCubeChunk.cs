@@ -97,8 +97,6 @@ namespace MarchingCubes
 
         public virtual MarchingCubeEntity March(Vector3Int p)
         {
-            MarchingCubeEntity e = new MarchingCubeEntity(this);
-            e.origin = p;
             Vector4[] cubeCorners = GetCubeCornersForPoint(p);
 
             int cubeIndex = 0;
@@ -111,32 +109,34 @@ namespace MarchingCubes
             if (cubeCorners[6].w < surfaceLevel) cubeIndex |= 64;
             if (cubeCorners[7].w < surfaceLevel) cubeIndex |= 128;
 
-            e.triangulationIndex = cubeIndex;
+            MarchingCubeEntity e = new MarchingCubeEntity(this, cubeIndex);
+            e.origin = p;
 
-            for (int i = 0; TriangulationTable.triangulation[cubeIndex][i] != -1; i += 3)
+            int[] triangulation = TriangulationTable.triangulation[cubeIndex];
+            int count = triangulation.Length;
+            for (int i = 0; i < count; i += 3)
             {
                 // Get indices of corner points A and B for each of the three edges
                 // of the cube that need to be joined to form the triangle.
-                int a0 = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[cubeIndex][i]];
-                int b0 = TriangulationTable.cornerIndexBFromEdge[TriangulationTable.triangulation[cubeIndex][i]];
+                int a0 = TriangulationTable.cornerIndexAFromEdge[triangulation[i]];
+                int b0 = TriangulationTable.cornerIndexBFromEdge[triangulation[i]];
 
-                int a1 = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[cubeIndex][i + 1]];
-                int b1 = TriangulationTable.cornerIndexBFromEdge[TriangulationTable.triangulation[cubeIndex][i + 1]];
+                int a1 = TriangulationTable.cornerIndexAFromEdge[triangulation[i + 1]];
+                int b1 = TriangulationTable.cornerIndexBFromEdge[triangulation[i + 1]];
 
-                int a2 = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[cubeIndex][i + 2]];
-                int b2 = TriangulationTable.cornerIndexBFromEdge[TriangulationTable.triangulation[cubeIndex][i + 2]];
+                int a2 = TriangulationTable.cornerIndexAFromEdge[triangulation[i + 2]];
+                int b2 = TriangulationTable.cornerIndexBFromEdge[triangulation[i + 2]];
 
                 Triangle tri = new Triangle();
 
                 tri.c = InterpolateVerts(cubeCorners[a0], cubeCorners[b0]);
                 tri.b = InterpolateVerts(cubeCorners[a1], cubeCorners[b1]);
                 tri.a = InterpolateVerts(cubeCorners[a2], cubeCorners[b2]);
-                e.triangles.Add(new PathTriangle(e, tri, GetColor));
+                e.AddTriangle(new PathTriangle(e, tri, GetColor));
                 triCount += 3;
-
             }
 
-            if (e.triangles.Count > 0)
+            if (count > 0)
             {
                 AddEntityAt(p, e);
             }
@@ -396,17 +396,25 @@ namespace MarchingCubes
             // BuildMeshFromCurrentTriangles();
         }
 
-        protected bool GetOrAddEntityAt(int x, int y, int z, out MarchingCubeEntity e)
+        protected bool GetOrAddEntityAt(int x, int y, int z, int triangulationIndex, out MarchingCubeEntity e)
         {
             e = GetEntityAt(x,y,z);
             if (e == null)
             {
-                e = new MarchingCubeEntity(this);
+                e = new MarchingCubeEntity(this, triangulationIndex);
                 e.origin = new Vector3Int(x,y,z);
                 AddEntityAt(x,y,z, e);
                 return false;
             }
             return true;
+        }
+
+        protected MarchingCubeEntity CreateAndAddEntityAt(int x, int y, int z, int triangulationIndex)
+        {
+            MarchingCubeEntity e = new MarchingCubeEntity(this, triangulationIndex);
+            e.origin = new Vector3Int(x, y, z);
+            AddEntityAt(x, y, z, e);
+            return e;
         }
 
 
@@ -431,9 +439,9 @@ namespace MarchingCubes
                 x = origin.x;
                 y = origin.y;
                 z = origin.z;
-                if (!GetOrAddEntityAt(x,y,z, out cube))
+                if (!TryGetEntitiyAt(x,y,z, out cube))
                 {
-                    cube.triangulationIndex = t.TriIndex;
+                    cube = CreateAndAddEntityAt(x, y, z, t.TriIndex);
                     if (careAboutNeighbourLODS && IsBorderCube(x,y,z))
                     {
                         CheckForConnectedChunk(x, y, z);
@@ -441,7 +449,7 @@ namespace MarchingCubes
                     SetNeighbourAt(x, y, z);
                 }
                 PathTriangle pathTri = new PathTriangle(cube, t.tri, t.steepnessAndColorData);
-                cube.triangles.Add(pathTri);
+                cube.AddTriangle(pathTri);
                 if (buildMeshAswell)
                 {
                     AddTriangleToMeshData(pathTri, t.GetColor(), ref usedTriCount, ref totalTreeCount);
@@ -499,7 +507,7 @@ namespace MarchingCubes
                     {
                         if(TryGetEntitiyAt(x,y,z,out e))
                         {
-                            count = e.triangles.Count;
+                            count = e.triangles.Length;
                             for (int i = 0; i < count; ++i)
                             {
                                 AddTriangleToMeshData(e.triangles[i], e.triangles[i].GetColor(), ref usedTriCount, ref totalTreeCount, false);
@@ -526,7 +534,7 @@ namespace MarchingCubes
             //BuildMeshFromCurrentTriangles();
             if (e != null)
             {
-                triCount -= e.triangles.Count * 3;
+                triCount -= e.triangles.Length * 3;
                 RemoveEntityAt(e.origin);
             }
             int[] a = new int[3];
@@ -547,11 +555,11 @@ namespace MarchingCubes
                             MarchingCubeEntity neighbourEntity;
                             if (TryGetEntitiyAt(a[0],a[1],a[2], out neighbourEntity))
                             {
-                                triCount -= neighbourEntity.triangles.Count * 3;
+                                triCount -= neighbourEntity.triangles.Length * 3;
                                 RemoveEntityAt(a[0], a[1], a[2]);
                             }
                             MarchingCubeEntity newCube = March(new Vector3Int(a[0], a[1], a[2]));
-                            if (newCube.triangles.Count > 0)
+                            if (newCube.triangles.Length > 0)
                             {
                                 buildNeighbours.Add(newCube);
                             }

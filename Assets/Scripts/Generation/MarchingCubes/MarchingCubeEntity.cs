@@ -8,9 +8,12 @@ namespace MarchingCubes
     public class MarchingCubeEntity : ICubeEntity
     {
 
-        public MarchingCubeEntity(ICubeNeighbourFinder cubeFinder)
+        public MarchingCubeEntity(ICubeNeighbourFinder cubeFinder, int triangulationIndex)
         {
             this.cubeFinder = cubeFinder;
+            this.triangulationIndex = triangulationIndex;
+            int size = TriangulationTable.triangulation[triangulationIndex].Length / 3;
+            triangles = new PathTriangle[size];
         }
 
         protected ICubeNeighbourFinder cubeFinder;
@@ -20,9 +23,16 @@ namespace MarchingCubes
             return triangles[GetTriangleIndexWithNormal(normal)];
         }
 
+        public void AddTriangle(PathTriangle tri)
+        {
+            triangles[counter] = tri;
+            counter++;
+        }
+
+
         public int GetTriangleIndexWithNormal(Vector3 normal)
         {
-            int triCount = triangles.Count;
+            int triCount = triangles.Length;
             for (int i = 0; i < triCount; ++i)
             {
                 if (triangles[i].Normal == normal)
@@ -37,7 +47,8 @@ namespace MarchingCubes
         {
             float closestSqr = float.MaxValue;
             int closestIndex = -1;
-            for (int i = 0; i < triangles.Count; ++i)
+            int count = triangles.Length;
+            for (int i = 0; i < count; ++i)
             {
                 if (triangles[i].Normal == normal)
                 {
@@ -61,13 +72,15 @@ namespace MarchingCubes
             return triangles[GetTriangleIndexWithNormalOrClosest(normal, point)];
         }
 
-        public List<PathTriangle> triangles = new List<PathTriangle>();
+        public PathTriangle[] triangles;
 
         public Vector3Int origin;
 
         public Vector3Int Origin => origin;
 
         public int triangulationIndex;
+
+        private int counter = 0;
 
         protected TriangulationNeighbours neighbourData;
 
@@ -87,7 +100,7 @@ namespace MarchingCubes
         public List<PathTriangle> GetNeighboursOf(PathTriangle tri)
         {
             List<PathTriangle> result = new List<PathTriangle>();
-            int index = triangles.IndexOf(tri);
+            int index = Array.IndexOf(triangles,tri);
             GetInternNeighbours(result, index);
 
             OutsideEdgeNeighbourDirection neighbour;

@@ -344,9 +344,6 @@ namespace MarchingCubes
 
         public virtual MarchingCubeEntity MarchAt(Vector3Int v3, int lod)
         {
-            MarchingCubeEntity e = new MarchingCubeEntity(null);
-            e.origin = v3;
-
             Vector4[] cubeCorners = GetCubeCornersForPoint(v3.x, v3.y, v3.z, lod);
 
             int cubeIndex = 0;
@@ -359,7 +356,9 @@ namespace MarchingCubes
             if (cubeCorners[6].w < surfaceLevel) cubeIndex |= 64;
             if (cubeCorners[7].w < surfaceLevel) cubeIndex |= 128;
 
-            e.triangulationIndex = cubeIndex;
+
+            MarchingCubeEntity e = new MarchingCubeEntity(null, cubeIndex);
+            e.origin = v3;
 
             int[] triangulation = TriangulationTable.triangulation[cubeIndex];
             int count = triangulation.Length;
@@ -381,7 +380,7 @@ namespace MarchingCubes
                 tri.b = InterpolateVerts(cubeCorners[a1], cubeCorners[b1]);
                 tri.a = InterpolateVerts(cubeCorners[a2], cubeCorners[b2]);
 
-                e.triangles.Add(new PathTriangle(null, tri, GetColor));
+                e.AddTriangle(new PathTriangle(null, tri, GetColor));
             }
             return e;
         }
@@ -420,7 +419,7 @@ namespace MarchingCubes
                 MarchingCubeEntity bindWithNeighbour = MarchAt(rightCubeIndex, lodDiff);
                 neighbourChunksGlue.Add(key, bindWithNeighbour);
                 AddCubeForNeigbhourInDirection(VectorExtension.GetIndexFromDirection(missingData.outsideNeighbour.offset), bindWithNeighbour);
-                connectorTriangleCount += bindWithNeighbour.triangles.Count * 3;
+                connectorTriangleCount += bindWithNeighbour.triangles.Length * 3;
             }
         }
 
@@ -623,7 +622,8 @@ namespace MarchingCubes
             while (outerEnum.MoveNext())
             {
                 e = outerEnum.Current;
-                for (int i = 0; i < e.triangles.Count; ++i)
+                int count = e.triangles.Length;
+                for (int i = 0; i < count; ++i)
                 {
                     AddTriangleToMeshData(e.triangles[i], e.triangles[i].GetColor(), ref usedTriCount, ref totalTreeCount, true);
                 }
