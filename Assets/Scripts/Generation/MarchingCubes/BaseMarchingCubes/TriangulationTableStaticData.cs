@@ -585,7 +585,8 @@ public class TriangulationTableStaticData : MonoBehaviour
     protected static void BuildInternNeighbours()
     {
         internNeighbours = new Dictionary<int, TriangulationNeighbours>();
-        for (int i = 1; i < TriangulationTable.triangulation.Count - 1; ++i)
+        int length = TriangulationTable.triangulation.Length - 1;
+        for (int i = 1; i < length; ++i)
         {
             TriangulationNeighbours currentNeighbours = new TriangulationNeighbours();
             internNeighbours.Add(i, currentNeighbours);

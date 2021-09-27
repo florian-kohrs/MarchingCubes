@@ -12,7 +12,7 @@ namespace MarchingCubes
         // Values from http://paulbourke.net/geometry/polygonise/
 
 
-        public static readonly List<int[]> triangulation = new List<int[]>(255)
+        public static readonly int[][] triangulation = new List<int[]>(255)
         {
             new int[]{} ,
             new int[]{ 0, 8, 3} ,
@@ -270,7 +270,7 @@ namespace MarchingCubes
             new int[]    { 0, 9, 1 },
             new int[]   { 0, 3, 8 },
             new int[]    {}
-        };
+        }.ToArray();
 
 
         public static readonly List<int> cornerIndexAFromEdge = new List<int>(12)
