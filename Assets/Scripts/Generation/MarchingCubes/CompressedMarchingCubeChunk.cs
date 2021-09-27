@@ -82,8 +82,7 @@ namespace MarchingCubes
             set
             {
                 lod = value;
-                vertexSize = chunkSize / lod * SizeGrower;
-                pointsPerAxis = vertexSize + 1;
+                UpdateChunkData();
             }
         }
 
@@ -117,6 +116,8 @@ namespace MarchingCubes
         protected int chunkSize;
 
         protected int vertexSize;
+
+        protected int entitiesPerAxis;
 
         protected int pointsPerAxis;
 
@@ -216,6 +217,7 @@ namespace MarchingCubes
         private void UpdateChunkData()
         {
             vertexSize = chunkSize / lod * sizeGrower;
+            entitiesPerAxis = vertexSize - 1;
             pointsPerAxis = vertexSize + 1;
             sqrPointsPerAxis = pointsPerAxis * pointsPerAxis;
         }

@@ -515,9 +515,9 @@ namespace MarchingCubes
 
         protected bool IsBorderCube(int x, int y, int z)
         {
-            return x == 0 || x % (vertexSize - 1) == 0
-                || y == 0 || y % (vertexSize - 1) == 0
-                || z == 0 || z % (vertexSize - 1) == 0;
+            return x == 0 || x % (entitiesPerAxis) == 0
+                || y == 0 || y % (entitiesPerAxis) == 0
+                || z == 0 || z % (entitiesPerAxis) == 0;
         }
 
         protected bool IsPointTouchingBorderInDirection(Vector3 p, Vector3Int borderDir)
