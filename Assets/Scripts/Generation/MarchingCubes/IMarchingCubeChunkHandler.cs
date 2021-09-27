@@ -29,6 +29,8 @@ namespace MarchingCubes
 
         void DecreaseChunkLod(IMarchingCubeChunk chunk, int toLodPower);
 
+        MarchingCubeChunkNeighbourLODs GetNeighbourLODSFrom(IMarchingCubeChunk chunk);
+
     }
 
 }

@@ -10,30 +10,11 @@ namespace MarchingCubes
     public class MarchingCubeChunk : CompressedMarchingCubeChunk, IMarchingCubeInteractableChunk, IHasInteractableMarchingCubeChunk, ICubeNeighbourFinder
     {
 
-        public override void InitializeWithMeshDataParallel(TriangleBuilder[] tris, float[] points, MarchingCubeChunkNeighbourLODs neighbourLODs, Action OnDone = null)
-        {
-            Debug.LogWarning("This class does not support concurrency! Will use base class instead. Use " + nameof(MarchingCubeChunkThreaded) + "instead!");
-            base.InitializeWithMeshDataParallel(tris, points, neighbourLODs, OnDone);
-        }
-
-        public override void InitializeWithMeshData(TriangleBuilder[] tris, float[] points, MarchingCubeChunkNeighbourLODs neighbourLODs)
-        {
-            BuildChunkFromMeshData(tris, points, neighbourLODs);
-        }
-
         protected override void WorkOnBuildedChunk()
         {
-            //if (LODPower <= MarchingCubeChunkHandler.DEFAULT_MIN_CHUNK_LOD_POWER)
-            //{
-            //    BuildChunkEdges();
-            //}
-            //else
-            {
-                FindConnectedChunks();
-            }
-
+            FindConnectedChunks();
+            
             BuildMeshToConnectHigherLodChunks();
-
         }
 
         //public override void InitializeEmpty(IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel)
@@ -49,7 +30,6 @@ namespace MarchingCubes
 
         public IMarchingCubeInteractableChunk GetChunk => this;
 
-        //TODO: Use array of arrays instead, or single array?
         public MarchingCubeEntity[,,] cubeEntities;
 
         //public Dictionary<int, MarchingCubeEntity> cubeEntities = new Dictionary<int, MarchingCubeEntity>();

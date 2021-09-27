@@ -44,9 +44,9 @@ namespace MarchingCubes
 
        // void InitializeWithMeshData(Material mat, TriangleBuilder[] tris, int activeTris, float[] points, IMarchingCubeChunkHandler handler, float surfaceLevel);
 
-        void InitializeWithMeshDataParallel(TriangleBuilder[] tris, float[] points, MarchingCubeChunkNeighbourLODs neighbourLod, Action OnDone = null);
+        void InitializeWithMeshDataParallel(TriangleBuilder[] tris, float[] points, Action OnDone = null);
 
-        void InitializeWithMeshData(TriangleBuilder[] tris, float[] points, MarchingCubeChunkNeighbourLODs neighbourLod);
+        void InitializeWithMeshData(TriangleBuilder[] tris, float[] points);
 
         void ResetChunk();
 

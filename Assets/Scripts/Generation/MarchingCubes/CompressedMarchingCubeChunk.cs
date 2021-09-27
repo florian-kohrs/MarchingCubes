@@ -8,14 +8,24 @@ namespace MarchingCubes
     public class CompressedMarchingCubeChunk : IMarchingCubeChunk
     {
 
-        public virtual void InitializeWithMeshDataParallel(TriangleBuilder[] tris, float[] points, MarchingCubeChunkNeighbourLODs neighbourLod, Action OnDone = null)
+        public virtual void InitializeWithMeshDataParallel(TriangleBuilder[] tris, float[] points, Action OnDone = null)
         {
             throw new Exception("This class doesnt support concurrency");
         }
 
-        public virtual void InitializeWithMeshData(TriangleBuilder[] tris, float[] points, MarchingCubeChunkNeighbourLODs neighbourLod)
+        public virtual void InitializeWithMeshData(TriangleBuilder[] tris, float[] points)
         {
-            BuildChunkFromMeshData(tris, points, neighbourLod);
+            HasStarted = true;
+            this.points = points;
+            neighbourLODs = chunkHandler.GetNeighbourLODSFrom(this);
+            triCount = tris.Length * 3;
+
+            careAboutNeighbourLODS = neighbourLODs.HasNeighbourWithHigherLOD(LODPower);
+            BuildFromTriangleArray(tris);
+
+            WorkOnBuildedChunk();
+
+            IsReady = true;
         }
 
         //public virtual void InitializeEmpty(IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel)
@@ -234,20 +244,6 @@ namespace MarchingCubes
             return CenterPos + offset * chunkSize / 2;
         }
 
-        protected virtual void BuildChunkFromMeshData(TriangleBuilder[] tris, float[] points, MarchingCubeChunkNeighbourLODs neighbourLODs)
-        {
-            HasStarted = true;
-            this.points = points;
-            this.neighbourLODs = neighbourLODs;
-            triCount = tris.Length * 3;
-            
-            careAboutNeighbourLODS = neighbourLODs.HasNeighbourWithHigherLOD(LODPower);
-            BuildFromTriangleArray(tris);
-
-            WorkOnBuildedChunk();
-
-            IsReady = true;
-        }
 
         protected virtual void WorkOnBuildedChunk()
         {

@@ -619,7 +619,7 @@ namespace MarchingCubes
         private ComputeBuffer triCountBuffer;
 
 
-        protected MarchingCubeChunkNeighbourLODs GetNeighbourLODSFrom(IMarchingCubeChunk chunk)
+        public MarchingCubeChunkNeighbourLODs GetNeighbourLODSFrom(IMarchingCubeChunk chunk)
         {
             MarchingCubeChunkNeighbourLODs result = new MarchingCubeChunkNeighbourLODs();
             Vector3Int[] coords = VectorExtension.GetAllAdjacentDirections; 
@@ -641,15 +641,14 @@ namespace MarchingCubes
         protected void BuildChunk(IMarchingCubeChunk chunk, int lod)
         {
             int numTris = ApplyChunkDataAndDispatchAndGetShaderData(chunk, lod);
-            MarchingCubeChunkNeighbourLODs l = GetNeighbourLODSFrom(chunk);
-            chunk.InitializeWithMeshData(tris, pointsArray, GetNeighbourLODSFrom(chunk));
+            chunk.InitializeWithMeshData(tris, pointsArray);
         }
 
         protected void BuildChunkParallel(IMarchingCubeChunk chunk, int lod, Action OnDone)
         {
             int numTris = ApplyChunkDataAndDispatchAndGetShaderData(chunk, lod);
             channeledChunks++;
-            chunk.InitializeWithMeshDataParallel(tris, pointsArray, GetNeighbourLODSFrom(chunk), OnDone);
+            chunk.InitializeWithMeshDataParallel(tris, pointsArray, OnDone);
         }
 
         //protected void RebuildChunkParallelAt(Vector3Int p, Action OnDone, int lod)

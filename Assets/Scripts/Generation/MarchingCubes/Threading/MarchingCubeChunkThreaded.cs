@@ -26,12 +26,12 @@ namespace MarchingCubes
 
         protected Action OnDone;
 
-        public override void InitializeWithMeshDataParallel(TriangleBuilder[] tris, float[] points, MarchingCubeChunkNeighbourLODs neighbourLODs, Action OnDone = null)
+        public override void InitializeWithMeshDataParallel(TriangleBuilder[] tris, float[] points, Action OnDone = null)
         {
             HasStarted = true;
             this.OnDone = OnDone;
             chunkHandler.StartWaitForParralelChunkDoneCoroutine(WaitForParallelDone());
-            ThreadPool.QueueUserWorkItem((o) => RequestChunk(tris, points, neighbourLODs, OnChunkDone));
+            ThreadPool.QueueUserWorkItem((o) => RequestChunk(tris, points, OnChunkDone));
         }
 
         protected bool isInOtherThread;
@@ -43,12 +43,12 @@ namespace MarchingCubes
 
         private bool multiThreadDone = false;
 
-        protected void RequestChunk(TriangleBuilder[] tris, float[] points, MarchingCubeChunkNeighbourLODs neighbourLODs, Action OnChunkDone)
+        protected void RequestChunk(TriangleBuilder[] tris, float[] points, Action OnChunkDone)
         {
             try
             {
                 isInOtherThread = true;
-                BuildChunkFromMeshData(tris, points, neighbourLODs);
+                InitializeWithMeshData(tris, points);
                 OnChunkDone();
             }
             catch(Exception x)

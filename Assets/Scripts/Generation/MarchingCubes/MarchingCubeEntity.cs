@@ -89,7 +89,6 @@ namespace MarchingCubes
             List<PathTriangle> result = new List<PathTriangle>();
             int index = triangles.IndexOf(tri);
             GetInternNeighbours(result, index);
-            //TODO:improve lookup table to give neighbouors for specific tri index
 
             OutsideEdgeNeighbourDirection neighbour;
             List<OutsideEdgeNeighbourDirection> edgeDirs = neighbourData.OutsideNeighbours;
