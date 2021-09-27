@@ -260,8 +260,6 @@ namespace MarchingCubes
         {
             Vector3Int result = FlipBorderCoordinateToNeighbourChunk(v3, dir, neighbour);
 
-            float sizeDiff = neighbour.ChunkSize / (float)ChunkSize;
-
             Vector3Int transformedAnchorPosition;
 
             if (IsDirectionOutOfChunk(dir))
@@ -344,8 +342,6 @@ namespace MarchingCubes
                 {
                     if (c.LODPower > LODPower)
                     {
-                        Vector3Int pos = TransformBorderPointToChunk(border, neighbour.outsideNeighbour.offset, c);
-
                         BuildMarchingCubeChunkTransitionInDirection(neighbour.originCubeEntity, neighbour, c.LODPower);
                     }
                 }

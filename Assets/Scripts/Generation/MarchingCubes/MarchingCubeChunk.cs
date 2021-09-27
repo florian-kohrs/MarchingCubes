@@ -276,7 +276,6 @@ namespace MarchingCubes
                         {
                             if (c.LODPower > LODPower)
                             {
-                                Vector3Int pos = TransformBorderPointToChunk(e.origin, t.outsideNeighbour.offset, c);
                                 BuildMarchingCubeChunkTransitionInDirection(e.origin, t, c.LODPower);
                             }
                         }
