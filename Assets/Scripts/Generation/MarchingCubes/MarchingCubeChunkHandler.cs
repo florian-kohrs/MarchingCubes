@@ -662,6 +662,19 @@ namespace MarchingCubes
         public Color steepColor = new Color(75 /  255f, 44 / 255f, 13 / 255f, 1);
 
 
+        public float[] RequestNoiseForChunk(IMarchingCubeChunk chunk)
+        {
+            int pointsPerAxis = chunk.PointsPerAxis;
+            CreateNoiseBufferWithSize(pointsPerAxis);
+
+            densityGenerator.Generate(pointsBuffer, pointsPerAxis, chunk.AnchorPos, chunk.LOD);
+            float[] result = new float[pointsPerAxis * pointsPerAxis * pointsPerAxis];
+
+            ReleaseNoiseBuffer();
+
+            return result;
+        }
+
         protected int ApplyChunkDataAndDispatchAndGetShaderData(IMarchingCubeChunk chunk, int lod)
         {
             int chunkSize = chunk.ChunkSize;
@@ -819,11 +832,21 @@ namespace MarchingCubes
 
         //protected int buffersCreated = 0;
 
-        protected void CreateAllBuffersWithSizes(int chunkSize)
+        protected void CreateNoiseBufferWithSize(int pointsPerAxis)
         {
-            int points = chunkSize + 1;
+            pointsBuffer = new ComputeBuffer(pointsPerAxis, sizeof(float));
+        }
+
+        protected void ReleaseNoiseBuffer()
+        {
+            pointsBuffer.Release();
+        }
+
+        protected void CreateAllBuffersWithSizes(int numVoxelsPerAxis)
+        {
+            int points = numVoxelsPerAxis + 1;
             int numPoints = points * points * points;
-            int numVoxels = chunkSize * chunkSize * chunkSize;
+            int numVoxels = numVoxelsPerAxis * numVoxelsPerAxis * numVoxelsPerAxis;
             int maxTriangleCount = numVoxels * 4;
 
             // Always create buffers in editor (since buffers are released immediately to prevent memory leak)

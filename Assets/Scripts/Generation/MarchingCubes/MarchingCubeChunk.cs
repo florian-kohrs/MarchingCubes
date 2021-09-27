@@ -12,9 +12,12 @@ namespace MarchingCubes
 
         protected override void WorkOnBuildedChunk()
         {
-            FindConnectedChunks();
-            
-            BuildMeshToConnectHigherLodChunks();
+            //FindConnectedChunks();
+
+            if (neighbourChunksGlue.Count > 0)
+            {
+                BuildMeshToConnectHigherLodChunks();
+            }
         }
 
         //public override void InitializeEmpty(IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel)
@@ -156,98 +159,150 @@ namespace MarchingCubes
         }
 
 
+        //protected void FastFindConnectedChunks()
+        //{
+        //    int index = points.Length - 1;
+        //    int sqrVertexSize = vertexSize * vertexSize;
+        //    bool isBackTopRightCornerEarth = points[index] >= surfaceLevel;
+        //    index -= vertexSize;
+        //    bool isBackTopLeftCornerEarth = points[index] >= surfaceLevel;
+        //    index -= sqrPointsPerAxis;
+        //    index += pointsPerAxis;
+        //    bool isBackBotLeftCornerEarth = points[index] >= surfaceLevel;
+        //    index += vertexSize;
+        //    bool isBackBotRightCornerEarth = points[index] >= surfaceLevel;
 
-        protected void FindConnectedChunks()
+        //    index = 0;
+        //    bool isFrontBotLeftCornerEarth = points[index] >= surfaceLevel;
+        //    index += vertexSize;
+        //    bool isFrontBotRightCornerEarth = points[index] >= surfaceLevel;
+        //    index += sqrPointsPerAxis;
+        //    index -= pointsPerAxis;
+        //    bool isFrontTopRightCornerEarth = points[index] >= surfaceLevel;
+        //    index -= vertexSize;
+        //    bool isFrontTopLeftCornerEarth = points[index] >= surfaceLevel;
+
+        //    if (neighbourLODs[0].ActiveLodPower > LODPower)
+        //    {
+        //        for (int y = 0; y < chunkSize; y++)
+        //        {
+        //            for (int z = 0; z < chunkSize; z++)
+        //            {
+        //                CheckForConnectedChunk(chunkSize - 1, y, z);
+        //            }
+        //        }
+        //    }
+        //    else
+        //    {
+        //        HasNeighbourInDirection[0] =
+        //        isBackBotRightCornerEarth != isFrontBotRightCornerEarth
+        //        || isFrontBotRightCornerEarth != isFrontTopRightCornerEarth
+        //        || isFrontTopRightCornerEarth != isBackTopRightCornerEarth;
+        //    }
+
+        //    if (neighbourLODs[1].ActiveLodPower > LODPower)
+        //    {
+        //        for (int y = 0; y < chunkSize; y++)
+        //        {
+        //            for (int z = 0; z < chunkSize; z++)
+        //            {
+        //                CheckForConnectedChunk(0, y, z);
+        //            }
+        //        }
+        //    }
+        //    else
+        //    {
+        //        HasNeighbourInDirection[1] =
+        //        isBackBotLeftCornerEarth != isFrontBotLeftCornerEarth
+        //        || isFrontBotLeftCornerEarth != isFrontTopLeftCornerEarth
+        //        || isFrontTopLeftCornerEarth != isBackTopRightCornerEarth;
+        //    }
+
+        //    if (neighbourLODs[2].ActiveLodPower > LODPower)
+        //    {
+        //        for (int x = 0; x < chunkSize; x++)
+        //        {
+        //            for (int z = 0; z < chunkSize; z++)
+        //            {
+        //                CheckForConnectedChunk(x, chunkSize - 1, z);
+        //            }
+        //        }
+        //    }
+        //    else
+        //    {
+        //        HasNeighbourInDirection[2] =
+        //        isBackTopLeftCornerEarth != isBackTopRightCornerEarth
+        //        || isBackTopRightCornerEarth != isFrontTopLeftCornerEarth
+        //        || isFrontTopLeftCornerEarth != isFrontTopRightCornerEarth;
+        //    }
+
+        //    if (neighbourLODs[3].ActiveLodPower > LODPower)
+        //    {
+        //        for (int x = 0; x < chunkSize; x++)
+        //        {
+        //            for (int z = 0; z < chunkSize; z++)
+        //            {
+        //                CheckForConnectedChunk(x, 0, z);
+        //            }
+        //        }
+        //    }
+        //    else
+        //    {
+        //        HasNeighbourInDirection[3] =
+        //        isBackBotLeftCornerEarth != isBackBotRightCornerEarth
+        //        || isBackBotRightCornerEarth != isFrontBotLeftCornerEarth
+        //        || isFrontBotLeftCornerEarth != isFrontBotRightCornerEarth;
+        //    }
+
+        //    if (neighbourLODs[4].ActiveLodPower > LODPower)
+        //    {
+        //        for (int x = 0; x < chunkSize; x++)
+        //        {
+        //            for (int y = 0; y < chunkSize; y++)
+        //            {
+        //                CheckForConnectedChunk(x, y, chunkSize - 1);
+        //            }
+        //        }
+        //    }
+        //    else
+        //    {
+        //        HasNeighbourInDirection[4] =
+        //        isBackBotLeftCornerEarth != isBackTopLeftCornerEarth
+        //        || isBackTopLeftCornerEarth != isBackTopRightCornerEarth
+        //        || isBackTopRightCornerEarth != isBackBotRightCornerEarth;
+        //    }
+
+        //    if (neighbourLODs[5].ActiveLodPower > LODPower)
+        //    {
+        //        for (int x = 0; x < chunkSize; x++)
+        //        {
+        //            for (int y = 0; y < chunkSize; y++)
+        //            {
+        //                CheckForConnectedChunk(x, y, 0);
+        //            }
+        //        }
+        //    }
+        //    else
+        //    {
+        //        HasNeighbourInDirection[5] =
+        //        isFrontBotLeftCornerEarth != isFrontTopLeftCornerEarth
+        //        || isFrontTopLeftCornerEarth != isFrontTopRightCornerEarth
+        //        || isFrontTopRightCornerEarth != isFrontBotRightCornerEarth;
+        //    }
+
+        //}
+
+        protected void CheckForConnectedChunk(int x, int y, int z)
         {
-            if (IsEmpty)
-                return;
-
-            for (int x = 0; x < chunkSize; x++)
-            {
-                for (int y = 0; y < chunkSize; y++)
-                {
-                    if(CheckForConnectedChunk(x, y, 0) && HasNeighbourInDirection[5] && !careAboutNeighbourLODS)
-                    {
-                        y = chunkSize;
-                        x = chunkSize;
-                    }
-                }
-            }
-
-            for (int x = 0; x < chunkSize; x++)
-            {
-                for (int y = 0; y < chunkSize; y++)
-                {
-                    if (CheckForConnectedChunk(x, y, chunkSize - 1) && HasNeighbourInDirection[4] && !careAboutNeighbourLODS)
-                    {
-                        y = chunkSize;
-                        x = chunkSize;
-                    }
-                }
-            }
-
-            for (int y = 0; y < chunkSize; y++)
-            {
-                for (int z = 0; z < chunkSize; z++)
-                {
-                    if (CheckForConnectedChunk(0, y, z) && HasNeighbourInDirection[1] && !careAboutNeighbourLODS)
-                    {
-                        y = chunkSize;
-                        z = chunkSize;
-                    }
-                    
-                }
-            }
-            for (int y = 0; y < chunkSize; y++)
-            {
-                for (int z = 0; z < chunkSize; z++)
-                {
-                    if (CheckForConnectedChunk(chunkSize - 1, y, z) && HasNeighbourInDirection[0] && !careAboutNeighbourLODS)
-                    {
-                        y = chunkSize;
-                        z = chunkSize;
-                    }
-                }
-            }
-
-            for (int x = 0; x < chunkSize; x++)
-            {
-                for (int z = 0; z < chunkSize; z++)
-                {
-                    if (CheckForConnectedChunk(x, 0, z) && HasNeighbourInDirection[3] && !careAboutNeighbourLODS)
-                    {
-                        x = chunkSize;
-                        z = chunkSize;
-                    }
-                }
-            }
-
-            for (int x = 0; x < chunkSize; x++)
-            {
-                for (int z = 0; z < chunkSize; z++)
-                {
-                    if (CheckForConnectedChunk(x, chunkSize - 1, z) && HasNeighbourInDirection[2] && !careAboutNeighbourLODS)
-                    {
-                        x = chunkSize;
-                        z = chunkSize;
-                    }
-                }
-            }
-        }
-
-        protected bool CheckForConnectedChunk(int x, int y, int z)
-        {
-            bool result = false;
             MarchingCubeEntity e;
             List<MissingNeighbourData> trisWithNeighboursOutOfBounds = new List<MissingNeighbourData>();
             if (TryGetEntitiyAt(x, y, z, out e) && !e.FindMissingNeighbours(IsCubeInBounds, trisWithNeighboursOutOfBounds))
             {
                 int count = trisWithNeighboursOutOfBounds.Count;
-                result = true;
                 for (int i = 0; i < count; ++i)
                 {
                     MissingNeighbourData t = trisWithNeighboursOutOfBounds[i];
-                    Vector3Int target = GetGlobalEstimatedNeighbourPositionFromOffset(t.outsideNeighbour.offset);
+                    Vector3Int target = AnchorPos + e.origin + t.outsideNeighbour.offset;
                     AddNeighbourFromEntity(t.outsideNeighbour.offset);
                     if (careAboutNeighbourLODS) {
                         IMarchingCubeChunk c;
@@ -270,7 +325,6 @@ namespace MarchingCubes
                     }
                 }
             }
-            return result;
         }
 
 
@@ -342,14 +396,14 @@ namespace MarchingCubes
             // BuildMeshFromCurrentTriangles();
         }
 
-        protected bool GetOrAddEntityAt(Vector3Int v3, out MarchingCubeEntity e)
+        protected bool GetOrAddEntityAt(int x, int y, int z, out MarchingCubeEntity e)
         {
-            e = GetEntityAt(v3);
+            e = GetEntityAt(x,y,z);
             if (e == null)
             {
                 e = new MarchingCubeEntity(this);
-                e.origin = v3;
-                AddEntityAt(v3, e);
+                e.origin = new Vector3Int(x,y,z);
+                AddEntityAt(x,y,z, e);
                 return false;
             }
             return true;
@@ -367,12 +421,23 @@ namespace MarchingCubes
             MarchingCubeEntity cube;
             cubeEntities = new MarchingCubeEntity[ChunkSize, ChunkSize, ChunkSize];
             TriangleBuilder t;
-            for(int i = 0; i< ts.Length; ++i) 
+            Vector3Int origin;
+            int x, y, z;
+            for (int i = 0; i< ts.Length; ++i) 
             {
                 t = ts[i];
-                if (!GetOrAddEntityAt(t.Origin, out cube))
+                origin = t.Origin;
+                x = origin.x;
+                y = origin.y;
+                z = origin.z;
+                if (!GetOrAddEntityAt(x,y,z, out cube))
                 {
                     cube.triangulationIndex = t.TriIndex;
+                    if (careAboutNeighbourLODS && IsBorderCube(x,y,z))
+                    {
+                        CheckForConnectedChunk(x, y, z);
+                    }
+                    SetNeighbourAt(x, y, z);
                 }
                 PathTriangle pathTri = new PathTriangle(cube, t.tri, t.steepnessAndColorData);
                 cube.triangles.Add(pathTri);
@@ -380,6 +445,36 @@ namespace MarchingCubes
                 {
                     AddTriangleToMeshData(pathTri, t.GetColor(), ref usedTriCount, ref totalTreeCount);
                 }
+            }
+        }
+
+        private void SetNeighbourAt(int x, int y, int z)
+        {
+            if (x == 0) 
+            {
+                HasNeighbourInDirection[1] = true;
+            }
+            else if(x == entitiesPerAxis)
+            {
+                HasNeighbourInDirection[0] = true;
+            }
+
+            if (y == 0)
+            {
+                HasNeighbourInDirection[3] = true;
+            }
+            else if (y == entitiesPerAxis)
+            {
+                HasNeighbourInDirection[2] = true;
+            }
+
+            if (z == 0)
+            {
+                HasNeighbourInDirection[5] = true;
+            }
+            else if (z == entitiesPerAxis)
+            {
+                HasNeighbourInDirection[4] = true;
             }
         }
 

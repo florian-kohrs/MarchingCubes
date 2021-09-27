@@ -16,17 +16,25 @@ namespace MarchingCubes
         public virtual void InitializeWithMeshData(TriangleBuilder[] tris, float[] points)
         {
             HasStarted = true;
-            this.points = points;
-            neighbourLODs = chunkHandler.GetNeighbourLODSFrom(this);
             triCount = tris.Length * 3;
 
+            isCompletlySolid = IsEmpty && points[0] >= surfaceLevel;
+            isCompletlyAir = IsEmpty && points[0] < surfaceLevel;
+
+            neighbourLODs = chunkHandler.GetNeighbourLODSFrom(this);
             careAboutNeighbourLODS = neighbourLODs.HasNeighbourWithHigherLOD(LODPower);
-            BuildFromTriangleArray(tris);
+            if (!IsEmpty)
+            {
+                this.points = points;
 
-            WorkOnBuildedChunk();
+                BuildFromTriangleArray(tris);
 
+                WorkOnBuildedChunk();
+            }
             IsReady = true;
         }
+
+
 
         //public virtual void InitializeEmpty(IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel)
         //{
@@ -46,20 +54,6 @@ namespace MarchingCubes
 
         public bool HasStarted { get; protected set; }
 
-        public int SizeGrower
-        {
-            get
-            {
-                return sizeGrower;
-            }
-            set
-            {
-                sizeGrower = value;
-                UpdateChunkData();
-            }
-        }
-
-        protected int sizeGrower = 1;
 
         protected float surfaceLevel;
 
@@ -105,7 +99,17 @@ namespace MarchingCubes
 
         protected float[] points;
 
-        public float[] Points => points;
+        public float[] Points
+        {
+            get
+            {
+                if(points == null)
+                {
+                    points = chunkHandler.RequestNoiseForChunk(this);
+                }
+                return points;
+            }
+        }
 
         protected int triCount;
 
@@ -184,13 +188,16 @@ namespace MarchingCubes
         /// <summary>
         /// chunk is completly underground
         /// </summary>
-        public bool IsCompletlySolid => IsEmpty && points[0] >= surfaceLevel;
+        public bool IsCompletlySolid => isCompletlySolid;
+
+        protected bool isCompletlySolid;
 
         /// <summary>
         /// chunk is completly air
         /// </summary>
-        public bool IsCompletlyAir => IsEmpty && points[0] < surfaceLevel;
+        public bool IsCompletlyAir => isCompletlyAir;
 
+        protected bool isCompletlyAir;
 
         public Vector3Int AnchorPos
         {
@@ -216,7 +223,7 @@ namespace MarchingCubes
 
         private void UpdateChunkData()
         {
-            vertexSize = chunkSize / lod * sizeGrower;
+            vertexSize = chunkSize / lod;
             entitiesPerAxis = vertexSize - 1;
             pointsPerAxis = vertexSize + 1;
             sqrPointsPerAxis = pointsPerAxis * pointsPerAxis;
@@ -231,26 +238,13 @@ namespace MarchingCubes
 
         public float SurfaceLevel { set => surfaceLevel = value; }
 
-        protected Vector3Int GetGlobalEstimatedNeighbourPositionFromOffset(Vector3Int offset)
-        {
-            return CenterPos + offset * chunkSize;
-            //Vector3Int center = CenterPos;
-            //return new Vector3Int(
-            //    center.x + offset.x * chunkSize,
-            //    center.y + offset.y * chunkSize, 
-            //    center.z + offset.z * chunkSize);
-        }
-
-        protected Vector3Int GetGlobalNeighbourBorderPositionFromOffset(Vector3Int offset)
-        {
-            return CenterPos + offset * chunkSize / 2;
-        }
-
 
         protected virtual void WorkOnBuildedChunk()
         {
-            
-            BuildMeshToConnectHigherLodChunks();
+            if (neighbourChunksGlue.Count > 0)
+            {
+                BuildMeshToConnectHigherLodChunks();
+            }
         }
 
 
@@ -317,41 +311,48 @@ namespace MarchingCubes
                 Vector3Int currentOrigin = t.Origin;
 
                 MarchingCubeEntity.FindMissingNeighboursAt(t.TriIndex, currentOrigin, IsCubeInBounds, HasNeighbourInDirection);
-                
+                //if (chunkHandler.TryGetReadyChunkAt(target, out c))
+                //{
+                //    if (c.LODPower > LODPower)
+                //    {
+                //        BuildMarchingCubeChunkTransitionInDirection(neighbour.originCubeEntity, neighbour, c.LODPower);
+                //    }
+                //}
+
                 if (buildMeshAswell)
                 {
                     AddTriangleToMeshData(t.tri, t.GetColor(), ref usedTriCount, ref totalTreeCount);
                 }
             }
 
-            MissingNeighbourData neighbour;
-            IMarchingCubeChunk c;
+            //MissingNeighbourData neighbour;
+            //IMarchingCubeChunk c;
 
-            int missingNeighbourCount = trisWithNeighboursOutOfBounds.Count;
-            for (int i = 0; i < missingNeighbourCount; ++i)
-            {
-                neighbour = trisWithNeighboursOutOfBounds[i];
-                Vector3Int target = GetGlobalEstimatedNeighbourPositionFromOffset(neighbour.outsideNeighbour.offset);
-                Vector3Int border = neighbour.originCubeEntity + neighbour.outsideNeighbour.offset;
+            //int missingNeighbourCount = trisWithNeighboursOutOfBounds.Count;
+            //for (int i = 0; i < missingNeighbourCount; ++i)
+            //{
+            //    neighbour = trisWithNeighboursOutOfBounds[i];
+            //    Vector3Int target = AnchorPos + (neighbour.outsideNeighbour.offset);
+            //    Vector3Int border = neighbour.originCubeEntity + neighbour.outsideNeighbour.offset;
 
-                AddNeighbourFromEntity(neighbour.outsideNeighbour.offset);
+            //    AddNeighbourFromEntity(neighbour.outsideNeighbour.offset);
 
-                if (chunkHandler.TryGetReadyChunkAt(target, out c))
-                {
-                    if (c.LODPower > LODPower)
-                    {
-                        BuildMarchingCubeChunkTransitionInDirection(neighbour.originCubeEntity, neighbour, c.LODPower);
-                    }
-                }
-                else if (careAboutNeighbourLODS)
-                {
-                    int neighbourLodPower = neighbourLODs.GetLodPowerFromNeighbourInDirection(neighbour.outsideNeighbour.offset);
-                    if (neighbourLodPower > LODPower)
-                    {
-                        BuildMarchingCubeChunkTransitionInDirection(neighbour.originCubeEntity, neighbour, neighbourLodPower);
-                    }
-                }
-            }
+            //    if (chunkHandler.TryGetReadyChunkAt(target, out c))
+            //    {
+            //        if (c.LODPower > LODPower)
+            //        {
+            //            BuildMarchingCubeChunkTransitionInDirection(neighbour.originCubeEntity, neighbour, c.LODPower);
+            //        }
+            //    }
+            //    else if (careAboutNeighbourLODS)
+            //    {
+            //        int neighbourLodPower = neighbourLODs.GetLodPowerFromNeighbourInDirection(neighbour.outsideNeighbour.offset);
+            //        if (neighbourLodPower > LODPower)
+            //        {
+            //            BuildMarchingCubeChunkTransitionInDirection(neighbour.originCubeEntity, neighbour, neighbourLodPower);
+            //        }
+            //    }
+            //}
         }
 
 

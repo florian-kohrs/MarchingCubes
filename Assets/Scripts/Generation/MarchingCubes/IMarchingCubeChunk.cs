@@ -10,8 +10,6 @@ namespace MarchingCubes
 
         bool IsReady { get; }
 
-        int SizeGrower { set; }
-
         int ChunkSize { get; set; }
 
         Vector3Int AnchorPos { get; set; }
