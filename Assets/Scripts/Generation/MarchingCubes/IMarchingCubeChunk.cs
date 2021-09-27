@@ -18,7 +18,7 @@ namespace MarchingCubes
 
         bool HasStarted { get; }
 
-        List<Vector3Int> NeighbourIndices { get; }
+        bool[] HasNeighbourInDirection { get; }
 
         IMarchingCubeChunkHandler ChunkHandler {set;}
 

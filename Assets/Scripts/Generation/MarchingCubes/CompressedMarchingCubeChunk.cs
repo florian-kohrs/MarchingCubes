@@ -151,20 +151,6 @@ namespace MarchingCubes
 
         public IMarchingCubeChunkHandler GetChunkHandler => chunkHandler;
 
-        public List<Vector3Int> NeighbourIndices
-        {
-            get
-            {
-                List<Vector3Int> result = new List<Vector3Int>();
-                for (int i = 0; i < HasNeighbourInDirection.Length; ++i)
-                {
-                    if (HasNeighbourInDirection[i])
-                        result.Add(VectorExtension.GetDirectionFromIndex(i));
-                }
-                return result;
-            } 
-        }
-
 
         public bool[] HasNeighbourInDirection { get; private set;} = new bool[6];
 

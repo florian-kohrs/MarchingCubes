@@ -243,11 +243,13 @@ namespace MarchingCubes
             while (neighboursToBuild.Count > 0)
             {
                 IMarchingCubeChunk current = neighboursToBuild.Dequeue();
-                List<Vector3Int> neighbours = current.NeighbourIndices;
-                int count = neighbours.Count;
+                bool[] dirs = current.HasNeighbourInDirection;
+                int count = dirs.Length;
                 for (int i = 0; i < count; i++)
                 {
-                    Vector3Int v3 = neighbours[i] * (current.ChunkSize + 1) + current.CenterPos;
+                    if (!dirs[i])
+                        continue;
+                    Vector3Int v3 = VectorExtension.GetDirectionFromIndex(i) * (current.ChunkSize + 1) + current.CenterPos;
                     if (!HasChunkAtPosition(v3) && (startPos - v3).magnitude < buildAroundDistance)
                     {
                         neighboursToBuild.Enqueue(CreateChunkAt(v3));
@@ -273,11 +275,14 @@ namespace MarchingCubes
 
         public IEnumerator BuildRelevantChunksParallelAround(IMarchingCubeChunk chunk)
         {
-            List<Vector3Int> neighboours = chunk.NeighbourIndices;
-            int count = neighboours.Count;
+            bool[] dirs = chunk.HasNeighbourInDirection;
+            int count = dirs.Length;
             for (int i = 0; i < count; ++i)
             {
-                Vector3Int v3 = neighboours[i] * (chunk.ChunkSize + 1) + chunk.CenterPos;
+                if (!dirs[i])
+                    continue;
+
+                Vector3Int v3 = VectorExtension.GetDirectionFromIndex(i) * (chunk.ChunkSize + 1) + chunk.CenterPos;
                 closestNeighbours.Enqueue(0, v3);
             }
             if (closestNeighbours.size > 0)
@@ -326,10 +331,14 @@ namespace MarchingCubes
             channeledChunks--;
 
             Vector3Int v3;
-            List<Vector3Int> dirs = chunk.NeighbourIndices;
-            for (int i = 0; i < dirs.Count; ++i)
+            bool[] dirs = chunk.HasNeighbourInDirection;
+            int count = dirs.Length;
+            for (int i = 0; i < count; ++i)
             {
-                v3 = dirs[i] * (chunk.ChunkSize + 1) + chunk.CenterPos;
+                if (!dirs[i])
+                    continue;
+
+                v3 = VectorExtension.GetDirectionFromIndex(i) * (chunk.ChunkSize + 1) + chunk.CenterPos;
                 float sqrDist = (startPos - v3).sqrMagnitude;
 
                 ///only add neighbours if

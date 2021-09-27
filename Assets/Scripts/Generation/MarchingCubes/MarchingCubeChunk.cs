@@ -423,7 +423,8 @@ namespace MarchingCubes
             TriangleBuilder t;
             Vector3Int origin;
             int x, y, z;
-            for (int i = 0; i< ts.Length; ++i) 
+            int count = ts.Length;
+            for (int i = 0; i< count; ++i) 
             {
                 t = ts[i];
                 origin = t.Origin;
