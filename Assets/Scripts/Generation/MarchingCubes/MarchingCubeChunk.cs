@@ -35,6 +35,8 @@ namespace MarchingCubes
 
         public MarchingCubeEntity[,,] cubeEntities;
 
+        public HashSet<MarchingCubeEntity> entities = new HashSet<MarchingCubeEntity>();
+
         //public Dictionary<int, MarchingCubeEntity> cubeEntities = new Dictionary<int, MarchingCubeEntity>();
 
         protected Dictionary<Vector3Int, MarchingCubeEntity> higherLodNeighbourCubes = new Dictionary<Vector3Int, MarchingCubeEntity>();
@@ -54,14 +56,15 @@ namespace MarchingCubes
             return e != null;
         }
 
-        public void RemoveEntityAt(Vector3Int v3)
+        public void RemoveEntityAt(MarchingCubeEntity e)
         {
-            SetEntityAt(v3.x, v3.y, v3.z, null);
+            RemoveEntityAt(e.origin.x, e.origin.y, e.origin.z, e);
         }
 
-        public void RemoveEntityAt(int  x,int  y,int z)
+        public void RemoveEntityAt(int x, int  y, int z, MarchingCubeEntity e)
         {
             SetEntityAt(x, y, z, null);
+            entities.Remove(e);
         }
 
         public void SetEntityAt(Vector3Int v3, MarchingCubeEntity e)
@@ -76,6 +79,7 @@ namespace MarchingCubes
 
         public void AddEntityAt(int x, int y, int z, MarchingCubeEntity e)
         {
+            entities.Add(e);
             cubeEntities[x, y, z] = e;
         }
 
@@ -95,9 +99,9 @@ namespace MarchingCubes
             return new Vector4(v3.x, v3.y, v3.z, w);
         }
 
-        public virtual MarchingCubeEntity March(Vector3Int p)
+        public virtual MarchingCubeEntity March(int x, int y, int z)
         {
-            Vector4[] cubeCorners = GetCubeCornersForPoint(p);
+            Vector4[] cubeCorners = GetCubeCornersForPoint(x,y,z);
 
             int cubeIndex = 0;
             if (cubeCorners[0].w < surfaceLevel) cubeIndex |= 1;
@@ -110,7 +114,7 @@ namespace MarchingCubes
             if (cubeCorners[7].w < surfaceLevel) cubeIndex |= 128;
 
             MarchingCubeEntity e = new MarchingCubeEntity(this, cubeIndex);
-            e.origin = p;
+            e.origin = new Vector3Int(x,y,z);
 
             int[] triangulation = TriangulationTable.triangulation[cubeIndex];
             int count = triangulation.Length;
@@ -138,7 +142,7 @@ namespace MarchingCubes
 
             if (count > 0)
             {
-                AddEntityAt(p, e);
+                AddEntityAt(x,y,z, e);
             }
             return e;
         }
@@ -372,24 +376,20 @@ namespace MarchingCubes
         protected void BuildAll(int localLod = 1)
         {
             triCount = 0;
-            Vector3Int v = new Vector3Int();
 
             for (int x = 0; x < vertexSize / localLod; x++)
             {
-                v.x = x;
                 for (int y = 0; y < vertexSize / localLod; y++)
                 {
-                    v.y = y;
                     for (int z = 0; z < vertexSize / localLod; z++)
                     {
-                        v.z = z;
                         //MarchingCubeEntity e = MarchAt(v, localLod);
                         //if (e.triangles.Count > 0)
                         //{
                         //    cubeEntities[IndexFromCoord(x, y, z)] = e;
                         //    triCount += e.triangles.Count * 3;
                         //}
-                        March(v);
+                        March(x,y,z);
                     }
                 }
             }
@@ -498,25 +498,16 @@ namespace MarchingCubes
 
             MarchingCubeEntity e;
             int count;
-
-            for (int x = 0; x < chunkSize; x++)
+            IEnumerator<MarchingCubeEntity> enumerator = entities.GetEnumerator();
+            while (enumerator.MoveNext())
             {
-                for (int y = 0; y < chunkSize; y++)
+                e = enumerator.Current;
+                count = e.triangles.Length;
+                for (int i = 0; i < count; ++i)
                 {
-                    for (int z = 0; z < chunkSize; z++)
-                    {
-                        if(TryGetEntitiyAt(x,y,z,out e))
-                        {
-                            count = e.triangles.Length;
-                            for (int i = 0; i < count; ++i)
-                            {
-                                AddTriangleToMeshData(e.triangles[i], e.triangles[i].GetColor(), ref usedTriCount, ref totalTreeCount, false);
-                            }
-                        }
-                    }
+                    AddTriangleToMeshData(e.triangles[i], e.triangles[i].GetColor(), ref usedTriCount, ref totalTreeCount, false);
                 }
             }
-
         }
 
         public void Rebuild()
@@ -535,10 +526,10 @@ namespace MarchingCubes
             if (e != null)
             {
                 triCount -= e.triangles.Length * 3;
-                RemoveEntityAt(e.origin);
+                RemoveEntityAt(e);
             }
-            
 
+            bool isBorder = IsBorderCube(e.origin);
             List<MarchingCubeEntity> buildNeighbours = new List<MarchingCubeEntity>();
 
             for (int x = origin.x - 1; x <= origin.x + 1; x++)
@@ -547,15 +538,15 @@ namespace MarchingCubes
                 {
                     for (int z = origin.z - 1; z <= origin.z + 1; z++)
                     {
-                        if (IsCubeInBounds(x,y,z))
+                        if (!isBorder || IsCubeInBounds(x,y,z))
                         {
                             MarchingCubeEntity neighbourEntity;
                             if (TryGetEntitiyAt(x,y,z, out neighbourEntity))
                             {
                                 triCount -= neighbourEntity.triangles.Length * 3;
-                                RemoveEntityAt(x,y,z);
+                                RemoveEntityAt(x,y,z, neighbourEntity);
                             }
-                            MarchingCubeEntity newCube = March(new Vector3Int(x,y,z));
+                            MarchingCubeEntity newCube = March(x,y,z);
                             if (newCube.triangles.Length > 0)
                             {
                                 buildNeighbours.Add(newCube);

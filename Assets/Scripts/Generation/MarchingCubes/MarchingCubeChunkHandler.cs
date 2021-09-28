@@ -729,13 +729,10 @@ namespace MarchingCubes
         public float[] RequestNoiseForChunk(IMarchingCubeChunk chunk)
         {
             int pointsPerAxis = chunk.PointsPerAxis;
-            CreateNoiseBufferWithSize(pointsPerAxis);
 
             densityGenerator.Generate(pointsPerAxis, chunk.AnchorPos, chunk.LOD);
             float[] result = new float[pointsPerAxis * pointsPerAxis * pointsPerAxis];
             pointsBuffer.GetData(result, 0, 0, result.Length);
-
-            ReleaseNoiseBuffer();
 
             return result;
         }
