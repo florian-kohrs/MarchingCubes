@@ -25,7 +25,9 @@ namespace MarchingCubes
             careAboutNeighbourLODS = neighbourLODs.HasNeighbourWithHigherLOD(LODPower);
             if (!IsEmpty)
             {
-                this.points = points;
+                if (careAboutNeighbourLODS)
+                    this.points = points;
+
 
                 BuildFromTriangleArray(tris);
 

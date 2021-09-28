@@ -537,28 +537,25 @@ namespace MarchingCubes
                 triCount -= e.triangles.Length * 3;
                 RemoveEntityAt(e.origin);
             }
-            int[] a = new int[3];
+            
 
             List<MarchingCubeEntity> buildNeighbours = new List<MarchingCubeEntity>();
 
             for (int x = origin.x - 1; x <= origin.x + 1; x++)
             {
-                a[0] = x;
                 for (int y = origin.y - 1; y <= origin.y + 1; y++)
                 {
-                    a[1] = y;
                     for (int z = origin.z - 1; z <= origin.z + 1; z++)
                     {
-                        a[2] = z;
-                        if (IsCubeInBounds(a))
+                        if (IsCubeInBounds(x,y,z))
                         {
                             MarchingCubeEntity neighbourEntity;
-                            if (TryGetEntitiyAt(a[0],a[1],a[2], out neighbourEntity))
+                            if (TryGetEntitiyAt(x,y,z, out neighbourEntity))
                             {
                                 triCount -= neighbourEntity.triangles.Length * 3;
-                                RemoveEntityAt(a[0], a[1], a[2]);
+                                RemoveEntityAt(x,y,z);
                             }
-                            MarchingCubeEntity newCube = March(new Vector3Int(a[0], a[1], a[2]));
+                            MarchingCubeEntity newCube = March(new Vector3Int(x,y,z));
                             if (newCube.triangles.Length > 0)
                             {
                                 buildNeighbours.Add(newCube);
@@ -746,6 +743,7 @@ namespace MarchingCubes
 
         public void EditPointsAroundRayHit(float delta, RaycastHit hit, int editDistance)
         {
+            float[] points = Points;
             MarchingCubeEntity e = GetEntityFromRayHit(hit);
             int triIndex = e.GetTriangleIndexWithNormalOrClosest(hit.normal, hit.point) * 3;
             int startPointIndex = PointIndexFromCoord(e.origin);
