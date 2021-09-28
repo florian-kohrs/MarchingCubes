@@ -28,10 +28,10 @@ namespace MarchingCubes
                 if (careAboutNeighbourLODS)
                     this.points = points;
 
-
                 BuildFromTriangleArray(tris);
 
                 WorkOnBuildedChunk();
+                this.points = null;
             }
             IsReady = true;
         }
