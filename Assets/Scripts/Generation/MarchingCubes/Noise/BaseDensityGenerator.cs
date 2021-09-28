@@ -53,16 +53,12 @@ namespace MarchingCubes
             octaveOffsetsBuffer = null;
         }
 
-        protected void ApplyShaderProperties(ComputeBuffer pointsBuffer, int numPointsPerAxis, Vector3 anchor, float spacing)
+        private void Start()
         {
+
             ComputeBuffer octaveOffsetsBuffer = GetOctaveOffsetsBuffer();
 
-            densityShader.SetBuffer(0, "points", pointsBuffer);
-            densityShader.SetInt("numPointsPerAxis", numPointsPerAxis);
-            densityShader.SetFloat("spacing", spacing);
-            densityShader.SetVector("anchor", new Vector4(anchor.x, anchor.y, anchor.z));
             densityShader.SetVector("offset", new Vector4(offset.x, offset.y, offset.z));
-
             densityShader.SetInt("octaves", Mathf.Max(1, octaves));
             densityShader.SetFloat("radius", radius);
             densityShader.SetFloat("lacunarity", lacunarity);
@@ -71,7 +67,16 @@ namespace MarchingCubes
             densityShader.SetFloat("scale", scale);
             densityShader.SetBuffer(0, "octaveOffsets", octaveOffsetsBuffer);
             densityShader.SetFloat("amplitude", amplitude);
+        }
 
+
+
+        protected void ApplyShaderProperties(ComputeBuffer pointsBuffer, int numPointsPerAxis, Vector3 anchor, float spacing)
+        {
+            densityShader.SetBuffer(0, "points", pointsBuffer);
+            densityShader.SetInt("numPointsPerAxis", numPointsPerAxis);
+            densityShader.SetFloat("spacing", spacing);
+            densityShader.SetVector("anchor", new Vector4(anchor.x, anchor.y, anchor.z));
         }
 
         protected ComputeBuffer octaveOffsetsBuffer;
