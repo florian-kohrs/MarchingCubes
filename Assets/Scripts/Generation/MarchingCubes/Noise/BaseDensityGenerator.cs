@@ -33,32 +33,24 @@ namespace MarchingCubes
 
         public int seed;
 
-        public virtual ComputeBuffer Generate(ComputeBuffer pointsBuffer, int numPointsPerAxis, Vector3 anchor, float spacing)
+        public virtual void Generate(int numPointsPerAxis, Vector3 anchor, float spacing)
         {
-            ApplyShaderProperties(pointsBuffer, numPointsPerAxis, anchor, spacing);
+            ApplyShaderProperties(numPointsPerAxis, anchor, spacing);
 
             int numThreadsPerAxis = Mathf.CeilToInt(numPointsPerAxis / (float)threadGroupSize);
 
             densityShader.Dispatch(0, numThreadsPerAxis, numThreadsPerAxis, numThreadsPerAxis);
 
-            // Return voxel data buffer so it can be used to generate mesh
-            return pointsBuffer;
         }
 
-
-        private void OnDestroy()
+        public void SetPointsBuffer(ComputeBuffer pointsBuffer)
         {
-
-            octaveOffsetsBuffer.Release();
-            octaveOffsetsBuffer = null;
+            densityShader.SetBuffer(0, "points", pointsBuffer);
         }
 
-        private void Start()
+        private void Awake()
         {
-
-            ComputeBuffer octaveOffsetsBuffer = GetOctaveOffsetsBuffer();
-
-            densityShader.SetVector("offset", new Vector4(offset.x, offset.y, offset.z));
+            GetOctaveOffsetsBuffer();
             densityShader.SetInt("octaves", Mathf.Max(1, octaves));
             densityShader.SetFloat("radius", radius);
             densityShader.SetFloat("lacunarity", lacunarity);
@@ -67,13 +59,17 @@ namespace MarchingCubes
             densityShader.SetFloat("scale", scale);
             densityShader.SetBuffer(0, "octaveOffsets", octaveOffsetsBuffer);
             densityShader.SetFloat("amplitude", amplitude);
+            densityShader.SetVector("offset", new Vector4(offset.x, offset.y, offset.z));
         }
 
-
-
-        protected void ApplyShaderProperties(ComputeBuffer pointsBuffer, int numPointsPerAxis, Vector3 anchor, float spacing)
+        private void OnDestroy()
         {
-            densityShader.SetBuffer(0, "points", pointsBuffer);
+            octaveOffsetsBuffer.Release();
+            octaveOffsetsBuffer = null;
+        }
+
+        protected void ApplyShaderProperties(int numPointsPerAxis, Vector3 anchor, float spacing)
+        {
             densityShader.SetInt("numPointsPerAxis", numPointsPerAxis);
             densityShader.SetFloat("spacing", spacing);
             densityShader.SetVector("anchor", new Vector4(anchor.x, anchor.y, anchor.z));

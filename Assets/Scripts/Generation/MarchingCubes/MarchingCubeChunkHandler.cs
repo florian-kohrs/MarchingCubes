@@ -205,6 +205,10 @@ namespace MarchingCubes
 
         private void Start()
         {
+            CreateAllBuffersWithSizes(129);
+            densityGenerator.SetPointsBuffer(pointsBuffer);
+            ApplyShaderProperties();
+
             start = DateTime.Now;
             buildAroundSqrDistance = (long)buildAroundDistance * buildAroundDistance;
             kernelId = marshShader.FindKernel("March");
@@ -214,6 +218,8 @@ namespace MarchingCubes
             BuildRelevantChunksAround(chunk);
             //StartCoroutine(BuildRelevantChunksParallelAround(chunk));
         }
+
+        
 
         private void Update()
         {
@@ -627,6 +633,55 @@ namespace MarchingCubes
         private ComputeBuffer pointsBuffer;
         private ComputeBuffer triCountBuffer;
 
+        //TODO: Check to iterate loops in parallel (https://michaelscodingspot.com/array-iteration-vs-parallelism-in-c-net/)
+
+        //protected void SplitArray(int halfSize, float[] splitThis, out float[] r1, out float[] r2, out float[] r3, out float[] r4)
+        //{
+        //    int pointsPerAxis = 2 * halfSize + 1;
+        //    int halfSizePlusOne = halfSize + 1;
+        //    int pointsPerAxisSqr = pointsPerAxis;
+        //    int index = 0;
+        //    for (int z = 0; z <= halfSize; z++)
+        //    {
+        //        for (int y = 0; y <= halfSize; y++)
+        //        {
+        //            for (int x = 0; x <= halfSize; x++)
+        //            {
+
+        //                index += 1;
+        //            }
+
+        //            index += halfSizePlusOne;
+        //        }
+        //            index += 
+        //    }
+        //}
+
+        //protected void SplitArrayAt(int halfSize, int startIndexX, int startIndexY, int startIndexZ, float[] points, out float[] writeInHere)
+        //{
+        //    int pointsPerAxis = 2 * halfSize + 1;
+        //    int halfSizePlusOne = halfSize + 1;
+        //    int pointsPerAxisSqr = pointsPerAxis;
+        //    int index = 0;
+        //    for (int z = 0; z <= halfSize; z++)
+        //    {
+        //        for (int y = 0; y <= halfSize; y++)
+        //        {
+        //            for (int x = 0; x <= halfSize; x++)
+        //            {
+
+        //                index += 1;
+        //            }
+
+        //            index += halfSizePlusOne;
+        //        }
+        //    }
+        //}
+
+        public void SplitChunkAndRecalculateAll(IMarchingCubeChunk chunk)
+        {
+
+        }
 
         public MarchingCubeChunkNeighbourLODs GetNeighbourLODSFrom(IMarchingCubeChunk chunk)
         {
@@ -676,12 +731,26 @@ namespace MarchingCubes
             int pointsPerAxis = chunk.PointsPerAxis;
             CreateNoiseBufferWithSize(pointsPerAxis);
 
-            densityGenerator.Generate(pointsBuffer, pointsPerAxis, chunk.AnchorPos, chunk.LOD);
+            densityGenerator.Generate(pointsPerAxis, chunk.AnchorPos, chunk.LOD);
             float[] result = new float[pointsPerAxis * pointsPerAxis * pointsPerAxis];
+            pointsBuffer.GetData(result, 0, 0, result.Length);
 
             ReleaseNoiseBuffer();
 
             return result;
+        }
+
+        protected void ApplyShaderProperties()
+        {
+
+            marshShader.SetBuffer(0, "points", pointsBuffer);
+            marshShader.SetBuffer(0, "triangles", triangleBuffer);
+
+            marshShader.SetInt("minSteepness", minSteepness);
+            marshShader.SetInt("maxSteepness", maxSteepness);
+            marshShader.SetInts("flatColor", Mathf.RoundToInt(flatColor.r * 255), Mathf.RoundToInt(flatColor.g * 255), Mathf.RoundToInt(flatColor.b * 255));
+            marshShader.SetInts("steepColor", Mathf.RoundToInt(steepColor.r * 255), Mathf.RoundToInt(steepColor.g * 255), Mathf.RoundToInt(steepColor.b * 255));
+            marshShader.SetFloat("surfaceLevel", surfaceLevel);
         }
 
         protected int ApplyChunkDataAndDispatchAndGetShaderData(IMarchingCubeChunk chunk, int lod)
@@ -699,26 +768,17 @@ namespace MarchingCubes
             int pointsPerAxis = numVoxelsPerAxis + 1;
             int pointsVolume = pointsPerAxis * pointsPerAxis * pointsPerAxis;
 
-            CreateAllBuffersWithSizes(numVoxelsPerAxis);
-
             float spacing = lod;
             Vector3 anchor = chunk.AnchorPos;
 
             //chunk.SizeGrower = extraSize;
 
-            densityGenerator.Generate(pointsBuffer, pointsPerAxis, anchor, spacing);
+            densityGenerator.Generate(pointsPerAxis, anchor, spacing);
 
             int numThreadsPerAxis = Mathf.CeilToInt(numVoxelsPerAxis / (float)threadGroupSize);
 
             triangleBuffer.SetCounterValue(0);
-            marshShader.SetBuffer(0, "points", pointsBuffer);
-            marshShader.SetInt("minSteepness", minSteepness);
-            marshShader.SetInt("maxSteepness", maxSteepness);
-            marshShader.SetInts("flatColor", Mathf.RoundToInt(flatColor.r * 255) , Mathf.RoundToInt(flatColor.g * 255), Mathf.RoundToInt(flatColor.b * 255));
-            marshShader.SetInts("steepColor", Mathf.RoundToInt(steepColor.r*255), Mathf.RoundToInt(steepColor.g * 255), Mathf.RoundToInt(steepColor.b * 255));
-            marshShader.SetBuffer(0, "triangles", triangleBuffer);
             marshShader.SetInt("numPointsPerAxis", pointsPerAxis);
-            marshShader.SetFloat("surfaceLevel", surfaceLevel);
             marshShader.SetFloat("spacing", spacing);
             marshShader.SetVector("anchor", new Vector4(anchor.x, anchor.y, anchor.z));
 
@@ -740,7 +800,6 @@ namespace MarchingCubes
             pointsBuffer.GetData(pointsArray, 0, 0, pointsArray.Length);
 
             totalTriBuild += numTris;
-            ReleaseBuffers();
 
             return numTris;
         }
