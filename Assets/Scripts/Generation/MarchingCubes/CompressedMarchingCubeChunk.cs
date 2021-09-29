@@ -8,12 +8,12 @@ namespace MarchingCubes
     public class CompressedMarchingCubeChunk : IMarchingCubeChunk
     {
 
-        public virtual void InitializeWithMeshDataParallel(TriangleBuilder[] tris, float[] points, Action OnDone = null)
+        public virtual void InitializeWithMeshDataParallel(TriangleBuilder[] tris, float[] points, Action OnDone = null, bool keepPoints = false)
         {
             throw new Exception("This class doesnt support concurrency");
         }
 
-        public virtual void InitializeWithMeshData(TriangleBuilder[] tris, float[] points)
+        public virtual void InitializeWithMeshData(TriangleBuilder[] tris, float[] points, bool keepPoints = false)
         {
             HasStarted = true;
             triCount = tris.Length * 3;
@@ -25,13 +25,16 @@ namespace MarchingCubes
             careAboutNeighbourLODS = neighbourLODs.HasNeighbourWithHigherLOD(LODPower);
             if (!IsEmpty)
             {
-                if (careAboutNeighbourLODS)
-                    this.points = points;
+                this.points = points;
 
                 BuildFromTriangleArray(tris);
 
                 WorkOnBuildedChunk();
-                this.points = null;
+
+                if (!keepPoints)
+                {
+                    this.points = null;
+                }
             }
             IsReady = true;
         }

@@ -735,14 +735,14 @@ namespace MarchingCubes
         protected void BuildChunk(IMarchingCubeChunk chunk, int lod)
         {
             ApplyChunkDataAndDispatchAndGetShaderData(chunk, lod);
-            chunk.InitializeWithMeshData(tris, pointsArray);
+            chunk.InitializeWithMeshData(tris, pointsArray, false);
         }
 
         protected void BuildChunkParallel(IMarchingCubeChunk chunk, int lod, Action OnDone)
         {
             ApplyChunkDataAndDispatchAndGetShaderData(chunk, lod);
             channeledChunks++;
-            chunk.InitializeWithMeshDataParallel(tris, pointsArray, OnDone);
+            chunk.InitializeWithMeshDataParallel(tris, pointsArray, OnDone, false);
         }
 
         //protected void RebuildChunkParallelAt(Vector3Int p, Action OnDone, int lod)
@@ -809,6 +809,7 @@ namespace MarchingCubes
         {
             pointsBuffer.SetData(noise);
             GenerateCubesFromNoise(chunk, lod);
+            chunk.InitializeWithMeshData(tris, noise, true);
         }
 
         public void GenerateCubesFromNoise(IMarchingCubeChunk chunk, int lod)
