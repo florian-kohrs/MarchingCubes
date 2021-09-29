@@ -220,7 +220,7 @@ namespace MarchingCubes
             //StartCoroutine(BuildRelevantChunksParallelAround(chunk));
         }
 
-        
+
 
         private void Update()
         {
@@ -583,7 +583,7 @@ namespace MarchingCubes
             ///Pot racecondition
             IChunkGroupRoot chunkGroup = GetOrCreateChunkGroupAtCoordinate(coord);
             IMarchingCubeChunk chunk = new T();
-            
+
             chunk.ChunkHandler = this;
             chunk.ChunkSize = chunkSize;
             chunk.Material = chunkMaterial;
@@ -667,7 +667,7 @@ namespace MarchingCubes
             SplitArrayAt(halfSize, halfSize, 0, halfSize, splitThis, backBotRight);
             SplitArrayAt(halfSize, 0, halfSize, halfSize, splitThis, backTopLeft);
             SplitArrayAt(halfSize, halfSize, halfSize, halfSize, splitThis, backTopRight);
-     
+
         }
 
         protected void SplitArrayAt(int halfSize, int startIndexX, int startIndexY, int startIndexZ, float[] points, float[] writeInHere)
@@ -719,7 +719,7 @@ namespace MarchingCubes
         public MarchingCubeChunkNeighbourLODs GetNeighbourLODSFrom(IMarchingCubeChunk chunk)
         {
             MarchingCubeChunkNeighbourLODs result = new MarchingCubeChunkNeighbourLODs();
-            Vector3Int[] coords = VectorExtension.GetAllAdjacentDirections; 
+            Vector3Int[] coords = VectorExtension.GetAllAdjacentDirections;
             for (int i = 0; i < coords.Length; ++i)
             {
                 MarchingCubeNeighbour neighbour = new MarchingCubeNeighbour();
@@ -731,13 +731,13 @@ namespace MarchingCubes
                 }
                 result[i] = neighbour;
             }
-        
+
             return result;
         }
 
         protected void BuildChunk(IMarchingCubeChunk chunk, int lod, bool careForNeighbours)
         {
-            ApplyChunkDataAndDispatchAndGetShaderData(chunk, lod,careForNeighbours);
+            ApplyChunkDataAndDispatchAndGetShaderData(chunk, lod, careForNeighbours);
             chunk.InitializeWithMeshData(tris, false);
         }
 
@@ -755,8 +755,8 @@ namespace MarchingCubes
 
         public int minSteepness = 15;
         public int maxSteepness = 50;
-        public Color flatColor = new Color(0, 255 / 255f, 0,1);
-        public Color steepColor = new Color(75 /  255f, 44 / 255f, 13 / 255f, 1);
+        public Color flatColor = new Color(0, 255 / 255f, 0, 1);
+        public Color steepColor = new Color(75 / 255f, 44 / 255f, 13 / 255f, 1);
 
 
         public float[] RequestNoiseForChunk(IMarchingCubeChunk chunk)
@@ -790,7 +790,7 @@ namespace MarchingCubes
 
             densityGenerator.Generate(pointsPerAxis, anchor, spacing);
 
-            if(GenerateCubesFromNoise(chunk, lod) == 0 || careForNeighbours)
+            if (GenerateCubesFromNoise(chunk, lod) == 0 || careForNeighbours)
             {
                 if (careForNeighbours)
                 {
@@ -805,6 +805,13 @@ namespace MarchingCubes
             }
         }
 
+        public TriangleBuilder[] GenerateCubesFromNoise(IMarchingCubeChunk chunk, int triCount, float[] noise)
+        {
+            pointsBuffer.SetData(noise);
+            GenerateCubesFromNoise(chunk, chunk.LOD, triCount);
+            return tris;
+        }
+
         public void GenerateCubesFromNoise(IMarchingCubeChunk chunk, float[] noise, int lod)
         {
             pointsBuffer.SetData(noise);
@@ -813,7 +820,7 @@ namespace MarchingCubes
             chunk.InitializeWithMeshData(tris, true);
         }
 
-        public int GenerateCubesFromNoise(IMarchingCubeChunk chunk, int lod)
+        public int GenerateCubesFromNoise(IMarchingCubeChunk chunk, int lod, int triCount = -1)
         {
             int numVoxelsPerAxis = chunk.ChunkSize / lod;
             //int chunkVolume = numVoxelsPerAxis * numVoxelsPerAxis * numVoxelsPerAxis;
@@ -821,6 +828,7 @@ namespace MarchingCubes
 
             int numThreadsPerAxis = Mathf.CeilToInt(numVoxelsPerAxis / (float)threadGroupSize);
 
+            //CreateTriangleBuffer();
 
             float spacing = lod;
             Vector3 anchor = chunk.AnchorPos;
@@ -832,20 +840,26 @@ namespace MarchingCubes
 
             marshShader.Dispatch(0, numThreadsPerAxis, numThreadsPerAxis, numThreadsPerAxis);
 
-            // Get number of triangles in the triangle buffer
-            ComputeBuffer.CopyCount(triangleBuffer, triCountBuffer, 0);
-            int[] triCountArray = { 0 };
-            triCountBuffer.GetData(triCountArray);
-            int numTris = triCountArray[0];
+            if (triCount < 0)
+            {
+                // Get number of triangles in the triangle buffer
+                ComputeBuffer.CopyCount(triangleBuffer, triCountBuffer, 0);
+                int[] triCountArray = { 0 };
+                triCountBuffer.GetData(triCountArray);
+                triCount = triCountArray[0];
+            }
 
             // Get triangle data from shader
 
-            tris = new TriangleBuilder[numTris];
-            triangleBuffer.GetData(tris, 0, 0, numTris);
+            tris = new TriangleBuilder[triCount];
+            triangleBuffer.GetData(tris, 0, 0, triCount);
 
-            totalTriBuild += numTris;
-            return numTris;
+            //ReleaseTriangleBuffer();
+
+            totalTriBuild += triCount;
+            return triCount;
         }
+
 
         public void DecreaseChunkLod(IMarchingCubeChunk chunk, int toLodPower)
         {
@@ -943,15 +957,15 @@ namespace MarchingCubes
 
         //protected int buffersCreated = 0;
 
-        protected void CreateNoiseBufferWithSize(int pointsPerAxis)
-        {
-            pointsBuffer = new ComputeBuffer(pointsPerAxis, sizeof(float));
-        }
+        //protected void CreateTriangleBuffer()
+        //{
+        //    triangleBuffer = new ComputeBuffer(MAX_TRIANGLES_COUNT, TriangleBuilder.SIZE_OF_TRI_BUILD, ComputeBufferType.Append);
+        //}
 
-        protected void ReleaseNoiseBuffer()
-        {
-            pointsBuffer.Release();
-        }
+        //protected void ReleaseTriangleBuffer()
+        //{
+        //    triangleBuffer.Release();
+        //}
 
         protected void CreateAllBuffersWithSizes(int numVoxelsPerAxis)
         {
@@ -963,8 +977,9 @@ namespace MarchingCubes
             pointsBuffer = new ComputeBuffer(numPoints, sizeof(float) * 1);
             triangleBuffer = new ComputeBuffer(maxTriangleCount, TriangleBuilder.SIZE_OF_TRI_BUILD, ComputeBufferType.Append);
             triCountBuffer = new ComputeBuffer(1, sizeof(int), ComputeBufferType.Raw);
-            
         }
+
+
 
         public void EditNeighbourChunksAt(Vector3Int chunkOffset, Vector3Int cubeOrigin, float delta)
         {

@@ -30,7 +30,10 @@ namespace MarchingCubes
         void DecreaseChunkLod(IMarchingCubeChunk chunk, int toLodPower);
 
         MarchingCubeChunkNeighbourLODs GetNeighbourLODSFrom(IMarchingCubeChunk chunk);
-        float[] RequestNoiseForChunk(IMarchingCubeChunk compressedMarchingCubeChunk);
+
+        float[] RequestNoiseForChunk(IMarchingCubeChunk chunk);
+
+        TriangleBuilder[] GenerateCubesFromNoise(IMarchingCubeChunk chunk, int triCount, float[] noise);
     }
 
 }

@@ -762,6 +762,39 @@ namespace MarchingCubes
             };
         }
 
+        protected int[] GetCubeCornerArrayForPoint(int x, int y, int z)
+        {
+            Vector3Int v3 = AnchorPos;
+            x *= lod;
+            y *= lod;
+            z *= lod;
+            x += v3.x;
+            y += v3.y;
+            z += v3.z;
+            return new int[]
+            {
+                x ,y,z,x+lod,y,z,x + lod, y, z + lod,x, y, z + lod,x, y + lod, z,x + lod, y + lod, z,x +lod, y + lod, z + lod,x, y + lod, z + lod
+            };
+        }
+
+
+
+        protected float[] GetNoiseInCornersForPoint(int x, int y, int z)
+        {
+            int pointIndex = PointIndexFromCoord(x, y, z);
+            return new float[]
+            {
+                points[pointIndex],
+                points[pointIndex + 1],
+                points[pointIndex + 1 + sqrPointsPerAxis],
+                points[pointIndex + sqrPointsPerAxis],
+                points[pointIndex + pointsPerAxis],
+                points[pointIndex + 1 + pointsPerAxis],
+                points[pointIndex + 1 + pointsPerAxis + sqrPointsPerAxis],
+                points[pointIndex + pointsPerAxis + sqrPointsPerAxis]
+            };
+        }
+
         protected static readonly Vector3[] CubeCornersOffset = 
                 new Vector3[]{
                     new Vector3(0,0,0),
