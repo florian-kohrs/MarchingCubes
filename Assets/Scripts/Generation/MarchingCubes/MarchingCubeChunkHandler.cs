@@ -166,11 +166,12 @@ namespace MarchingCubes
         }
 
 
-        public void GetSizeAndLodPowerForChunkPosition(Vector3 pos, out int size, out int lodPower)
+        public void GetSizeAndLodPowerForChunkPosition(Vector3 pos, out int size, out int lodPower, out bool careForNeighbours)
         {
             float distance = (startPos - pos).magnitude;
             lodPower = GetLodPower(distance);
             size = GetSizeForChunkAtDistance(distance);
+            careForNeighbours = GetLodPower(distance + size) > lodPower;
         }
 
         protected int RoundToPowerOf2(float f)
@@ -432,9 +433,10 @@ namespace MarchingCubes
         {
             int lodPower;
             int chunkSize;
-            GetSizeAndLodPowerForChunkPosition(pos, out chunkSize, out lodPower);
+            bool careForNeighbours;
+            GetSizeAndLodPowerForChunkPosition(pos, out chunkSize, out lodPower, out careForNeighbours);
             IMarchingCubeChunk chunk = GetThreadedChunkObjectAt(VectorExtension.ToVector3Int(pos), coord, lodPower, chunkSize);
-            BuildChunkParallel(chunk, RoundToPowerOf2(lodPower), () => OnDone(chunk));
+            BuildChunkParallel(chunk, RoundToPowerOf2(lodPower), careForNeighbours, () => OnDone(chunk));
         }
 
         protected IMarchingCubeChunk CreateChunkAt(Vector3Int p)
@@ -446,9 +448,10 @@ namespace MarchingCubes
         {
             int lodPower;
             int chunkSize;
-            GetSizeAndLodPowerForChunkPosition(pos, out chunkSize, out lodPower);
+            bool careForNeighbours;
+            GetSizeAndLodPowerForChunkPosition(pos, out chunkSize, out lodPower, out careForNeighbours);
             IMarchingCubeChunk chunk = GetThreadedChunkObjectAt(VectorExtension.ToVector3Int(pos), coord, lodPower, chunkSize);
-            BuildChunk(chunk, RoundToPowerOf2(lodPower));
+            BuildChunk(chunk, RoundToPowerOf2(lodPower), careForNeighbours);
             return chunk;
         }
 
@@ -732,17 +735,17 @@ namespace MarchingCubes
             return result;
         }
 
-        protected void BuildChunk(IMarchingCubeChunk chunk, int lod)
+        protected void BuildChunk(IMarchingCubeChunk chunk, int lod, bool careForNeighbours)
         {
-            ApplyChunkDataAndDispatchAndGetShaderData(chunk, lod);
-            chunk.InitializeWithMeshData(tris, pointsArray, false);
+            ApplyChunkDataAndDispatchAndGetShaderData(chunk, lod,careForNeighbours);
+            chunk.InitializeWithMeshData(tris, false);
         }
 
-        protected void BuildChunkParallel(IMarchingCubeChunk chunk, int lod, Action OnDone)
+        protected void BuildChunkParallel(IMarchingCubeChunk chunk, int lod, bool careForNeighbours, Action OnDone)
         {
-            ApplyChunkDataAndDispatchAndGetShaderData(chunk, lod);
+            ApplyChunkDataAndDispatchAndGetShaderData(chunk, lod, careForNeighbours);
             channeledChunks++;
-            chunk.InitializeWithMeshDataParallel(tris, pointsArray, OnDone, false);
+            chunk.InitializeWithMeshDataParallel(tris, OnDone, false);
         }
 
         //protected void RebuildChunkParallelAt(Vector3Int p, Action OnDone, int lod)
@@ -767,20 +770,8 @@ namespace MarchingCubes
             return result;
         }
 
-        protected void ApplyShaderProperties()
-        {
 
-            marshShader.SetBuffer(0, "points", pointsBuffer);
-            marshShader.SetBuffer(0, "triangles", triangleBuffer);
-
-            marshShader.SetInt("minSteepness", minSteepness);
-            marshShader.SetInt("maxSteepness", maxSteepness);
-            marshShader.SetInts("flatColor", Mathf.RoundToInt(flatColor.r * 255), Mathf.RoundToInt(flatColor.g * 255), Mathf.RoundToInt(flatColor.b * 255));
-            marshShader.SetInts("steepColor", Mathf.RoundToInt(steepColor.r * 255), Mathf.RoundToInt(steepColor.g * 255), Mathf.RoundToInt(steepColor.b * 255));
-            marshShader.SetFloat("surfaceLevel", surfaceLevel);
-        }
-
-        protected void ApplyChunkDataAndDispatchAndGetShaderData(IMarchingCubeChunk chunk, int lod)
+        protected void ApplyChunkDataAndDispatchAndGetShaderData(IMarchingCubeChunk chunk, int lod, bool careForNeighbours)
         {
             int chunkSize = chunk.ChunkSize;
 
@@ -799,20 +790,30 @@ namespace MarchingCubes
 
             densityGenerator.Generate(pointsPerAxis, anchor, spacing);
 
-            GenerateCubesFromNoise(chunk, lod);
-            
-            pointsArray = new float[pointsVolume];
-            pointsBuffer.GetData(pointsArray, 0, 0, pointsArray.Length);
+            if(GenerateCubesFromNoise(chunk, lod) == 0 || careForNeighbours)
+            {
+                if (careForNeighbours)
+                {
+                    pointsArray = new float[pointsVolume];
+                }
+                else
+                {
+                    pointsArray = new float[1];
+                }
+                pointsBuffer.GetData(pointsArray, 0, 0, pointsArray.Length);
+                chunk.Points = pointsArray;
+            }
         }
 
         public void GenerateCubesFromNoise(IMarchingCubeChunk chunk, float[] noise, int lod)
         {
             pointsBuffer.SetData(noise);
             GenerateCubesFromNoise(chunk, lod);
-            chunk.InitializeWithMeshData(tris, noise, true);
+            chunk.Points = noise;
+            chunk.InitializeWithMeshData(tris, true);
         }
 
-        public void GenerateCubesFromNoise(IMarchingCubeChunk chunk, int lod)
+        public int GenerateCubesFromNoise(IMarchingCubeChunk chunk, int lod)
         {
             int numVoxelsPerAxis = chunk.ChunkSize / lod;
             //int chunkVolume = numVoxelsPerAxis * numVoxelsPerAxis * numVoxelsPerAxis;
@@ -843,6 +844,7 @@ namespace MarchingCubes
             triangleBuffer.GetData(tris, 0, 0, numTris);
 
             totalTriBuild += numTris;
+            return numTris;
         }
 
         public void DecreaseChunkLod(IMarchingCubeChunk chunk, int toLodPower)
@@ -958,40 +960,11 @@ namespace MarchingCubes
             int numVoxels = numVoxelsPerAxis * numVoxelsPerAxis * numVoxelsPerAxis;
             int maxTriangleCount = numVoxels * 4;
 
-            // Always create buffers in editor (since buffers are released immediately to prevent memory leak)
-            // Otherwise, only create if null or if size has changed
-            //if (!Application.isPlaying || (pointsBuffer == null || numPoints != pointsBuffer.count))
-            //{
-            //    if (Application.isPlaying)
-            //    {
-            //        ReleaseBuffers();
-            //    }
             pointsBuffer = new ComputeBuffer(numPoints, sizeof(float) * 1);
             triangleBuffer = new ComputeBuffer(maxTriangleCount, TriangleBuilder.SIZE_OF_TRI_BUILD, ComputeBufferType.Append);
             triCountBuffer = new ComputeBuffer(1, sizeof(int), ComputeBufferType.Raw);
-
-
-            //}
+            
         }
-
-
-        protected void ReleaseBuffers()
-        {
-            if (triangleBuffer != null)
-            {
-                triangleBuffer.Release();
-                pointsBuffer.Release();
-                triCountBuffer.Release();
-                triangleBuffer = null;
-            }
-
-        }
-
-
-        //public static Vector3 GetCenterPosition(Vector3Int v)
-        //{
-        //    return AnchorFromChunkIndex(v) + Vector3.one ChunkSize * spacing / 2;
-        //}
 
         public void EditNeighbourChunksAt(Vector3Int chunkOffset, Vector3Int cubeOrigin, float delta)
         {
@@ -1049,6 +1022,32 @@ namespace MarchingCubes
             //    Debug.LogWarning("Neighbour chunk is not interactable!");
             //}
         }
+
+
+        protected void ApplyShaderProperties()
+        {
+            marshShader.SetBuffer(0, "points", pointsBuffer);
+            marshShader.SetBuffer(0, "triangles", triangleBuffer);
+
+            marshShader.SetInt("minSteepness", minSteepness);
+            marshShader.SetInt("maxSteepness", maxSteepness);
+            marshShader.SetInts("flatColor", Mathf.RoundToInt(flatColor.r * 255), Mathf.RoundToInt(flatColor.g * 255), Mathf.RoundToInt(flatColor.b * 255));
+            marshShader.SetInts("steepColor", Mathf.RoundToInt(steepColor.r * 255), Mathf.RoundToInt(steepColor.g * 255), Mathf.RoundToInt(steepColor.b * 255));
+            marshShader.SetFloat("surfaceLevel", surfaceLevel);
+        }
+
+        protected void ReleaseBuffers()
+        {
+            if (triangleBuffer != null)
+            {
+                triangleBuffer.Release();
+                pointsBuffer.Release();
+                triCountBuffer.Release();
+                triangleBuffer = null;
+            }
+
+        }
+
 
         void OnDestroy()
         {

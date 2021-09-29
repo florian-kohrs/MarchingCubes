@@ -8,12 +8,12 @@ namespace MarchingCubes
     public class CompressedMarchingCubeChunk : IMarchingCubeChunk
     {
 
-        public virtual void InitializeWithMeshDataParallel(TriangleBuilder[] tris, float[] points, Action OnDone = null, bool keepPoints = false)
+        public virtual void InitializeWithMeshDataParallel(TriangleBuilder[] tris, Action OnDone = null, bool keepPoints = false)
         {
             throw new Exception("This class doesnt support concurrency");
         }
 
-        public virtual void InitializeWithMeshData(TriangleBuilder[] tris, float[] points, bool keepPoints = false)
+        public virtual void InitializeWithMeshData(TriangleBuilder[] tris, bool keepPoints = false)
         {
             HasStarted = true;
             triCount = tris.Length * 3;
@@ -25,8 +25,6 @@ namespace MarchingCubes
             careAboutNeighbourLODS = neighbourLODs.HasNeighbourWithHigherLOD(LODPower);
             if (!IsEmpty)
             {
-                this.points = points;
-
                 BuildFromTriangleArray(tris);
 
                 WorkOnBuildedChunk();
@@ -65,6 +63,18 @@ namespace MarchingCubes
         protected const int MAX_TRIANGLES_PER_MESH = 65000;
 
         protected MarchingCubeChunkNeighbourLODs neighbourLODs;
+
+        protected MarchingCubeChunkNeighbourLODs NeighbourLODs
+        {
+            get
+            {
+                if(neighbourLODs == null)
+                {
+                    neighbourLODs = chunkHandler.GetNeighbourLODSFrom(this);
+                }
+                return neighbourLODs;
+            }
+        }
 
         protected bool careAboutNeighbourLODS;
 
@@ -114,6 +124,10 @@ namespace MarchingCubes
                 }
                 return points;
             }
+            set
+            {
+                points = Points;
+            }
         }
 
         protected int triCount;
@@ -148,6 +162,10 @@ namespace MarchingCubes
 
         public IMarchingCubeChunkHandler ChunkHandler
         {
+            protected get
+            {
+                return chunkHandler;
+            }
             set
             {
                 chunkHandler = value;
