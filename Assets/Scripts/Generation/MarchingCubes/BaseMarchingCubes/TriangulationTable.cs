@@ -268,12 +268,12 @@ namespace MarchingCubes
             new int[]    { 1, 10, 2 },
             new int[]    { 1, 3, 8, 9, 1, 8 },
             new int[]    { 0, 9, 1 },
-            new int[]   { 0, 3, 8 },
+            new int[]    { 0, 3, 8 },
             new int[]    {}
         }.ToArray();
 
 
-        public static readonly List<int> cornerIndexAFromEdge = new List<int>(12)
+        public static readonly int[] cornerIndexAFromEdge =
         {
             0,
             1,
@@ -289,7 +289,7 @@ namespace MarchingCubes
             3
         };
 
-        public static readonly List<int> cornerIndexBFromEdge = new List<int>(12)
+        public static readonly int[] cornerIndexBFromEdge =
         {
             1,
             2,
