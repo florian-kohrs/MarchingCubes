@@ -391,7 +391,7 @@ namespace MarchingCubes
         protected IMarchingCubeChunk FindNonEmptyChunkAround(Vector3 pos)
         {
             bool isEmpty = true;
-            Vector3Int chunkIndex = PositionToChunkGroupCoord(pos);
+            Vector3Int chunkIndex;
             IMarchingCubeChunk chunk = null;
             while (isEmpty)
             {
@@ -400,6 +400,7 @@ namespace MarchingCubes
                 isEmpty = chunk.IsEmpty;
                 if (chunk.IsEmpty)
                 {
+                    //TODO: maybe just read noise points here and completly remove isSolid or Air
                     if (chunk.IsCompletlySolid)
                     {
                         pos.y += chunk.ChunkSize;
@@ -849,7 +850,7 @@ namespace MarchingCubes
             {
                 // Get number of triangles in the triangle buffer
                 ComputeBuffer.CopyCount(triangleBuffer, triCountBuffer, 0);
-                int[] triCountArray = { 0 };
+                int[] triCountArray = new int[1];
                 triCountBuffer.GetData(triCountArray);
                 triCount = triCountArray[0];
             }
@@ -857,9 +858,11 @@ namespace MarchingCubes
             // Get triangle data from shader
 
             tris = new TriangleBuilder[triCount];
-            triangleBuffer.GetData(tris, 0, 0, triCount);
-
-            //ReleaseTriangleBuffer();
+            //TODO: Check if this changes performance
+            if (triCount > 0)
+            {
+                triangleBuffer.GetData(tris, 0, 0, triCount);
+            }
 
             totalTriBuild += triCount;
             return triCount;
