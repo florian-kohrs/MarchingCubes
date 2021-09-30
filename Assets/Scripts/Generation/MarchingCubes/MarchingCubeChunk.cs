@@ -94,76 +94,6 @@ namespace MarchingCubes
         protected NoiseFilter noiseFilter;
 
 
-        protected Vector4 BuildVector4(Vector3 v3, float w)
-        {
-            return new Vector4(v3.x, v3.y, v3.z, w);
-        }
-
-       
-        public virtual MarchingCubeEntity March(int x, int y, int z)
-        {
-            float[] noisePoints = GetNoiseInCornersForPoint(x, y, z);
-
-            int cubeIndex = 0;
-            if (noisePoints[0] < surfaceLevel) cubeIndex |= 1;
-            if (noisePoints[1] < surfaceLevel) cubeIndex |= 2;
-            if (noisePoints[2] < surfaceLevel) cubeIndex |= 4;
-            if (noisePoints[3] < surfaceLevel) cubeIndex |= 8;
-            if (noisePoints[4] < surfaceLevel) cubeIndex |= 16;
-            if (noisePoints[5] < surfaceLevel) cubeIndex |= 32;
-            if (noisePoints[6] < surfaceLevel) cubeIndex |= 64;
-            if (noisePoints[7] < surfaceLevel) cubeIndex |= 128;
-
-            if (cubeIndex > 0 && cubeIndex < 255)
-            {
-                int[] cubeCorners = GetCubeCornerArrayForPoint(x, y, z);
-                MarchingCubeEntity e = new MarchingCubeEntity(this, cubeIndex);
-                e.origin = new Vector3Int(x, y, z);
-
-                int[] triangulation = TriangulationTable.triangulation[cubeIndex];
-                int count = triangulation.Length;
-                for (int i = 0; i < count; i += 3)
-                {
-                    // Get indices of corner points A and B for each of the three edges
-                    // of the cube that need to be joined to form the triangle.
-                    int a0 = TriangulationTable.cornerIndexAFromEdge[triangulation[i]];
-                    int b0 = TriangulationTable.cornerIndexBFromEdge[triangulation[i]];
-
-                    int a1 = TriangulationTable.cornerIndexAFromEdge[triangulation[i + 1]];
-                    int b1 = TriangulationTable.cornerIndexBFromEdge[triangulation[i + 1]];
-
-                    int a2 = TriangulationTable.cornerIndexAFromEdge[triangulation[i + 2]];
-                    int b2 = TriangulationTable.cornerIndexBFromEdge[triangulation[i + 2]];
-
-                    Triangle tri = new Triangle();
-
-                    tri.c = InterpolateVerts(cubeCorners, noisePoints, a0, b0);
-                    tri.b = InterpolateVerts(cubeCorners, noisePoints, a1, b1);
-                    tri.a = InterpolateVerts(cubeCorners, noisePoints, a2, b2);
-                    e.AddTriangle(new PathTriangle(e, tri, GetColor));
-                    triCount += 3;
-                }
-
-                AddEntityAt(x, y, z, e);
-                
-                return e;
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        protected Vector3 InterpolateVerts(int[] cubeCorners, float[] points, int startIndex1, int startIndex2)
-        {
-            int index1 = startIndex1 * 3;
-            int index2 = startIndex2 * 3;
-            float t = (surfaceLevel - points[startIndex1]) / (points[startIndex2] - points[startIndex1]);
-            return new Vector3(
-                cubeCorners[index1] + t * (cubeCorners[index2] - cubeCorners[index1]),
-                cubeCorners[index1 + 1] + t * (cubeCorners[index2 + 1] - cubeCorners[index1 + 1]),
-                cubeCorners[index1 + 2] + t * (cubeCorners[index2 + 2] - cubeCorners[index1 + 2]));
-        }
 
         public MarchingCubeEntity GetEntityInNeighbourAt(Vector3Int outsidePos, Vector3Int offset)
         {
@@ -373,14 +303,6 @@ namespace MarchingCubes
 
 
 
-
-
-        protected virtual Vector3 InterpolatePositions(Vector3 v1, Vector3 v2, float p)
-        {
-            return v1 + p * (v2 - v1);
-        }
-
-
         protected virtual void ResetAll()
         {
             SoftResetMeshDisplayers();
@@ -394,6 +316,8 @@ namespace MarchingCubes
         {
             triCount = 0;
 
+            MarchingCubeEntity e;
+
             for (int x = 0; x < vertexSize / localLod; x++)
             {
                 for (int y = 0; y < vertexSize / localLod; y++)
@@ -406,7 +330,11 @@ namespace MarchingCubes
                         //    cubeEntities[IndexFromCoord(x, y, z)] = e;
                         //    triCount += e.triangles.Count * 3;
                         //}
-                        March(x,y,z);
+                        e = MarchAt(x,y,z, this);
+                        if(e!= null)
+                        {
+                            AddEntityAt(x, y, z, e);
+                        }
                     }
                 }
             }
@@ -574,7 +502,11 @@ namespace MarchingCubes
                                 triCount -= cube.triangles.Length * 3;
                                 RemoveEntityAt(x, y, z, cube);
                             }
-                            March(x, y, z);
+                            cube = MarchAt(x, y, z, this);
+                            if(cube != null)
+                            {
+                                AddEntityAt(x, y, z, cube);
+                            }
                         }
                     }
                 }
