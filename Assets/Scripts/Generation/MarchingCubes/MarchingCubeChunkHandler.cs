@@ -385,6 +385,8 @@ namespace MarchingCubes
         //    }
         //}
 
+        protected bool hasFoundInitialChunk;
+
 
         protected IMarchingCubeChunk FindNonEmptyChunkAround(Vector3 pos)
         {
@@ -408,6 +410,7 @@ namespace MarchingCubes
                     }
                 }
             }
+            hasFoundInitialChunk = true;
             return chunk;
         }
 
@@ -790,7 +793,9 @@ namespace MarchingCubes
 
             densityGenerator.Generate(pointsPerAxis, anchor, spacing);
 
-            if (GenerateCubesFromNoise(chunk, lod) == 0 || careForNeighbours)
+            int numTris = GenerateCubesFromNoise(chunk, lod);
+                
+            if ((numTris == 0 && !hasFoundInitialChunk) || careForNeighbours)
             {
                 if (careForNeighbours)
                 {

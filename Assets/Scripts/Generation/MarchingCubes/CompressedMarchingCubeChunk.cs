@@ -18,8 +18,11 @@ namespace MarchingCubes
             HasStarted = true;
             triCount = tris.Length * 3;
 
-            isCompletlySolid = IsEmpty && points[0] >= surfaceLevel;
-            isCompletlyAir = IsEmpty && points[0] < surfaceLevel;
+            if (points != null)
+            {
+                isCompletlySolid = IsEmpty && points[0] >= surfaceLevel;
+                isCompletlyAir = IsEmpty && points[0] < surfaceLevel;
+            }
 
             neighbourLODs = chunkHandler.GetNeighbourLODSFrom(this);
             careAboutNeighbourLODS = neighbourLODs.HasNeighbourWithHigherLOD(LODPower);
@@ -31,7 +34,7 @@ namespace MarchingCubes
 
                 if (!keepPoints)
                 {
-                    this.points = null;
+                    points = null;
                 }
             }
             IsReady = true;
@@ -194,6 +197,7 @@ namespace MarchingCubes
 
         public bool IsEmpty => triCount == 0;
 
+        //TODO:Maybe remove this from chunks
         /// <summary>
         /// chunk is completly underground
         /// </summary>
