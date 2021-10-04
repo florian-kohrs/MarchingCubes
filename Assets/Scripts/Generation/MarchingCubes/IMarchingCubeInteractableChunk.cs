@@ -14,13 +14,19 @@ namespace MarchingCubes
 
         void EditPointsAroundRayHit(float delta, RaycastHit hit, int editDistance);
 
-        void EditPointsNextToChunk(IMarchingCubeChunk chunk, Vector3Int entityOrigin, Vector3Int offset, float delta);
-
         MarchingCubeEntity GetEntityAt(Vector3Int v3);
 
         MarchingCubeEntity GetEntityAt(int x, int y, int z);
 
         IMarchingCubeChunkHandler GetChunkHandler { get; }
+
+        void RebuildAround(List<Vector3Int> changedPoints);
+
+        int PointIndexFromCoord(Vector3Int v);
+
+        bool IsPointInBounds(int x, int y, int z);
+
+        bool IsPointInBounds(Vector3Int v);
 
     }
 }

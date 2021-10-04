@@ -145,7 +145,7 @@ namespace PathFinding
         {
             PathTriangle closest = pathTails.Dequeue();
            
-            List<PathTriangle> circumjacent = closest.GetCircumjacent();
+            List<PathTriangle> circumjacent = closest.GetReachableCircumjacent();
             PathTriangle t;
             int count = circumjacent.Count;
             for (int i = 0; i < count; ++i)
@@ -175,7 +175,7 @@ namespace PathFinding
         {
             PathTriangle closest = backwardsTails.Dequeue();
 
-            List<PathTriangle> circumjacent = closest.GetCircumjacent();
+            List<PathTriangle> circumjacent = closest.GetReachableCircumjacent();
             PathTriangle t;
             int count = circumjacent.Count;
             for (int i = 0; i < count; ++i)

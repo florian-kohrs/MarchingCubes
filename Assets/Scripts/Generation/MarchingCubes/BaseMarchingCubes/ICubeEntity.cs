@@ -12,5 +12,9 @@ namespace MarchingCubes
 
         Vector3Int Origin { get; }
 
+        int IndexOfTri(PathTriangle tri);
+
+        int TriangulationIndex { get; }
+
     }
 }

@@ -97,6 +97,8 @@ namespace MarchingCubes
             }
         }
 
+        public int TriangulationIndex => triangulationIndex;
+
         public List<PathTriangle> GetNeighboursOf(PathTriangle tri)
         {
             List<PathTriangle> result = new List<PathTriangle>();
@@ -201,6 +203,9 @@ namespace MarchingCubes
             return hasNeighbourOutOfBounds;
         }
 
-
+        public int IndexOfTri(PathTriangle tri)
+        {
+            return Array.IndexOf(triangles, tri);
+        }
     }
 }

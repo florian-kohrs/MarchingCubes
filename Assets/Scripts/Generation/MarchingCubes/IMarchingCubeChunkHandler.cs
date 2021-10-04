@@ -11,9 +11,9 @@ namespace MarchingCubes
 
         //Dictionary<Vector3Int, IMarchingCubeChunk> Chunks { get; }
 
-        void EditNeighbourChunksAt(Vector3Int chunkOffset, Vector3Int cubeOrigin, float delta);
-
         bool TryGetReadyChunkAt(Vector3Int p, out IMarchingCubeChunk chunk);
+
+        bool TryGetOrCreateChunkAt(Vector3Int p, out IMarchingCubeChunk chunk);
 
         bool TryGetReadyChunkAt(Vector3Int p, out IMarchingCubeChunk chunk, out Vector3Int positionInOtherChunk);
 

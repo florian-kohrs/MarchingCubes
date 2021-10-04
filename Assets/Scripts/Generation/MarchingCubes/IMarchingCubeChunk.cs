@@ -50,6 +50,8 @@ namespace MarchingCubes
 
         void ChangeNeighbourLodTo(int newLodPower, Vector3Int dir);
 
+        void SetLeaf(ChunkGroupTreeLeaf leaf);
+
         //void InitializeEmpty(IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel);
 
  

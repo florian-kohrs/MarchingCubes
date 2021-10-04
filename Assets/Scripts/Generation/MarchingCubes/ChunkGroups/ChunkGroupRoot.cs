@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public class ChunkGroupRoot : IChunkGroupRoot
+    public class ChunkGroupRoot : IChunkGroupRoot, IChunkGroupParent
     {
 
         public ChunkGroupRoot(int[] coord)
@@ -38,7 +38,7 @@ namespace MarchingCubes
             {
                 if (chunk.ChunkSize == Size)
                 {
-                    child = new ChunkGroupTreeLeaf(chunk, GroupAnchorPosition, Size);
+                    child = new ChunkGroupTreeLeaf(this, chunk, 0, GroupAnchorPosition, Size);
                 }
                 else
                 {
@@ -73,6 +73,11 @@ namespace MarchingCubes
         public bool RemoveChunkAtGlobalPosition(Vector3Int pos)
         {
             return RemoveChunkAtGlobalPosition(new int[] { pos.x, pos.y, pos.z });
+        }
+
+        public void SplitChild(ChunkGroupTreeLeaf leaf, int index, IMarchingCubeChunk chunk, IMarchingCubeChunkHandler chunkHandler)
+        {
+
         }
 
         public bool HasChild => child != null;

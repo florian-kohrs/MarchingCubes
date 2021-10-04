@@ -28,7 +28,7 @@ namespace PathFinding
         public List<Path> Advance()
         {
             List<Path> result = new List<Path>();
-            List<PathTriangle> circumjacent = current.GetCircumjacent();
+            List<PathTriangle> circumjacent = current.GetReachableCircumjacent();
             PathTriangle c;
             for (int i = 0; i < circumjacent.Count; ++i)
             {

@@ -46,6 +46,24 @@ namespace MarchingCubes
 
         protected const float MAX_SLOPE_TO_BE_USEABLE_IN_PATHFINDING = 45;
 
+        public int[] CornerIndices
+        {
+            get
+            {
+                int[] result = new int[3];
+
+                int index = e.IndexOfTri(this) * 3;
+
+                int[] triangulation = TriangulationTable.triangulation[e.TriangulationIndex];
+
+                result[0] = TriangulationTable.cornerIndexAFromEdge[triangulation[index]];
+                result[1] = TriangulationTable.cornerIndexAFromEdge[triangulation[index + 1]];
+                result[2] = TriangulationTable.cornerIndexAFromEdge[triangulation[index + 2]];
+
+                return result;
+            }
+        }
+
         public Vector3 Normal
         {
             get
@@ -93,14 +111,11 @@ namespace MarchingCubes
                 pathParent.BuildPath(result);
         }
 
-        public List<PathTriangle> Neighbours => GetCircumjacent();
+        public List<PathTriangle> Neighbours => GetNeighbours();
 
-        public virtual List<PathTriangle> GetCircumjacent()
+        public virtual List<PathTriangle> GetReachableCircumjacent()
         {
-            //if (neighbours == null)
-            //{
-            List<PathTriangle> neighbours = e.GetNeighboursOf(this);
-            //}
+            List<PathTriangle> neighbours = GetNeighbours();
             List<PathTriangle> result = new List<PathTriangle>();
             int count = neighbours.Count;
             PathTriangle tri;
@@ -113,6 +128,12 @@ namespace MarchingCubes
                 }
             }
             return result;
+        }
+
+        public List<PathTriangle> GetNeighbours()
+        {
+            return e.GetNeighboursOf(this);
+            
         }
 
         public float DistanceToTarget(PathTriangle to)

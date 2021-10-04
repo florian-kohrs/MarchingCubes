@@ -296,15 +296,65 @@ public static class VectorExtension
     public static Vector3Int[] GetAllCombination(this Vector3Int v)
     {
         Vector3Int[] r = new Vector3Int[7];
-        r[0] = new Vector3Int(v.x, int.MinValue, int.MinValue);
-        r[1] = new Vector3Int(v.x, v.y, int.MinValue);
+        r[0] = new Vector3Int(v.x, 0, 0);
+        r[1] = new Vector3Int(v.x, v.y, 0);
         r[2] = new Vector3Int(v.x, v.y, v.z);
-        r[3] = new Vector3Int(v.x, int.MinValue, v.z);
-        r[4] = new Vector3Int(int.MinValue, v.y, v.z);
-        r[5] = new Vector3Int(int.MinValue, v.y, int.MinValue);
-        r[6] = new Vector3Int(int.MinValue, int.MinValue, v.z);
+        r[3] = new Vector3Int(v.x, 0, v.z);
+        r[4] = new Vector3Int(0, v.y, v.z);
+        r[5] = new Vector3Int(0, v.y, 0);
+        r[6] = new Vector3Int(0, 0, v.z);
         return r;
     }
+
+    public static Vector3Int[] GetReducedCombination(Vector3Int v)
+    {
+        Vector3Int[] r = new Vector3Int[3];
+        if (v.z == 0)
+        {
+            r[0] = new Vector3Int(v.x, 0, 0);
+            r[1] = new Vector3Int(v.x, v.y, 0);
+            r[2] = new Vector3Int(0, v.y, 0);
+        }
+        else if(v.x == 0)
+        {
+            r[0] = new Vector3Int(0,v.y, 0);
+            r[1] = new Vector3Int(0,v.y, v.z);
+            r[2] = new Vector3Int(0,0, v.z);
+        }
+        else
+        {
+            r[0] = new Vector3Int(v.x, 0,0);
+            r[1] = new Vector3Int(v.x, 0, v.z);
+            r[2] = new Vector3Int(0, 0, v.z);
+        }
+        return r;
+    }
+
+    public static Vector3Int[] GetAllNonDefaultAxisCombinations(this Vector3Int v)
+    {
+        int count = v.CountNonZeros();
+        if (count == 3)
+            return GetAllCombination(v);
+        else if (count == 2)
+            return GetReducedCombination(v);
+        else if (count == 1)
+            return new Vector3Int[] { v };
+        else
+            return new Vector3Int[0];
+    }
+
+    public static int CountNonZeros(this Vector3Int v)
+    {
+        int i = 0;
+        if (v.x != 0)
+            i++;
+        if (v.y != 0)
+            i++;
+        if (v.z != 0)
+            i++;
+        return i;
+    }
+    
 
     public static Vector3Int[] GetAllAdjacentDirections =
         new Vector3Int[] {
@@ -350,16 +400,18 @@ public static class VectorExtension
         }
     }
 
-    //public static Vector3Int[] GetAllDirectNeighbours(this Vector3Int v3)
-    //{
-    //    Vector3Int[] r = new Vector3Int[6];
-    //    r[0] = new Vector3Int(v3.x + 1, v3.y, v3.z);
-    //    r[1] = new Vector3Int(v3.x - 1, v3.y, v3.z);
-    //    r[2] = new Vector3Int(v3.x, v3.y + 1, v3.z);
-    //    r[3] = new Vector3Int(v3.x, v3.y - 1, v3.z);
-    //    r[4] = new Vector3Int(v3.x, v3.y, v3.z + 1);
-    //    r[5] = new Vector3Int(v3.x, v3.y, v3.z - 1);
-    //    return r;
-    //}
+    public static Vector3Int[] GetAllSurroundingFields(this Vector3Int v3)
+    {
+        Vector3Int[] r = new Vector3Int[8];
+        r[0] = new Vector3Int(v3.x, v3.y, v3.z);
+        r[1] = new Vector3Int(v3.x - 1, v3.y, v3.z);
+        r[2] = new Vector3Int(v3.x, v3.y - 1, v3.z);
+        r[3] = new Vector3Int(v3.x, v3.y, v3.z - 1);
+        r[4] = new Vector3Int(v3.x - 1, v3.y - 1, v3.z);
+        r[5] = new Vector3Int(v3.x - 1, v3.y, v3.z - 1);
+        r[6] = new Vector3Int(v3.x, v3.y - 1, v3.z - 1);
+        r[7] = new Vector3Int(v3.x -1, v3.y - 1, v3.z - 1);
+        return r;
+    }
 
 }

@@ -8,6 +8,7 @@ namespace MarchingCubes
     public class CompressedMarchingCubeChunk : IMarchingCubeChunk
     {
 
+
         public virtual void InitializeWithMeshDataParallel(TriangleBuilder[] tris, Action OnDone = null, bool keepPoints = false)
         {
             throw new Exception("This class doesnt support concurrency");
@@ -54,6 +55,13 @@ namespace MarchingCubes
             points = null;
         }
 
+        public void SetLeaf(ChunkGroupTreeLeaf leaf)
+        {
+            this.leaf = leaf;
+        }
+
+        protected ChunkGroupTreeLeaf leaf;
+
         protected virtual void OnResetChunk() { }
 
         public bool IsReady { get; protected set; }
@@ -71,7 +79,7 @@ namespace MarchingCubes
         {
             get
             {
-                if(neighbourLODs == null)
+                if (neighbourLODs == null)
                 {
                     neighbourLODs = chunkHandler.GetNeighbourLODSFrom(this);
                 }
@@ -121,7 +129,7 @@ namespace MarchingCubes
         {
             get
             {
-                if(points == null)
+                if (points == null)
                 {
                     points = chunkHandler.RequestNoiseForChunk(this);
                 }
@@ -178,7 +186,7 @@ namespace MarchingCubes
         public IMarchingCubeChunkHandler GetChunkHandler => chunkHandler;
 
 
-        public bool[] HasNeighbourInDirection { get; private set;} = new bool[6];
+        public bool[] HasNeighbourInDirection { get; private set; } = new bool[6];
 
         /// <summary>
         /// stores chunkEntities based on their position as index
@@ -246,8 +254,11 @@ namespace MarchingCubes
 
         int IMarchingCubeChunk.PointsPerAxis => pointsPerAxis;
 
-        public int ChunkSize { get => chunkSize; 
-            set { chunkSize = value; UpdateChunkCenterPos(); UpdateChunkData(); } }
+        public int ChunkSize
+        {
+            get => chunkSize;
+            set { chunkSize = value; UpdateChunkCenterPos(); UpdateChunkData(); }
+        }
 
         public float SurfaceLevel { set => surfaceLevel = value; }
 
@@ -261,7 +272,7 @@ namespace MarchingCubes
         }
 
 
-        protected Vector3Int TransformBorderPointToChunk(Vector3Int v3, Vector3Int dir, IMarchingCubeChunk neighbour)
+        protected Vector3Int TransformBorderCubePointToChunk(Vector3Int v3, Vector3Int dir, IMarchingCubeChunk neighbour)
         {
             Vector3Int result = FlipBorderCoordinateToNeighbourChunk(v3, dir, neighbour);
 
@@ -276,6 +287,27 @@ namespace MarchingCubes
                 transformedAnchorPosition = AnchorPos + ChunkSize * dir;
             }
 
+            Vector3Int anchorDiff = transformedAnchorPosition - neighbour.AnchorPos;
+
+            result = result + anchorDiff;
+
+            return result;
+        }
+
+        protected Vector3Int TransformBorderNoisePointToChunk(Vector3Int v3, Vector3Int dir, IMarchingCubeChunk neighbour)
+        {
+            Vector3Int result = FlipBorderCoordinateToNeighbourChunkPoints(v3, dir, neighbour);
+
+            Vector3Int transformedAnchorPosition;
+
+            if (IsDirectionOutOfChunk(dir))
+            {
+                transformedAnchorPosition = AnchorPos + neighbour.ChunkSize * dir;
+            }
+            else
+            {
+                transformedAnchorPosition = AnchorPos + ChunkSize * dir;
+            }
 
             Vector3Int anchorDiff = transformedAnchorPosition - neighbour.AnchorPos;
 
@@ -304,6 +336,28 @@ namespace MarchingCubes
                 result.z = neighbour.ChunkSize - 1;
             else if (dir.z > 0)
                 result.z = 0;
+            return result;
+        }
+
+        protected Vector3Int FlipBorderCoordinateToNeighbourChunkPoints(Vector3Int v3, Vector3Int dir, IMarchingCubeChunk neighbour)
+        {
+            Vector3Int result = v3;
+
+            if (dir.x < 0)
+                result.x = neighbour.PointsPerAxis - 1;
+            else if (dir.x > 0)
+                result.x = 0;
+
+            if (dir.y < 0)
+                result.y = neighbour.PointsPerAxis - 1;
+            else if (dir.y > 0)
+                result.y = 0;
+
+            if (dir.z < 0)
+                result.z = neighbour.PointsPerAxis - 1;
+            else if (dir.z > 0)
+                result.z = 0;
+
             return result;
         }
 
@@ -459,7 +513,7 @@ namespace MarchingCubes
             int x = rightCubeIndex.x;
             int y = rightCubeIndex.y;
             int z = rightCubeIndex.z;
-            int key = PointIndexFromCoord(x,y,z);
+            int key = PointIndexFromCoord(x, y, z);
             key = (key << MarchingCubeChunkHandler.MAX_CHUNK_LOD_BIT_REPRESENTATION_SIZE) + otherLodPower;
             if (!neighbourChunksGlue.ContainsKey(key))
             {
@@ -538,7 +592,7 @@ namespace MarchingCubes
 
         protected BaseMeshDisplayer GetBestMeshDisplayer()
         {
-            if(this is IMarchingCubeInteractableChunk i)
+            if (this is IMarchingCubeInteractableChunk i)
             {
                 return GetMeshInteractableDisplayer(i);
             }
@@ -690,7 +744,72 @@ namespace MarchingCubes
             return IsCubeInBounds(v.x, v.y, v.z);
         }
 
-        public bool IsCubeInBounds(int  x,int   y,int z)
+        public bool IsPointInBounds(Vector3Int v)
+        {
+            return IsPointInBounds(v.x, v.y, v.z);
+        }
+
+        public bool IsPointInBounds(int x, int y, int z)
+        {
+            return
+                x >= 0 && x < pointsPerAxis
+                && y >= 0 && y < pointsPerAxis
+                && z >= 0 && z < pointsPerAxis;
+        }
+
+        public bool IsBorderOrOutsidePoint(Vector3Int v)
+        {
+            return IsBorderOrOutsidePoint(v.x, v.y, v.z);
+        }
+
+        public bool IsBorderOrOutsidePoint(int x, int y, int z)
+        {
+            return
+                x <= 0 || x >= pointsPerAxis - 1
+                && y <= 0 && y >= pointsPerAxis - 1
+                && z <= 0 && z >= pointsPerAxis - 1;
+        }
+
+        public Vector3Int[] NeighbourDirections(Vector3Int v)
+        {
+            return NeighbourDirections(v.x, v.y, v.z);
+        }
+
+        public Vector3Int[] NeighbourDirections(int x, int y, int z)
+        {
+            Vector3Int v3 = new Vector3Int();
+            int pointsMinus = pointsPerAxis - 1;
+            if (x <= 0)
+            {
+                v3.x = -1;
+            }
+            else if (x >= pointsMinus)
+            {
+                v3.x = 1;
+            }
+
+            if (y <= 0)
+            {
+                v3.y = -1;
+            }
+            else if (y >= pointsMinus)
+            {
+                v3.y = 1;
+            }
+
+            if (z <= 0)
+            {
+                v3.z = -1;
+            }
+            else if (z >= pointsMinus)
+            {
+                v3.z = 1;
+            }
+
+            return v3.GetAllNonDefaultAxisCombinations();
+        }
+
+        public bool IsCubeInBounds(int x, int y, int z)
         {
             return
                 x >= 0 && x < vertexSize
@@ -710,7 +829,7 @@ namespace MarchingCubes
         }
 
 
-        protected Vector3Int CoordFromCubeIndex(int i)
+        public Vector3Int CoordFromCubeIndex(int i)
         {
             return new Vector3Int
                ((i % (vertexSize * vertexSize) % vertexSize)
@@ -719,7 +838,7 @@ namespace MarchingCubes
                );
         }
 
-        protected Vector3Int CoordFromPointIndex(int i)
+        public Vector3Int CoordFromPointIndex(int i)
         {
             return new Vector3Int
                (i % sqrPointsPerAxis % pointsPerAxis
@@ -728,7 +847,7 @@ namespace MarchingCubes
                );
         }
 
-        protected int PointIndexFromCoord(int x, int y, int z)
+        public int PointIndexFromCoord(int x, int y, int z)
         {
             int index = z * sqrPointsPerAxis + y * pointsPerAxis + x;
             return index;
@@ -736,7 +855,7 @@ namespace MarchingCubes
 
 
 
-        protected int PointIndexFromCoord(Vector3Int v)
+        public int PointIndexFromCoord(Vector3Int v)
         {
             return PointIndexFromCoord(v.x, v.y, v.z);
         }
@@ -781,17 +900,15 @@ namespace MarchingCubes
             return new int[]
             {
                 x, y, z,
-                x+offset,y,z,
+                x + offset, y,z,
                 x + offset, y, z + offset,
                 x, y, z + offset,
                 x, y + offset, z,
                 x + offset, y + offset, z,
-                x +offset, y + offset, z + offset,
+                x + offset, y + offset, z + offset,
                 x, y + offset, z + offset
             };
         }
-
-
 
         protected float[] GetNoiseInCornersForPoint(int x, int y, int z, int lod)
         {
@@ -829,11 +946,11 @@ namespace MarchingCubes
         public void ChangeNeighbourLodTo(int newLodPower, Vector3Int dir)
         {
             int oldLodPower = neighbourLODs.GetLodPowerFromNeighbourInDirection(dir);
-            if(oldLodPower < LODPower)
+            if (oldLodPower < LODPower)
             {
                 //delete old glue mesh
             }
-            if(newLodPower < LODPower)
+            if (newLodPower < LODPower)
             {
                 //build new connection
             }

@@ -8,11 +8,23 @@ namespace MarchingCubes
     public class ChunkGroupTreeLeaf : BaseChunkGroupOrganizer
     {
 
-        public ChunkGroupTreeLeaf(IMarchingCubeChunk chunk, int[] anchorPoint, int size)
+        public ChunkGroupTreeLeaf(IChunkGroupParent parent, IMarchingCubeChunk chunk, int index, int[] anchorPoint, int size)
         {
+            this.childIndex = index;
+            this.parent = parent;
             this.chunk = chunk;
             chunk.AnchorPos = new Vector3Int(anchorPoint[0], anchorPoint[1],anchorPoint[2]);
             chunk.ChunkSize = size;
+            chunk.SetLeaf(this);
+        }
+
+        protected IChunkGroupParent parent;
+
+        protected int childIndex;
+
+        public void SplitLeaf(IMarchingCubeChunkHandler chunkHandler)
+        {
+            parent.SplitChild(this, childIndex, chunk, chunkHandler);
         }
 
         public override int Size => chunk.ChunkSize; 

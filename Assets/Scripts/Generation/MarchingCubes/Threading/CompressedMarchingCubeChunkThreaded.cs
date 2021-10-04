@@ -10,7 +10,6 @@ namespace MarchingCubes
     public class CompressedMarchingCubeChunkThreaded : CompressedMarchingCubeChunk
     {
 
-
         protected IEnumerator WaitForParallelDone()
         {
             while (!multiThreadDone)

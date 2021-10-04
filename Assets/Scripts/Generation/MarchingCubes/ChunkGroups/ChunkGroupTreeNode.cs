@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public class ChunkGroupTreeNode : BaseChunkGroupOrganizer
+    public class ChunkGroupTreeNode : BaseChunkGroupOrganizer, IChunkGroupParent
     {
 
         public ChunkGroupTreeNode(
@@ -90,7 +90,7 @@ namespace MarchingCubes
                 int[] childAnchorPosition;
                 int[] childRelativeAnchorPosition;
                 GetAnchorPositionForChunkAt(relativePosition, out childAnchorPosition, out childRelativeAnchorPosition);
-                children[childIndex] = new ChunkGroupTreeLeaf(chunk, childAnchorPosition, halfSize);
+                children[childIndex] = new ChunkGroupTreeLeaf(this, chunk, childIndex, childAnchorPosition, halfSize);
             }
             else
             {
@@ -154,6 +154,11 @@ namespace MarchingCubes
             IChunkGroupOrganizer child = children[GetIndexForLocalPosition(relativePosition)];
 
             return (child == null && (child is ChunkGroupTreeLeaf || child.HasChunkAtLocalPosition(relativePosition)));
+        }
+
+        public void SplitChild(ChunkGroupTreeLeaf leaf, int index, IMarchingCubeChunk chunk, IMarchingCubeChunkHandler chunkHandler)
+        {
+            
         }
     }
 }

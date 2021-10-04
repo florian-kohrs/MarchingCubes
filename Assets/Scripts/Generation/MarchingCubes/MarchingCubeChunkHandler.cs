@@ -201,16 +201,15 @@ namespace MarchingCubes
 
         protected long buildAroundSqrDistance;
 
-        DateTime start;
-        DateTime end;
+        System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
 
         private void Start()
         {
-            CreateAllBuffersWithSizes(129);
+            CreateAllBuffersWithSizes(65);
             densityGenerator.SetPointsBuffer(pointsBuffer);
             ApplyShaderProperties();
 
-            start = DateTime.Now;
+            watch.Start();
             buildAroundSqrDistance = (long)buildAroundDistance * buildAroundDistance;
             kernelId = marshShader.FindKernel("March");
             startPos = player.position;
@@ -236,6 +235,8 @@ namespace MarchingCubes
 
             yield return UpdateChunks();
         }
+
+        protected int marshCounter;
 
         protected Vector3 startPos;
         protected float maxSqrChunkDistance;
@@ -270,8 +271,8 @@ namespace MarchingCubes
                 }
             }
 
-            end = DateTime.Now;
-            Debug.Log("Total millis: " + (end - start).TotalMilliseconds);
+            watch.Stop();
+            Debug.Log("Total millis: " + watch.Elapsed.TotalMilliseconds);
 
             Debug.Log("Total triangles: " + totalTriBuild);
 
@@ -296,8 +297,9 @@ namespace MarchingCubes
             {
                 yield return BuildRelevantChunksParallelAround();
             }
-            end = DateTime.Now;
-            Debug.Log("Total millis: " + (end - start).TotalMilliseconds);
+
+            watch.Stop();
+            Debug.Log("Total millis: " + watch.Elapsed.TotalMilliseconds);
             if (totalTriBuild >= maxTrianglesLeft)
             {
                 Debug.Log("Aborted");
@@ -443,10 +445,25 @@ namespace MarchingCubes
             BuildChunkParallel(chunk, RoundToPowerOf2(lodPower), careForNeighbours, () => OnDone(chunk));
         }
 
+        public bool TryGetOrCreateChunkAt(Vector3Int p, out IMarchingCubeChunk chunk)
+        {
+            if(!TryGetChunkAtPosition(p, out chunk))
+            {
+                chunk = CreateChunkAt(p);
+            }
+            if(chunk != null && !chunk.IsReady)
+            {
+                Debug.LogWarning("Unfinished chunk next to requested chunk. may lead to holes in mesh!");
+            }
+            return chunk != null;
+        }
+
         protected IMarchingCubeChunk CreateChunkAt(Vector3Int p)
         {
             return CreateChunkAt(p, PositionToChunkGroupCoord(p));
         }
+
+
 
         protected IMarchingCubeChunk CreateChunkAt(Vector3 pos, Vector3Int coord)
         {
@@ -794,7 +811,7 @@ namespace MarchingCubes
 
             densityGenerator.Generate(pointsPerAxis, anchor, spacing);
 
-            int numTris = GenerateCubesFromNoise(chunk, lod);
+            int numTris = RequestCubesFromNoise(chunk, lod);
                 
             if ((numTris == 0 && !hasFoundInitialChunk) || careForNeighbours)
             {
@@ -814,38 +831,21 @@ namespace MarchingCubes
         public TriangleBuilder[] GenerateCubesFromNoise(IMarchingCubeChunk chunk, int triCount, float[] noise)
         {
             pointsBuffer.SetData(noise);
-            GenerateCubesFromNoise(chunk, chunk.LOD, triCount);
+            RequestCubesFromNoise(chunk, chunk.LOD, triCount);
             return tris;
         }
 
         public void GenerateCubesFromNoise(IMarchingCubeChunk chunk, float[] noise, int lod)
         {
             pointsBuffer.SetData(noise);
-            GenerateCubesFromNoise(chunk, lod);
+            RequestCubesFromNoise(chunk, lod);
             chunk.Points = noise;
             chunk.InitializeWithMeshData(tris, true);
         }
 
-        public int GenerateCubesFromNoise(IMarchingCubeChunk chunk, int lod, int triCount = -1)
+        public int RequestCubesFromNoise(IMarchingCubeChunk chunk, int lod, int triCount = -1)
         {
-            int numVoxelsPerAxis = chunk.ChunkSize / lod;
-            //int chunkVolume = numVoxelsPerAxis * numVoxelsPerAxis * numVoxelsPerAxis;
-            int pointsPerAxis = numVoxelsPerAxis + 1;
-
-            int numThreadsPerAxis = Mathf.CeilToInt(numVoxelsPerAxis / (float)threadGroupSize);
-
-            //CreateTriangleBuffer();
-
-            float spacing = lod;
-            Vector3 anchor = chunk.AnchorPos;
-
-            triangleBuffer.SetCounterValue(0);
-            marshShader.SetInt("numPointsPerAxis", pointsPerAxis);
-            marshShader.SetFloat("spacing", spacing);
-            marshShader.SetVector("anchor", new Vector4(anchor.x, anchor.y, anchor.z));
-
-            marshShader.Dispatch(0, numThreadsPerAxis, numThreadsPerAxis, numThreadsPerAxis);
-
+            ComputeCubesFromNoise(chunk, lod);
             if (triCount < 0)
             {
                 // Get number of triangles in the triangle buffer
@@ -867,6 +867,29 @@ namespace MarchingCubes
             totalTriBuild += triCount;
             return triCount;
         }
+
+        public void ComputeCubesFromNoise(IMarchingCubeChunk chunk, int lod)
+        {
+            int numVoxelsPerAxis = chunk.ChunkSize / lod;
+            //int chunkVolume = numVoxelsPerAxis * numVoxelsPerAxis * numVoxelsPerAxis;
+            int pointsPerAxis = numVoxelsPerAxis + 1;
+
+            int numThreadsPerAxis = Mathf.CeilToInt(numVoxelsPerAxis / (float)threadGroupSize);
+
+            //CreateTriangleBuffer();
+
+            float spacing = lod;
+            Vector3 anchor = chunk.AnchorPos;
+
+            triangleBuffer.SetCounterValue(0);
+            marshShader.SetInt("numPointsPerAxis", pointsPerAxis);
+            marshShader.SetFloat("spacing", spacing);
+            marshShader.SetVector("anchor", new Vector4(anchor.x, anchor.y, anchor.z));
+
+            marshShader.Dispatch(0, numThreadsPerAxis, numThreadsPerAxis, numThreadsPerAxis);
+        }
+
+
 
 
         public void DecreaseChunkLod(IMarchingCubeChunk chunk, int toLodPower)
@@ -980,7 +1003,7 @@ namespace MarchingCubes
             int points = numVoxelsPerAxis + 1;
             int numPoints = points * points * points;
             int numVoxels = numVoxelsPerAxis * numVoxelsPerAxis * numVoxelsPerAxis;
-            int maxTriangleCount = numVoxels * 4;
+            int maxTriangleCount = numVoxels * 2;
 
             pointsBuffer = new ComputeBuffer(numPoints, sizeof(float) * 1);
             triangleBuffer = new ComputeBuffer(maxTriangleCount, TriangleBuilder.SIZE_OF_TRI_BUILD, ComputeBufferType.Append);
@@ -989,48 +1012,49 @@ namespace MarchingCubes
 
 
 
-        public void EditNeighbourChunksAt(Vector3Int chunkOffset, Vector3Int cubeOrigin, float delta)
-        {
-            throw new NotImplementedException();
-            //Vector3Int[] combs = cubeOrigin.GetAllCombination();
-            //Vector3Int v;
-            //for (int i = 0; i < combs.Length; ++i)
-            //{
-            //    v = combs[i];
-            //    bool allActiveIndicesHaveOffset = true;
-            //    Vector3Int offsetVector = new Vector3Int();
-            //    for (int x = 0; x < 3 && allActiveIndicesHaveOffset; x++)
-            //    {
-            //        if (v[x] != int.MinValue)
-            //        {
-            //            //offset is in range -1 to 1
-            //            int offset = Mathf.CeilToInt((cubeOrigin[x] / (chunkSize - 2f)) - 1);
-            //            allActiveIndicesHaveOffset = offset != 0;
-            //            offsetVector[x] = offset;
-            //        }
-            //        else
-            //        {
-            //            offsetVector[x] = 0;
-            //        }
-            //    }
-            //    if (allActiveIndicesHaveOffset)
-            //    {
-            //        //Debug.Log("Found neighbour with offset " + offsetVector);
-            //        IMarchingCubeChunk neighbourChunk;
-            //        if (TryGetOrCreateChunk(chunkOffset + offsetVector, out neighbourChunk))
-            //        {
-            //            if (neighbourChunk.LODPower <= DEFAULT_MIN_CHUNK_LOD_POWER)
-            //            {
-            //                EditNeighbourChunkAt(neighbourChunk, cubeOrigin, offsetVector, delta);
-            //            }
-            //            else
-            //            {
-            //                Debug.LogWarning("Cant edit a neighbour mesh with higher lod! Upgrade neighbour lods if player gets too close.");
-            //            }
-            //        }
-            //    }
-            //}
-        }
+        //public void EditNeighbourChunksAt(Dictionary<Vector3Int, float> deltas)
+        //{
+
+        //    Vector3Int cubeOrigin = new Vector3Int();
+        //    Vector3Int[] combs = cubeOrigin.GetAllCombination();
+        //    Vector3Int v;
+        //    for (int i = 0; i < combs.Length; ++i)
+        //    {
+        //        v = combs[i];
+        //        bool allActiveIndicesHaveOffset = true;
+        //        Vector3Int offsetVector = new Vector3Int();
+        //        for (int x = 0; x < 3 && allActiveIndicesHaveOffset; x++)
+        //        {
+        //            if (v[x] != int.MinValue)
+        //            {
+        //                //offset is in range -1 to 1
+        //                int offset = Mathf.CeilToInt((cubeOrigin[x] / (chunkSize - 2f)) - 1);
+        //                allActiveIndicesHaveOffset = offset != 0;
+        //                offsetVector[x] = offset;
+        //            }
+        //            else
+        //            {
+        //                offsetVector[x] = 0;
+        //            }
+        //        }
+        //        if (allActiveIndicesHaveOffset)
+        //        {
+        //            //Debug.Log("Found neighbour with offset " + offsetVector);
+        //            IMarchingCubeChunk neighbourChunk;
+        //            if (TryGetOrCreateChunk(chunkOffset + offsetVector, out neighbourChunk))
+        //            {
+        //                if (neighbourChunk.LODPower <= DEFAULT_MIN_CHUNK_LOD_POWER)
+        //                {
+        //                    EditNeighbourChunkAt(neighbourChunk, cubeOrigin, offsetVector, delta);
+        //                }
+        //                else
+        //                {
+        //                    Debug.LogWarning("Cant edit a neighbour mesh with higher lod! Upgrade neighbour lods if player gets too close.");
+        //                }
+        //            }
+        //        }
+        //    }
+        //}
 
         public void EditNeighbourChunkAt(IMarchingCubeChunk chunk, Vector3Int original, Vector3Int offset, float delta)
         {
