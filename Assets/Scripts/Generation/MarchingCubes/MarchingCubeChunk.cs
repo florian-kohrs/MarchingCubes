@@ -438,10 +438,6 @@ namespace MarchingCubes
             if (IsEmpty)
                 return;
 
-
-            System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
-            watch.Start();
-
             trisLeft = triCount;
 
             ResetArrayData();
@@ -470,9 +466,6 @@ namespace MarchingCubes
                 }
             }
 
-
-            TimeSpan spam = watch.Elapsed;
-            UnityEngine.Debug.Log(spam.TotalMilliseconds + "ms; " + spam.Ticks + " ticks");
         }
 
         public void Rebuild()
@@ -728,6 +721,10 @@ namespace MarchingCubes
 
         public void EditPointsAroundRayHit(float delta, RaycastHit hit, int editDistance)
         {
+            System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
+            watch.Start();
+
+
             float sign = Mathf.Sign(delta);
             float signedSurface = surfaceLevel * sign;
             float[] points = Points;
@@ -740,11 +737,6 @@ namespace MarchingCubes
                 = new Dictionary<Vector3Int, Tuple<IMarchingCubeInteractableChunk, List<Vector3Int>>>();
 
             List<Vector3Int> selfEditedPoints = new List<Vector3Int>();
-
-            HashSet<Vector3Int> editedPoints = new HashSet<Vector3Int>();
-
-            HashSet<PathTriangle> tris = new HashSet<PathTriangle>() { tri };
-            HashSet<PathTriangle> next = new HashSet<PathTriangle>();
 
             for (int xx = -editDistance; xx < editDistance; xx++)
             {
@@ -803,13 +795,20 @@ namespace MarchingCubes
                                 {
                                     int index = chunk.PointIndexFromCoord(pos);
 
-                                    value = chunk.Points[index];
+                                    if (value != int.MinValue)
+                                    {
+                                        chunk.Points[index] = value;
+                                    }
+                                    else
+                                    {
+                                        value = chunk.Points[index];
 
-                                    if (value < signedSurface)
-                                        continue;
+                                        if (value < signedSurface)
+                                            continue;
 
-                                    value += diff;
-                                    Points[index] = value;
+                                        value += diff;
+                                        chunk.Points[index] = value;
+                                    }
 
                                     l.Add(pos);
                                 }
@@ -819,76 +818,8 @@ namespace MarchingCubes
                 }
             }
 
-
-            /////bfs with editDistance interations
-            //for (int i = 0; i <= editDistance; i++)
-            //{
-            //    float distanceScaling = 1 - (i / Mathf.Max(1f, editDistance));
-            //    IEnumerator<PathTriangle> enu = tris.GetEnumerator();
-            //    PathTriangle t;
-            //    ///iterate over current pathtriangles
-            //    while (enu.MoveNext())
-            //    {
-            //        t = enu.Current;
-            //        ///iterate over all neighbours of triangle
-            //        foreach (var item in t.Neighbours)
-            //        {
-            //            if (next.Add(item))
-            //            {
-            //                int[] corners = item.CornerIndices;
-            //                ///iterate over all corner indices of triangle
-            //                for (int c = 0; c < 3; c++)
-            //                {
-            //                    Vector3Int v3 = origin + LocalCornerIndexToOffset(corners[c]);
-            //                    ///only work on point if it wasnt worked on before
-            //                    if (!editedPoints.Contains(v3))
-            //                    {
-            //                        float diff = delta * distanceScaling;
-            //                        editedPoints.Add(v3);
-            //                        ///if points is in chunk edit surface value
-            //                        if (IsPointInBounds(v3))
-            //                        {
-            //                            selfEditedPoints.Add(v3);
-            //                            points[PointIndexFromCoord(v3)] -= diff;
-            //                        }
-            //                        ///iterate over all directions where chunks share this noise point
-            //                        Vector3Int[] neighbourDirs = NeighbourDirections(v3);
-            //                        int length = neighbourDirs.Length;
-            //                        for (int z = 0; z < length; z++)
-            //                        {
-            //                            Vector3Int dir = neighbourDirs[z];
-            //                            IMarchingCubeChunk chunk;
-            //                            List<Vector3Int> l;
-            //                            Tuple<IMarchingCubeInteractableChunk, List<Vector3Int>> tuple;
-            //                            if (!editedNeighbourChunks.TryGetValue(dir, out tuple))
-            //                            {
-            //                                Vector3Int newChunkPos = AnchorPos + ChunkSize * dir;
-            //                                if (ChunkHandler.TryGetReadyChunkAt(newChunkPos, out chunk) && chunk is IMarchingCubeInteractableChunk changeableChunk)
-            //                                {
-
-            //                                    l = new List<Vector3Int>();
-            //                                    tuple = Tuple.Create(changeableChunk, l);
-            //                                    editedNeighbourChunks[newChunkPos] = tuple;
-            //                                }
-            //                            }
-            //                            if (tuple != null)
-            //                            {
-            //                                chunk = tuple.Item1;
-            //                                l = tuple.Item2;
-            //                                Vector3Int pos = TransformBorderNoisePointToChunk(v3, dir, chunk);
-            //                                l.Add(pos);
-            //                                chunk.Points[PointIndexFromCoord(pos)] -= diff;
-            //                            }
-            //                        }
-            //                    }
-            //                }
-            //            }
-            //        }
-            //    }
-            //    ///prepare next iteration
-            //    tris = next;
-            //    next.Clear();
-            //}
+            float elapsed = (float)watch.Elapsed.TotalMilliseconds;
+            UnityEngine.Debug.Log(elapsed + "ms for changing point values in " + (editedNeighbourChunks.Count + 1) + " different chunks");
 
             ///if another chunk is affected call chunkhandler
             if (editedNeighbourChunks.Count > 0)
@@ -900,6 +831,9 @@ namespace MarchingCubes
             }
 
             RebuildAround(selfEditedPoints);
+
+            TimeSpan spam = watch.Elapsed;
+            UnityEngine.Debug.Log(spam.TotalMilliseconds + "ms for total rebuild");
         }
 
 
