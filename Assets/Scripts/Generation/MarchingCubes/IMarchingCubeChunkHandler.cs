@@ -34,6 +34,9 @@ namespace MarchingCubes
         float[] RequestNoiseForChunk(IMarchingCubeChunk chunk);
 
         TriangleBuilder[] GenerateCubesFromNoise(IMarchingCubeChunk chunk, int triCount, float[] noise);
+
+        int[] GetColor(PathTriangle t, int steepness);
+
     }
 
 }

@@ -463,7 +463,7 @@ namespace MarchingCubes
                     tri.c = InterpolateVerts(cubeCorners, noisePoints, a0, b0);
                     tri.b = InterpolateVerts(cubeCorners, noisePoints, a1, b1);
                     tri.a = InterpolateVerts(cubeCorners, noisePoints, a2, b2);
-                    e.AddTriangle(new PathTriangle(e, tri, GetColor));
+                    e.AddTriangle(new PathTriangle(e, tri, ChunkHandler.GetColor));
                     triCount += 3;
                 }
 
@@ -689,24 +689,7 @@ namespace MarchingCubes
 
 
 
-        protected Color GetColor(PathTriangle t)
-        {
-            ///have color calculated in shader?
-            return GetColor(t.Normal, t.MiddlePoint, t.steepnessAndColorData);
-        }
-
-        protected Color GetColor(Vector3 normal, Vector3 middlePoint, float slope)
-        {
-            float slopeProgress = Mathf.InverseLerp(15, 45, slope);
-
-            Color result = new Color(
-                brownR * slopeProgress,
-                1 - slopeProgress + brownG * slopeProgress,
-                brownB * slopeProgress / 2);
-
-            //return (Color.green * (1 - slopeProgress) + brown * slopeProgress) / 2;
-            return result;
-        }
+       
 
         protected void ResetArrayData()
         {

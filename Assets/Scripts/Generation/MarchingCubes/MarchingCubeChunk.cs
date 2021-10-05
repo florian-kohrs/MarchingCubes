@@ -834,7 +834,7 @@ namespace MarchingCubes
             RebuildAround(selfEditedPoints);
 
             TimeSpan spam = watch.Elapsed;
-            UnityEngine.Debug.Log(spam.TotalMilliseconds + "ms for total rebuild");
+            Debug.Log(spam.TotalMilliseconds + "ms for total rebuild");
         }
 
 

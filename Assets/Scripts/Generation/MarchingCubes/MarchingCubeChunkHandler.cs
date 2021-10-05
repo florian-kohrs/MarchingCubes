@@ -206,6 +206,15 @@ namespace MarchingCubes
         private void Start()
         {
             CreateAllBuffersWithSizes(65);
+
+            flatR = (int)(flatColor.r * 255);
+            flatG = (int)(flatColor.g * 255);
+            flatB = (int)(flatColor.b * 255);
+
+            steepR = (int)(steepColor.r * 255);
+            steepG = (int)(steepColor.g * 255);
+            steepB = (int)(steepColor.b * 255);
+
             densityGenerator.SetPointsBuffer(pointsBuffer);
             ApplyShaderProperties();
 
@@ -779,6 +788,13 @@ namespace MarchingCubes
         public Color flatColor = new Color(0, 255 / 255f, 0, 1);
         public Color steepColor = new Color(75 / 255f, 44 / 255f, 13 / 255f, 1);
 
+        private int steepR;
+        private int steepG;
+        private int steepB;
+
+        private int flatR;
+        private int flatG;
+        private int flatB;
 
         public float[] RequestNoiseForChunk(IMarchingCubeChunk chunk)
         {
@@ -889,7 +905,19 @@ namespace MarchingCubes
             marshShader.Dispatch(0, numThreadsPerAxis, numThreadsPerAxis, numThreadsPerAxis);
         }
 
+        public int[] GetColor(PathTriangle t, int steepness)
+        {
+            float invLerp = (steepness - minSteepness) / ((float)maxSteepness - minSteepness);
+            if (invLerp < 0)
+                invLerp = 0;
+            else if (invLerp > 1)
+                invLerp = 1;
 
+            return new int[] {
+                (int)(invLerp * steepR + (1 - invLerp) * flatR),
+                (int)(invLerp * steepG + (1 - invLerp) * flatG),
+                (int)(invLerp * steepB  + (1 - invLerp) * flatB)};
+        }
 
 
         public void DecreaseChunkLod(IMarchingCubeChunk chunk, int toLodPower)
