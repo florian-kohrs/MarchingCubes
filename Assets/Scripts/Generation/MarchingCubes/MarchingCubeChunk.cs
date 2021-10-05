@@ -724,6 +724,7 @@ namespace MarchingCubes
             System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
             watch.Start();
 
+            int sqrEdit = editDistance * editDistance;
 
             float sign = Mathf.Sign(delta);
             float signedSurface = surfaceLevel * sign;
@@ -731,7 +732,7 @@ namespace MarchingCubes
             MarchingCubeEntity e = GetEntityFromRayHit(hit);
             PathTriangle tri = e.GetTriangleWithNormalOrClosest(hit.normal, hit.point);
             Vector3Int origin = e.origin;
-            Vector3Int globalOrigin = origin + AnchorPos;
+            Vector3 globalOrigin = origin + AnchorPos;
 
             Dictionary<Vector3Int, Tuple<IMarchingCubeInteractableChunk, List<Vector3Int>>> editedNeighbourChunks
                 = new Dictionary<Vector3Int, Tuple<IMarchingCubeInteractableChunk, List<Vector3Int>>>();
@@ -747,12 +748,12 @@ namespace MarchingCubes
                         int x = origin.x + xx;
                         int y = origin.y + yy;
                         int z = origin.z + zz;
-                        float distance = ((new Vector3(xx,yy,zz) + globalOrigin) - hit.point).magnitude;
+                        float sqrDistance = ((new Vector3(xx,yy,zz) + globalOrigin) - hit.point).sqrMagnitude;
 
-                        if (distance > editDistance)
+                        if (sqrDistance > sqrEdit)
                             continue;
 
-                        float factor = 1 - (distance / editDistance);
+                        float factor = 1 - (Mathf.Sqrt(sqrDistance) / editDistance);
                         float diff = factor * delta;
                         float value = int.MinValue;
                         if (IsPointInBounds(x, y, z))
@@ -819,7 +820,7 @@ namespace MarchingCubes
             }
 
             float elapsed = (float)watch.Elapsed.TotalMilliseconds;
-            UnityEngine.Debug.Log(elapsed + "ms for changing point values in " + (editedNeighbourChunks.Count + 1) + " different chunks");
+            Debug.Log(elapsed + "ms for changing point values in " + (editedNeighbourChunks.Count + 1) + " different chunks");
 
             ///if another chunk is affected call chunkhandler
             if (editedNeighbourChunks.Count > 0)

@@ -778,6 +778,8 @@ namespace MarchingCubes
         public Vector3Int[] NeighbourDirections(int x, int y, int z)
         {
             Vector3Int v3 = new Vector3Int();
+
+
             int pointsMinus = pointsPerAxis - 1;
             if (x <= 0)
             {

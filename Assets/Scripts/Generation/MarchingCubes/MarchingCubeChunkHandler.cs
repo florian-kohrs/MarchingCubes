@@ -417,7 +417,7 @@ namespace MarchingCubes
             return chunk;
         }
 
-
+        //TODO:Use late update to see how much time has passes so far, and if not so much use time to change neighbour chunks
 
         //protected void SetActivationOfChunks(Vector3Int center)
         //{
