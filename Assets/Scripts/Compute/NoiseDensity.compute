@@ -73,8 +73,10 @@ void Density (int3 id : SV_DispatchThreadID)
     }
 
     int index = indexFromCoord(id.x, id.y, id.z);
-    //if (noise > 1 ||noise < -1)
-    //    noise /= 32;
+    if (noise < -2)
+        noise = -2;
+    else if (noise > 2)
+        noise = 2;
 
     points[index] = noise;
     

@@ -725,9 +725,16 @@ namespace MarchingCubes
             watch.Start();
 
             int sqrEdit = editDistance * editDistance;
+            float factorMaxDistance = editDistance + 1f;
 
-            float sign = Mathf.Sign(delta);
-            float signedSurface = surfaceLevel * sign;
+            Func<float, bool> f;
+            if (delta > 0)
+                f = (v) => v > surfaceLevel;
+            else if (delta < 0)
+                f = (v) => v < surfaceLevel;
+            else
+                return;
+
             float[] points = Points;
             MarchingCubeEntity e = GetEntityFromRayHit(hit);
             PathTriangle tri = e.GetTriangleWithNormalOrClosest(hit.normal, hit.point);
@@ -753,19 +760,19 @@ namespace MarchingCubes
                         if (sqrDistance > sqrEdit)
                             continue;
 
-                        float factor = 1 - (Mathf.Sqrt(sqrDistance) / editDistance);
+                        float factor = 1 - (Mathf.Sqrt(sqrDistance) / factorMaxDistance);
                         float diff = factor * delta;
                         float value = int.MinValue;
                         if (IsPointInBounds(x, y, z))
                         {
                             int index = PointIndexFromCoord(x, y, z);
-                            value = Points[index];
+                            value = points[index];
                             ///if the value is already air stop checking this point (maybe multiply surface level with sign of delta (and swap se to ge))
-                            if (value < signedSurface)
+                            if (f(value))
                                 continue;
 
                             value += diff;
-                            Points[index] = value;
+                            points[index] = value;
                             selfEditedPoints.Add(new Vector3Int(x, y, z));
                         }
 
@@ -804,7 +811,7 @@ namespace MarchingCubes
                                     {
                                         value = chunk.Points[index];
 
-                                        if (value < signedSurface)
+                                        if (f(value))
                                             continue;
 
                                         value += diff;
