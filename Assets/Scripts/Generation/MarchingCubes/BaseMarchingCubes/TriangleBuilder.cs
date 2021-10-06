@@ -9,8 +9,17 @@ namespace MarchingCubes
 
         public Triangle tri;
 
-        public uint cubeData;
-        public uint steepnessAndColorData;
+        public byte triIndex;
+        public byte z;
+        public byte y;
+        public byte x;
+
+        public byte steepness;
+        public byte b;
+        public byte g;
+        public byte r;  
+
+        //public uint steepnessAndColorData;
 
         //public int colorData;
 
@@ -18,16 +27,13 @@ namespace MarchingCubes
         {
             get
             {
-                return new Vector3Int(
-                    (int)((cubeData >> 16) % step),
-                    (int)((cubeData >> 8) % step),
-                    (int)(cubeData % step));
+                return new Vector3Int(x,y, z);
             }
         }
 
         public static uint zipData(int x, int y, int z, int triIndex)
         {
-            return (uint)((triIndex << 24) + (x << 16) + (y << 8) + z);
+            return (uint)((x << 24) + (y << 16) + (z << 8) + triIndex);
         }
 
         private const int step = 1 << 8;
@@ -35,15 +41,15 @@ namespace MarchingCubes
         public Color GetColor()
         {
             Color c = new Color(
-                (int)(steepnessAndColorData % step) / 255f,
-                (int)((steepnessAndColorData >> 8) % step) / 255f,
-                (int)((steepnessAndColorData >> 16) % step) / 255f, 1);
+                r / 255f,
+                g / 255f,
+                b / 255f, 1);
             return c;
         }
 
-        public int TriIndex => (int)(cubeData >> 24);
+        public int TriIndex => triIndex;
 
-        public int Steepness => (int)(steepnessAndColorData >> 24);
+        public int Steepness => steepness;
 
         //public Color Color
         //{

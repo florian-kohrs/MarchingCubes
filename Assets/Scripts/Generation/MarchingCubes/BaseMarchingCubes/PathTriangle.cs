@@ -13,16 +13,21 @@ namespace MarchingCubes
         {
             this.e = e;
             tri = t;
-            int steepness = (int)(Mathf.Acos(Vector3.Dot(Normal, MiddlePoint.normalized)) * 180 / Mathf.PI);
+            steepness = (byte)(Mathf.Acos(Vector3.Dot(Normal, MiddlePoint.normalized)) * 180 / Mathf.PI);
             int[] c = f(this, steepness);
-            steepnessAndColorData = TriangleBuilder.zipData((c[2]), (c[1]), (c[0]), steepness);
+            r = (byte)c[0];
+            g = (byte)c[1];
+            b = (byte)c[2];
         }
 
-        public PathTriangle(ICubeEntity e, in Triangle t, uint steepnessAndColorData)
+        public PathTriangle(ICubeEntity e, in Triangle t, byte r, byte g, byte b, byte steepness)
         {
             this.e = e;
-            this.steepnessAndColorData = steepnessAndColorData;
+            this.steepness = steepness;
             tri = t;
+            this.r = r;
+            this.g = g;
+            this.b = b;
         }
 
 
@@ -39,7 +44,7 @@ namespace MarchingCubes
 
         protected ICubeEntity e;
 
-        public int Steepness => (int)(steepnessAndColorData >> 24);
+        public int Steepness => steepness;
 
 
         public const int TRIANGLE_NEIGHBOUR_COUNT = 3;
@@ -77,7 +82,10 @@ namespace MarchingCubes
             }
         }
 
-        public uint steepnessAndColorData;
+        public byte steepness;
+        public byte b;
+        public byte g;
+        public byte r;
 
 
         private const int step = 1 << 8;
@@ -85,12 +93,11 @@ namespace MarchingCubes
         public Color GetColor()
         {
             Color c = new Color(
-                (int)(steepnessAndColorData % step) / 255f,
-                (int)((steepnessAndColorData >> 8) % step) / 255f,
-                (int)((steepnessAndColorData >> 16) % step) / 255f, 1);
+                r / 255f,
+                g / 255f,
+                b / 255f, 1);
             return c;
         }
-
 
         /// <summary>
         /// maybe stop storing? but couldnt recalculate normal.
@@ -177,7 +184,7 @@ namespace MarchingCubes
             activeInBackwardsPathIteration = iteration;
         }
 
-        public float Slope => (int)(steepnessAndColorData >> 24);
+        public float Slope => steepness;
 
         public Vector3 EstimatedMiddlePoint => tri.a;
 

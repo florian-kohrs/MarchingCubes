@@ -796,7 +796,7 @@ MonoBehaviour:
   chunkMaterial: {fileID: 2100000, guid: 97d2f9aa8d16b8241a90494b8d616c04, type: 2}
   surfaceLevel: 0.511
   player: {fileID: 1779183453}
-  buildAroundDistance: 100
+  buildAroundDistance: 500
   totalTriBuild: 0
   minSteepness: 11
   maxSteepness: 45
@@ -1352,7 +1352,7 @@ CharacterController:
   m_Height: 2
   m_Radius: 0.5
   m_SlopeLimit: 45
-  m_StepOffset: 0.3
+  m_StepOffset: 1
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 0, z: 0}

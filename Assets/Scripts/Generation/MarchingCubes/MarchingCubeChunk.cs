@@ -375,16 +375,14 @@ namespace MarchingCubes
             MarchingCubeEntity cube;
             cubeEntities = new MarchingCubeEntity[ChunkSize, ChunkSize, ChunkSize];
             TriangleBuilder t;
-            Vector3Int origin;
             int x, y, z;
             int count = ts.Length;
             for (int i = 0; i < count; ++i)
             {
                 t = ts[i];
-                origin = t.Origin;
-                x = origin.x;
-                y = origin.y;
-                z = origin.z;
+                x = t.x;
+                y = t.y;
+                z = t.z;
                 if (!TryGetEntityAt(x, y, z, out cube))
                 {
                     cube = CreateAndAddEntityAt(x, y, z, t.TriIndex);
@@ -394,7 +392,7 @@ namespace MarchingCubes
                     }
                     SetNeighbourAt(x, y, z);
                 }
-                PathTriangle pathTri = new PathTriangle(cube, in t.tri, t.steepnessAndColorData);
+                PathTriangle pathTri = new PathTriangle(cube, in t.tri, t.r,t.g,t.b,t.steepness);
                 cube.AddTriangle(pathTri);
                 if (buildMeshAswell)
                 {
@@ -732,9 +730,9 @@ namespace MarchingCubes
 
             Func<float, bool> f;
             if (delta > 0)
-                f = SmallerThanSurface;
-            else if (delta < 0)
                 f = LargerThanSurface;
+            else if (delta < 0)
+                f = SmallerThanSurface;
             else
                 return;
 

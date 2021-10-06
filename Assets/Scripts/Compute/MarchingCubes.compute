@@ -42,7 +42,7 @@ int indexFromCoord(int x, int y, int z)
 
 
 int zipData(int x, int y, int z, int w) {
-	return (w << 24) + (x << 16) + (y << 8) + z;
+	return (x << 24) + (y << 16) + (z << 8) + w;
 }
 
 //int angle(int3 a, int3 b) 
@@ -131,7 +131,7 @@ void March(int3 id : SV_DispatchThreadID)
 		int colorG = (invLerp * steepColor.y + (1 - invLerp) * flatColor.y);
 		int colorB = (invLerp * steepColor.z + (1 - invLerp) * flatColor.z);
 		
-		tri.colorAndSteepness = zipData(colorB, colorG, colorR, (int)angleFromCenter);
+		tri.colorAndSteepness = zipData(colorR, colorG, colorB, (int)angleFromCenter);
 		//tri.colorAndSteepness = 0;
 		triangles.Append(tri);
 	}
