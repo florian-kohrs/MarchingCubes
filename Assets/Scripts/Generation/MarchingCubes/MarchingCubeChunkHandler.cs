@@ -472,7 +472,8 @@ namespace MarchingCubes
             return CreateChunkAt(p, PositionToChunkGroupCoord(p));
         }
 
-
+        //TODO:Check if collider can be removed from most chunks.
+        //Collision can be approximated by calling noise function for lowest point of object and checking if its noise is larger than surface value
 
         protected IMarchingCubeChunk CreateChunkAt(Vector3 pos, Vector3Int coord)
         {
