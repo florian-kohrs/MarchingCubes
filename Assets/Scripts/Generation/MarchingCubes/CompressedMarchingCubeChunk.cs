@@ -276,42 +276,50 @@ namespace MarchingCubes
         {
             Vector3Int result = FlipBorderCoordinateToNeighbourChunk(v3, dir, neighbour);
 
-            Vector3Int transformedAnchorPosition;
 
-            if (IsDirectionOutOfChunk(dir))
+            if (neighbour.ChunkSize != ChunkSize)
             {
-                transformedAnchorPosition = AnchorPos + neighbour.ChunkSize * dir;
-            }
-            else
-            {
-                transformedAnchorPosition = AnchorPos + ChunkSize * dir;
-            }
 
-            Vector3Int anchorDiff = transformedAnchorPosition - neighbour.AnchorPos;
+                Vector3Int transformedAnchorPosition;
 
-            result = result + anchorDiff;
+                if (IsDirectionOutOfChunk(dir))
+                {
+                    transformedAnchorPosition = AnchorPos + neighbour.ChunkSize * dir;
+                }
+                else
+                {
+                    transformedAnchorPosition = AnchorPos + ChunkSize * dir;
+                }
+
+                Vector3Int anchorDiff = transformedAnchorPosition - neighbour.AnchorPos;
+
+                result = result + anchorDiff;
+            }
 
             return result;
         }
 
-        protected Vector3Int TransformBorderNoisePointToChunk(Vector3Int v3, Vector3Int dir, IMarchingCubeChunk neighbour)
+        protected Vector3Int TransformBorderNoisePointToChunk(int x, int y, int z, Vector3Int dir, IMarchingCubeChunk neighbour)
         {
-            Vector3Int result = FlipBorderCoordinateToNeighbourChunkPoints(v3, dir, neighbour);
+            Vector3Int result = FlipBorderCoordinateToNeighbourChunkPoints(x,y,z, dir, neighbour);
 
-            Vector3Int transformedAnchorPosition;
-
-            if (IsDirectionOutOfChunk(dir))
+            if (neighbour.ChunkSize != ChunkSize)
             {
-                transformedAnchorPosition = AnchorPos + neighbour.ChunkSize * dir;
-            }
-            else
-            {
-                transformedAnchorPosition = AnchorPos + ChunkSize * dir;
-            }
+                Vector3Int transformedAnchorPosition;
 
-            Vector3Int anchorDiff = transformedAnchorPosition - neighbour.AnchorPos;
+                if (IsDirectionOutOfChunk(dir))
+                {
+                    transformedAnchorPosition = AnchorPos + neighbour.ChunkSize * dir;
+                }
+                else
+                {
+                    transformedAnchorPosition = AnchorPos + ChunkSize * dir;
+                }
 
-            result = result + anchorDiff;
+                Vector3Int anchorDiff = transformedAnchorPosition - neighbour.AnchorPos;
+
+                result = result + anchorDiff;
+            }
 
             return result;
         }
@@ -339,26 +347,25 @@ namespace MarchingCubes
             return result;
         }
 
-        protected Vector3Int FlipBorderCoordinateToNeighbourChunkPoints(Vector3Int v3, Vector3Int dir, IMarchingCubeChunk neighbour)
+        protected Vector3Int FlipBorderCoordinateToNeighbourChunkPoints(int x, int y, int z, Vector3Int dir, IMarchingCubeChunk neighbour)
         {
-            Vector3Int result = v3;
             int ppaMinus = neighbour.PointsPerAxis - 1;
             if (dir.x < 0)
-                result.x = ppaMinus + v3.x;
+                x = ppaMinus + x;
             else if (dir.x > 0)
-                result.x = v3.x - ppaMinus;
+                x = x - ppaMinus;
 
             if (dir.y < 0)
-                result.y = ppaMinus + v3.y;
+                y = ppaMinus + y;
             else if (dir.y > 0)
-                result.y = v3.y - ppaMinus;
+                y = y - ppaMinus;
 
             if (dir.z < 0)
-                result.z = ppaMinus + v3.z;
+                z = ppaMinus + z;
             else if (dir.z > 0)
-                result.z = v3.z - ppaMinus;
+                z = z - ppaMinus;
 
-            return result;
+            return new Vector3Int(x, y, z);
         }
 
         protected virtual void BuildFromTriangleArray(TriangleBuilder[] ts, bool buildMeshAswell = true)
@@ -851,25 +858,6 @@ namespace MarchingCubes
             return i.FloorMod(vertexSize);
         }
 
-        protected Vector4[] GetCubeCornersForPointWithLod(int x, int y, int z, int spacing)
-        {
-            return new Vector4[]
-            {
-                BuildVector4FromCoord(x, y, z),
-                BuildVector4FromCoord(x + spacing, y, z),
-                BuildVector4FromCoord(x + spacing, y, z + spacing),
-                BuildVector4FromCoord(x, y, z + spacing),
-                BuildVector4FromCoord(x, y + spacing, z),
-                BuildVector4FromCoord(x + spacing, y + spacing, z),
-                BuildVector4FromCoord(x + spacing, y + spacing, z + spacing),
-                BuildVector4FromCoord(x, y + spacing, z + spacing)
-            };
-        }
-
-        protected Vector4 BuildVector4FromCoord(int x, int y, int z)
-        {
-            return new Vector4(AnchorPos.x + x * lod, AnchorPos.y + y * lod, AnchorPos.z + z * lod, points[PointIndexFromCoord(x, y, z)]);
-        }
 
         protected int[] GetCubeCornerArrayForPoint(int x, int y, int z, int spacing)
         {

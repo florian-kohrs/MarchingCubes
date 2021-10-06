@@ -719,6 +719,9 @@ namespace MarchingCubes
             return pointIndex;
         }
 
+        protected bool SmallerThanSurface(float f) => f < surfaceLevel;
+        protected bool LargerThanSurface(float f) => f >= surfaceLevel;
+
         public void EditPointsAroundRayHit(float delta, RaycastHit hit, int editDistance)
         {
             System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
@@ -729,15 +732,14 @@ namespace MarchingCubes
 
             Func<float, bool> f;
             if (delta > 0)
-                f = (v) => v > surfaceLevel;
+                f = SmallerThanSurface;
             else if (delta < 0)
-                f = (v) => v < surfaceLevel;
+                f = LargerThanSurface;
             else
                 return;
 
             float[] points = Points;
             MarchingCubeEntity e = GetEntityFromRayHit(hit);
-            PathTriangle tri = e.GetTriangleWithNormalOrClosest(hit.normal, hit.point);
             Vector3Int origin = e.origin;
             Vector3 globalOrigin = origin + AnchorPos;
 
@@ -798,7 +800,7 @@ namespace MarchingCubes
                             {
                                 IMarchingCubeInteractableChunk chunk = tuple.Item1;
                                 l = tuple.Item2;
-                                Vector3Int pos = TransformBorderNoisePointToChunk(new Vector3Int(x, y, z), dir, chunk);
+                                Vector3Int pos = TransformBorderNoisePointToChunk(x, y, z, dir, chunk);
                                 if (chunk.IsPointInBounds(pos))
                                 {
                                     int index = chunk.PointIndexFromCoord(pos);
@@ -830,14 +832,16 @@ namespace MarchingCubes
             Debug.Log(elapsed + "ms for changing point values in " + (editedNeighbourChunks.Count + 1) + " different chunks");
 
             ///if another chunk is affected call chunkhandler
-            if (editedNeighbourChunks.Count > 0)
+            int count = editedNeighbourChunks.Count;
+            IEnumerator<Tuple<IMarchingCubeInteractableChunk, List<Vector3Int>>> enu
+                = editedNeighbourChunks.Values.GetEnumerator();
+            Tuple<IMarchingCubeInteractableChunk, List<Vector3Int>> c;
+            while (enu.MoveNext())
             {
-                foreach (var item in editedNeighbourChunks)
-                {
-                    item.Value.Item1.RebuildAround(item.Value.Item2);
-                }
+                c = enu.Current;
+                c.Item1.RebuildAround(c.Item2);
             }
-
+            
             RebuildAround(selfEditedPoints);
 
             TimeSpan spam = watch.Elapsed;
