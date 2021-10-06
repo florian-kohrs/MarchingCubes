@@ -9,7 +9,7 @@ namespace MarchingCubes
     {
 
 
-        public PathTriangle(ICubeEntity e, Triangle t, Func<PathTriangle, int, int[]> f)
+        public PathTriangle(ICubeEntity e, in Triangle t, Func<PathTriangle, int, int[]> f)
         {
             this.e = e;
             tri = t;
@@ -18,7 +18,7 @@ namespace MarchingCubes
             steepnessAndColorData = TriangleBuilder.zipData((c[2]), (c[1]), (c[0]), steepness);
         }
 
-        public PathTriangle(ICubeEntity e, Triangle t, uint steepnessAndColorData)
+        public PathTriangle(ICubeEntity e, in Triangle t, uint steepnessAndColorData)
         {
             this.e = e;
             this.steepnessAndColorData = steepnessAndColorData;

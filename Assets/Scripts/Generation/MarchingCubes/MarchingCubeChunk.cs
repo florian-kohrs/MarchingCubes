@@ -394,7 +394,7 @@ namespace MarchingCubes
                     }
                     SetNeighbourAt(x, y, z);
                 }
-                PathTriangle pathTri = new PathTriangle(cube, t.tri, t.steepnessAndColorData);
+                PathTriangle pathTri = new PathTriangle(cube, in t.tri, t.steepnessAndColorData);
                 cube.AddTriangle(pathTri);
                 if (buildMeshAswell)
                 {
