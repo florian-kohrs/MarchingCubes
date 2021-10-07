@@ -35,7 +35,7 @@ namespace MarchingCubes
 
         public MarchingCubeEntity[,,] cubeEntities;
 
-        public HashSet<MarchingCubeEntity> entities = new HashSet<MarchingCubeEntity>();
+        public HashSet<MarchingCubeEntity> entities;
 
         //public Dictionary<int, MarchingCubeEntity> cubeEntities = new Dictionary<int, MarchingCubeEntity>();
 
@@ -374,6 +374,7 @@ namespace MarchingCubes
 
             MarchingCubeEntity cube;
             cubeEntities = new MarchingCubeEntity[ChunkSize, ChunkSize, ChunkSize];
+            entities = new HashSet<MarchingCubeEntity>();
             TriangleBuilder t;
             int x, y, z;
             int count = ts.Length;
@@ -385,7 +386,7 @@ namespace MarchingCubes
                 z = t.z;
                 if (!TryGetEntityAt(x, y, z, out cube))
                 {
-                    cube = CreateAndAddEntityAt(x, y, z, t.TriIndex);
+                    cube = CreateAndAddEntityAt(x, y, z, t.triIndex);
                     if (careAboutNeighbourLODS && IsBorderCube(x, y, z))
                     {
                         CheckForConnectedChunk(x, y, z);
@@ -396,7 +397,7 @@ namespace MarchingCubes
                 cube.AddTriangle(pathTri);
                 if (buildMeshAswell)
                 {
-                    AddTriangleToMeshData(pathTri, t.GetColor(), ref usedTriCount, ref totalTreeCount);
+                    AddTriangleToMeshData(in t, ref usedTriCount, ref totalTreeCount);
                 }
             }
         }
@@ -575,9 +576,9 @@ namespace MarchingCubes
 
         protected bool IsBorderCube(int x, int y, int z)
         {
-            return x == 0 || x % (entitiesPerAxis) == 0
-                || y == 0 || y % (entitiesPerAxis) == 0
-                || z == 0 || z % (entitiesPerAxis) == 0;
+            return x == 0 || x  == entitiesPerAxis
+                || y == 0 || y == entitiesPerAxis
+                || z == 0 || z == entitiesPerAxis;
         }
 
 
@@ -741,6 +742,7 @@ namespace MarchingCubes
 
             int sqrEdit = editDistance * editDistance;
             float factorMaxDistance = editDistance + 0.0f;
+            int loopRange = editDistance;
 
             Func<float, bool> f;
             if (delta > 0)
@@ -757,22 +759,26 @@ namespace MarchingCubes
             int originY = origin.y;
             int originZ = origin.z;
             Vector3 globalOrigin = origin + AnchorPos;
+            Vector3 hitDiff = globalOrigin - hit.point;
+            float hitOffsetX = hitDiff.x;
+            float hitOffsetY = hitDiff.y;
+            float hitOffsetZ = hitDiff.z;
 
             Dictionary<Vector3Int, Tuple<IMarchingCubeInteractableChunk, Vector3Int, Vector3>> editedNeighbourChunks
                 = new Dictionary<Vector3Int, Tuple<IMarchingCubeInteractableChunk, Vector3Int, Vector3>>();
 
             List<Vector3Int> selfEditedPoints = new List<Vector3Int>();
 
-            for (int xx = -editDistance; xx < editDistance; xx++)
+            for (int xx = -loopRange; xx < loopRange; xx++)
             {
-                for (int yy = -editDistance; yy < editDistance; yy++)
+                for (int yy = -loopRange; yy < loopRange; yy++)
                 {
-                    for (int zz = -editDistance; zz < editDistance; zz++)
+                    for (int zz = -loopRange; zz < loopRange; zz++)
                     {
                         int x = originX + xx;
                         int y = originY + yy;
                         int z = originZ + zz;
-                        float sqrDistance = ((new Vector3(xx,yy,zz) + globalOrigin) - hit.point).sqrMagnitude;
+                        float sqrDistance = new Vector3(xx + hitOffsetX,yy + hitOffsetY,zz + hitOffsetZ).sqrMagnitude;
 
                         if (sqrDistance > sqrEdit)
                             continue;

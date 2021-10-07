@@ -388,7 +388,7 @@ namespace MarchingCubes
                 t = ts[i];
                 Vector3Int currentOrigin = t.Origin;
 
-                MarchingCubeEntity.FindMissingNeighboursAt(t.TriIndex, currentOrigin, IsCubeInBounds, HasNeighbourInDirection);
+                MarchingCubeEntity.FindMissingNeighboursAt(t.triIndex, currentOrigin, IsCubeInBounds, HasNeighbourInDirection);
                 //if (chunkHandler.TryGetReadyChunkAt(target, out c))
                 //{
                 //    if (c.LODPower > LODPower)
@@ -399,7 +399,7 @@ namespace MarchingCubes
 
                 if (buildMeshAswell)
                 {
-                    AddTriangleToMeshData(t.tri, t.GetColor(), ref usedTriCount, ref totalTreeCount);
+                    AddTriangleToMeshData(in t, ref usedTriCount, ref totalTreeCount);
                 }
             }
 
@@ -566,6 +566,31 @@ namespace MarchingCubes
             if (usedTriCount >= MAX_TRIANGLES_PER_MESH || usedTriCount >= trisLeft)
             {
                 ApplyChangesToMesh(isBorderConnectionMesh);
+                usedTriCount = 0;
+            }
+        }
+
+        protected void AddTriangleToMeshData(in TriangleBuilder t, ref int usedTriCount, ref int totalTriCount, bool useCollider = true)
+        {
+            Color c = new Color(t.r / 255f, t.g / 255f, t.b / 255f,1);
+
+            meshTriangles[usedTriCount] = usedTriCount;
+            meshTriangles[usedTriCount + 1] = usedTriCount + 1;
+            meshTriangles[usedTriCount + 2] = usedTriCount + 2;
+
+            colorData[usedTriCount] = c;
+            colorData[usedTriCount + 1] = c;
+            colorData[usedTriCount + 2] = c;
+
+            vertices[usedTriCount] = t.tri.a;
+            vertices[usedTriCount + 1] = t.tri.b;
+            vertices[usedTriCount + 2] = t.tri.c;
+
+            usedTriCount += 3;
+            totalTriCount++;
+            if (usedTriCount >= MAX_TRIANGLES_PER_MESH || usedTriCount >= trisLeft)
+            {
+                ApplyChangesToMesh(useCollider);
                 usedTriCount = 0;
             }
         }

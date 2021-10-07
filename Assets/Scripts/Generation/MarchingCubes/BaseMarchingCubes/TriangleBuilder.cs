@@ -17,7 +17,7 @@ namespace MarchingCubes
         public byte steepness;
         public byte b;
         public byte g;
-        public byte r;  
+        public byte r;
 
         //public uint steepnessAndColorData;
 
@@ -40,16 +40,12 @@ namespace MarchingCubes
 
         public Color GetColor()
         {
-            Color c = new Color(
+            return new Color(
                 r / 255f,
                 g / 255f,
                 b / 255f, 1);
-            return c;
         }
 
-        public int TriIndex => triIndex;
-
-        public int Steepness => steepness;
 
         //public Color Color
         //{
