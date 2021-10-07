@@ -345,6 +345,7 @@ namespace MarchingCubes
                 {
                     while ((closestNeighbours.size == 0 && channeledChunks > 0) /*|| channeledChunks > maxRunningThreads*/)
                     {
+                        //TODO: while waiting create mesh displayers!
                         while (readyParallelChunks.Count > 0)
                         {
                             OnParallelChunkDoneCallBack(readyParallelChunks.Dequeue());
