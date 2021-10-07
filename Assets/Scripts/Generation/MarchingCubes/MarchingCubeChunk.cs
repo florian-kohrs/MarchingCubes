@@ -472,49 +472,63 @@ namespace MarchingCubes
             BuildAll();
         }
 
-        public void RebuildAround(List<Vector3Int> changedPoints)
+        //TODO: Do this also for noise manipulation
+
+        public void RebuildAround(Vector3 point, int radius, int posX, int posY, int posZ, Vector3 globalOrigin)
         {
-            if(cubeEntities == null)
+            if (cubeEntities == null)
             {
                 cubeEntities = new MarchingCubeEntity[ChunkSize, ChunkSize, ChunkSize];
             }
+            ///at some point rather call gpu to compute this
+            int ppMinus = pointsPerAxis - 2;
+            float diff = /*(globalOrigin - point).magnitude + */Mathf.Sqrt(2);
+            float sqrRad = (radius + diff) * (radius + diff);
+            int startX = Mathf.Max(0, posX - radius);
+            int startY = Mathf.Max(0, posY - radius);
+            int startZ = Mathf.Max(0, posZ - radius);
+            int endX = Mathf.Min(ppMinus, posX + radius);
+            int endY = Mathf.Min(ppMinus, posY + radius);
+            int endZ = Mathf.Min(ppMinus, posZ + radius);
 
-            HashSet<Vector3Int> set = new HashSet<Vector3Int>();
+            int distanceX = startX - posX;
 
-            int count = changedPoints.Count;
-            for (int i = 0; i < count; i++)
+            for (int x = startX; x <= endX; x++)
             {
-                set.UnionWith(changedPoints[i].GetAllSurroundingFields());
-            }
-
-            int x, y, z;
-
-            IEnumerator<Vector3Int> enu = set.GetEnumerator();
-            while (enu.MoveNext())
-            {
-                Vector3Int c = enu.Current;
-                x = c.x;
-                y = c.y;
-                z = c.z;
-
-                if (IsCubeInBounds(x, y, z))
+                int distanceY = startY - posY;
+                int xx = distanceX * distanceX;
+                for (int y = startY; y <= endY; y++)
                 {
-                    MarchingCubeEntity cube;
-                    if (TryGetEntityAt(x, y, z, out cube))
+                    int distanceZ = startZ - posZ;
+                    int yy = distanceY * distanceY;
+                    for (int z = startZ; z <= endZ; z++)
                     {
-                        triCount -= cube.triangles.Length * 3;
-                        RemoveEntityAt(x, y, z, cube);
+                        int zz = distanceZ * distanceZ;
+                        int sqrDis = xx + yy + zz;
+                        //float sqrDistance = ((new Vector3(distanceX, distanceY, distanceZ) + globalOrigin) - point).sqrMagnitude;
+                        if (sqrDis <= sqrRad)
+                        {
+                            MarchingCubeEntity cube;
+                            if (TryGetEntityAt(x, y, z, out cube))
+                            {
+                                triCount -= cube.triangles.Length * 3;
+                                RemoveEntityAt(x, y, z, cube);
+                            }
+                            cube = MarchAt(x, y, z, this);
+                            if (cube != null)
+                            {
+                                AddEntityAt(x, y, z, cube);
+                            }
+                        }
+
+                        distanceZ++;
                     }
-                    cube = MarchAt(x, y, z, this);
-                    if (cube != null)
-                    {
-                        AddEntityAt(x, y, z, cube);
-                    }
+                    distanceY++;
                 }
+                distanceX++;
             }
             RebuildMesh();
         }
-
 
         public void RebuildMesh()
         {
@@ -726,7 +740,7 @@ namespace MarchingCubes
             watch.Start();
 
             int sqrEdit = editDistance * editDistance;
-            float factorMaxDistance = editDistance + 1f;
+            float factorMaxDistance = editDistance + 0.0f;
 
             Func<float, bool> f;
             if (delta > 0)
@@ -739,10 +753,13 @@ namespace MarchingCubes
             float[] points = Points;
             MarchingCubeEntity e = GetEntityFromRayHit(hit);
             Vector3Int origin = e.origin;
+            int originX = origin.x;
+            int originY = origin.y;
+            int originZ = origin.z;
             Vector3 globalOrigin = origin + AnchorPos;
 
-            Dictionary<Vector3Int, Tuple<IMarchingCubeInteractableChunk, List<Vector3Int>>> editedNeighbourChunks
-                = new Dictionary<Vector3Int, Tuple<IMarchingCubeInteractableChunk, List<Vector3Int>>>();
+            Dictionary<Vector3Int, Tuple<IMarchingCubeInteractableChunk, Vector3Int, Vector3>> editedNeighbourChunks
+                = new Dictionary<Vector3Int, Tuple<IMarchingCubeInteractableChunk, Vector3Int, Vector3>>();
 
             List<Vector3Int> selfEditedPoints = new List<Vector3Int>();
 
@@ -752,9 +769,9 @@ namespace MarchingCubes
                 {
                     for (int zz = -editDistance; zz < editDistance; zz++)
                     {
-                        int x = origin.x + xx;
-                        int y = origin.y + yy;
-                        int z = origin.z + zz;
+                        int x = originX + xx;
+                        int y = originY + yy;
+                        int z = originZ + zz;
                         float sqrDistance = ((new Vector3(xx,yy,zz) + globalOrigin) - hit.point).sqrMagnitude;
 
                         if (sqrDistance > sqrEdit)
@@ -781,23 +798,21 @@ namespace MarchingCubes
                         for (int i = 0; i < length; i++)
                         {
                             Vector3Int dir = neighbourDirs[i];
-                            List<Vector3Int> l;
-                            Tuple<IMarchingCubeInteractableChunk, List<Vector3Int>> tuple;
-                            if (!editedNeighbourChunks.TryGetValue(dir, out tuple))
+                            Tuple<IMarchingCubeInteractableChunk, Vector3Int, Vector3> t;
+                            if (!editedNeighbourChunks.TryGetValue(dir, out t))
                             {
                                 IMarchingCubeChunk chunk;
+
                                 Vector3Int newChunkPos = AnchorPos + ChunkSize * dir;
                                 if (ChunkHandler.TryGetOrCreateChunkAt(newChunkPos, out chunk) && chunk is IMarchingCubeInteractableChunk changeableChunk)
                                 {
-                                    l = new List<Vector3Int>();
-                                    tuple = Tuple.Create(changeableChunk, l);
-                                    editedNeighbourChunks[dir] = tuple;
+                                    t = Tuple.Create(changeableChunk, TransformBorderCubePointToChunk(origin, dir, changeableChunk), globalOrigin);
+                                    editedNeighbourChunks[dir] = t;
                                 }
                             }
-                            if (tuple != null)
+                            if (t != null)
                             {
-                                IMarchingCubeInteractableChunk chunk = tuple.Item1;
-                                l = tuple.Item2;
+                                IMarchingCubeInteractableChunk chunk = t.Item1;
                                 Vector3Int pos = TransformBorderNoisePointToChunk(x, y, z, dir, chunk);
                                 if (chunk.IsPointInBounds(pos))
                                 {
@@ -817,8 +832,6 @@ namespace MarchingCubes
                                         value += diff;
                                         chunk.Points[index] = value;
                                     }
-
-                                    l.Add(pos);
                                 }
                             }
                         }
@@ -829,19 +842,22 @@ namespace MarchingCubes
             float elapsed = (float)watch.Elapsed.TotalMilliseconds;
             Debug.Log(elapsed + "ms for changing point values in " + (editedNeighbourChunks.Count + 1) + " different chunks");
 
+            //TODO: Shouldnt be too hard to just calculate possitions to be rebuild from origin and radius
+
             ///if another chunk is affected call chunkhandler
-            int count = editedNeighbourChunks.Count;
-            IEnumerator<Tuple<IMarchingCubeInteractableChunk, List<Vector3Int>>> enu
+            //int count = editedNeighbourChunks.Count;
+            IEnumerator<Tuple<IMarchingCubeInteractableChunk, Vector3Int, Vector3>> enu
                 = editedNeighbourChunks.Values.GetEnumerator();
-            Tuple<IMarchingCubeInteractableChunk, List<Vector3Int>> c;
+            Tuple<IMarchingCubeInteractableChunk, Vector3Int, Vector3> c;
             while (enu.MoveNext())
             {
                 c = enu.Current;
-                c.Item1.RebuildAround(c.Item2);
+                Vector3Int v = c.Item2;
+                c.Item1.RebuildAround(hit.point, editDistance, v.x,v.y,v.z, c.Item3);
             }
             
-            RebuildAround(selfEditedPoints);
-
+            RebuildAround(hit.point, editDistance, originX, originY, originZ, globalOrigin);
+            //RebuildAround(selfEditedPoints);
             TimeSpan spam = watch.Elapsed;
             Debug.Log(spam.TotalMilliseconds + "ms for total rebuild");
         }

@@ -332,18 +332,22 @@ namespace MarchingCubes
         protected Vector3Int FlipBorderCoordinateToNeighbourChunk(Vector3Int v3, Vector3Int dir, IMarchingCubeChunk neighbour)
         {
             Vector3Int result = v3;
+
             if (dir.x < 0)
                 result.x = neighbour.ChunkSize - 1;
             else if (dir.x > 0)
                 result.x = 0;
-            else if (dir.y < 0)
+
+            if (dir.y < 0)
                 result.y = neighbour.ChunkSize - 1;
             else if (dir.y > 0)
                 result.y = 0;
-            else if (dir.z < 0)
+
+            if (dir.z < 0)
                 result.z = neighbour.ChunkSize - 1;
             else if (dir.z > 0)
                 result.z = 0;
+
             return result;
         }
 

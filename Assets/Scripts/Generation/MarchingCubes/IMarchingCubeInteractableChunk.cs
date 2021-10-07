@@ -20,7 +20,9 @@ namespace MarchingCubes
 
         IMarchingCubeChunkHandler GetChunkHandler { get; }
 
-        void RebuildAround(List<Vector3Int> changedPoints);
+        //void RebuildAround(List<Vector3Int> changedPoints);
+
+        void RebuildAround(Vector3 point, int radius, int posX, int posY, int posZ, Vector3 v3);
 
         int PointIndexFromCoord(Vector3Int v);
 
