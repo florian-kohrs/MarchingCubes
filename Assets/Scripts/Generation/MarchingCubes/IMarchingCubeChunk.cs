@@ -8,7 +8,7 @@ namespace MarchingCubes
     public interface IMarchingCubeChunk
     {
 
-        bool IsReady { get; }
+        bool IsReady { get; set; }
 
         int ChunkSize { get; set; }
 
@@ -42,7 +42,7 @@ namespace MarchingCubes
 
        // void InitializeWithMeshData(Material mat, TriangleBuilder[] tris, int activeTris, float[] points, IMarchingCubeChunkHandler handler, float surfaceLevel);
 
-        void InitializeWithMeshDataParallel(TriangleBuilder[] tris, Action OnDone, bool keepPoints);
+        void InitializeWithMeshDataParallel(TriangleBuilder[] tris, Queue<IThreadedMarchingCubeChunk> readyChunks, bool keepPoints);
 
         void InitializeWithMeshData(TriangleBuilder[] tris, bool keepPoints);
 

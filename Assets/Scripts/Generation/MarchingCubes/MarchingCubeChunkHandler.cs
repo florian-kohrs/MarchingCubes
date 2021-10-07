@@ -224,7 +224,8 @@ namespace MarchingCubes
             startPos = player.position;
             IMarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
             maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
-            BuildRelevantChunksAround(chunk);
+            //BuildRelevantChunksAround(chunk);
+            BuildRelevantChunksParallelBlockingAround(chunk);
             //StartCoroutine(BuildRelevantChunksParallelAround(chunk));
         }
 
@@ -289,9 +290,67 @@ namespace MarchingCubes
         }
 
 
+        public void BuildRelevantChunksParallelBlockingAround(IMarchingCubeChunk chunk)
+        {
+            bool[] dirs = chunk.HasNeighbourInDirection;
+            int count = dirs.Length;
+            for (int i = 0; i < count; ++i)
+            {
+                if (!dirs[i])
+                    continue;
+
+                Vector3Int v3 = VectorExtension.GetDirectionFromIndex(i) * (chunk.ChunkSize + 1) + chunk.CenterPos;
+                closestNeighbours.Enqueue(0, v3);
+            }
+            if (closestNeighbours.size > 0)
+            {
+                BuildRelevantChunksParallelBlockingAround();
+            }
+
+            watch.Stop();
+            Debug.Log("Total millis: " + watch.Elapsed.TotalMilliseconds);
+            if (totalTriBuild >= maxTrianglesLeft)
+            {
+                Debug.Log("Aborted");
+            }
+            Debug.Log("Total triangles: " + totalTriBuild);
+
+            Debug.Log($"Number of chunks: {ChunkGroups.Count}");
+        }
+
+        private void BuildRelevantChunksParallelBlockingAround()
+        {
+            Vector3Int next;
+            bool isNextInProgress;
+            while (closestNeighbours.size > 0)
+            {
+                do
+                {
+                    next = closestNeighbours.Dequeue();
+                    isNextInProgress = HasChunkStartedAt(next);
+                } while (isNextInProgress && closestNeighbours.size > 0);
+
+                if (!isNextInProgress)
+                {
+                    CreateChunkParallelAt(next);
+                }
+                if (totalTriBuild < maxTrianglesLeft)
+                {
+                    while ((closestNeighbours.size == 0 && channeledChunks > 0) /*|| channeledChunks > maxRunningThreads*/)
+                    {
+                        while (readyParallelChunks.Count > 0)
+                        {
+                            OnParallelChunkDoneCallBack(readyParallelChunks.Dequeue());
+                        }
+                    }
+                }
+            }
+        }
+
 
         public IEnumerator BuildRelevantChunksParallelAround(IMarchingCubeChunk chunk)
         {
+
             bool[] dirs = chunk.HasNeighbourInDirection;
             int count = dirs.Length;
             for (int i = 0; i < count; ++i)
@@ -332,21 +391,36 @@ namespace MarchingCubes
 
                 if (!isNextInProgress)
                 {
-                    CreateChunkParallelAt(next, OnChunkDoneCallBack);
+                    CreateChunkParallelAt(next);
                 }
                 if (totalTriBuild < maxTrianglesLeft)
                 {
                     while ((closestNeighbours.size == 0 && channeledChunks > 0) /*|| channeledChunks > maxRunningThreads*/)
                     {
+                        while(readyParallelChunks.Count > 0)
+                        {
+                            OnParallelChunkDoneCallBack(readyParallelChunks.Dequeue());
+                        }
                         yield return null;
                     }
                 }
             }
         }
 
-        protected void OnChunkDoneCallBack(IMarchingCubeChunk chunk)
+        protected void OnParallelChunkDoneCallBack(IThreadedMarchingCubeChunk chunk)
         {
             channeledChunks--;
+
+            if (chunk == null)
+            {
+                Debug.Log("Chunk is null?");
+                return;
+            }
+
+            chunk.IsInOtherThread = false;
+            chunk.BuildAllMeshes();
+            chunk.IsReady = true;
+
 
             Vector3Int v3;
             bool[] dirs = chunk.HasNeighbourInDirection;
@@ -439,19 +513,19 @@ namespace MarchingCubes
         //    }
         //}
 
-        protected void CreateChunkParallelAt(Vector3 pos, Action<IMarchingCubeChunk> OnDone)
+        protected void CreateChunkParallelAt(Vector3 pos)
         {
-            CreateChunkParallelAt(pos, PositionToChunkGroupCoord(pos), OnDone);
+            CreateChunkParallelAt(pos, PositionToChunkGroupCoord(pos));
         }
 
-        protected void CreateChunkParallelAt(Vector3 pos, Vector3Int coord, Action<IMarchingCubeChunk> OnDone)
+        protected void CreateChunkParallelAt(Vector3 pos, Vector3Int coord)
         {
             int lodPower;
             int chunkSize;
             bool careForNeighbours;
             GetSizeAndLodPowerForChunkPosition(pos, out chunkSize, out lodPower, out careForNeighbours);
             IMarchingCubeChunk chunk = GetThreadedChunkObjectAt(VectorExtension.ToVector3Int(pos), coord, lodPower, chunkSize);
-            BuildChunkParallel(chunk, RoundToPowerOf2(lodPower), careForNeighbours, () => OnDone(chunk));
+            BuildChunkParallel(chunk, RoundToPowerOf2(lodPower), careForNeighbours);
         }
 
         public bool TryGetOrCreateChunkAt(Vector3Int p, out IMarchingCubeChunk chunk)
@@ -772,11 +846,13 @@ namespace MarchingCubes
             chunk.InitializeWithMeshData(tris, false);
         }
 
-        protected void BuildChunkParallel(IMarchingCubeChunk chunk, int lod, bool careForNeighbours, Action OnDone)
+        protected Queue<IThreadedMarchingCubeChunk> readyParallelChunks = new Queue<IThreadedMarchingCubeChunk>();
+
+        protected void BuildChunkParallel(IMarchingCubeChunk chunk, int lod, bool careForNeighbours)
         {
             ApplyChunkDataAndDispatchAndGetShaderData(chunk, lod, careForNeighbours);
             channeledChunks++;
-            chunk.InitializeWithMeshDataParallel(tris, OnDone, false);
+            chunk.InitializeWithMeshDataParallel(tris, readyParallelChunks, false);
         }
 
         //protected void RebuildChunkParallelAt(Vector3Int p, Action OnDone, int lod)

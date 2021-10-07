@@ -9,7 +9,7 @@ namespace MarchingCubes
     {
 
 
-        public virtual void InitializeWithMeshDataParallel(TriangleBuilder[] tris, Action OnDone = null, bool keepPoints = false)
+        public virtual void InitializeWithMeshDataParallel(TriangleBuilder[] tris, Queue<IThreadedMarchingCubeChunk> readyChunks, bool keepPoints = false)
         {
             throw new Exception("This class doesnt support concurrency");
         }
@@ -64,7 +64,7 @@ namespace MarchingCubes
 
         protected virtual void OnResetChunk() { }
 
-        public bool IsReady { get; protected set; }
+        public bool IsReady { get; set; }
 
         public bool HasStarted { get; protected set; }
 

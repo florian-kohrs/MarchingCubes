@@ -7,47 +7,35 @@ using System.Threading;
 namespace MarchingCubes
 {
 
-    public class MarchingCubeChunkThreaded : MarchingCubeChunk
+    public class MarchingCubeChunkThreaded : MarchingCubeChunk, IThreadedMarchingCubeChunk
     {
 
+        protected Queue<IThreadedMarchingCubeChunk> readyChunks;
 
-        protected IEnumerator WaitForParallelDone()
-        {
-            while (!multiThreadDone)
-            {
-                yield return null;
-            }
-
-            isInOtherThread = false;
-            BuildAllMeshes();
-            IsReady = true;
-            OnDone?.Invoke();
-        }
-
-        protected Action OnDone;
-
-        public override void InitializeWithMeshDataParallel(TriangleBuilder[] tris, Action OnDone = null, bool keepPoints = false)
+        public override void InitializeWithMeshDataParallel(TriangleBuilder[] tris, Queue<IThreadedMarchingCubeChunk> readyChunks, bool keepPoints = false)
         {
             HasStarted = true;
-            this.OnDone = OnDone;
-            chunkHandler.StartWaitForParralelChunkDoneCoroutine(WaitForParallelDone());
-            ThreadPool.QueueUserWorkItem((o) => RequestChunk(tris, OnChunkDone, keepPoints));
+            this.readyChunks = readyChunks;
+            ThreadPool.QueueUserWorkItem((o) => RequestChunk(tris, keepPoints));
         }
 
-        protected bool isInOtherThread;
+        public bool IsInOtherThread { get; set; }
+
+        public static object listLock = new object();
 
         protected void OnChunkDone()
         {
-            multiThreadDone = true;
+            lock (listLock)
+            {
+                readyChunks.Enqueue(this);
+            }
         }
 
-        private bool multiThreadDone = false;
-
-        protected void RequestChunk(TriangleBuilder[] tris, Action OnChunkDone, bool keepPoints)
+        protected void RequestChunk(TriangleBuilder[] tris, bool keepPoints)
         {
             try
             {
-                isInOtherThread = true;
+                IsInOtherThread = true;
                 InitializeWithMeshData(tris, keepPoints);
                 OnChunkDone();
             }
@@ -59,7 +47,7 @@ namespace MarchingCubes
 
         protected override void SetCurrentMeshData(bool isBorderConnector)
         {
-            if (isInOtherThread)
+            if (IsInOtherThread)
             {
                 data.Add(new MeshData(meshTriangles, vertices, colorData, !isBorderConnector, isBorderConnector));
             }
@@ -71,7 +59,7 @@ namespace MarchingCubes
 
         protected override void ResetAll()
         {
-            if (isInOtherThread)
+            if (IsInOtherThread)
             {
                 data.Clear();
             }
@@ -83,7 +71,7 @@ namespace MarchingCubes
 
         protected List<MeshData> data = new List<MeshData>();
 
-        protected void BuildAllMeshes()
+        public void BuildAllMeshes()
         {
             for (int i = 0; i < data.Count; ++i)
             {
