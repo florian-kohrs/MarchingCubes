@@ -472,6 +472,7 @@ namespace MarchingCubes
 
         //TODO: Do this also for noise manipulation
 
+
         public void RebuildAround(Vector3 point, int radius, int posX, int posY, int posZ, Vector3 globalOrigin)
         {
             if (cubeEntities == null)
@@ -490,6 +491,11 @@ namespace MarchingCubes
             int endZ = Mathf.Min(ppMinus, posZ + radius);
 
             int distanceX = startX - posX;
+
+
+
+
+
 
             for (int x = startX; x <= endX; x++)
             {
