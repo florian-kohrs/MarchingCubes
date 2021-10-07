@@ -570,7 +570,7 @@ namespace MarchingCubes
             }
         }
 
-        protected void AddTriangleToMeshData(in TriangleBuilder t, ref int usedTriCount, ref int totalTriCount, bool useCollider = true)
+        protected void AddTriangleToMeshData(in TriangleBuilder t, ref int usedTriCount, ref int totalTriCount, bool isBorderConnectionMesh = false)
         {
             Color c = new Color(t.r / 255f, t.g / 255f, t.b / 255f,1);
 
@@ -590,34 +590,34 @@ namespace MarchingCubes
             totalTriCount++;
             if (usedTriCount >= MAX_TRIANGLES_PER_MESH || usedTriCount >= trisLeft)
             {
-                ApplyChangesToMesh(useCollider);
+                ApplyChangesToMesh(isBorderConnectionMesh);
                 usedTriCount = 0;
             }
         }
 
-        protected void AddTriangleToMeshData(Triangle tri, Color c, ref int usedTriCount, ref int totalTriCount, bool useCollider = true)
-        {
+        //protected void AddTriangleToMeshData(Triangle tri, Color c, ref int usedTriCount, ref int totalTriCount, bool useCollider = true)
+        //{
 
-            meshTriangles[usedTriCount] = usedTriCount;
-            meshTriangles[usedTriCount + 1] = usedTriCount + 1;
-            meshTriangles[usedTriCount + 2] = usedTriCount + 2;
+        //    meshTriangles[usedTriCount] = usedTriCount;
+        //    meshTriangles[usedTriCount + 1] = usedTriCount + 1;
+        //    meshTriangles[usedTriCount + 2] = usedTriCount + 2;
 
-            colorData[usedTriCount] = c;
-            colorData[usedTriCount + 1] = c;
-            colorData[usedTriCount + 2] = c;
+        //    colorData[usedTriCount] = c;
+        //    colorData[usedTriCount + 1] = c;
+        //    colorData[usedTriCount + 2] = c;
 
-            vertices[usedTriCount] = tri.a;
-            vertices[usedTriCount + 1] = tri.b;
-            vertices[usedTriCount + 2] = tri.c;
+        //    vertices[usedTriCount] = tri.a;
+        //    vertices[usedTriCount + 1] = tri.b;
+        //    vertices[usedTriCount + 2] = tri.c;
 
-            usedTriCount += 3;
-            totalTriCount++;
-            if (usedTriCount >= MAX_TRIANGLES_PER_MESH || usedTriCount >= trisLeft)
-            {
-                ApplyChangesToMesh(useCollider);
-                usedTriCount = 0;
-            }
-        }
+        //    usedTriCount += 3;
+        //    totalTriCount++;
+        //    if (usedTriCount >= MAX_TRIANGLES_PER_MESH || usedTriCount >= trisLeft)
+        //    {
+        //        ApplyChangesToMesh(useCollider);
+        //        usedTriCount = 0;
+        //    }
+        //}
 
         protected BaseMeshDisplayer GetMeshDisplayer()
         {

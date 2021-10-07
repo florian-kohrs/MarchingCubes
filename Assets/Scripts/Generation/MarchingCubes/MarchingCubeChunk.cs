@@ -35,7 +35,7 @@ namespace MarchingCubes
 
         public MarchingCubeEntity[,,] cubeEntities;
 
-        public HashSet<MarchingCubeEntity> entities;
+        public HashSet<MarchingCubeEntity> entities = new HashSet<MarchingCubeEntity>();
 
         //public Dictionary<int, MarchingCubeEntity> cubeEntities = new Dictionary<int, MarchingCubeEntity>();
 
@@ -374,30 +374,27 @@ namespace MarchingCubes
 
             MarchingCubeEntity cube;
             cubeEntities = new MarchingCubeEntity[ChunkSize, ChunkSize, ChunkSize];
-            entities = new HashSet<MarchingCubeEntity>();
-            TriangleBuilder t;
             int x, y, z;
             int count = ts.Length;
             for (int i = 0; i < count; ++i)
             {
-                t = ts[i];
-                x = t.x;
-                y = t.y;
-                z = t.z;
+                x = ts[i].x;
+                y = ts[i].y;
+                z = ts[i].z;
                 if (!TryGetEntityAt(x, y, z, out cube))
                 {
-                    cube = CreateAndAddEntityAt(x, y, z, t.triIndex);
+                    cube = CreateAndAddEntityAt(x, y, z, ts[i].triIndex);
                     if (careAboutNeighbourLODS && IsBorderCube(x, y, z))
                     {
                         CheckForConnectedChunk(x, y, z);
                     }
                     SetNeighbourAt(x, y, z);
                 }
-                PathTriangle pathTri = new PathTriangle(cube, in t.tri, t.r,t.g,t.b,t.steepness);
+                PathTriangle pathTri = new PathTriangle(cube, in ts[i].tri, ts[i].r, ts[i].g, ts[i].b, ts[i].steepness);
                 cube.AddTriangle(pathTri);
                 if (buildMeshAswell)
                 {
-                    AddTriangleToMeshData(in t, ref usedTriCount, ref totalTreeCount);
+                    AddTriangleToMeshData(in ts[i], ref usedTriCount, ref totalTreeCount);
                 }
             }
         }
