@@ -233,6 +233,8 @@ namespace MarchingCubes
             }
         }
 
+
+
         private void UpdateChunkCenterPos()
         {
             int halfSize = ChunkSize / 2;
@@ -382,13 +384,11 @@ namespace MarchingCubes
             int usedTriCount = 0;
 
             List<MissingNeighbourData> trisWithNeighboursOutOfBounds = new List<MissingNeighbourData>();
-            TriangleBuilder t;
             for (int i = 0; i < ts.Length; ++i)
             {
-                t = ts[i];
-                Vector3Int currentOrigin = t.Origin;
+                Vector3Int currentOrigin = ts[i].Origin;
 
-                MarchingCubeEntity.FindMissingNeighboursAt(t.triIndex, currentOrigin, IsCubeInBounds, HasNeighbourInDirection);
+                MarchingCubeEntity.FindMissingNeighboursAt(ts[i].triIndex, currentOrigin, IsCubeInBounds, HasNeighbourInDirection);
                 //if (chunkHandler.TryGetReadyChunkAt(target, out c))
                 //{
                 //    if (c.LODPower > LODPower)
@@ -399,7 +399,7 @@ namespace MarchingCubes
 
                 if (buildMeshAswell)
                 {
-                    AddTriangleToMeshData(in t, ref usedTriCount, ref totalTreeCount);
+                    AddTriangleToMeshData(in ts[i], ref usedTriCount, ref totalTreeCount);
                 }
             }
 
@@ -469,11 +469,11 @@ namespace MarchingCubes
                     int a2 = TriangulationTable.cornerIndexAFromEdge[triangulation[i + 2]];
                     int b2 = TriangulationTable.cornerIndexBFromEdge[triangulation[i + 2]];
 
-                    Triangle tri = new Triangle();
+                    Triangle tri = new Triangle(
+                        InterpolateVerts(cubeCorners, noisePoints, a0, b0),
+                        InterpolateVerts(cubeCorners, noisePoints, a1, b1),
+                        InterpolateVerts(cubeCorners, noisePoints, a2, b2));
 
-                    tri.c = InterpolateVerts(cubeCorners, noisePoints, a0, b0);
-                    tri.b = InterpolateVerts(cubeCorners, noisePoints, a1, b1);
-                    tri.a = InterpolateVerts(cubeCorners, noisePoints, a2, b2);
                     e.AddTriangle(new PathTriangle(e, in tri, ChunkHandler.GetColor));
                     triCount += 3;
                 }

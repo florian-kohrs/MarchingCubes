@@ -4,20 +4,20 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public struct TriangleBuilder
+    public readonly struct TriangleBuilder
     {
 
-        public Triangle tri;
+        public readonly Triangle tri;
 
-        public byte triIndex;
-        public byte z;
-        public byte y;
-        public byte x;
+        public readonly byte triIndex;
+        public readonly byte z;
+        public readonly byte y;
+        public readonly byte x;
 
-        public byte steepness;
-        public byte b;
-        public byte g;
-        public byte r;
+        public readonly byte steepness;
+        public readonly byte b;
+        public readonly byte g;
+        public readonly byte r;
 
         //public uint steepnessAndColorData;
 

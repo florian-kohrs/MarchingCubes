@@ -301,6 +301,13 @@ namespace MarchingCubes
 
                 Vector3Int v3 = VectorExtension.GetDirectionFromIndex(i) * (chunk.ChunkSize + 1) + chunk.CenterPos;
                 closestNeighbours.Enqueue(0, v3);
+                ///for initial neighbours build additional chunks to not just wait for first thread to be done
+                ///seems to worsen performance?
+                //v3 = 2 * VectorExtension.GetDirectionFromIndex(i) * (chunk.ChunkSize + 1) + chunk.CenterPos;
+                //closestNeighbours.Enqueue(0, v3);
+
+                //v3 = 3 * VectorExtension.GetDirectionFromIndex(i) * (chunk.ChunkSize + 1) + chunk.CenterPos;
+                //closestNeighbours.Enqueue(0, v3);
             }
             if (closestNeighbours.size > 0)
             {

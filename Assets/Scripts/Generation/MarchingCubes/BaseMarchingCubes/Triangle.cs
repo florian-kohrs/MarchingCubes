@@ -4,46 +4,23 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public struct Triangle
+    public readonly struct Triangle
     {
+
+        public Triangle(Vector3 a, Vector3 b, Vector3 c)
+        {
+            this.a = a;
+            this.b = b;
+            this.c = c;
+        }
 
         public const int SIZE_OF_TRI = sizeof(float) * 9;
         //could share this with their neighbour
         //do i need this at all?
-        public Vector3 a;
-        public Vector3 b;
-        public Vector3 c;
+        public readonly Vector3 a;
+        public readonly Vector3 b;
+        public readonly Vector3 c;
 
-        public Vector3 this[int i]
-        {
-            get
-            {
-                switch (i)
-                {
-                    case 0:
-                        return a;
-                    case 1:
-                        return b;
-                    default:
-                        return c;
-                }
-            }
-            set
-            {
-                switch (i)
-                {
-                    case 0:
-                        a = value;
-                        break;
-                    case 1:
-                        b = value;
-                        break;
-                    default:
-                        c = value;
-                        break;
-                }
-            }
-        }
 
     }
 }
