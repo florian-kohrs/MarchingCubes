@@ -22,7 +22,7 @@ namespace MarchingCubes
 
         //void RebuildAround(List<Vector3Int> changedPoints);
 
-        void RebuildAround(Vector3 point, int radius, int posX, int posY, int posZ, Vector3 v3);
+        void RebuildAround(float offsetX, float offsetY, float offsetZ, int radius, int posX, int posY, int posZ, float delta);
 
         int PointIndexFromCoord(Vector3Int v);
 

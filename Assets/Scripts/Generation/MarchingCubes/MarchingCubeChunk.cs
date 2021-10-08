@@ -470,19 +470,21 @@ namespace MarchingCubes
             BuildAll();
         }
 
-        //TODO: Do this also for noise manipulation
-
-
-        public void RebuildAround(Vector3 point, int radius, int posX, int posY, int posZ, Vector3 globalOrigin)
+        //TODO: Try make it parallel
+        public void RebuildAround(float offsetX, float offsetY, float offsetZ, int radius, int posX, int posY, int posZ, float delta)
         {
             if (cubeEntities == null)
             {
                 cubeEntities = new MarchingCubeEntity[ChunkSize, ChunkSize, ChunkSize];
             }
+
+            RequestPointsIfNotStored();
+
             ///at some point rather call gpu to compute this
-            int ppMinus = pointsPerAxis - 2;
-            float diff = /*(globalOrigin - point).magnitude + */Mathf.Sqrt(2);
-            float sqrRad = (radius + diff) * (radius + diff);
+            int ppMinus = pointsPerAxis - 1;
+            float sqrEdit = radius * radius;
+
+            ///define loop ranges
             int startX = Mathf.Max(0, posX - radius);
             int startY = Mathf.Max(0, posY - radius);
             int startZ = Mathf.Max(0, posZ - radius);
@@ -490,17 +492,67 @@ namespace MarchingCubes
             int endY = Mathf.Min(ppMinus, posY + radius);
             int endZ = Mathf.Min(ppMinus, posZ + radius);
 
-            int distanceX = startX - posX;
+            float factorMaxDistance = radius + 0;
 
+            Func<float, bool> f;
+            if (delta > 0)
+                f = LargerThanSurface;
+            else if (delta < 0)
+                f = SmallerThanSurface;
+            else
+                return;
 
+            float distanceX = startX - posX + offsetX;
 
+            for (int x = startX; x <= endX; x++)
+            {
+                float distanceY = startY - posY + offsetY;
+                for (int y = startY; y <= endY; y++)
+                {
+                    float distanceZ = startZ - posZ + offsetZ;
+                    for (int z = startZ; z <= endZ; z++)
+                    {
+                        float sqrDistance = new Vector3(distanceX, distanceY, distanceZ).sqrMagnitude;
 
+                        if (sqrDistance <= sqrEdit)
+                        {
+                            float dis = Mathf.Sqrt(sqrDistance);
+                            float factor = 1 - (dis / factorMaxDistance);
+                            float diff = factor * delta;
+                            float value;
+                            int index = PointIndexFromCoord(x, y, z);
+                            value = points[index];
 
+                            if (f(value))
+                                continue;
+
+                            value += diff;
+                            points[index] = value;
+
+                        }
+                        distanceZ++;
+                    }
+                    distanceY++;
+                }
+                distanceX++;
+            }
+
+            distanceX = startX - posX;
+
+            float marchDistance = Vector3.one.magnitude + radius;
+            int voxelMinus = chunkSize - 1;
+
+            startX = Mathf.Max(0, startX - 1);
+            startY = Mathf.Max(0, startY - 1);
+            startZ = Mathf.Max(0, startZ - 1);
+            endX = Mathf.Min(voxelMinus, endX + 1);
+            endY = Mathf.Min(voxelMinus, endY + 1);
+            endZ = Mathf.Min(voxelMinus, endZ + 1);
 
             for (int x = startX; x <= endX; x++)
             {
                 int distanceY = startY - posY;
-                int xx = distanceX * distanceX;
+                float xx = distanceX * distanceX;
                 for (int y = startY; y <= endY; y++)
                 {
                     int distanceZ = startZ - posZ;
@@ -508,9 +560,9 @@ namespace MarchingCubes
                     for (int z = startZ; z <= endZ; z++)
                     {
                         int zz = distanceZ * distanceZ;
-                        int sqrDis = xx + yy + zz;
+                        float dis =  Mathf.Sqrt(xx + yy + zz);
                         //float sqrDistance = ((new Vector3(distanceX, distanceY, distanceZ) + globalOrigin) - point).sqrMagnitude;
-                        if (sqrDis <= sqrRad)
+                        if (dis <= marchDistance)
                         {
                             MarchingCubeEntity cube;
                             if (TryGetEntityAt(x, y, z, out cube))
@@ -743,132 +795,37 @@ namespace MarchingCubes
             System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
             watch.Start();
 
-            int sqrEdit = editDistance * editDistance;
-            float factorMaxDistance = editDistance + 0.0f;
-            int loopRange = editDistance;
-
-            Func<float, bool> f;
-            if (delta > 0)
-                f = LargerThanSurface;
-            else if (delta < 0)
-                f = SmallerThanSurface;
-            else
-                return;
-
-            float[] points = Points;
             MarchingCubeEntity e = GetEntityFromRayHit(hit);
             Vector3Int origin = e.origin;
             int originX = origin.x;
             int originY = origin.y;
             int originZ = origin.z;
+
+            Vector3Int[] neighbourDirs = NeighbourDirections(originX, originY, originZ, editDistance);
+
             Vector3 globalOrigin = origin + AnchorPos;
             Vector3 hitDiff = globalOrigin - hit.point;
             float hitOffsetX = hitDiff.x;
             float hitOffsetY = hitDiff.y;
             float hitOffsetZ = hitDiff.z;
 
-            Dictionary<Vector3Int, Tuple<IMarchingCubeInteractableChunk, Vector3Int, Vector3>> editedNeighbourChunks
-                = new Dictionary<Vector3Int, Tuple<IMarchingCubeInteractableChunk, Vector3Int, Vector3>>();
-
-            List<Vector3Int> selfEditedPoints = new List<Vector3Int>();
-
-            for (int xx = -loopRange; xx < loopRange; xx++)
+            int length = neighbourDirs.Length;
+            IMarchingCubeChunk chunk;
+            for (int i = 0; i < length; i++)
             {
-                for (int yy = -loopRange; yy < loopRange; yy++)
+                Vector3Int newChunkPos = AnchorPos + ChunkSize * neighbourDirs[i];
+                if (ChunkHandler.TryGetOrCreateChunkAt(newChunkPos, out chunk) && chunk is IMarchingCubeInteractableChunk changeableChunk)
                 {
-                    for (int zz = -loopRange; zz < loopRange; zz++)
-                    {
-                        int x = originX + xx;
-                        int y = originY + yy;
-                        int z = originZ + zz;
-                        float sqrDistance = new Vector3(xx + hitOffsetX,yy + hitOffsetY,zz + hitOffsetZ).sqrMagnitude;
-
-                        if (sqrDistance > sqrEdit)
-                            continue;
-
-                        float factor = 1 - (Mathf.Sqrt(sqrDistance) / factorMaxDistance);
-                        float diff = factor * delta;
-                        float value = int.MinValue;
-                        if (IsPointInBounds(x, y, z))
-                        {
-                            int index = PointIndexFromCoord(x, y, z);
-                            value = points[index];
-                            ///if the value is already air stop checking this point (maybe multiply surface level with sign of delta (and swap se to ge))
-                            if (f(value))
-                                continue;
-
-                            value += diff;
-                            points[index] = value;
-                            selfEditedPoints.Add(new Vector3Int(x, y, z));
-                        }
-
-                        Vector3Int[] neighbourDirs = NeighbourDirections(x, y, z);
-                        int length = neighbourDirs.Length;
-                        for (int i = 0; i < length; i++)
-                        {
-                            Vector3Int dir = neighbourDirs[i];
-                            Tuple<IMarchingCubeInteractableChunk, Vector3Int, Vector3> t;
-                            if (!editedNeighbourChunks.TryGetValue(dir, out t))
-                            {
-                                IMarchingCubeChunk chunk;
-
-                                Vector3Int newChunkPos = AnchorPos + ChunkSize * dir;
-                                if (ChunkHandler.TryGetOrCreateChunkAt(newChunkPos, out chunk) && chunk is IMarchingCubeInteractableChunk changeableChunk)
-                                {
-                                    t = Tuple.Create(changeableChunk, TransformBorderCubePointToChunk(origin, dir, changeableChunk), globalOrigin);
-                                    editedNeighbourChunks[dir] = t;
-                                }
-                            }
-                            if (t != null)
-                            {
-                                IMarchingCubeInteractableChunk chunk = t.Item1;
-                                Vector3Int pos = TransformBorderNoisePointToChunk(x, y, z, dir, chunk);
-                                if (chunk.IsPointInBounds(pos))
-                                {
-                                    int index = chunk.PointIndexFromCoord(pos);
-
-                                    if (value != int.MinValue)
-                                    {
-                                        chunk.Points[index] = value;
-                                    }
-                                    else
-                                    {
-                                        value = chunk.Points[index];
-
-                                        if (f(value))
-                                            continue;
-
-                                        value += diff;
-                                        chunk.Points[index] = value;
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    Vector3Int v3 = TransformCoordinateToNeighbourChunk(originX, originY, originZ, neighbourDirs[i], changeableChunk);
+                    changeableChunk.RebuildAround(hitOffsetX, hitOffsetY, hitOffsetZ, editDistance, v3.x, v3.y, v3.z, delta);
                 }
             }
 
-            float elapsed = (float)watch.Elapsed.TotalMilliseconds;
-            Debug.Log(elapsed + "ms for changing point values in " + (editedNeighbourChunks.Count + 1) + " different chunks");
+            RebuildAround(hitOffsetX, hitOffsetY, hitOffsetZ, editDistance, originX, originY, originZ, delta);
 
-            //TODO: Shouldnt be too hard to just calculate possitions to be rebuild from origin and radius
-
-            ///if another chunk is affected call chunkhandler
-            //int count = editedNeighbourChunks.Count;
-            IEnumerator<Tuple<IMarchingCubeInteractableChunk, Vector3Int, Vector3>> enu
-                = editedNeighbourChunks.Values.GetEnumerator();
-            Tuple<IMarchingCubeInteractableChunk, Vector3Int, Vector3> c;
-            while (enu.MoveNext())
-            {
-                c = enu.Current;
-                Vector3Int v = c.Item2;
-                c.Item1.RebuildAround(hit.point, editDistance, v.x,v.y,v.z, c.Item3);
-            }
-            
-            RebuildAround(hit.point, editDistance, originX, originY, originZ, globalOrigin);
             //RebuildAround(selfEditedPoints);
             TimeSpan spam = watch.Elapsed;
-            Debug.Log(spam.TotalMilliseconds + "ms for total rebuild");
+            Debug.Log(spam.TotalMilliseconds + "ms for total rebuild of " + (length + 1) + " chunks");
         }
 
 

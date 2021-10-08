@@ -40,6 +40,7 @@ namespace MarchingCubes
             }
             catch(Exception x)
             {
+                //TODO: Tell chunk handler it didnt work, or will stay stuck
                 Console.WriteLine(x);
                 //Debug.LogException(x);
             }

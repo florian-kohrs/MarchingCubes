@@ -141,6 +141,14 @@ namespace MarchingCubes
             }
         }
 
+        protected void RequestPointsIfNotStored()
+        {
+            if (points == null)
+            {
+                points = chunkHandler.RequestNoiseForChunk(this);
+            }
+        }
+
         protected int triCount;
 
         protected int connectorTriangleCount = 0;
@@ -301,9 +309,9 @@ namespace MarchingCubes
             return result;
         }
 
-        protected Vector3Int TransformBorderNoisePointToChunk(int x, int y, int z, Vector3Int dir, IMarchingCubeChunk neighbour)
+        protected Vector3Int TransformCoordinateToNeighbourChunk(int x, int y, int z, Vector3Int dir, IMarchingCubeChunk neighbour)
         {
-            Vector3Int result = FlipBorderCoordinateToNeighbourChunkPoints(x,y,z, dir, neighbour);
+            Vector3Int result = FlipCoordToNeighbourCubeCoord(x,y,z, dir, neighbour);
 
             if (neighbour.ChunkSize != ChunkSize)
             {
@@ -326,10 +334,6 @@ namespace MarchingCubes
             return result;
         }
 
-        protected bool IsDirectionOutOfChunk(Vector3Int v3)
-        {
-            return v3.x < 0 || v3.y < 0 || v3.z < 0;
-        }
 
         protected Vector3Int FlipBorderCoordinateToNeighbourChunk(Vector3Int v3, Vector3Int dir, IMarchingCubeChunk neighbour)
         {
@@ -339,13 +343,11 @@ namespace MarchingCubes
                 result.x = neighbour.ChunkSize - 1;
             else if (dir.x > 0)
                 result.x = 0;
-
-            if (dir.y < 0)
+            else if (dir.y < 0)
                 result.y = neighbour.ChunkSize - 1;
             else if (dir.y > 0)
                 result.y = 0;
-
-            if (dir.z < 0)
+            else if(dir.z < 0)
                 result.z = neighbour.ChunkSize - 1;
             else if (dir.z > 0)
                 result.z = 0;
@@ -353,25 +355,29 @@ namespace MarchingCubes
             return result;
         }
 
-        protected Vector3Int FlipBorderCoordinateToNeighbourChunkPoints(int x, int y, int z, Vector3Int dir, IMarchingCubeChunk neighbour)
+        protected Vector3Int FlipCoordToNeighbourCubeCoord(int x, int y, int z, Vector3Int dir, IMarchingCubeChunk neighbour)
         {
-            int ppaMinus = neighbour.PointsPerAxis - 1;
             if (dir.x < 0)
-                x = ppaMinus + x;
+                x = chunkSize + x;
             else if (dir.x > 0)
-                x = x - ppaMinus;
+                x = x - chunkSize;
 
             if (dir.y < 0)
-                y = ppaMinus + y;
+                y = chunkSize + y;
             else if (dir.y > 0)
-                y = y - ppaMinus;
+                y = y - chunkSize;
 
             if (dir.z < 0)
-                z = ppaMinus + z;
+                z = chunkSize + z;
             else if (dir.z > 0)
-                z = z - ppaMinus;
+                z = z - chunkSize;
 
             return new Vector3Int(x, y, z);
+        }
+
+        protected bool IsDirectionOutOfChunk(Vector3Int v3)
+        {
+            return v3.x < 0 || v3.y < 0 || v3.z < 0;
         }
 
         protected virtual void BuildFromTriangleArray(TriangleBuilder[] ts, bool buildMeshAswell = true)
@@ -439,14 +445,14 @@ namespace MarchingCubes
             float[] noisePoints = GetNoiseInCornersForPoint(x, y, z, lod);
 
             int cubeIndex = 0;
-            if (noisePoints[0] < surfaceLevel) cubeIndex |= 1;
-            if (noisePoints[1] < surfaceLevel) cubeIndex |= 2;
-            if (noisePoints[2] < surfaceLevel) cubeIndex |= 4;
-            if (noisePoints[3] < surfaceLevel) cubeIndex |= 8;
-            if (noisePoints[4] < surfaceLevel) cubeIndex |= 16;
-            if (noisePoints[5] < surfaceLevel) cubeIndex |= 32;
-            if (noisePoints[6] < surfaceLevel) cubeIndex |= 64;
-            if (noisePoints[7] < surfaceLevel) cubeIndex |= 128;
+            if (noisePoints[0] > surfaceLevel) cubeIndex |= 1;
+            if (noisePoints[1] > surfaceLevel) cubeIndex |= 2;
+            if (noisePoints[2] > surfaceLevel) cubeIndex |= 4;
+            if (noisePoints[3] > surfaceLevel) cubeIndex |= 8;
+            if (noisePoints[4] > surfaceLevel) cubeIndex |= 16;
+            if (noisePoints[5] > surfaceLevel) cubeIndex |= 32;
+            if (noisePoints[6] > surfaceLevel) cubeIndex |= 64;
+            if (noisePoints[7] > surfaceLevel) cubeIndex |= 128;
 
             if (cubeIndex > 0 && cubeIndex < 255)
             {
@@ -789,18 +795,19 @@ namespace MarchingCubes
                 && z <= 0 && z >= pointsPerAxis - 1;
         }
 
+   
         public Vector3Int[] NeighbourDirections(Vector3Int v)
         {
             return NeighbourDirections(v.x, v.y, v.z);
         }
 
-        public Vector3Int[] NeighbourDirections(int x, int y, int z)
+        public Vector3Int[] NeighbourDirections(int x, int y, int z, int space = 0)
         {
             Vector3Int v3 = new Vector3Int();
 
 
-            int pointsMinus = pointsPerAxis - 1;
-            if (x <= 0)
+            int pointsMinus = pointsPerAxis - 1 - space;
+            if (x <= space)
             {
                 v3.x = -1;
             }
@@ -809,7 +816,7 @@ namespace MarchingCubes
                 v3.x = 1;
             }
 
-            if (y <= 0)
+            if (y <= space)
             {
                 v3.y = -1;
             }
@@ -818,7 +825,7 @@ namespace MarchingCubes
                 v3.y = 1;
             }
 
-            if (z <= 0)
+            if (z <= space)
             {
                 v3.z = -1;
             }
