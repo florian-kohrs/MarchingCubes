@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using System.Threading;
+using System.Threading.Tasks;
+using UnityEngine;
 
 namespace MarchingCubes
 {
@@ -18,8 +19,6 @@ namespace MarchingCubes
             this.readyChunks = readyChunks;
             ThreadPool.QueueUserWorkItem((o) => RequestChunk(tris, keepPoints));
         }
-
-        public bool IsInOtherThread { get; set; }
 
         public static object listLock = new object();
 
@@ -70,6 +69,28 @@ namespace MarchingCubes
             }
         }
 
+        public void RebuildAroundParallel(float offsetX, float offsetY, float offsetZ, int radius, int posX, int posY, int posZ, float delta, Queue<MarchingCubeChunkThreaded> readyChunks)
+        {
+            IsInOtherThread = true;
+
+            RequestPointsIfNotStored();
+            ThreadPool.QueueUserWorkItem(delegate
+            {
+                try
+                {
+                    RebuildAround(offsetX, offsetY, offsetZ, radius, posX, posY, posZ, delta);
+                }
+                catch(Exception x)
+                {
+
+                }
+                lock (reabuildListLock)
+                {
+                    readyChunks.Enqueue(this);
+                }
+            });
+        }
+
         protected List<MeshData> data = new List<MeshData>();
 
         public void BuildAllMeshes()
@@ -78,9 +99,10 @@ namespace MarchingCubes
             {
                 ApplyChangesToMesh(data[i]);
             }
+            data.Clear();
         }
 
-        protected void ApplyChangesToMesh(in MeshData d)
+        protected void ApplyChangesToMesh(MeshData d)
         {
             BaseMeshDisplayer displayer = GetMeshInteractableDisplayer(this);
             displayer.ApplyMesh(d.colorData, d.vertices, d.triangles, Material, d.useCollider);

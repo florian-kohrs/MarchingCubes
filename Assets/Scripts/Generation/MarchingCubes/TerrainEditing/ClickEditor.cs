@@ -107,7 +107,7 @@ namespace MarchingCubes
 
                     if (chunk != null)
                     {
-                        chunk.EditPointsAroundRayHit(pointDelta, hit,4);
+                        chunk.EditPointsAroundRayHit(pointDelta, hit,3);
                     }
                 }
             }

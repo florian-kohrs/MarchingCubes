@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace MarchingCubes
@@ -470,7 +472,12 @@ namespace MarchingCubes
             BuildAll();
         }
 
-        //TODO: Try make it parallel
+        public bool IsInOtherThread { get; set; }
+
+        protected static object reabuildListLock = new object();
+
+      
+
         public void RebuildAround(float offsetX, float offsetY, float offsetZ, int radius, int posX, int posY, int posZ, float delta)
         {
             if (cubeEntities == null)
@@ -479,7 +486,6 @@ namespace MarchingCubes
             }
 
             RequestPointsIfNotStored();
-
             ///at some point rather call gpu to compute this
             int ppMinus = pointsPerAxis - 1;
             float sqrEdit = radius * radius;
@@ -488,9 +494,9 @@ namespace MarchingCubes
             int startX = Mathf.Max(0, posX - radius);
             int startY = Mathf.Max(0, posY - radius);
             int startZ = Mathf.Max(0, posZ - radius);
-            int endX = Mathf.Min(ppMinus, posX + radius);
-            int endY = Mathf.Min(ppMinus, posY + radius);
-            int endZ = Mathf.Min(ppMinus, posZ + radius);
+            int endX = Mathf.Min(ppMinus, posX + radius + 1);
+            int endY = Mathf.Min(ppMinus, posY + radius + 1);
+            int endZ = Mathf.Min(ppMinus, posZ + radius + 1);
 
             float factorMaxDistance = radius + 0;
 
@@ -539,7 +545,7 @@ namespace MarchingCubes
 
             distanceX = startX - posX;
 
-            float marchDistance = Vector3.one.magnitude + radius;
+            float marchDistance = Vector3.one.magnitude + radius + 1;
             int voxelMinus = chunkSize - 1;
 
             startX = Mathf.Max(0, startX - 1);
@@ -560,9 +566,9 @@ namespace MarchingCubes
                     for (int z = startZ; z <= endZ; z++)
                     {
                         int zz = distanceZ * distanceZ;
-                        float dis =  Mathf.Sqrt(xx + yy + zz);
+                        float dis = Mathf.Sqrt(xx + yy + zz);
                         //float sqrDistance = ((new Vector3(distanceX, distanceY, distanceZ) + globalOrigin) - point).sqrMagnitude;
-                        if (dis <= marchDistance)
+                        //if (dis <= marchDistance)
                         {
                             MarchingCubeEntity cube;
                             if (TryGetEntityAt(x, y, z, out cube))
@@ -588,7 +594,10 @@ namespace MarchingCubes
 
         public void RebuildMesh()
         {
-            SoftResetMeshDisplayers();
+            if (!IsInOtherThread)
+            {
+                SoftResetMeshDisplayers();
+            }
             BuildMeshFromCurrentTriangles();
         }
 
@@ -631,7 +640,7 @@ namespace MarchingCubes
 
         protected bool IsBorderCube(int x, int y, int z)
         {
-            return x == 0 || x  == entitiesPerAxis
+            return x == 0 || x == entitiesPerAxis
                 || y == 0 || y == entitiesPerAxis
                 || z == 0 || z == entitiesPerAxis;
         }
@@ -801,27 +810,114 @@ namespace MarchingCubes
             int originY = origin.y;
             int originZ = origin.z;
 
-            Vector3Int[] neighbourDirs = NeighbourDirections(originX, originY, originZ, editDistance);
-
             Vector3 globalOrigin = origin + AnchorPos;
             Vector3 hitDiff = globalOrigin - hit.point;
             float hitOffsetX = hitDiff.x;
             float hitOffsetY = hitDiff.y;
             float hitOffsetZ = hitDiff.z;
 
+            Queue<MarchingCubeChunkThreaded> readyChunks = new Queue<MarchingCubeChunkThreaded>();
+
+            Vector3Int[] neighbourDirs = NeighbourDirections(originX, originY, originZ, editDistance + 1);
+
             int length = neighbourDirs.Length;
+
+            int totalChunks = length + 1;
+            int expectedFinishes = 0;
+
+            List<Tuple<MarchingCubeChunkThreaded, Vector3Int>>[] chunks = new List<Tuple<MarchingCubeChunkThreaded, Vector3Int>>[2];
+            chunks[0] = new List<Tuple<MarchingCubeChunkThreaded, Vector3Int>>();
+            chunks[1] = new List<Tuple<MarchingCubeChunkThreaded, Vector3Int>>();
+
+            chunks[points != null ? 1 : 0].Add(Tuple.Create((MarchingCubeChunkThreaded)this, origin));
+
             IMarchingCubeChunk chunk;
             for (int i = 0; i < length; i++)
             {
                 Vector3Int newChunkPos = AnchorPos + ChunkSize * neighbourDirs[i];
-                if (ChunkHandler.TryGetOrCreateChunkAt(newChunkPos, out chunk) && chunk is IMarchingCubeInteractableChunk changeableChunk)
+                if (ChunkHandler.TryGetOrCreateChunkAt(newChunkPos, out chunk))
                 {
-                    Vector3Int v3 = TransformCoordinateToNeighbourChunk(originX, originY, originZ, neighbourDirs[i], changeableChunk);
-                    changeableChunk.RebuildAround(hitOffsetX, hitOffsetY, hitOffsetZ, editDistance, v3.x, v3.y, v3.z, delta);
+                    Vector3Int v3 = TransformCoordinateToNeighbourChunk(originX, originY, originZ, neighbourDirs[i], chunk);
+                    if (chunk is MarchingCubeChunkThreaded threadedChunk)
+                    {
+                        chunks[threadedChunk.points == null ? 1 : 0].Add(Tuple.Create(threadedChunk,v3));
+                    }
+                    else
+                    {
+                        Debug.LogWarning("Ediiting of non paralleel chunks is not supported!");
+                    }
                 }
             }
 
-            RebuildAround(hitOffsetX, hitOffsetY, hitOffsetZ, editDistance, originX, originY, originZ, delta);
+            expectedFinishes = 0;
+
+            int mainThreadChunks;
+            if(chunks[1].Count >= 2)
+            {
+                mainThreadChunks = 8;
+            }
+            else
+            {
+                mainThreadChunks = 8;
+            }
+            
+
+            int count = chunks[0].Count;
+
+            for (int i = 0; i < count; i++)
+            {
+                Vector3Int v3 = chunks[0][i].Item2;
+                if (totalChunks - i > mainThreadChunks)
+                {
+                    chunks[0][i].Item1.RebuildAroundParallel(hitOffsetX, hitOffsetY, hitOffsetZ, editDistance, v3.x, v3.y, v3.z, delta, readyChunks);
+                    expectedFinishes++;
+                }
+                else
+                {
+                    chunks[0][i].Item1.RebuildAround(hitOffsetX, hitOffsetY, hitOffsetZ, editDistance, v3.x, v3.y, v3.z, delta);
+                }
+            }
+
+            totalChunks -= count;
+
+            count = chunks[1].Count;
+            for (int i = 0; i < count; i++)
+            {
+                Vector3Int v3 = chunks[1][i].Item2;
+                if (totalChunks - i > mainThreadChunks)
+                {
+                    chunks[1][i].Item1.RebuildAroundParallel(hitOffsetX, hitOffsetY, hitOffsetZ, editDistance, v3.x, v3.y, v3.z, delta, readyChunks);
+                    expectedFinishes++;
+                }
+                else
+                {
+                    chunks[1][i].Item1.RebuildAround(hitOffsetX, hitOffsetY, hitOffsetZ, editDistance, v3.x, v3.y, v3.z, delta);
+                }
+            }
+
+            int handlelChunks = 0;
+            System.Diagnostics.Stopwatch watch2 = new System.Diagnostics.Stopwatch();
+            watch2.Start();
+            while (handlelChunks < expectedFinishes)
+            {
+                while(readyChunks.Count > 0)
+                {
+                    watch2.Stop();
+                    MarchingCubeChunkThreaded c = readyChunks.Dequeue();
+                    c.SoftResetMeshDisplayers();
+                    c.BuildAllMeshes();
+                    c.IsInOtherThread = false;
+                    handlelChunks++;
+                    watch2.Start();
+                }
+                if(watch.ElapsedMilliseconds > 1000)
+                {
+                    Debug.LogError("Watch exeeded a second. interupt!");
+                    break;
+                }
+            }
+            Debug.Log(watch2.Elapsed.TotalMilliseconds + "ms for wait of parallel chunks");
+
 
             //RebuildAround(selfEditedPoints);
             TimeSpan spam = watch.Elapsed;

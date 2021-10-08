@@ -105,6 +105,8 @@ namespace MarchingCubes
             int index = Array.IndexOf(triangles,tri);
             GetInternNeighbours(result, index);
 
+            //TODO: check to make structs readonly and other optimations
+            //possibly stop reading first to avoid memcopy
             OutsideEdgeNeighbourDirection neighbour;
             List<OutsideEdgeNeighbourDirection> edgeDirs = neighbourData.OutsideNeighbours;
             int count = edgeDirs.Count;
