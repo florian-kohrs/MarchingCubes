@@ -107,11 +107,13 @@ namespace MarchingCubes
 
                     if (chunk != null)
                     {
-                        chunk.EditPointsAroundRayHit(pointDelta, hit,3);
+                        chunk.EditPointsAroundRayHit(pointDelta, hit,4);
                     }
                 }
             }
         }
+
+        int count = 0;
 
         public void BuildPath(PathTriangle from, PathTriangle to)
         {

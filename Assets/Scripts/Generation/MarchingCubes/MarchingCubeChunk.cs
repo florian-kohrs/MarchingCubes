@@ -490,6 +490,7 @@ namespace MarchingCubes
             int ppMinus = pointsPerAxis - 1;
             float sqrEdit = radius * radius;
 
+
             ///define loop ranges
             int startX = Mathf.Max(0, posX - radius);
             int startY = Mathf.Max(0, posY - radius);
@@ -529,10 +530,11 @@ namespace MarchingCubes
                             int index = PointIndexFromCoord(x, y, z);
                             value = points[index];
 
-                            if (f(value))
-                                continue;
+                            //if (f(value))
+                            //    continue;
 
                             value += diff;
+                            value = Mathf.Clamp(value, -2, 2);
                             points[index] = value;
 
                         }
@@ -550,7 +552,7 @@ namespace MarchingCubes
 
             startX = Mathf.Max(0, startX - 1);
             startY = Mathf.Max(0, startY - 1);
-            startZ = Mathf.Max(0, startZ - 1);
+            startZ = Mathf.Max(0, startZ - 5);
             endX = Mathf.Min(voxelMinus, endX + 1);
             endY = Mathf.Min(voxelMinus, endY + 1);
             endZ = Mathf.Min(voxelMinus, endZ + 1);
@@ -568,7 +570,7 @@ namespace MarchingCubes
                         int zz = distanceZ * distanceZ;
                         float dis = Mathf.Sqrt(xx + yy + zz);
                         //float sqrDistance = ((new Vector3(distanceX, distanceY, distanceZ) + globalOrigin) - point).sqrMagnitude;
-                        //if (dis <= marchDistance)
+                        if (dis <= marchDistance)
                         {
                             MarchingCubeEntity cube;
                             if (TryGetEntityAt(x, y, z, out cube))
