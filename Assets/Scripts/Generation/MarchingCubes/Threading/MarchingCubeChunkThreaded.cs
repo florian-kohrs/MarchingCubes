@@ -82,7 +82,8 @@ namespace MarchingCubes
                 }
                 catch(Exception x)
                 {
-
+                    Debug.LogError(x);
+                    //TODO: Reduce expected chunk finishes
                 }
                 lock (reabuildListLock)
                 {

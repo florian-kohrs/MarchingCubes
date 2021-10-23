@@ -127,7 +127,7 @@ namespace MarchingCubes
                 }
                 else
                 {
-                    cubeNeighbour = cubeFinder.GetEntityInNeighbourAt(newPos, neighbour.offset);
+                    cubeNeighbour = cubeFinder.GetEntityInNeighbourAt(newPos);
                     if (cubeNeighbour == null)
                         continue;
                 }

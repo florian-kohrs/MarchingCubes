@@ -9,7 +9,7 @@ namespace MarchingCubes
     {
         bool IsCubeInBounds(int x, int y, int z);
 
-        MarchingCubeEntity GetEntityInNeighbourAt(Vector3Int outsidePos, Vector3Int offset);
+        MarchingCubeEntity GetEntityInNeighbourAt(Vector3Int outsidePos);
 
         MarchingCubeEntity GetEntityAt(Vector3Int outsidePos);
 

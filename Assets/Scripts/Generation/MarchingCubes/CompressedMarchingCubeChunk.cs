@@ -282,98 +282,78 @@ namespace MarchingCubes
         }
 
 
-        protected Vector3Int TransformBorderCubePointToChunk(Vector3Int v3, Vector3Int dir, IMarchingCubeChunk neighbour)
-        {
-            Vector3Int result = FlipBorderCoordinateToNeighbourChunk(v3, dir, neighbour);
+        //protected Vector3Int TransformBorderCubePointToChunk(Vector3Int v3, Vector3Int dir, IMarchingCubeChunk neighbour)
+        //{
+        //    Vector3Int result = FlipBorderCoordinateToNeighbourChunk(v3, dir, neighbour);
 
 
-            if (neighbour.ChunkSize != ChunkSize)
-            {
+        //    if (neighbour.ChunkSize != ChunkSize)
+        //    {
 
-                Vector3Int transformedAnchorPosition;
+        //        Vector3Int transformedAnchorPosition;
 
-                if (IsDirectionOutOfChunk(dir))
-                {
-                    transformedAnchorPosition = AnchorPos + neighbour.ChunkSize * dir;
-                }
-                else
-                {
-                    transformedAnchorPosition = AnchorPos + ChunkSize * dir;
-                }
+        //        if (IsDirectionOutOfChunk(dir))
+        //        {
+        //            transformedAnchorPosition = AnchorPos + neighbour.ChunkSize * dir;
+        //        }
+        //        else
+        //        {
+        //            transformedAnchorPosition = AnchorPos + ChunkSize * dir;
+        //        }
 
-                Vector3Int anchorDiff = transformedAnchorPosition - neighbour.AnchorPos;
+        //        Vector3Int anchorDiff = transformedAnchorPosition - neighbour.AnchorPos;
 
-                result = result + anchorDiff;
-            }
+        //        result = result + anchorDiff;
+        //    }
 
-            return result;
-        }
+        //    return result;
+        //}
 
-        protected Vector3Int TransformCoordinateToNeighbourChunk(int x, int y, int z, Vector3Int dir, IMarchingCubeChunk neighbour)
-        {
-            Vector3Int result = FlipCoordToNeighbourCubeCoord(x,y,z, dir, neighbour);
-
-            if (neighbour.ChunkSize != ChunkSize)
-            {
-                Vector3Int transformedAnchorPosition;
-
-                if (IsDirectionOutOfChunk(dir))
-                {
-                    transformedAnchorPosition = AnchorPos + neighbour.ChunkSize * dir;
-                }
-                else
-                {
-                    transformedAnchorPosition = AnchorPos + ChunkSize * dir;
-                }
-
-                Vector3Int anchorDiff = transformedAnchorPosition - neighbour.AnchorPos;
-
-                result = result + anchorDiff;
-            }
-
-            return result;
-        }
+        //protected Vector3Int TransformCoordinateToNeighbourChunk(Vector3Int coord, IMarchingCubeChunk neighbour)
+        //{
+        //    return coord + AnchorPos - neighbour.AnchorPos;
+        //}
 
 
-        protected Vector3Int FlipBorderCoordinateToNeighbourChunk(Vector3Int v3, Vector3Int dir, IMarchingCubeChunk neighbour)
-        {
-            Vector3Int result = v3;
+        //protected Vector3Int FlipBorderCoordinateToNeighbourChunk(Vector3Int v3, Vector3Int dir, IMarchingCubeChunk neighbour)
+        //{
+        //    Vector3Int result = v3;
 
-            if (dir.x < 0)
-                result.x = neighbour.ChunkSize - 1;
-            else if (dir.x > 0)
-                result.x = 0;
-            else if (dir.y < 0)
-                result.y = neighbour.ChunkSize - 1;
-            else if (dir.y > 0)
-                result.y = 0;
-            else if(dir.z < 0)
-                result.z = neighbour.ChunkSize - 1;
-            else if (dir.z > 0)
-                result.z = 0;
+        //    if (dir.x < 0)
+        //        result.x = neighbour.ChunkSize - 1;
+        //    else if (dir.x > 0)
+        //        result.x = 0;
+        //    else if (dir.y < 0)
+        //        result.y = neighbour.ChunkSize - 1;
+        //    else if (dir.y > 0)
+        //        result.y = 0;
+        //    else if(dir.z < 0)
+        //        result.z = neighbour.ChunkSize - 1;
+        //    else if (dir.z > 0)
+        //        result.z = 0;
 
-            return result;
-        }
+        //    return result;
+        //}
 
-        protected Vector3Int FlipCoordToNeighbourCubeCoord(int x, int y, int z, Vector3Int dir, IMarchingCubeChunk neighbour)
-        {
-            if (dir.x < 0)
-                x = chunkSize + x;
-            else if (dir.x > 0)
-                x = x - chunkSize;
+        //protected Vector3Int FlipCoordToNeighbourCubeCoord(int x, int y, int z, Vector3Int dir, IMarchingCubeChunk neighbour)
+        //{
+        //    if (dir.x < 0)
+        //        x = chunkSize + x;
+        //    else if (dir.x > 0)
+        //        x = x - chunkSize;
 
-            if (dir.y < 0)
-                y = chunkSize + y;
-            else if (dir.y > 0)
-                y = y - chunkSize;
+        //    if (dir.y < 0)
+        //        y = chunkSize + y;
+        //    else if (dir.y > 0)
+        //        y = y - chunkSize;
 
-            if (dir.z < 0)
-                z = chunkSize + z;
-            else if (dir.z > 0)
-                z = z - chunkSize;
+        //    if (dir.z < 0)
+        //        z = chunkSize + z;
+        //    else if (dir.z > 0)
+        //        z = z - chunkSize;
 
-            return new Vector3Int(x, y, z);
-        }
+        //    return new Vector3Int(x, y, z);
+        //}
 
         protected bool IsDirectionOutOfChunk(Vector3Int v3)
         {

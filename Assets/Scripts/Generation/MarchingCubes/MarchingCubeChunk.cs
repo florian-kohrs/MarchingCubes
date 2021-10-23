@@ -97,14 +97,14 @@ namespace MarchingCubes
 
 
 
-        public MarchingCubeEntity GetEntityInNeighbourAt(Vector3Int outsidePos, Vector3Int offset)
+        public MarchingCubeEntity GetEntityInNeighbourAt(Vector3Int outsidePos)
         {
             IMarchingCubeChunk chunk;
             if (chunkHandler.TryGetReadyChunkAt(AnchorPos + outsidePos, out chunk))
             {
                 if (chunk is IMarchingCubeInteractableChunk c)
                 {
-                    Vector3Int pos = TransformBorderCubePointToChunk(outsidePos, offset, chunk);
+                    Vector3Int pos = outsidePos + AnchorPos - chunk.AnchorPos;
                     return c.GetEntityAt(pos);
                 }
             }
@@ -834,17 +834,18 @@ namespace MarchingCubes
             IMarchingCubeChunk chunk;
             for (int i = 0; i < length; i++)
             {
-                Vector3Int newChunkPos = AnchorPos + ChunkSize * neighbourDirs[i];
+                Vector3Int offset = ChunkSize * neighbourDirs[i];
+                Vector3Int newChunkPos = AnchorPos + offset;
                 if (ChunkHandler.TryGetOrCreateChunkAt(newChunkPos, out chunk))
                 {
-                    Vector3Int v3 = TransformCoordinateToNeighbourChunk(originX, originY, originZ, neighbourDirs[i], chunk);
                     if (chunk is MarchingCubeChunkThreaded threadedChunk)
                     {
+                        Vector3Int v3 = origin - offset;
                         chunks[threadedChunk.points == null ? 1 : 0].Add(Tuple.Create(threadedChunk,v3));
                     }
                     else
                     {
-                        Debug.LogWarning("Ediiting of non paralleel chunks is not supported!");
+                        Debug.LogWarning("Ediiting of non parallel chunks is not supported!");
                     }
                 }
             }
