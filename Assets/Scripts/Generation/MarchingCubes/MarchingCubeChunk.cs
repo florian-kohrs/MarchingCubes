@@ -561,36 +561,6 @@ namespace MarchingCubes
             BuildMeshFromCurrentTriangles();
         }
 
-        protected Vector3Int[] GetIndicesAround(MarchingCubeEntity e)
-        {
-            Vector3Int v3 = e.origin;
-            Vector3Int[] r = new Vector3Int[] {
-                new Vector3Int(v3.x + 1, v3.y, v3.z),
-                new Vector3Int(v3.x - 1, v3.y, v3.z),
-                new Vector3Int(v3.x, v3.y + 1, v3.z),
-                new Vector3Int(v3.x, v3.y - 1, v3.z),
-                new Vector3Int(v3.x, v3.y, v3.z + 1),
-                new Vector3Int(v3.x, v3.y, v3.z - 1) };
-            return r;
-        }
-
-        protected List<Vector3Int> GetValidIndicesAround(MarchingCubeEntity e)
-        {
-            Vector3Int[] aroundVertices = GetIndicesAround(e);
-            List<Vector3Int> r = new List<Vector3Int>(aroundVertices.Length);
-            Vector3Int v3;
-            for (int i = 0; i < aroundVertices.Length; ++i)
-            {
-                v3 = aroundVertices[i];
-                if (IsCubeInBounds(v3))
-                {
-                    r.Add(v3);
-                }
-            }
-            return r;
-        }
-
-
 
         protected bool IsBorderCube(Vector3Int v)
         {
