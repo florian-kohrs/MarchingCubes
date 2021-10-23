@@ -42,12 +42,6 @@ namespace MarchingCubes
         }
 
 
-
-        //public virtual void InitializeEmpty(IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel)
-        //{
-        //    throw new NotImplementedException();
-        //}
-
         public void ResetChunk()
         {
             FreeAllMeshes();
@@ -281,80 +275,6 @@ namespace MarchingCubes
             }
         }
 
-
-        //protected Vector3Int TransformBorderCubePointToChunk(Vector3Int v3, Vector3Int dir, IMarchingCubeChunk neighbour)
-        //{
-        //    Vector3Int result = FlipBorderCoordinateToNeighbourChunk(v3, dir, neighbour);
-
-
-        //    if (neighbour.ChunkSize != ChunkSize)
-        //    {
-
-        //        Vector3Int transformedAnchorPosition;
-
-        //        if (IsDirectionOutOfChunk(dir))
-        //        {
-        //            transformedAnchorPosition = AnchorPos + neighbour.ChunkSize * dir;
-        //        }
-        //        else
-        //        {
-        //            transformedAnchorPosition = AnchorPos + ChunkSize * dir;
-        //        }
-
-        //        Vector3Int anchorDiff = transformedAnchorPosition - neighbour.AnchorPos;
-
-        //        result = result + anchorDiff;
-        //    }
-
-        //    return result;
-        //}
-
-        //protected Vector3Int TransformCoordinateToNeighbourChunk(Vector3Int coord, IMarchingCubeChunk neighbour)
-        //{
-        //    return coord + AnchorPos - neighbour.AnchorPos;
-        //}
-
-
-        //protected Vector3Int FlipBorderCoordinateToNeighbourChunk(Vector3Int v3, Vector3Int dir, IMarchingCubeChunk neighbour)
-        //{
-        //    Vector3Int result = v3;
-
-        //    if (dir.x < 0)
-        //        result.x = neighbour.ChunkSize - 1;
-        //    else if (dir.x > 0)
-        //        result.x = 0;
-        //    else if (dir.y < 0)
-        //        result.y = neighbour.ChunkSize - 1;
-        //    else if (dir.y > 0)
-        //        result.y = 0;
-        //    else if(dir.z < 0)
-        //        result.z = neighbour.ChunkSize - 1;
-        //    else if (dir.z > 0)
-        //        result.z = 0;
-
-        //    return result;
-        //}
-
-        //protected Vector3Int FlipCoordToNeighbourCubeCoord(int x, int y, int z, Vector3Int dir, IMarchingCubeChunk neighbour)
-        //{
-        //    if (dir.x < 0)
-        //        x = chunkSize + x;
-        //    else if (dir.x > 0)
-        //        x = x - chunkSize;
-
-        //    if (dir.y < 0)
-        //        y = chunkSize + y;
-        //    else if (dir.y > 0)
-        //        y = y - chunkSize;
-
-        //    if (dir.z < 0)
-        //        z = chunkSize + z;
-        //    else if (dir.z > 0)
-        //        z = z - chunkSize;
-
-        //    return new Vector3Int(x, y, z);
-        //}
-
         protected bool IsDirectionOutOfChunk(Vector3Int v3)
         {
             return v3.x < 0 || v3.y < 0 || v3.z < 0;
@@ -581,30 +501,6 @@ namespace MarchingCubes
             }
         }
 
-        //protected void AddTriangleToMeshData(Triangle tri, Color c, ref int usedTriCount, ref int totalTriCount, bool useCollider = true)
-        //{
-
-        //    meshTriangles[usedTriCount] = usedTriCount;
-        //    meshTriangles[usedTriCount + 1] = usedTriCount + 1;
-        //    meshTriangles[usedTriCount + 2] = usedTriCount + 2;
-
-        //    colorData[usedTriCount] = c;
-        //    colorData[usedTriCount + 1] = c;
-        //    colorData[usedTriCount + 2] = c;
-
-        //    vertices[usedTriCount] = tri.a;
-        //    vertices[usedTriCount + 1] = tri.b;
-        //    vertices[usedTriCount + 2] = tri.c;
-
-        //    usedTriCount += 3;
-        //    totalTriCount++;
-        //    if (usedTriCount >= MAX_TRIANGLES_PER_MESH || usedTriCount >= trisLeft)
-        //    {
-        //        ApplyChangesToMesh(useCollider);
-        //        usedTriCount = 0;
-        //    }
-        //}
-
         protected BaseMeshDisplayer GetMeshDisplayer()
         {
             BaseMeshDisplayer d = chunkHandler.GetNextMeshDisplayer();
@@ -699,19 +595,7 @@ namespace MarchingCubes
             }
         }
 
-        protected static Color brown = new Color(75, 44, 13, 1) / 255f;
-        protected static float brownR = 75 / 255f;
-        protected static float brownG = 44 / 255f;
-        protected static float brownB = 13 / 255f;
 
-        protected static Color green = Color.green;
-        protected static float greenR = Color.green.r / 255f;
-        protected static float greenG = Color.green.g / 255f;
-        protected static float greenB = Color.green.b / 255f;
-
-
-
-       
 
         protected void ResetArrayData()
         {

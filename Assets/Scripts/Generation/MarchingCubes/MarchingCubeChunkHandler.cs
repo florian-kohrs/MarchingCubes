@@ -26,21 +26,13 @@ namespace MarchingCubes
 
         public const int DEFAULT_CHUNK_SIZE_POWER = 5;
 
-        //public const int ChunkSize = 128;
-
-        //public const int CHUNK_VOLUME = ChunkSize * ChunkSize * ChunkSize;
 
         public const int DEFAULT_MIN_CHUNK_LOD_POWER = 0;
 
         public const int MAX_CHUNK_LOD_POWER = 7;
 
-        public const int MAX_CHUNK_LOD_BIT_REPRESENTATION_SIZE = 3;//(int)(Mathf.Log(2,MAX_CHUNK_LOD_POWER)) + 1;
+        public const int MAX_CHUNK_LOD_BIT_REPRESENTATION_SIZE = 3;
 
-        // protected int maxRunningThreads = 0;
-
-        //public const int PointsPerChunkAxis = ChunkSize + 1;
-
-        //public Dictionary<Vector3Int, IMarchingCubeChunk> chunks = new Dictionary<Vector3Int, IMarchingCubeChunk>(new Vector3EqualityComparer());
 
         public Dictionary<Vector3Int, IChunkGroupRoot> chunkGroups = new Dictionary<Vector3Int, IChunkGroupRoot>();
 
@@ -187,8 +179,6 @@ namespace MarchingCubes
 
 
         public int deactivateAfterDistance = 40;
-
-        //protected int DeactivatedChunkDistance => Mathf.CeilToInt(deactivateAfterDistance / PointsPerChunkAxis);
 
         public Material chunkMaterial;
 
@@ -451,32 +441,6 @@ namespace MarchingCubes
         }
 
         protected int channeledChunks = 0;
-
-        //public void CheckChunksAround(Vector3 v)
-        //{
-        //    Vector3Int chunkIndex = PositionToNormalCoord(v);
-
-        //    // SetActivationOfChunks(chunkIndex);
-
-        //    Vector3Int index = new Vector3Int();
-        //    for (int x = -NeededChunkAmount / 2; x < NeededChunkAmount / 2 + 1; x++)
-        //    {
-        //        index.x = x;
-        //        for (int y = Mathf.Max(-NeededChunkAmount / 2, -NeededChunkAmount / 2); y < NeededChunkAmount / 2 + 1; y++)
-        //        {
-        //            index.y = y;
-        //            for (int z = -NeededChunkAmount / 2; z < NeededChunkAmount / 2 + 1; z++)
-        //            {
-        //                index.z = z;
-        //                Vector3Int shiftedIndex = index + chunkIndex;
-        //                if (!chunks.ContainsKey(shiftedIndex))
-        //                {
-        //                    CreateChunkAt(shiftedIndex);
-        //                }
-        //            }
-        //        }
-        //    }
-        //}
 
         protected bool hasFoundInitialChunk;
 
@@ -863,11 +827,6 @@ namespace MarchingCubes
             chunk.InitializeWithMeshDataParallel(tris, readyParallelChunks, false);
         }
 
-        //protected void RebuildChunkParallelAt(Vector3Int p, Action OnDone, int lod)
-        //{
-        //    RebuildChunkParallelAt(chunks[p]);
-        //}
-
         public int minSteepness = 15;
         public int maxSteepness = 50;
         public Color flatColor = new Color(0, 255 / 255f, 0, 1);
@@ -901,14 +860,11 @@ namespace MarchingCubes
                 throw new Exception("Lod must be divisor of chunksize");
 
             int numVoxelsPerAxis = chunkSize / lod;
-            //int chunkVolume = numVoxelsPerAxis * numVoxelsPerAxis * numVoxelsPerAxis;
             int pointsPerAxis = numVoxelsPerAxis + 1;
             int pointsVolume = pointsPerAxis * pointsPerAxis * pointsPerAxis;
 
             float spacing = lod;
             Vector3 anchor = chunk.AnchorPos;
-
-            //chunk.SizeGrower = extraSize;
 
             densityGenerator.Generate(pointsPerAxis, anchor, spacing);
 
@@ -949,14 +905,14 @@ namespace MarchingCubes
             ComputeCubesFromNoise(chunk, lod);
             if (triCount < 0)
             {
-                // Get number of triangles in the triangle buffer
+                ///Get number of triangles in the triangle buffer
                 ComputeBuffer.CopyCount(triangleBuffer, triCountBuffer, 0);
                 int[] triCountArray = new int[1];
                 triCountBuffer.GetData(triCountArray);
                 triCount = triCountArray[0];
             }
 
-            // Get triangle data from shader
+            ///Get triangle data from shader
 
             tris = new TriangleBuilder[triCount];
             //TODO: Check if this changes performance
@@ -972,12 +928,9 @@ namespace MarchingCubes
         public void ComputeCubesFromNoise(IMarchingCubeChunk chunk, int lod)
         {
             int numVoxelsPerAxis = chunk.ChunkSize / lod;
-            //int chunkVolume = numVoxelsPerAxis * numVoxelsPerAxis * numVoxelsPerAxis;
             int pointsPerAxis = numVoxelsPerAxis + 1;
 
             int numThreadsPerAxis = Mathf.CeilToInt(numVoxelsPerAxis / (float)threadGroupSize);
-
-            //CreateTriangleBuffer();
 
             float spacing = lod;
             Vector3 anchor = chunk.AnchorPos;
@@ -1085,32 +1038,7 @@ namespace MarchingCubes
             //    });
         }
 
-        //protected void NotifyNeighbourChunksOnLodSwitch(Vector3Int changedIndex, int newLodPower)
-        //{
-        //    Vector3Int[] neighbourPositions = changedIndex.GetAllAdjacentDirections();
-        //    for (int i = 0; i < neighbourPositions.Length; ++i)
-        //    {
-        //        Vector3Int v3 = neighbourPositions[i];
-        //        IMarchingCubeChunk c;
-        //        if (TryGetReadyChunkAt(changedIndex + v3, out c))
-        //        {
-        //            c.ChangeNeighbourLodTo(newLodPower, v3);
-        //        }
-        //    }
-        //}
-
-        //protected int buffersCreated = 0;
-
-        //protected void CreateTriangleBuffer()
-        //{
-        //    triangleBuffer = new ComputeBuffer(MAX_TRIANGLES_COUNT, TriangleBuilder.SIZE_OF_TRI_BUILD, ComputeBufferType.Append);
-        //}
-
-        //protected void ReleaseTriangleBuffer()
-        //{
-        //    triangleBuffer.Release();
-        //}
-
+      
         protected void CreateAllBuffersWithSizes(int numVoxelsPerAxis)
         {
             int points = numVoxelsPerAxis + 1;
@@ -1121,66 +1049,6 @@ namespace MarchingCubes
             pointsBuffer = new ComputeBuffer(numPoints, sizeof(float) * 1);
             triangleBuffer = new ComputeBuffer(maxTriangleCount, TriangleBuilder.SIZE_OF_TRI_BUILD, ComputeBufferType.Append);
             triCountBuffer = new ComputeBuffer(1, sizeof(int), ComputeBufferType.Raw);
-        }
-
-
-
-        //public void EditNeighbourChunksAt(Dictionary<Vector3Int, float> deltas)
-        //{
-
-        //    Vector3Int cubeOrigin = new Vector3Int();
-        //    Vector3Int[] combs = cubeOrigin.GetAllCombination();
-        //    Vector3Int v;
-        //    for (int i = 0; i < combs.Length; ++i)
-        //    {
-        //        v = combs[i];
-        //        bool allActiveIndicesHaveOffset = true;
-        //        Vector3Int offsetVector = new Vector3Int();
-        //        for (int x = 0; x < 3 && allActiveIndicesHaveOffset; x++)
-        //        {
-        //            if (v[x] != int.MinValue)
-        //            {
-        //                //offset is in range -1 to 1
-        //                int offset = Mathf.CeilToInt((cubeOrigin[x] / (chunkSize - 2f)) - 1);
-        //                allActiveIndicesHaveOffset = offset != 0;
-        //                offsetVector[x] = offset;
-        //            }
-        //            else
-        //            {
-        //                offsetVector[x] = 0;
-        //            }
-        //        }
-        //        if (allActiveIndicesHaveOffset)
-        //        {
-        //            //Debug.Log("Found neighbour with offset " + offsetVector);
-        //            IMarchingCubeChunk neighbourChunk;
-        //            if (TryGetOrCreateChunk(chunkOffset + offsetVector, out neighbourChunk))
-        //            {
-        //                if (neighbourChunk.LODPower <= DEFAULT_MIN_CHUNK_LOD_POWER)
-        //                {
-        //                    EditNeighbourChunkAt(neighbourChunk, cubeOrigin, offsetVector, delta);
-        //                }
-        //                else
-        //                {
-        //                    Debug.LogWarning("Cant edit a neighbour mesh with higher lod! Upgrade neighbour lods if player gets too close.");
-        //                }
-        //            }
-        //        }
-        //    }
-        //}
-
-        public void EditNeighbourChunkAt(IMarchingCubeChunk chunk, Vector3Int original, Vector3Int offset, float delta)
-        {
-            throw new NotImplementedException();
-            //if (chunk is IMarchingCubeInteractableChunk interactable)
-            //{
-            //    Vector3Int newChunkCubeIndex = (original + offset).Map(f => MathExt.FloorMod(f, ChunkSize));
-            //    interactable.EditPointsNextToChunk(chunk, newChunkCubeIndex, offset, delta);
-            //}
-            //else
-            //{
-            //    Debug.LogWarning("Neighbour chunk is not interactable!");
-            //}
         }
 
 

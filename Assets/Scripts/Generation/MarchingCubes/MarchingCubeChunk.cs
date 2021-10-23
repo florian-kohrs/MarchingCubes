@@ -14,32 +14,19 @@ namespace MarchingCubes
 
         protected override void WorkOnBuildedChunk()
         {
-            //FindConnectedChunks();
-
             if (neighbourChunksGlue.Count > 0)
             {
                 BuildMeshToConnectHigherLodChunks();
             }
         }
 
-        //public override void InitializeEmpty(IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel)
-        //{
-        //    HasStarted = true;
-        //    points = new float[PointsPerAxis * PointsPerAxis * PointsPerAxis];
-        //    this.surfaceLevel = surfaceLevel;
-        //    this.neighbourLODs = neighbourLODs;
-        //    careAboutNeighbourLODS = neighbourLODs.HasNeighbourWithHigherLOD(lod);
-        //    chunkHandler = handler;
-        //    IsReady = true;
-        //}
+     
 
         public IMarchingCubeInteractableChunk GetChunk => this;
 
         public MarchingCubeEntity[,,] cubeEntities;
 
         public HashSet<MarchingCubeEntity> entities = new HashSet<MarchingCubeEntity>();
-
-        //public Dictionary<int, MarchingCubeEntity> cubeEntities = new Dictionary<int, MarchingCubeEntity>();
 
         protected Dictionary<Vector3Int, MarchingCubeEntity> higherLodNeighbourCubes = new Dictionary<Vector3Int, MarchingCubeEntity>();
 
@@ -282,30 +269,6 @@ namespace MarchingCubes
         }
 
 
-        //protected List<MissingNeighbourData> missingHigherLODNeighbour = new List<MissingNeighbourData>();
-
-        //protected bool GetPointWithCorner(MarchingCubeEntity e, int a, int b, out Vector3 result)
-        //{
-        //    for (int i = 0; i < e.triangles.Count; ++i)
-        //    {
-        //        for (int x = 0; x < 3; x++)
-        //        {
-        //            Vector3 v = e.triangles[i].tri[x];
-        //            int aIndex = TriangulationTable.cornerIndexAFromEdge[TriangulationTable.triangulation[e.triangulationIndex][i * 3 + x]];
-        //            int bIndex = TriangulationTable.cornerIndexBFromEdge[TriangulationTable.triangulation[e.triangulationIndex][i * 3 + x]];
-        //            if (aIndex == a && bIndex == b)
-        //            {
-        //                result = v;
-        //                return true;
-        //            }
-        //        }
-        //    }
-        //    result = Vector3.zero;
-        //    return false;
-        //}
-
-
-
         protected virtual void ResetAll()
         {
             FreeAllMeshes();
@@ -327,12 +290,7 @@ namespace MarchingCubes
                 {
                     for (int z = 0; z < vertexSize / localLod; z++)
                     {
-                        //MarchingCubeEntity e = MarchAt(v, localLod);
-                        //if (e.triangles.Count > 0)
-                        //{
-                        //    cubeEntities[IndexFromCoord(x, y, z)] = e;
-                        //    triCount += e.triangles.Count * 3;
-                        //}
+                       
                         e = MarchAt(x, y, z, this);
                         if (e != null)
                         {
@@ -341,7 +299,6 @@ namespace MarchingCubes
                     }
                 }
             }
-            // BuildMeshFromCurrentTriangles();
         }
 
         protected bool GetOrAddEntityAt(int x, int y, int z, int triangulationIndex, out MarchingCubeEntity e)
@@ -568,8 +525,9 @@ namespace MarchingCubes
                     for (int z = startZ; z <= endZ; z++)
                     {
                         int zz = distanceZ * distanceZ;
+                        //TODO: Replace with sqrDistance
+                        //Maybe write changed coords in hashset instead and check here if they changed?
                         float dis = Mathf.Sqrt(xx + yy + zz);
-                        //float sqrDistance = ((new Vector3(distanceX, distanceY, distanceZ) + globalOrigin) - point).sqrMagnitude;
                         if (dis <= marchDistance)
                         {
                             MarchingCubeEntity cube;
@@ -646,57 +604,6 @@ namespace MarchingCubes
                 || y == 0 || y == entitiesPerAxis
                 || z == 0 || z == entitiesPerAxis;
         }
-
-
-        //protected Direction GetBorderInfo(Vector3Int v)
-        //{
-        //    if (!(v.y == 0 || v.y % (vertexSize - 1) == 0
-        //        || v.z == 0 || v.z % (vertexSize - 1) == 0))
-        //    {
-        //        if (v.x == 0)
-        //            return Direction.xStart;
-        //        else if (v.x % (vertexSize - 1) == 0)
-        //            return Direction.xEnd;
-        //    }
-
-        //    if (!(v.x == 0 || v.x % (vertexSize - 1) == 0
-        //        || v.z == 0 || v.z % (vertexSize - 1) == 0))
-        //    {
-        //        if (v.y == 0)
-        //            return Direction.yStart;
-        //        else if (v.y % (vertexSize - 1) == 0)
-        //            return Direction.yEnd;
-        //    }
-
-        //    if (!(v.x == 0 || v.x % (vertexSize - 1) == 0
-        //      || v.y == 0 || v.y % (vertexSize - 1) == 0))
-        //    {
-        //        if (v.z == 0)
-        //            return Direction.yStart;
-        //        else if (v.z % (vertexSize - 1) == 0)
-        //            return Direction.yEnd;
-        //    }
-        //    return Direction.None;
-        //}
-
-
-        //protected enum Direction { None, xStart, xEnd, yStart, yEnd, zStart, zEnd };
-
-        //protected Direction DirFromVector(Vector3Int dir)
-        //{
-        //    if (dir.x > 0)
-        //        return Direction.xEnd;
-        //    else if (dir.x < 0)
-        //        return Direction.xStart;
-        //    else if (dir.y > 0)
-        //        return Direction.yEnd;
-        //    else if (dir.y < 0)
-        //        return Direction.yStart;
-        //    else if (dir.z > 0)
-        //        return Direction.zEnd;
-        //    else
-        //        return Direction.zStart;
-        //}
 
 
 
