@@ -30,6 +30,8 @@ namespace MarchingCubes
             }
         }
 
+        public static List<Exception> xs = new List<Exception>();
+
         protected void RequestChunk(TriangleBuilder[] tris, bool keepPoints)
         {
             try
@@ -40,6 +42,7 @@ namespace MarchingCubes
             }
             catch(Exception x)
             {
+                xs.Add(x);
                 Console.WriteLine(x);
                 //Debug.LogException(x);
             }

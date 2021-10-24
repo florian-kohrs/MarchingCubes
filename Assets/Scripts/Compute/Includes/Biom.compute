@@ -1,32 +1,22 @@
 ﻿struct Biom
 {
-	int3 steepColor;
-	int3 flatColor;
-	int minSteepness;
-	int maxSteepness;
-
+	float amplitude;
 	float lacunarity;
 	float persistence;
 	float noiseScale;
-	float amplitude;
 	float scale;
 };
 
 
 Biom interpolate(Biom b1, Biom b2, float t)
 {
-	float reversedT = 1 - t;
+    float reversedT = 1 - t;
 
-	Biom b;
-	b.steepColor = reversedT * b1.steepColor + t * b2.steepColor;
-	b.flatColor = reversedT * b1.flatColor + t * b2.flatColor;
-
-	b.minSteepness = reversedT * b1.minSteepness + t * b2.minSteepness;
-	b.maxSteepness = reversedT * b1.maxSteepness + t * b2.maxSteepness;
-	b.lacunarity = reversedT * b1.lacunarity + t * b2.lacunarity;
-	b.persistence = reversedT * b1.persistence + t * b2.persistence;
-	b.noiseScale = reversedT * b1.noiseScale + t * b2.noiseScale;
-	b.amplitude = reversedT * b1.amplitude + t * b2.amplitude;
-	b.scale = reversedT * b1.scale + t * b2.scale;
-	return b;
+    Biom b;
+    b.lacunarity = reversedT * b1.lacunarity + t * b2.lacunarity;
+    b.persistence = reversedT * b1.persistence + t * b2.persistence;
+    b.noiseScale = reversedT * b1.noiseScale + t * b2.noiseScale;
+    b.amplitude = reversedT * b1.amplitude + t * b2.amplitude;
+    b.scale = reversedT * b1.scale + t * b2.scale;
+    return b;
 }

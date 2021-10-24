@@ -1,21 +1,23 @@
 ﻿#pragma kernel Density
 #include "/Includes/Noise.compute"
-#include "/Includes/Splines.compute"
 
 static const int numThreads = 8;
 
-// Noise settings
+struct Biom
+{
+    float amplitude;
+    float lacunarity;
+    float persistence;
+    float noiseScale;
+    float scale;
+};
+
+//Noise settings
 StructuredBuffer<float3> octaveOffsets;
-
-
 int octaves;
-float lacunarity;
-float persistence;
-float noiseScale;
-float amplitude;
-float scale;
 float radius;
 
+//Envirenment settings
 RWStructuredBuffer<float> points;
 int numPointsPerAxis;
 float3 anchor;
@@ -24,11 +26,152 @@ float3 offset;
 float spacing;
 
 
-int indexFromCoord(uint x, uint y, uint z) {
-    return z * numPointsPerAxis * numPointsPerAxis + y * numPointsPerAxis + x;
+//Biom settings
+StructuredBuffer<Biom> bioms;
+uint biomSize;
+uint biomsCount;
+uint biomSpacing;
+
+
+Biom interpolate(Biom b1, Biom b2, float t)
+{
+    float reversedT = 1 - t;
+
+    Biom b;
+    b.lacunarity = reversedT * b1.lacunarity + t * b2.lacunarity;
+    b.persistence = reversedT * b1.persistence + t * b2.persistence;
+    b.noiseScale = reversedT * b1.noiseScale + t * b2.noiseScale;
+    b.amplitude = reversedT * b1.amplitude + t * b2.amplitude;
+    b.scale = reversedT * b1.scale + t * b2.scale;
+    return b;
 }
 
 
+Biom getBiomAt(int3 pos)
+{
+    float3 noisePos = pos * biomSpacing / biomSize;
+    uint noise = (uint)(snoise(noisePos) * 100);
+    uint index = noise % biomsCount;
+    return bioms[index];
+}
+
+
+Biom GetCubicInterpolatedBiomAt(int3 pos)
+{
+    int3 biomPoint = (pos / biomSize) * biomSize;
+    //float xProg = (pos.x - biomPoint.x) / (float)biomSize;
+    float xProg = pos.x % biomSize / (float)biomSize;
+    int3 xOffset = int3(biomSize, 0, 0);
+    int3 xdoubleOffset = int3(biomSize * 2, 0, 0);
+    Biom frontBot = interpolate(
+        interpolate(getBiomAt(biomPoint), getBiomAt(biomPoint + xOffset), xProg),
+        interpolate(getBiomAt(biomPoint + xOffset), getBiomAt(biomPoint + xdoubleOffset), xProg),
+        xProg);
+
+    biomPoint.y += biomSize;
+    Biom frontCenter = interpolate(
+        interpolate(getBiomAt(biomPoint), getBiomAt(biomPoint + xOffset), xProg),
+        interpolate(getBiomAt(biomPoint + xOffset), getBiomAt(biomPoint + xdoubleOffset), xProg), xProg);
+
+    biomPoint.y += biomSize;
+    Biom frontTop = interpolate(
+        interpolate(getBiomAt(biomPoint), getBiomAt(biomPoint + xOffset), xProg),
+        interpolate(getBiomAt(biomPoint + xOffset), getBiomAt(biomPoint + xdoubleOffset), xProg),
+        xProg);
+
+    biomPoint.z += biomSize;
+    Biom centerTop = interpolate(
+        interpolate(getBiomAt(biomPoint), getBiomAt(biomPoint + xOffset), xProg),
+        interpolate(getBiomAt(biomPoint + xOffset), getBiomAt(biomPoint + xdoubleOffset), xProg),
+        xProg);
+    biomPoint.y -= biomSize;
+    Biom centerCenter = interpolate(
+        interpolate(getBiomAt(biomPoint), getBiomAt(biomPoint + xOffset), xProg),
+        interpolate(getBiomAt(biomPoint + xOffset), getBiomAt(biomPoint + xdoubleOffset), xProg),
+        xProg);
+
+    biomPoint.y -= biomSize;
+    Biom centerBot = interpolate(
+        interpolate(getBiomAt(biomPoint), getBiomAt(biomPoint + xOffset), xProg),
+        interpolate(getBiomAt(biomPoint + xOffset), getBiomAt(biomPoint + xdoubleOffset), xProg),
+        xProg);
+
+    biomPoint.z += biomSize;
+    Biom backBot = interpolate(
+        interpolate(getBiomAt(biomPoint), getBiomAt(biomPoint + xOffset), xProg),
+        interpolate(getBiomAt(biomPoint + xOffset), getBiomAt(biomPoint + xdoubleOffset), xProg),
+        xProg);
+
+    biomPoint.y += biomSize;
+    Biom backCenter = interpolate(
+        interpolate(getBiomAt(biomPoint), getBiomAt(biomPoint + xOffset), xProg),
+        interpolate(getBiomAt(biomPoint + xOffset), getBiomAt(biomPoint + xdoubleOffset), xProg),
+        xProg);
+
+    biomPoint.y += biomSize;
+    Biom backTop = interpolate(
+        interpolate(getBiomAt(biomPoint), getBiomAt(biomPoint + xOffset), xProg),
+        interpolate(getBiomAt(biomPoint + xOffset), getBiomAt(biomPoint + xdoubleOffset), xProg),
+        xProg);
+
+    float yProg = (pos.y % biomSize) / (float)biomSize;
+    Biom front = interpolate(
+        interpolate(frontBot, frontCenter, yProg),
+        interpolate(frontCenter, frontTop, yProg),
+        yProg);
+
+    Biom center = interpolate(
+        interpolate(centerBot, centerCenter, yProg),
+        interpolate(centerCenter, centerTop, yProg),
+        yProg);
+
+    Biom back = interpolate(
+        interpolate(backBot, backCenter, yProg),
+        interpolate(backCenter, backTop, yProg),
+        yProg);
+
+    float zProg = (pos.z % biomSize) / (float)biomSize;
+
+    Biom result = interpolate(
+        interpolate(front, center, zProg),
+        interpolate(center, back, zProg),
+        zProg);
+
+    return result;
+}
+
+
+Biom GetInterpolatedBiomAt(int3 pos)
+{
+    int3 biomPoint = (pos / biomSize) * biomSize;
+    //float xProg = (pos.x - biomPoint.x) / (float)biomSize;
+    float xProg = pos.x % biomSize / (float)biomSize;
+    int3 xOffset = int3(biomSize, 0, 0);
+    Biom frontBot = interpolate(getBiomAt(biomPoint),getBiomAt(biomPoint + xOffset), xProg);
+
+    biomPoint.y += biomSize;
+    Biom frontTop = interpolate(getBiomAt(biomPoint), getBiomAt(biomPoint + xOffset), xProg);
+
+    biomPoint.z += biomSize;
+    Biom backTop = interpolate(getBiomAt(biomPoint), getBiomAt(biomPoint + xOffset), xProg);
+
+    biomPoint.y -= biomSize;
+    Biom backBot = interpolate(getBiomAt(biomPoint), getBiomAt(biomPoint + xOffset), xProg);
+
+    float yProg = (pos.y % biomSize) / (float)biomSize;
+    Biom front = interpolate(frontBot, frontTop, yProg);
+    Biom back = interpolate(backBot, backTop, yProg);
+
+    float zProg = (pos.z % biomSize) / (float)biomSize;
+    Biom result = interpolate(front, back, zProg);
+
+    return result;
+} 
+
+
+int indexFromCoord(uint x, uint y, uint z) {
+    return z * numPointsPerAxis * numPointsPerAxis + y * numPointsPerAxis + x;
+}
 
 [numthreads(numThreads,numThreads,numThreads)]
 void Density (int3 id : SV_DispatchThreadID)
@@ -40,10 +183,12 @@ void Density (int3 id : SV_DispatchThreadID)
 
     float3 pos = anchor + id * spacing;
 
+    Biom b = GetInterpolatedBiomAt((int3)pos);
+   
     float noise = radius - length(pos);
 
-    float frequency = noiseScale / 100;
-    float localAmplitude = amplitude;
+    float frequency = b.noiseScale / 100;
+    float localAmplitude = b.amplitude;
 
   /*  float lengthPos = length(pos);
 
@@ -68,20 +213,20 @@ void Density (int3 id : SV_DispatchThreadID)
 
 
     for (int j =0; j < octaves; j ++) {
-        float n = snoise((pos * frequency) / scale + octaveOffsets[j] + offset);
+        float n = snoise((pos * frequency) / b.scale + octaveOffsets[j] + offset);
         n *= localAmplitude;
 
         noise += n;
 
-        localAmplitude *= persistence;
-        frequency *= lacunarity;
+        localAmplitude *= b.persistence;
+        frequency *= b.lacunarity;
     }
 
     int index = indexFromCoord(id.x, id.y, id.z);
-    if (noise < -2)
-        noise = -2;
-    else if (noise > 2)
-        noise = 2;
+    if (noise < -100)
+        noise = -100;
+    else if (noise > 100)
+        noise = 100;
 
     points[index] = noise;
     

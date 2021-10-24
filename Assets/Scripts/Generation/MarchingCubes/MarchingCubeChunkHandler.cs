@@ -317,6 +317,7 @@ namespace MarchingCubes
 
         private void BuildRelevantChunksParallelBlockingAround()
         {
+            List<Exception> x = MarchingCubeChunkThreaded.xs;
             Vector3Int next;
             bool isNextInProgress;
             while (closestNeighbours.size > 0)
@@ -333,7 +334,7 @@ namespace MarchingCubes
                 }
                 if (totalTriBuild < maxTrianglesLeft)
                 {
-                    while ((closestNeighbours.size == 0 && channeledChunks > 0) /*|| channeledChunks > maxRunningThreads*/)
+                    while ((closestNeighbours.size == 0 && channeledChunks > x.Count) /*|| channeledChunks > maxRunningThreads*/)
                     {
                         //TODO: while waiting create mesh displayers!
                         while (readyParallelChunks.Count > 0)

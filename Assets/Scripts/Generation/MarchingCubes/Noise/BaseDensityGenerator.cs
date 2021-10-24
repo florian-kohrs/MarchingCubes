@@ -13,23 +13,17 @@ namespace MarchingCubes
 
         protected List<ComputeBuffer> buffersToRelease = new List<ComputeBuffer>();
 
-        public float amplitude = 2;
+        public Biom[] bioms;
 
-        public float frequency = 0.75f;
+        public int biomSize = 500;
 
-        [Range(0.001f, 100)]
-        public float scale = 1;
+        public int biomSpacing = 1;
 
         public float radius = 1000;
 
         public int octaves = 9;
 
         public Vector3 offset;
-
-        [Range(0, 1)]
-        public float persistence = 0.5f;
-
-        public float lacunarity = 3.41f;
 
         public int seed;
 
@@ -51,20 +45,17 @@ namespace MarchingCubes
         private void Awake()
         {
             GetOctaveOffsetsBuffer();
+            SetBiomData();
             densityShader.SetInt("octaves", Mathf.Max(1, octaves));
             densityShader.SetFloat("radius", radius);
-            densityShader.SetFloat("lacunarity", lacunarity);
-            densityShader.SetFloat("persistence", persistence);
-            densityShader.SetFloat("noiseScale", frequency);
-            densityShader.SetFloat("scale", scale);
             densityShader.SetBuffer(0, "octaveOffsets", octaveOffsetsBuffer);
-            densityShader.SetFloat("amplitude", amplitude);
             densityShader.SetVector("offset", new Vector4(offset.x, offset.y, offset.z));
         }
 
         private void OnDestroy()
         {
             octaveOffsetsBuffer.Release();
+            biomsBuffer.Release();
             octaveOffsetsBuffer = null;
         }
 
@@ -76,6 +67,21 @@ namespace MarchingCubes
         }
 
         protected ComputeBuffer octaveOffsetsBuffer;
+
+        protected ComputeBuffer biomsBuffer;
+
+        protected void SetBiomData()
+        {
+            if (biomsBuffer != null)
+                return;
+
+            biomsBuffer = new ComputeBuffer(bioms.Length, Biom.SIZE);
+            biomsBuffer.SetData(bioms);
+            densityShader.SetBuffer(0, "bioms", biomsBuffer);
+            densityShader.SetInt("biomSize", biomSize);
+            densityShader.SetInt("biomSpacing", biomSpacing);
+            densityShader.SetInt("biomsCount", bioms.Length);
+        }
 
         protected ComputeBuffer GetOctaveOffsetsBuffer()
         {
