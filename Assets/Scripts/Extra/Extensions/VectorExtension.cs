@@ -238,6 +238,11 @@ public static class VectorExtension
         return new Vector3Int(f(v.x), f(v.y), f(v.z));
     }
 
+    public static Vector3Int Combine(this Vector3Int v1, Vector3Int v2, Func<int,int, int> f)
+    {
+        return new Vector3Int(f(v1.x,v2.x), f(v1.y,v2.y), f(v1.z,v2.z));
+    }
+
     /// <summary>
     /// applies Function f to all three coordinates
     /// </summary>

@@ -81,6 +81,14 @@ public class GamePersistence
     private GamePersistence()
     {
         Debug.Log("Game Data will be saved here: " + FolderSystem.GetDefaultSaveSlotPath());
+        Vector3Int pos = new Vector3Int(-1, 64994, -1);
+        int biomSize = 65;
+        Vector3Int restMod = pos.Map((i=>(i+ biomSize) % biomSize));
+        Vector3Int biomAnchor = pos - restMod;
+
+        Vector3 interpolation = restMod.Map(v => (v + biomSize) % biomSize);
+        interpolation /= biomSize;
+        Debug.Log(biomAnchor);
 
         InitializeSavePath();
 

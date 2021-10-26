@@ -27,6 +27,7 @@ float spacing;
 
 
 //Biom settings
+//TODO:Let height play a role in choosen biom
 StructuredBuffer<Biom> bioms;
 uint biomSize;
 uint biomsCount;
@@ -140,12 +141,28 @@ Biom GetCubicInterpolatedBiomAt(int3 pos)
     return result;
 }
 
+int3 getBiomAnchor(int3 rest, int3 pos)
+{
+    int3 positiveRest = (rest + int3(biomSize, biomSize, biomSize)) % biomSize;
+    return int3(pos.x - positiveRest.x, pos.y - positiveRest.y, pos.z - positiveRest.z);
+}
 
+float3 getInterpolation(int3 rest)
+{
+    rest = (rest + int3(biomSize, biomSize, biomSize)) % biomSize;
+    return rest / (float)biomSize;
+}
+
+//TODO:Write biompoints in array or interpolation
 Biom GetInterpolatedBiomAt(int3 pos)
 {
-    int3 biomPoint = (pos / biomSize) * biomSize;
+    int3 rest = pos % biomSize;
+
+    int3 biomPoint = getBiomAnchor(rest, pos);
+    float3 interpolation = getInterpolation(rest);
+
     //float xProg = (pos.x - biomPoint.x) / (float)biomSize;
-    float xProg = pos.x % biomSize / (float)biomSize;
+    float xProg = interpolation.x;
     int3 xOffset = int3(biomSize, 0, 0);
     Biom frontBot = interpolate(getBiomAt(biomPoint),getBiomAt(biomPoint + xOffset), xProg);
 
@@ -158,11 +175,11 @@ Biom GetInterpolatedBiomAt(int3 pos)
     biomPoint.y -= biomSize;
     Biom backBot = interpolate(getBiomAt(biomPoint), getBiomAt(biomPoint + xOffset), xProg);
 
-    float yProg = (pos.y % biomSize) / (float)biomSize;
+    float yProg = interpolation.y;
     Biom front = interpolate(frontBot, frontTop, yProg);
     Biom back = interpolate(backBot, backTop, yProg);
 
-    float zProg = (pos.z % biomSize) / (float)biomSize;
+    float zProg = interpolation.z;
     Biom result = interpolate(front, back, zProg);
 
     return result;
