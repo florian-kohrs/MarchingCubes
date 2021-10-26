@@ -16,8 +16,9 @@ namespace MarchingCubes
 		public float frequency;
 		[Range(0.001f, 100)]
 		public float scale;
+		public float heightOffset;
 
-		public const int SIZE = sizeof(float) * 5;
+		public const int SIZE = sizeof(float) * 6;
 
 	}
 }

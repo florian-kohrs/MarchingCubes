@@ -601,14 +601,16 @@ MonoBehaviour:
     persistence: 0.518
     frequency: 2.05
     scale: 18.5
+    heightOffset: 0
   - amplitude: 100
     lacunarity: 2
     persistence: 0.518
     frequency: 2.05
     scale: 18.5
+    heightOffset: 0
   biomSize: 64
   biomSpacing: 14
-  radius: 65000
+  radius: 1000
   octaves: 9
   offset: {x: 0, y: 0, z: 0}
   seed: 4
@@ -866,7 +868,7 @@ MonoBehaviour:
   chunkMaterial: {fileID: 2100000, guid: 97d2f9aa8d16b8241a90494b8d616c04, type: 2}
   surfaceLevel: 0.511
   player: {fileID: 1779183453}
-  buildAroundDistance: 500
+  buildAroundDistance: 600
   totalTriBuild: 0
   minSteepness: 11
   maxSteepness: 45
@@ -966,17 +968,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   densityShader: {fileID: 7200000, guid: 2dd2295c8799c9a4297e6c83b1fc4a4b, type: 3}
   bioms:
-  - amplitude: 0
-    lacunarity: 0
-    persistence: 0
-    frequency: 0
-    scale: 0.001
-  - amplitude: 100
-    lacunarity: 0
-    persistence: 0
-    frequency: 0
-    scale: 0.001
-  biomSize: 33
+  - amplitude: 25
+    lacunarity: 2
+    persistence: 0.518
+    frequency: 2.05
+    scale: 18.5
+    heightOffset: 0
+  - amplitude: 25
+    lacunarity: 2
+    persistence: 0.518
+    frequency: 2.05
+    scale: 18.5
+    heightOffset: 0
+  biomSize: 64
   biomSpacing: 14
   radius: 65000
   octaves: 9
