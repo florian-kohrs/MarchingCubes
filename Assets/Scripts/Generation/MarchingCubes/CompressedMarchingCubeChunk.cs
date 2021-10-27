@@ -392,20 +392,16 @@ namespace MarchingCubes
             {
                 MissingNeighbourData t = l[i];
                 Vector3Int target = AnchorPos + origin + t.outsideNeighbour.offset;
-                AddNeighbourFromEntity(t.outsideNeighbour.offset);
-                if (careAboutNeighbourLODS)
-                {
-                    IMarchingCubeChunk c;
-                    int otherLodPower;
-                    //TODO: may also take non ready chunks!
-                    if (chunkHandler.TryGetReadyChunkAt(target, out c))
-                        otherLodPower = c.LODPower;
-                    else
-                        otherLodPower = neighbourLODs.GetLodPowerFromNeighbourInDirection(t.outsideNeighbour.offset);
+                //AddNeighbourFromEntity(t.outsideNeighbour.offset);
+                IMarchingCubeChunk c;
+                int otherLodPower;
+                //TODO: may also take non ready chunks!
+                if (chunkHandler.TryGetReadyChunkAt(target, out c))
+                    otherLodPower = c.LODPower;
+                else
+                    otherLodPower = neighbourLODs.GetLodPowerFromNeighbourInDirection(t.outsideNeighbour.offset);
 
-                    BuildMarchingCubeChunkTransitionInDirection(origin, t, otherLodPower);
-
-                }
+                //BuildMarchingCubeChunkTransitionInDirection(origin, t, otherLodPower);
             }
         }
 
