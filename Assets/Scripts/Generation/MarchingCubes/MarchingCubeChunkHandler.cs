@@ -193,6 +193,8 @@ namespace MarchingCubes
 
         System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
 
+        //TODO:GPU instancing from script generated meshes and add simple colliders as game objects
+
         private void Start()
         {
             CreateAllBuffersWithSizes(65);
@@ -217,8 +219,8 @@ namespace MarchingCubes
             IMarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
             maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
             //BuildRelevantChunksAround(chunk);
-            //BuildRelevantChunksParallelBlockingAround(chunk);
-            StartCoroutine(BuildRelevantChunksParallelAround(chunk));
+            BuildRelevantChunksParallelBlockingAround(chunk);
+            //StartCoroutine(BuildRelevantChunksParallelAround(chunk));
         }
 
 
@@ -435,6 +437,10 @@ namespace MarchingCubes
                 v3 = VectorExtension.GetDirectionFromIndex(i) * (chunk.ChunkSize + 1) + chunk.CenterPos;
                 float sqrDist = (startPos - v3).sqrMagnitude;
 
+                if(sqrDist > buildAroundSqrDistance)
+                {
+
+                }
                 ///only add neighbours if
                 if (sqrDist <= buildAroundSqrDistance
                     && !HasChunkAtPosition(v3))

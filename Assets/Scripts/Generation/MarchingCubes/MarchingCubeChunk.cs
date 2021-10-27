@@ -45,6 +45,16 @@ namespace MarchingCubes
             return e != null;
         }
 
+        public bool HasEntityAt(Vector3Int v)
+        {
+            return GetEntityAt(v.x, v.y, v.z) != null;
+        }
+
+        public bool HasEntityAt(int x, int y, int z)
+        {
+            return GetEntityAt(x, y, z) != null;
+        }
+
         public void RemoveEntityAt(MarchingCubeEntity e)
         {
             RemoveEntityAt(e.origin.x, e.origin.y, e.origin.z, e);
@@ -238,33 +248,7 @@ namespace MarchingCubes
             List<MissingNeighbourData> trisWithNeighboursOutOfBounds = new List<MissingNeighbourData>();
             if (TryGetEntityAt(x, y, z, out e) && !e.FindMissingNeighbours(IsCubeInBounds, trisWithNeighboursOutOfBounds))
             {
-                int count = trisWithNeighboursOutOfBounds.Count;
-                for (int i = 0; i < count; ++i)
-                {
-                    MissingNeighbourData t = trisWithNeighboursOutOfBounds[i];
-                    Vector3Int target = AnchorPos + e.origin + t.outsideNeighbour.offset;
-                    AddNeighbourFromEntity(t.outsideNeighbour.offset);
-                    if (careAboutNeighbourLODS)
-                    {
-                        IMarchingCubeChunk c;
-                        //TODO: may also take non ready chunks!
-                        if (chunkHandler.TryGetReadyChunkAt(target, out c))
-                        {
-                            if (c.LODPower > LODPower)
-                            {
-                                BuildMarchingCubeChunkTransitionInDirection(e.origin, t, c.LODPower);
-                            }
-                        }
-                        else
-                        {
-                            int neighbourLodPower = neighbourLODs.GetLodPowerFromNeighbourInDirection(t.outsideNeighbour.offset);
-                            if (neighbourLodPower > LODPower)
-                            {
-                                BuildMarchingCubeChunkTransitionInDirection(e.origin, t, neighbourLodPower);
-                            }
-                        }
-                    }
-                }
+                ProcessNeighboursFromList(trisWithNeighboursOutOfBounds, e.origin);
             }
         }
 
@@ -358,36 +342,7 @@ namespace MarchingCubes
             }
         }
 
-        private void SetNeighbourAt(int x, int y, int z)
-        {
-            if (x == 0)
-            {
-                HasNeighbourInDirection[1] = true;
-            }
-            else if (x == entitiesPerAxis)
-            {
-                HasNeighbourInDirection[0] = true;
-            }
-
-            if (y == 0)
-            {
-                HasNeighbourInDirection[3] = true;
-            }
-            else if (y == entitiesPerAxis)
-            {
-                HasNeighbourInDirection[2] = true;
-            }
-
-            if (z == 0)
-            {
-                HasNeighbourInDirection[5] = true;
-            }
-            else if (z == entitiesPerAxis)
-            {
-                HasNeighbourInDirection[4] = true;
-            }
-        }
-
+      
         protected void BuildMeshFromCurrentTriangles()
         {
             if (IsEmpty)
@@ -561,22 +516,7 @@ namespace MarchingCubes
             BuildMeshFromCurrentTriangles();
         }
 
-
-        protected bool IsBorderCube(Vector3Int v)
-        {
-            return IsBorderCube(v.x, v.y, v.z);
-        }
-
-
-        protected bool IsBorderCube(int x, int y, int z)
-        {
-            return x == 0 || x == entitiesPerAxis
-                || y == 0 || y == entitiesPerAxis
-                || z == 0 || z == entitiesPerAxis;
-        }
-
-
-
+   
         public PathTriangle GetTriangleFromRayHit(RaycastHit hit)
         {
             MarchingCubeEntity cube = GetClosestEntity(hit.point);

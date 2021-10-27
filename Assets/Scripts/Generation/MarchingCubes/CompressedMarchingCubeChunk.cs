@@ -275,6 +275,42 @@ namespace MarchingCubes
             }
         }
 
+        protected void SetNeighbourAt(Vector3Int v3)
+        {
+            SetNeighbourAt(v3.x, v3.y, v3.z);
+        }
+
+        protected void SetNeighbourAt(int x, int y, int z)
+        {
+            if (x == 0)
+            {
+                HasNeighbourInDirection[1] = true;
+            }
+            else if (x == entitiesPerAxis)
+            {
+                HasNeighbourInDirection[0] = true;
+            }
+
+            if (y == 0)
+            {
+                HasNeighbourInDirection[3] = true;
+            }
+            else if (y == entitiesPerAxis)
+            {
+                HasNeighbourInDirection[2] = true;
+            }
+
+            if (z == 0)
+            {
+                HasNeighbourInDirection[5] = true;
+            }
+            else if (z == entitiesPerAxis)
+            {
+                HasNeighbourInDirection[4] = true;
+            }
+        }
+
+
         protected bool IsDirectionOutOfChunk(Vector3Int v3)
         {
             return v3.x < 0 || v3.y < 0 || v3.z < 0;
@@ -290,12 +326,19 @@ namespace MarchingCubes
             int usedTriCount = 0;
 
             List<MissingNeighbourData> trisWithNeighboursOutOfBounds = new List<MissingNeighbourData>();
-            int length = ts.Length;
-            for (int i = 0; i < length; ++i)
+            for (int i = 0; i < ts.Length; ++i)
             {
                 Vector3Int currentOrigin = ts[i].Origin;
 
-                MarchingCubeEntity.FindMissingNeighboursAt(ts[i].triIndex, currentOrigin, IsCubeInBounds, HasNeighbourInDirection);
+                if (careAboutNeighbourLODS && IsBorderCube(currentOrigin))
+                {
+                    if (MarchingCubeEntity.FindMissingNeighboursAt(ts[i].triIndex, currentOrigin, IsCubeInBounds, HasNeighbourInDirection))
+                    {
+                        ProcessNeighboursFromList(trisWithNeighboursOutOfBounds, currentOrigin);
+                    }
+                }
+                SetNeighbourAt(currentOrigin);
+
                 //if (chunkHandler.TryGetReadyChunkAt(target, out c))
                 //{
                 //    if (c.LODPower > LODPower)
@@ -309,6 +352,7 @@ namespace MarchingCubes
                     AddTriangleToMeshData(in ts[i], ref usedTriCount, ref totalTreeCount);
                 }
             }
+
 
             //MissingNeighbourData neighbour;
             //IMarchingCubeChunk c;
@@ -340,6 +384,30 @@ namespace MarchingCubes
             //}
         }
 
+
+        protected void ProcessNeighboursFromList(List<MissingNeighbourData> l, Vector3Int origin)
+        {
+            int count = l.Count;
+            for (int i = 0; i < count; ++i)
+            {
+                MissingNeighbourData t = l[i];
+                Vector3Int target = AnchorPos + origin + t.outsideNeighbour.offset;
+                AddNeighbourFromEntity(t.outsideNeighbour.offset);
+                if (careAboutNeighbourLODS)
+                {
+                    IMarchingCubeChunk c;
+                    int otherLodPower;
+                    //TODO: may also take non ready chunks!
+                    if (chunkHandler.TryGetReadyChunkAt(target, out c))
+                        otherLodPower = c.LODPower;
+                    else
+                        otherLodPower = neighbourLODs.GetLodPowerFromNeighbourInDirection(t.outsideNeighbour.offset);
+
+                    BuildMarchingCubeChunkTransitionInDirection(origin, t, otherLodPower);
+
+                }
+            }
+        }
 
         public virtual MarchingCubeEntity MarchAt(int x, int y, int z, ICubeNeighbourFinder chunk, int lod)
         {
@@ -479,7 +547,7 @@ namespace MarchingCubes
 
         protected void AddTriangleToMeshData(in TriangleBuilder t, ref int usedTriCount, ref int totalTriCount, bool isBorderConnectionMesh = false)
         {
-            Color c = new Color(t.r / 255f, t.g / 255f, t.b / 255f,1);
+            Color c = new Color(t.r / 255f, t.g / 255f, t.b / 255f, 1);
 
             meshTriangles[usedTriCount] = usedTriCount;
             meshTriangles[usedTriCount + 1] = usedTriCount + 1;
@@ -660,7 +728,7 @@ namespace MarchingCubes
                 && z <= 0 && z >= pointsPerAxis - 1;
         }
 
-   
+
         public Vector3Int[] NeighbourDirections(Vector3Int v)
         {
             return NeighbourDirections(v.x, v.y, v.z);
@@ -708,6 +776,19 @@ namespace MarchingCubes
                 x >= 0 && x < vertexSize
                 && y >= 0 && y < vertexSize
                 && z >= 0 && z < vertexSize;
+        }
+
+        protected bool IsBorderCube(Vector3Int v)
+        {
+            return IsBorderCube(v.x, v.y, v.z);
+        }
+
+
+        protected bool IsBorderCube(int x, int y, int z)
+        {
+            return x == 0 || x == entitiesPerAxis
+                || y == 0 || y == entitiesPerAxis
+                || z == 0 || z == entitiesPerAxis;
         }
 
         public bool IsCubeInBounds(int[] v)
