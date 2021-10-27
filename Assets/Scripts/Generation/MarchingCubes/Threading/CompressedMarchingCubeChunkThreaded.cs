@@ -40,6 +40,7 @@ namespace MarchingCubes
             }
             catch(Exception x)
             {
+                MarchingCubeChunkThreaded.xs.Add(x);
                 //TODO: Tell chunk handler it didnt work, or will stay stuck
                 Console.WriteLine(x);
                 //Debug.LogException(x);

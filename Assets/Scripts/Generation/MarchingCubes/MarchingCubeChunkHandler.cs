@@ -215,8 +215,8 @@ namespace MarchingCubes
             IMarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
             maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
             //BuildRelevantChunksAround(chunk);
-            BuildRelevantChunksParallelBlockingAround(chunk);
-            //StartCoroutine(BuildRelevantChunksParallelAround(chunk));
+            //BuildRelevantChunksParallelBlockingAround(chunk);
+            StartCoroutine(BuildRelevantChunksParallelAround(chunk));
         }
 
 
@@ -378,6 +378,7 @@ namespace MarchingCubes
 
         private IEnumerator BuildRelevantChunksParallelAround()
         {
+            List<Exception> x = MarchingCubeChunkThreaded.xs;
             Vector3Int next;
             bool isNextInProgress = false;
             while (closestNeighbours.size > 0)
@@ -394,7 +395,7 @@ namespace MarchingCubes
                 }
                 if (totalTriBuild < maxTrianglesLeft)
                 {
-                    while ((closestNeighbours.size == 0 && channeledChunks > 0) /*|| channeledChunks > maxRunningThreads*/)
+                    while ((closestNeighbours.size == 0 && channeledChunks > x.Count) /*|| channeledChunks > maxRunningThreads*/)
                     {
                         while(readyParallelChunks.Count > 0)
                         {
