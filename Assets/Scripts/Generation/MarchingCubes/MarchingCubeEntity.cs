@@ -172,6 +172,11 @@ namespace MarchingCubes
         {
             bool hasNeighbourOutOfBounds = true;
             OutsideEdgeNeighbourDirection neighbour;
+            var data = NeighbourData;
+            if(data==null)
+            {
+                data = NeighbourData;
+            }
             int count = NeighbourData.OutsideNeighbours.Count;
             for (int i = 0; i < count; ++i)
             {

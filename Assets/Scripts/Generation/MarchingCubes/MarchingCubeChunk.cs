@@ -345,7 +345,7 @@ namespace MarchingCubes
                     cube = CreateAndAddEntityAt(x, y, z, ts[i].triIndex);
                     if (careAboutNeighbourLODS && IsBorderCube(x, y, z))
                     {
-                        //CheckForConnectedChunk(x, y, z);
+                        CheckForConnectedChunk(x, y, z);
                     }
                     SetNeighbourAt(x, y, z);
                 }

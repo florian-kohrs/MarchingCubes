@@ -803,16 +803,7 @@ MonoBehaviour:
       time: 0.1
       value: 0
       inSlope: -0
-      outSlope: 0
-      tangentMode: 69
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 0.5
-      value: 0
-      inSlope: -0
-      outSlope: 16
+      outSlope: 8.888889
       tangentMode: 69
       weightedMode: 0
       inWeight: 0.33333334
@@ -820,8 +811,8 @@ MonoBehaviour:
     - serializedVersion: 3
       time: 1
       value: 8
-      inSlope: 16
-      outSlope: 16
+      inSlope: 8.888889
+      outSlope: 8.888889
       tangentMode: 34
       weightedMode: 0
       inWeight: 0.33333334
@@ -868,7 +859,7 @@ MonoBehaviour:
   chunkMaterial: {fileID: 2100000, guid: 97d2f9aa8d16b8241a90494b8d616c04, type: 2}
   surfaceLevel: 0.511
   player: {fileID: 1779183453}
-  buildAroundDistance: 600
+  buildAroundDistance: 700
   totalTriBuild: 0
   minSteepness: 11
   maxSteepness: 45

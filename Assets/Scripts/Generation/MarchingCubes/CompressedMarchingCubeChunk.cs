@@ -290,7 +290,8 @@ namespace MarchingCubes
             int usedTriCount = 0;
 
             List<MissingNeighbourData> trisWithNeighboursOutOfBounds = new List<MissingNeighbourData>();
-            for (int i = 0; i < ts.Length; ++i)
+            int length = ts.Length;
+            for (int i = 0; i < length; ++i)
             {
                 Vector3Int currentOrigin = ts[i].Origin;
 

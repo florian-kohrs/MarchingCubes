@@ -197,6 +197,8 @@ namespace MarchingCubes
         {
             CreateAllBuffersWithSizes(65);
 
+            TriangulationTableStaticData.BuildLookUpTables();
+
             flatR = (int)(flatColor.r * 255);
             flatG = (int)(flatColor.g * 255);
             flatB = (int)(flatColor.b * 255);

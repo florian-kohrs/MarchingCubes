@@ -305,6 +305,11 @@ public class TriangulationTableStaticData : MonoBehaviour
     //    return NeighbourTable.TryGetValue(new NeighbourKey(fromIndex, fromTriIndex, toIndex), out result);
     //}
 
+    public static void BuildLookUpTables()
+    {
+        BuildInternNeighbours();
+    }
+
     public static TriangulationNeighbours GetNeighbourData(int triangulationIndex)
     {
         TriangulationNeighbours neighbours;
@@ -485,7 +490,7 @@ public class TriangulationTableStaticData : MonoBehaviour
     {
 
         int key = BuildKeyFromEdgeIndices(index, edge1, edge2);
-        float[] edge = new float[] {edge1, edge2};
+        float[] edge = new float[] { edge1, edge2 };
         bool found = false;
 
         if (indexWithEdges.TryGetValue(key, out result))
@@ -495,7 +500,7 @@ public class TriangulationTableStaticData : MonoBehaviour
         float[] v = new float[3];
         int[] triangulation = TriangulationTable.triangulation[index];
         int count = triangulation.Length;
-        for (int i = 0; i < count ; i += 3)
+        for (int i = 0; i < count; i += 3)
         {
             v[0] = triangulation[i];
             v[1] = triangulation[i + 1];
@@ -599,7 +604,7 @@ public class TriangulationTableStaticData : MonoBehaviour
                 int firstIndex = triIndex1 / 3;
 
                 GetNeighbourForAllPossibleNeighbours(i, triIndex1, currentNeighbours.OutsideNeighbours);
-                
+
                 Vector3 v1 = new Vector3(
                        triangulation[triIndex1],
                        triangulation[triIndex1 + 1],
