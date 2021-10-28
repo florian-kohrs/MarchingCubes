@@ -15,7 +15,7 @@ namespace MarchingCubes
         /// <param name="lodPower"></param>
         /// <param name="chunk"></param>
         /// <returns>returns the anchor position of the chunk</returns>
-        void SetChunkAtPosition(int[] pos, IMarchingCubeChunk chunk);
+        void SetChunkAtPosition(int[] pos, IMarchingCubeChunk chunk, bool allowOverride);
 
 
         bool TryGetChunkAtGlobalPosition(Vector3Int pos, out IMarchingCubeChunk chunk);

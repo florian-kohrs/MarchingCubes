@@ -32,9 +32,9 @@ namespace MarchingCubes
 
         public bool TryGetChunkAtLocalPosition(int[] pos, out IMarchingCubeChunk chunk) => child.TryGetChunkAtLocalPosition(pos, out chunk);
 
-        public void SetChunkAtPosition(int[] pos, IMarchingCubeChunk chunk)
+        public void SetChunkAtPosition(int[] pos, IMarchingCubeChunk chunk, bool allowOverride)
         {
-            if (!HasChild)
+            if (!HasChild || allowOverride)
             {
                 if (chunk.ChunkSize == Size)
                 {
@@ -45,7 +45,7 @@ namespace MarchingCubes
                     child = new ChunkGroupTreeNode(GroupAnchorPosition, GroupAnchorPosition, Size);
                 }
             }
-            child.SetChunkAtLocalPosition(pos, chunk);
+            child.SetChunkAtLocalPosition(pos, chunk, allowOverride);
         }
             
 

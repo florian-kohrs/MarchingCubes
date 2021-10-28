@@ -45,7 +45,7 @@ namespace MarchingCubes
             return chunk;
         }
 
-        public override void SetChunkAtLocalPosition(int[] pos, IMarchingCubeChunk chunk)
+        public override void SetChunkAtLocalPosition(int[] pos, IMarchingCubeChunk chunk, bool allowOverride)
         {
             throw new System.NotImplementedException
                 ($"Overriding leafes is not supported. tried to apply lower size to existing leaf requested size:{chunk.ChunkSize} at node {GroupAnchorPosition} with size {Size} ");

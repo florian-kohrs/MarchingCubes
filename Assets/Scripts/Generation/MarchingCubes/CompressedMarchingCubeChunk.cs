@@ -647,7 +647,8 @@ namespace MarchingCubes
         protected virtual void SetCurrentMeshData(bool isBorderConnectionMesh)
         {
             BaseMeshDisplayer displayer = GetBestMeshDisplayer();
-            displayer.ApplyMesh(colorData, vertices, meshTriangles, Material, !isBorderConnectionMesh);
+            bool useCollider = !isBorderConnectionMesh && !(this is CompressedMarchingCubeChunkThreaded);
+            displayer.ApplyMesh(colorData, vertices, meshTriangles, Material, useCollider);
         }
 
 

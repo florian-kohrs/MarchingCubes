@@ -17,6 +17,9 @@ namespace MarchingCubes
         protected IList<PathTriangle> ps;
         protected PathTriangle p;
 
+
+        public MarchingCubeChunkHandler h;
+
         private void OnDrawGizmos()
         {
             if (ps != null)
@@ -85,9 +88,11 @@ namespace MarchingCubes
                     {
                         //MarchingCubeEntity e2 = chunk.GetClosestEntity(hit.point);
 
-                        PathTriangle tri = chunk.GetTriangleFromRayHit(hit);
-                        ps = tri.Neighbours;
-                        p = tri;
+                        //PathTriangle tri = chunk.GetTriangleFromRayHit(hit);
+                        //ps = tri.Neighbours;
+                        //p = tri;
+
+                        h.DecreaseChunkLod(chunk, chunk.LODPower + 1);
 
                         // chunk.GetChunkHandler.DecreaseChunkLod(chunk, 1);
                     }

@@ -16,7 +16,7 @@ namespace MarchingCubes
         public abstract int Size { get; }
 
         public abstract IMarchingCubeChunk GetChunkAtLocalPosition(int[] pos);
-        public abstract void SetChunkAtLocalPosition(int[] pos, IMarchingCubeChunk chunk);
+        public abstract void SetChunkAtLocalPosition(int[] pos, IMarchingCubeChunk chunk, bool allowOverride);
         public abstract bool TryGetChunkAtLocalPosition(int[] pos, out IMarchingCubeChunk chunk);
         public abstract bool HasChunkAtLocalPosition(int[] pos);
         public abstract bool RemoveChunkAtLocalPosition(int[] pos);

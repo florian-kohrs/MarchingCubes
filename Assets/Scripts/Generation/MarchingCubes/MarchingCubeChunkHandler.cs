@@ -506,7 +506,8 @@ namespace MarchingCubes
             int chunkSize;
             bool careForNeighbours;
             GetSizeAndLodPowerForChunkPosition(pos, out chunkSize, out lodPower, out careForNeighbours);
-            IMarchingCubeChunk chunk = GetThreadedChunkObjectAt(VectorExtension.ToVector3Int(pos), coord, lodPower, chunkSize);
+            
+            IMarchingCubeChunk chunk = GetThreadedChunkObjectAt(Vector3Int.FloorToInt(pos), coord, lodPower, chunkSize, false);
             BuildChunkParallel(chunk, RoundToPowerOf2(lodPower), careForNeighbours);
         }
 
@@ -537,7 +538,7 @@ namespace MarchingCubes
             int chunkSize;
             bool careForNeighbours;
             GetSizeAndLodPowerForChunkPosition(pos, out chunkSize, out lodPower, out careForNeighbours);
-            IMarchingCubeChunk chunk = GetThreadedChunkObjectAt(VectorExtension.ToVector3Int(pos), coord, lodPower, chunkSize);
+            IMarchingCubeChunk chunk = GetThreadedChunkObjectAt(VectorExtension.ToVector3Int(pos), coord, lodPower, chunkSize, false);
             BuildChunk(chunk, RoundToPowerOf2(lodPower), careForNeighbours);
             return chunk;
         }
@@ -665,7 +666,7 @@ namespace MarchingCubes
         }
 
 
-        protected IMarchingCubeChunk GetChunkObjectAt<T>(Vector3Int position, Vector3Int coord, int lodPower, int chunkSize) where T : IMarchingCubeChunk, new()
+        protected IMarchingCubeChunk GetChunkObjectAt<T>(Vector3Int position, Vector3Int coord, int lodPower, int chunkSize, bool allowOverride) where T : IMarchingCubeChunk, new()
         {
             ///Pot racecondition
             IChunkGroupRoot chunkGroup = GetOrCreateChunkGroupAtCoordinate(coord);
@@ -677,17 +678,24 @@ namespace MarchingCubes
             chunk.SurfaceLevel = surfaceLevel;
             chunk.LODPower = lodPower;
 
-            chunkGroup.SetChunkAtPosition(new int[] { position.x, position.y, position.z }, chunk);
+            chunkGroup.SetChunkAtPosition(new int[] { position.x, position.y, position.z }, chunk, allowOverride);
 
             return chunk;
         }
+        
 
-        protected IMarchingCubeChunk GetThreadedChunkObjectAt(Vector3Int position, Vector3Int coord, int lodPower, int chunkSize)
+        protected IMarchingCubeChunk GetThreadedChunkObjectAt(Vector3Int pos, int lodPower, int chunkSize, bool allowOverride)
+        {
+            return GetThreadedChunkObjectAt(pos, PositionToChunkGroupCoord(pos), lodPower, chunkSize, allowOverride);
+        }
+
+
+        protected IMarchingCubeChunk GetThreadedChunkObjectAt(Vector3Int position, Vector3Int coord, int lodPower, int chunkSize, bool allowOverride)
         {
             if (lodPower <= DEFAULT_MIN_CHUNK_LOD_POWER)
-                return GetChunkObjectAt<MarchingCubeChunkThreaded>(position, coord, lodPower, chunkSize);
+                return GetChunkObjectAt<MarchingCubeChunkThreaded>(position, coord, lodPower, chunkSize, allowOverride);
             else
-                return GetChunkObjectAt<CompressedMarchingCubeChunkThreaded>(position, coord, lodPower, chunkSize);
+                return GetChunkObjectAt<CompressedMarchingCubeChunkThreaded>(position, coord, lodPower, chunkSize, allowOverride);
         }
 
         protected Vector3Int CoordToPosition(Vector3Int coord)
@@ -912,7 +920,7 @@ namespace MarchingCubes
 
         public int RequestCubesFromNoise(IMarchingCubeChunk chunk, int lod, int triCount = -1)
         {
-            ComputeCubesFromNoise(chunk, lod);
+            ComputeCubesFromNoise(chunk.ChunkSize, chunk.AnchorPos, lod);
             if (triCount < 0)
             {
                 ///Get number of triangles in the triangle buffer
@@ -935,15 +943,14 @@ namespace MarchingCubes
             return triCount;
         }
 
-        public void ComputeCubesFromNoise(IMarchingCubeChunk chunk, int lod)
+        public void ComputeCubesFromNoise(int chunkSize, Vector3Int anchor, int lod)
         {
-            int numVoxelsPerAxis = chunk.ChunkSize / lod;
+            int numVoxelsPerAxis = chunkSize / lod;
             int pointsPerAxis = numVoxelsPerAxis + 1;
 
             int numThreadsPerAxis = Mathf.CeilToInt(numVoxelsPerAxis / (float)threadGroupSize);
 
             float spacing = lod;
-            Vector3 anchor = chunk.AnchorPos;
 
             triangleBuffer.SetCounterValue(0);
             marshShader.SetInt("numPointsPerAxis", pointsPerAxis);
@@ -970,82 +977,59 @@ namespace MarchingCubes
 
         public void DecreaseChunkLod(IMarchingCubeChunk chunk, int toLodPower)
         {
-            throw new NotImplementedException();
+            int toLod = RoundToPowerOf2(toLodPower);
+            int chunkSize = chunk.ChunkSize;
+            if (toLod <= chunk.LOD || chunkSize % toLod != 0)
+                throw new Exception("invalid new chunk lod");
 
-            //int toLod = RoundToPowerOf2(toLodPower);
-            //if (toLod <= chunk.LOD || chunk.ChunkSize % toLod != 0)
-            //    throw new Exception("invalid new chunk lod");
+            int shrinkFactor = toLod / chunk.LOD;
+            int originalPointsPerAxis = chunk.PointsPerAxis;
+            float[] points = chunk.Points;
 
-            //int shrinkFactor = toLod / chunk.LOD;
+            chunk.LODPower = toLodPower;
 
-            //int numVoxelsPerAxis = chunk.ChunkSize / toLod;
+            int newPointsPerAxis = chunk.PointsPerAxis;
+            int numVoxelsPerAxis = newPointsPerAxis - 1;
 
-            //CreateAllBuffersWithSizes(numVoxelsPerAxis);
-
-            //float spacing = toLod;
-
-            //int originalPointsPerAxis = chunk.PointsPerAxis;
+            int originalPointsPerAxisSqr = originalPointsPerAxis * originalPointsPerAxis;
 
             //int newPointsPerAxis = (originalPointsPerAxis - 1) / shrinkFactor + 1;
 
-            //float[] points = chunk.Points;
 
-            //float[] relevantPoints = new float[newPointsPerAxis * newPointsPerAxis * newPointsPerAxis];
+            float[] relevantPoints = new float[newPointsPerAxis * newPointsPerAxis * newPointsPerAxis];
 
-            //int addCount = 0;
+            int addCount = 0;
 
             //NotifyNeighbourChunksOnLodSwitch(chunk.ChunkAnchorPosition, toLodPower);
 
-            //for (int z = 0; z < originalPointsPerAxis; z += shrinkFactor)
-            //{
-            //    int zPoint = z * originalPointsPerAxis * originalPointsPerAxis;
-            //    for (int y = 0; y < originalPointsPerAxis; y += shrinkFactor)
-            //    {
-            //        int yPoint = y * originalPointsPerAxis;
-            //        for (int x = 0; x < originalPointsPerAxis; x += shrinkFactor)
-            //        {
-            //            relevantPoints[addCount] = points[zPoint + yPoint + x];
-            //            addCount++;
-            //        }
-            //    }
-            //}
+            for (int z = 0; z < originalPointsPerAxis; z += shrinkFactor)
+            {
+                int zPoint = z * originalPointsPerAxisSqr;
+                for (int y = 0; y < originalPointsPerAxis; y += shrinkFactor)
+                {
+                    int yPoint = y * originalPointsPerAxis;
+                    for (int x = 0; x < originalPointsPerAxis; x += shrinkFactor)
+                    {
+                        float p = points[zPoint + yPoint + x];
+                        relevantPoints[addCount] = p;
+                        addCount++;
+                    }
+                }
+            }
 
-            //pointsBuffer.SetData(relevantPoints);
-            //Vector3 anchor = chunk.ChunkAnchorPosition;
+            pointsBuffer.SetData(relevantPoints);
 
-            //int numThreadsPerAxis = Mathf.CeilToInt(numVoxelsPerAxis / (float)threadGroupSize);
+            RequestCubesFromNoise(chunk, toLod);
 
-            //triangleBuffer.SetCounterValue(0);
-            //marshShader.SetBuffer(0, "points", pointsBuffer);
-            //marshShader.SetBuffer(0, "triangles", triangleBuffer);
-            //marshShader.SetInt("numPointsPerAxis", newPointsPerAxis);
-            //marshShader.SetFloat("surfaceLevel", surfaceLevel);
-            //marshShader.SetFloat("spacing", spacing);
-            //marshShader.SetVector("anchor", new Vector4(anchor.x, anchor.y, anchor.z));
-
-            //marshShader.Dispatch(0, numThreadsPerAxis, numThreadsPerAxis, numThreadsPerAxis);
-
-            //// Get number of triangles in the triangle buffer
-            //ComputeBuffer.CopyCount(triangleBuffer, triCountBuffer, 0);
-            //int[] triCountArray = { 0 };
-            //triCountBuffer.GetData(triCountArray);
-            //int numTris = triCountArray[0];
-
-            //// Get triangle data from shader
-
-            //tris = new TriangleBuilder[numTris];
-            //triangleBuffer.GetData(tris, 0, 0, numTris);
-
-            //totalTriBuild += numTris;
-            //ReleaseBuffers();
-
-            ////TryGetChunkAtPosition(chunk.CenterPos);
-            //IMarchingCubeChunk compressedChunk = GetThreadedChunkObjectAt(chunk.AnchorPos, toLodPower);
-            //compressedChunk.InitializeWithMeshDataParallel(tris, relevantPoints, ChunkSize, this, GetNeighbourLODSFrom(chunk), surfaceLevel,
+            //TryGetChunkAtPosition(chunk.CenterPos);
+            IMarchingCubeChunk compressedChunk = GetThreadedChunkObjectAt(chunk.AnchorPos, toLodPower, chunkSize, true);
+            //compressedChunk.InitializeWithMeshDataParallel(tris, relevantPoints, chunkSize, this, GetNeighbourLODSFrom(chunk), surfaceLevel,
             //    delegate
             //    {
             //        chunk.ResetChunk();
             //    });
+            compressedChunk.InitializeWithMeshData(tris, true);
+            chunk.ResetChunk();
         }
 
       

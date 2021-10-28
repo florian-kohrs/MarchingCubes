@@ -859,7 +859,7 @@ MonoBehaviour:
   chunkMaterial: {fileID: 2100000, guid: 97d2f9aa8d16b8241a90494b8d616c04, type: 2}
   surfaceLevel: 0.511
   player: {fileID: 1779183453}
-  buildAroundDistance: 700
+  buildAroundDistance: 2000
   totalTriBuild: 0
   minSteepness: 11
   maxSteepness: 45
@@ -965,13 +965,13 @@ MonoBehaviour:
     frequency: 2.05
     scale: 18.5
     heightOffset: 0
-  - amplitude: 25
+  - amplitude: 100
     lacunarity: 2
     persistence: 0.518
     frequency: 2.05
     scale: 18.5
     heightOffset: 0
-  biomSize: 64
+  biomSize: 250
   biomSpacing: 14
   radius: 65000
   octaves: 9
@@ -1397,6 +1397,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8dc09eb4039aae499dd6675dbde6ca0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  h: {fileID: 1125545288}
 --- !u!114 &2047378106
 MonoBehaviour:
   m_ObjectHideFlags: 0

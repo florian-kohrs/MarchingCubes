@@ -37,6 +37,7 @@ namespace MarchingCubes
             }
         }
 
+
         protected BaseMeshDisplayer(GameObject g, Transform t) : this(g, g.AddComponent<MeshFilter>(), g.AddComponent<MeshRenderer>(), new Mesh())
         {
             g.transform.SetParent(t, false);

@@ -78,14 +78,14 @@ namespace MarchingCubes
             return child.GetChunkAtLocalPosition(pos);
         }
 
-        public override void SetChunkAtLocalPosition(int[] relativePosition, IMarchingCubeChunk chunk)
+        public override void SetChunkAtLocalPosition(int[] relativePosition, IMarchingCubeChunk chunk, bool allowOverride)
         {
             relativePosition[0] -= GroupRelativeAnchorPosition[0];
             relativePosition[1] -= GroupRelativeAnchorPosition[1];
             relativePosition[2] -= GroupRelativeAnchorPosition[2];
             int childIndex = GetIndexForLocalPosition(relativePosition);
             
-            if (chunk.ChunkSize >= halfSize && children[childIndex] == null)
+            if (chunk.ChunkSize >= halfSize && (children[childIndex] == null || allowOverride))
             {
                 int[] childAnchorPosition;
                 int[] childRelativeAnchorPosition;
@@ -96,7 +96,7 @@ namespace MarchingCubes
             {
                 IChunkGroupOrganizer child = GetOrCreateChildAt(childIndex, relativePosition);
                 //maybe let child substract anchor
-                child.SetChunkAtLocalPosition(relativePosition, chunk);
+                child.SetChunkAtLocalPosition(relativePosition, chunk, allowOverride);
             }
         }
 
