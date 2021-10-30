@@ -45,9 +45,9 @@ namespace MarchingCubes
                 else
                 {
                     child = new ChunkGroupTreeNode(GroupAnchorPosition, GroupAnchorPosition, SizePower);
-                    child.SetChunkAtLocalPosition(pos, chunk, allowOverride);
                 }
             }
+            child.SetChunkAtLocalPosition(pos, chunk, allowOverride);
         }
             
 

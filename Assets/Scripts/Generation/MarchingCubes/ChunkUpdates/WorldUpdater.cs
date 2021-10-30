@@ -20,7 +20,7 @@ namespace MarchingCubes
 
         private void Awake()
         {
-            for (int i = 0; i < MarchingCubeChunkHandler.CHUNK_GROUP_SIZE_POWER; i++)
+            for (int i = 0; i <= MarchingCubeChunkHandler.CHUNK_GROUP_SIZE_POWER; i++)
             {
                 chunksAtSizes[i] = new HashSet<IMarchingCubeChunk>();
             }
@@ -30,7 +30,7 @@ namespace MarchingCubes
         /// <summary>
         /// chunks with small sizes have to be checked more frequently if they need to be changed
         /// </summary>
-        public HashSet<IMarchingCubeChunk>[] chunksAtSizes = new HashSet<IMarchingCubeChunk>[MarchingCubeChunkHandler.CHUNK_GROUP_SIZE_POWER];
+        public HashSet<IMarchingCubeChunk>[] chunksAtSizes = new HashSet<IMarchingCubeChunk>[MarchingCubeChunkHandler.CHUNK_GROUP_SIZE_POWER + 1];
 
         public void AddChunk(IMarchingCubeChunk chunk)
         {
