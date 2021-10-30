@@ -151,6 +151,8 @@ namespace MarchingCubes
 
         protected int chunkSize;
 
+        protected int chunkSizePower;
+
         protected int vertexSize;
 
         protected int entitiesPerAxis;
@@ -261,7 +263,13 @@ namespace MarchingCubes
         public int ChunkSize
         {
             get => chunkSize;
-            set { chunkSize = value; UpdateChunkCenterPos(); UpdateChunkData(); }
+            protected set { chunkSize = value; UpdateChunkCenterPos(); UpdateChunkData(); }
+        }
+
+        public int ChunkSizePower
+        {
+            get => chunkSizePower;
+            set { chunkSizePower = value; ChunkSize = (int)Mathf.Pow(2, chunkSizePower); }
         }
 
         public float SurfaceLevel { set => surfaceLevel = value; }

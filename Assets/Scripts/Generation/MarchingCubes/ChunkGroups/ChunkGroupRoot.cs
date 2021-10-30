@@ -23,6 +23,8 @@ namespace MarchingCubes
 
         public int Size => MarchingCubeChunkHandler.CHUNK_GROUP_SIZE;
 
+        public int SizePower => MarchingCubeChunkHandler.CHUNK_GROUP_SIZE_POWER;
+
         public int[] GroupRelativeAnchorPosition => GroupAnchorPosition;
 
         public IMarchingCubeChunk GetChunkAtLocalPosition(int[] pos)
@@ -36,13 +38,13 @@ namespace MarchingCubes
         {
             if (!HasChild || allowOverride)
             {
-                if (chunk.ChunkSize == Size)
+                if (chunk.ChunkSizePower == SizePower)
                 {
-                    child = new ChunkGroupTreeLeaf(this, chunk, 0, GroupAnchorPosition, Size);
+                    child = new ChunkGroupTreeLeaf(this, chunk, 0, GroupAnchorPosition, SizePower);
                 }
                 else
                 {
-                    child = new ChunkGroupTreeNode(GroupAnchorPosition, GroupAnchorPosition, Size);
+                    child = new ChunkGroupTreeNode(GroupAnchorPosition, GroupAnchorPosition, SizePower);
                 }
             }
             child.SetChunkAtLocalPosition(pos, chunk, allowOverride);

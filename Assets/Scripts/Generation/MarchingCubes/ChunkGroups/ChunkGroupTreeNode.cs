@@ -11,10 +11,10 @@ namespace MarchingCubes
         public ChunkGroupTreeNode(
             int[] anchorPosition,
             int[] relativeAnchorPosition, 
-            int size)
+            int sizePower)
         {
-            this.size = size;
-            halfSize = size / 2;
+            this.sizePower = sizePower;
+            halfSize = (int)Mathf.Pow(2,sizePower) / 2;
             GroupAnchorPosition = anchorPosition;
             groupRelativeAnchorPosition = relativeAnchorPosition;
         }
@@ -28,7 +28,7 @@ namespace MarchingCubes
         protected const int bottomRightBack = 6;
         protected const int bottomRightFront = 7;
 
-        public int size;
+        public int sizePower;
 
         protected int halfSize;
 
@@ -60,11 +60,11 @@ namespace MarchingCubes
             };
         }
 
-        public override int Size
+        public override int SizePower
         {
             get
             {
-                return size;
+                return sizePower;
             }
         }
 
@@ -85,12 +85,12 @@ namespace MarchingCubes
             relativePosition[2] -= GroupRelativeAnchorPosition[2];
             int childIndex = GetIndexForLocalPosition(relativePosition);
             
-            if (chunk.ChunkSize >= halfSize && (children[childIndex] == null || allowOverride))
+            if (chunk.ChunkSizePower >= sizePower - 1 && (children[childIndex] == null || allowOverride))
             {
                 int[] childAnchorPosition;
                 int[] childRelativeAnchorPosition;
                 GetAnchorPositionForChunkAt(relativePosition, out childAnchorPosition, out childRelativeAnchorPosition);
-                children[childIndex] = new ChunkGroupTreeLeaf(this, chunk, childIndex, childAnchorPosition, halfSize);
+                children[childIndex] = new ChunkGroupTreeLeaf(this, chunk, childIndex, childAnchorPosition, sizePower - 1);
             }
             else
             {
@@ -107,7 +107,7 @@ namespace MarchingCubes
                 int[] childAnchorPosition;
                 int[] childRelativeAnchorPosition;
                 GetAnchorPositionForChunkAt(relativePosition, out childAnchorPosition, out childRelativeAnchorPosition);
-                children[index] = new ChunkGroupTreeNode(childAnchorPosition, childRelativeAnchorPosition, halfSize);
+                children[index] = new ChunkGroupTreeNode(childAnchorPosition, childRelativeAnchorPosition, sizePower - 1);
             }
             return children[index];
         }

@@ -13,7 +13,7 @@ namespace MarchingCubes
 
         public abstract int[] GroupRelativeAnchorPosition { get; }
 
-        public abstract int Size { get; }
+        public abstract int SizePower { get; }
 
         public abstract IMarchingCubeChunk GetChunkAtLocalPosition(int[] pos);
         public abstract void SetChunkAtLocalPosition(int[] pos, IMarchingCubeChunk chunk, bool allowOverride);

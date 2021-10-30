@@ -30,7 +30,7 @@ namespace MarchingCubes
 
         bool RemoveChunkAtLocalPosition(int[] pos);
 
-        int Size { get; }
+        int SizePower { get; }
 
         int[] GroupAnchorPosition { get; }
 
