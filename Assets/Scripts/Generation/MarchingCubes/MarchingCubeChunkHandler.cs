@@ -47,9 +47,6 @@ namespace MarchingCubes
 
         public ComputeShader marshShader;
 
-        public const int maxLodAtDistance = 2000;
-
-        public const int maxSizeAtDistance = 2000;
 
         [Header("Voxel Settings")]
         //public float boundsSize = 8;
@@ -135,7 +132,7 @@ namespace MarchingCubes
 
         public int GetLodPower(float distance)
         {
-            return (int)Mathf.Max(DEFAULT_MIN_CHUNK_LOD_POWER, lodPowerForDistances.Evaluate(distance / maxLodAtDistance));
+            return (int)Mathf.Max(DEFAULT_MIN_CHUNK_LOD_POWER, lodPowerForDistances.Evaluate(distance));
         }
 
         public int GetLodPowerAt(Vector3 pos)
@@ -145,7 +142,7 @@ namespace MarchingCubes
 
         public int GetSizePowerForDistance(float distance)
         {
-            return (int)chunkSizePowerForDistances.Evaluate(distance / maxSizeAtDistance);
+            return (int)chunkSizePowerForDistances.Evaluate(distance);
         }
 
 
@@ -334,6 +331,7 @@ namespace MarchingCubes
                     isNextInProgress = HasChunkStartedAt(next);
                 } while (isNextInProgress && closestNeighbours.size > 0);
 
+                
                 if (!isNextInProgress)
                 {
                     CreateChunkParallelAt(next);
@@ -681,6 +679,7 @@ namespace MarchingCubes
             chunk.LODPower = lodPower;
 
             chunkGroup.SetChunkAtPosition(new int[] { position.x, position.y, position.z }, chunk, allowOverride);
+
 
             worldUpdater.AddChunk(chunk);
 
