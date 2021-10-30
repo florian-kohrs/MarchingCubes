@@ -989,7 +989,6 @@ namespace MarchingCubes
             chunk.LODPower = toLodPower;
 
             int newPointsPerAxis = chunk.PointsPerAxis;
-            int numVoxelsPerAxis = newPointsPerAxis - 1;
 
             int originalPointsPerAxisSqr = originalPointsPerAxis * originalPointsPerAxis;
 
