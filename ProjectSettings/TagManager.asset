@@ -26,22 +26,22 @@ TagManager:
   - 
   - Water
   - UI
+  - ChunkApproximation
+  - ChunkChecker
   - 
   - 
   - 
   - 
-  - WeaponOnly
-  - Weapon
-  - ClickableOnly
-  - NotSelf
-  - Troop
-  - TroopDetector
-  - ReachableClick
-  - Editable
-  - Shield
-  - Projectile
-  - TroopHitbox
-  - MeleeWeaponBlock
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
   - 
   - 
   - 

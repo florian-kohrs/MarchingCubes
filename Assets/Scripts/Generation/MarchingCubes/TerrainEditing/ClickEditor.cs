@@ -20,6 +20,12 @@ namespace MarchingCubes
 
         public MarchingCubeChunkHandler h;
 
+        private void Start()
+        {
+            layer = LayerMask.GetMask("ChunkApproximation", "ChunkChecker");
+            layer = ~layer;
+        }
+
         private void OnDrawGizmos()
         {
             if (ps != null)
@@ -38,8 +44,11 @@ namespace MarchingCubes
             }
         }
 
+        int layer;
+
         void Update()
         {
+           
             if (Input.GetKeyDown(KeyCode.Space))
             {
                 pointDelta *= -1;
@@ -49,7 +58,7 @@ namespace MarchingCubes
                 RaycastHit hit;
                 Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
                 Debug.DrawRay(ray.origin, ray.direction * 10, Color.red, 0.1f);
-                if (Physics.Raycast(ray, out hit, 2000))
+                if (Physics.Raycast(ray, out hit, 2000, layer))
                 {
                     Transform currentHitObject = hit.collider.transform;
 
@@ -76,9 +85,10 @@ namespace MarchingCubes
             else if (Input.GetMouseButtonDown(1))
             {
                 RaycastHit hit;
+               
                 Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
                 Debug.DrawRay(ray.origin, ray.direction * 10, Color.red, 0.1f);
-                if (Physics.Raycast(ray, out hit, 2000))
+                if (Physics.Raycast(ray, out hit, 2000, layer))
                 {
                     Transform currentHitObject = hit.collider.transform;
 
@@ -104,7 +114,7 @@ namespace MarchingCubes
                 RaycastHit hit;
                 Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
                 Debug.DrawRay(ray.origin, ray.direction * 10, Color.red, 0.1f);
-                if (Physics.Raycast(ray, out hit, 2000))
+                if (Physics.Raycast(ray, out hit, 2000, layer))
                 {
                     Transform currentHitObject = hit.collider.transform;
 
@@ -117,8 +127,6 @@ namespace MarchingCubes
                 }
             }
         }
-
-        int count = 0;
 
         public void BuildPath(PathTriangle from, PathTriangle to)
         {

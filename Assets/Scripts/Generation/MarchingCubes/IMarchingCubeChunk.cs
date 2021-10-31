@@ -14,15 +14,21 @@ namespace MarchingCubes
 
         int ChunkSizePower { get; set; }
 
+        int TargetChunkSizePower { get; set; }
+
+        WorldUpdater ChunkUpdater { set; }
+
         Vector3Int AnchorPos { get; set; }
-        
+
         Vector3Int CenterPos { get; }
 
         bool HasStarted { get; }
 
         bool[] HasNeighbourInDirection { get; }
 
-        IMarchingCubeChunkHandler ChunkHandler {set;}
+        IMarchingCubeChunkHandler ChunkHandler { set; }
+
+        public ChunkLodCollider ChunkSimpleCollider { set; }
 
         bool IsEmpty { get; }
 
@@ -36,13 +42,15 @@ namespace MarchingCubes
 
         int LODPower { get; set; }
 
+        int TargetLODPower { get; set; }
+
         Material Material { set; }
 
         float[] Points { get; set; }
 
         int PointsPerAxis { get; }
 
-       // void InitializeWithMeshData(Material mat, TriangleBuilder[] tris, int activeTris, float[] points, IMarchingCubeChunkHandler handler, float surfaceLevel);
+        // void InitializeWithMeshData(Material mat, TriangleBuilder[] tris, int activeTris, float[] points, IMarchingCubeChunkHandler handler, float surfaceLevel);
 
         void InitializeWithMeshDataParallel(TriangleBuilder[] tris, Queue<IThreadedMarchingCubeChunk> readyChunks, bool keepPoints);
 
@@ -56,7 +64,7 @@ namespace MarchingCubes
 
         //void InitializeEmpty(IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel);
 
- 
+
 
     }
 

@@ -47,6 +47,7 @@ namespace MarchingCubes
             return result;
         }
 
+
         protected void GetAnchorPositionForChunkAt(int[] position, out int[] anchorPos, out int[] relAchorPos)
         {
             relAchorPos = new int[3];
@@ -158,7 +159,14 @@ namespace MarchingCubes
 
         public void SplitChild(ChunkGroupTreeLeaf leaf, int index, IMarchingCubeChunk chunk, IMarchingCubeChunkHandler chunkHandler)
         {
+            children[index] = new ChunkGroupTreeNode(GroupAnchorPosition, GroupAnchorPosition, SizePower);
             
+        }
+
+        public void Fill(IMarchingCubeChunk chunk, IMarchingCubeChunkHandler chunkHandler)
+        {
+            float[][] noises = chunkHandler.GetSplittedNoiseArray(chunk);
+
         }
     }
 }

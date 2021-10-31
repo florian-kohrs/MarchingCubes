@@ -37,6 +37,10 @@ namespace MarchingCubes
 
         int[] GetColor(PathTriangle t, int steepness);
 
+        float[][] GetSplittedNoiseArray(IMarchingCubeChunk chunk);
+
+        //IMarchingCubeChunk CreateChunkFromNoiseAt(ChunkGroupTreeLeaf leaf, float[] noise);
+
     }
 
 }

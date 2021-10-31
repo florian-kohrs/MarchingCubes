@@ -28,7 +28,6 @@ namespace MarchingCubes
 
         public const int DEFAULT_CHUNK_SIZE_POWER = 5;
 
-
         public const int DEFAULT_MIN_CHUNK_LOD_POWER = 0;
 
         public const int MAX_CHUNK_LOD_POWER = 7;
@@ -72,7 +71,6 @@ namespace MarchingCubes
         {
             StartCoroutine(e);
         }
-
 
         public BaseMeshDisplayer GetNextMeshDisplayer()
         {
@@ -666,6 +664,8 @@ namespace MarchingCubes
 
         public WorldUpdater worldUpdater;
 
+        public Transform colliderParent;
+
         protected IMarchingCubeChunk GetChunkObjectAt<T>(Vector3Int position, Vector3Int coord, int lodPower, int chunkSizePower, bool allowOverride) where T : IMarchingCubeChunk, new()
         {
             ///Pot racecondition
@@ -674,18 +674,36 @@ namespace MarchingCubes
 
             chunk.ChunkHandler = this;
             chunk.ChunkSizePower = chunkSizePower;
+            chunk.ChunkUpdater = worldUpdater;
             chunk.Material = chunkMaterial;
             chunk.SurfaceLevel = surfaceLevel;
             chunk.LODPower = lodPower;
 
             chunkGroup.SetChunkAtPosition(new int[] { position.x, position.y, position.z }, chunk, allowOverride);
 
+            BuildLodColliderForChunk(chunk);
 
             worldUpdater.AddChunk(chunk);
 
             return chunk;
         }
         
+        protected void BuildLodColliderForChunk(IMarchingCubeChunk c)
+        {
+            GameObject g = new GameObject();
+            SphereCollider sphere = g.AddComponent<SphereCollider>();
+            sphere.radius = c.ChunkSize / 2;
+
+            sphere.isTrigger = true;
+
+            g.transform.position = c.CenterPos;
+            ChunkLodCollider coll = g.AddComponent<ChunkLodCollider>();
+            coll.chunk = c;
+            c.ChunkSimpleCollider = coll;
+
+            g.layer = 6;
+            g.transform.SetParent(colliderParent, true);
+        }
 
         protected IMarchingCubeChunk GetThreadedChunkObjectAt(Vector3Int pos, int lodPower, int chunkSize, bool allowOverride)
         {
@@ -794,7 +812,7 @@ namespace MarchingCubes
         }
 
 
-        public void SplitChunkAndRecalculateAll(IMarchingCubeChunk chunk)
+        public float[][] GetSplittedNoiseArray(IMarchingCubeChunk chunk)
         {
             float[] points = chunk.Points;
             int halfSize = chunk.ChunkSize / 2;
@@ -810,9 +828,9 @@ namespace MarchingCubes
             float[] backTopRight = new float[size];
             SplitArray(halfSize, points, frontBotLeft, frontBotRight, frontTopLeft, frontTopRight, backBotLeft, backBotRight, backTopLeft, backTopRight);
 
-
-
+            return new float[][] { frontBotLeft, backTopLeft, frontBotRight, backBotRight, frontTopLeft, backTopLeft, frontTopRight, backTopRight };
         }
+
 
         public MarchingCubeChunkNeighbourLODs GetNeighbourLODSFrom(IMarchingCubeChunk chunk)
         {

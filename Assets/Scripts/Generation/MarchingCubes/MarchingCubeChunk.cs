@@ -11,7 +11,7 @@ namespace MarchingCubes
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
     public class MarchingCubeChunk : CompressedMarchingCubeChunk, IMarchingCubeInteractableChunk, IHasInteractableMarchingCubeChunk, ICubeNeighbourFinder
     {
-
+         
         protected override void WorkOnBuildedChunk()
         {
             if (neighbourChunksGlue.Count > 0)

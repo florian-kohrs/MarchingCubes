@@ -124,6 +124,36 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &37876275
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 37876276}
+  m_Layer: 0
+  m_Name: Increase
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &37876276
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 37876275}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 2071981538}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &163582543
 GameObject:
   m_ObjectHideFlags: 0
@@ -750,6 +780,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1125545287}
   - component: {fileID: 1125545288}
+  - component: {fileID: 1125545290}
   - component: {fileID: 1125545289}
   m_Layer: 0
   m_Name: ChunkHandler
@@ -794,52 +825,43 @@ MonoBehaviour:
       time: 0
       value: 0
       inSlope: -0
-      outSlope: 0
+      outSlope: 0.01
       tangentMode: 69
       weightedMode: 0
       inWeight: 0.33333334
       outWeight: 0.33333334
     - serializedVersion: 3
       time: 100
-      value: 0
-      inSlope: -0
-      outSlope: 0.0042918455
-      tangentMode: 69
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 333
       value: 1
-      inSlope: 0.0042918455
-      outSlope: 0.004219409
+      inSlope: 0.01
+      outSlope: 0.005
       tangentMode: 69
       weightedMode: 0
       inWeight: 0.33333334
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 570
+      time: 300
       value: 2
-      inSlope: 0.004219409
-      outSlope: 0.0023255814
+      inSlope: 0.005
+      outSlope: 0.002
       tangentMode: 69
       weightedMode: 0
       inWeight: 0.33333334
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 1000
+      time: 800
       value: 3
-      inSlope: 0.0023255814
-      outSlope: 0.002
+      inSlope: 0.002
+      outSlope: 0.0016666667
       tangentMode: 69
       weightedMode: 0
       inWeight: 0.33333334
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 1500
+      time: 1400
       value: 4
-      inSlope: 0.002
-      outSlope: 0.002
+      inSlope: 0.0016666667
+      outSlope: 0.0016666667
       tangentMode: 69
       weightedMode: 0
       inWeight: 0.33333334
@@ -847,17 +869,8 @@ MonoBehaviour:
     - serializedVersion: 3
       time: 2000
       value: 5
-      inSlope: 0.002
-      outSlope: 0.002
-      tangentMode: 69
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 3000
-      value: 7
-      inSlope: 0.002
-      outSlope: -0.008
+      inSlope: 0.0016666667
+      outSlope: 0
       tangentMode: 69
       weightedMode: 0
       inWeight: 0.33333334
@@ -870,72 +883,54 @@ MonoBehaviour:
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0
+      value: 2
       inSlope: -0
-      outSlope: 0
+      outSlope: 0.01
       tangentMode: 69
       weightedMode: 0
       inWeight: 0.33333334
       outWeight: 0.33333334
     - serializedVersion: 3
       time: 100
-      value: 0
-      inSlope: -0
-      outSlope: 0.0042918455
-      tangentMode: 69
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 333
-      value: 1
-      inSlope: 0.0042918455
-      outSlope: 0.004219409
-      tangentMode: 69
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 570
-      value: 2
-      inSlope: 0.004219409
-      outSlope: 0.0023255814
-      tangentMode: 69
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 1000
       value: 3
-      inSlope: 0.0023255814
+      inSlope: 0.01
+      outSlope: 0.005
+      tangentMode: 69
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 300
+      value: 4
+      inSlope: 0.005
       outSlope: 0.002
       tangentMode: 69
       weightedMode: 0
       inWeight: 0.33333334
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 1500
-      value: 4
+      time: 800
+      value: 5
       inSlope: 0.002
-      outSlope: 0.002
+      outSlope: 0.0016666667
+      tangentMode: 69
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1400
+      value: 6
+      inSlope: 0.0016666667
+      outSlope: 0.0016666667
       tangentMode: 69
       weightedMode: 0
       inWeight: 0.33333334
       outWeight: 0.33333334
     - serializedVersion: 3
       time: 2000
-      value: 5
-      inSlope: 0.002
-      outSlope: 0.002
-      tangentMode: 69
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 3000
       value: 7
-      inSlope: 0.002
-      outSlope: -0.008
+      inSlope: 0.0016666667
+      outSlope: 0
       tangentMode: 69
       weightedMode: 0
       inWeight: 0.33333334
@@ -949,8 +944,8 @@ MonoBehaviour:
   chunkMaterial: {fileID: 2100000, guid: 97d2f9aa8d16b8241a90494b8d616c04, type: 2}
   surfaceLevel: 0.511
   player: {fileID: 1779183453}
-  buildAroundDistance: 500
-  worldUpdater: {fileID: 0}
+  buildAroundDistance: 1000
+  worldUpdater: {fileID: 1125545290}
   totalTriBuild: 0
   minSteepness: 11
   maxSteepness: 45
@@ -972,6 +967,39 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 3
+--- !u!114 &1125545290
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1125545286}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76e2bdfbd44892348a426b99b226067a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  chunkHandler: {fileID: 1125545288}
+  lastUpdatePosition: {x: 0, y: 0, z: 0}
+  player: {fileID: 910780110}
+  updateClosestAfterDistance: 16
+  maxFrameTime: 15
+  estimatedTimeReduce: 1
+  estimatedTimeIncrease: 4
+  increaseTriggerParent: {fileID: 37876276}
+  decreaseTriggerParent: {fileID: 1489920410}
+  lodPowerAtDistance:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reduceChunkAtCorrectSizeDist: 0.25
+  increaseChunkAtCorrectSizeDist: 0.25
+  maxMillisecondsPerFrame: 30
+  stopReducingChunksAtMillisecond: 28
+  stopGeneratingChunksAtMillisecond: 12
+  stopIncreasingChunkLodsAtMillisecond: 16
 --- !u!1 &1146147227
 GameObject:
   m_ObjectHideFlags: 0
@@ -1068,6 +1096,36 @@ MonoBehaviour:
   octaves: 9
   offset: {x: 0, y: 0, z: 0}
   seed: 4
+--- !u!1 &1489920409
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1489920410}
+  m_Layer: 0
+  m_Name: Decrease
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1489920410
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1489920409}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 2071981538}
+  m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1642241349
 GameObject:
   m_ObjectHideFlags: 0
@@ -1473,6 +1531,7 @@ Transform:
   m_Children:
   - {fileID: 1779183453}
   - {fileID: 1642241350}
+  - {fileID: 2071981538}
   m_Father: {fileID: 910780110}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1521,6 +1580,38 @@ CharacterController:
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &2071981537
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2071981538}
+  m_Layer: 0
+  m_Name: ChunkUpdateTriggers
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2071981538
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2071981537}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children:
+  - {fileID: 37876276}
+  - {fileID: 1489920410}
+  m_Father: {fileID: 2047378104}
+  m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2072808058
 GameObject:
   m_ObjectHideFlags: 0

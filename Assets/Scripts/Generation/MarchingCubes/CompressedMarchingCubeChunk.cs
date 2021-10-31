@@ -8,7 +8,6 @@ namespace MarchingCubes
     public class CompressedMarchingCubeChunk : IMarchingCubeChunk
     {
 
-
         public virtual void InitializeWithMeshDataParallel(TriangleBuilder[] tris, Queue<IThreadedMarchingCubeChunk> readyChunks, bool keepPoints = false)
         {
             throw new Exception("This class doesnt support concurrency");
@@ -55,6 +54,28 @@ namespace MarchingCubes
         }
 
         protected ChunkGroupTreeLeaf leaf;
+
+        protected WorldUpdater chunkUpdater;
+
+        protected ChunkLodCollider chunkSimpleCollider;
+
+
+        public ChunkLodCollider ChunkSimpleCollider
+        {
+            set
+            {
+                chunkSimpleCollider = value;
+            }
+        }
+
+
+        public WorldUpdater ChunkUpdater
+        {
+            set
+            {
+                chunkUpdater = value;
+            }
+        }
 
         protected virtual void OnResetChunk() { }
 
@@ -112,6 +133,49 @@ namespace MarchingCubes
             {
                 lodPower = value;
                 LOD = (int)Mathf.Pow(2, lodPower);
+            }
+        }
+
+        protected int targetLodPower;
+
+        public int TargetLODPower
+        {
+            get
+            {
+                return targetLodPower;
+            }
+            set
+            {
+                targetLodPower = value;
+                if(targetLodPower > lodPower)
+                {
+                    chunkUpdater.lowerChunkLods.Remove(this);
+                    chunkUpdater.increaseChunkLods.Add(this);
+                }
+                else if(targetLodPower < lodPower)
+                {
+                    chunkUpdater.increaseChunkLods.Remove(this);
+                    chunkUpdater.lowerChunkLods.Add(this);
+                }
+                else
+                {
+                    chunkUpdater.lowerChunkLods.Remove(this);
+                    chunkUpdater.increaseChunkLods.Remove(this);
+                }
+            }
+        }
+
+        protected int targetChunkSizePower;
+
+        public int TargetChunkSizePower
+        {
+            get
+            {
+                return targetChunkSizePower;
+            }
+            set
+            {
+                targetChunkSizePower = value;
             }
         }
 

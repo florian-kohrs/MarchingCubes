@@ -39,6 +39,20 @@ public static class ExtensionAnimationCurve
         return approximateResult;
     }
 
+
+    public static AnimationCurve CreateSquaredAnimationCurve(this AnimationCurve c)
+    {
+        AnimationCurve result = new AnimationCurve();
+        for (int i = 0; i < c.length; i++)
+        {
+            Keyframe f = c.keys[i];
+            f.time *= f.time;
+            result.AddKey(f);
+        }
+        return result;
+    }
+
+
     public static float IntegrateUntil(this AnimationCurve c, float start, float approximateIntegration, int accuracy = 100)
     {
         float approximateResult = 0;

@@ -79,7 +79,12 @@ namespace MarchingCubes
 
         public void SplitChild(ChunkGroupTreeLeaf leaf, int index, IMarchingCubeChunk chunk, IMarchingCubeChunkHandler chunkHandler)
         {
-
+            if(chunk.ChunkSizePower == SizePower)
+            {
+                child = new ChunkGroupTreeNode(GroupAnchorPosition, GroupAnchorPosition, SizePower);
+            }
+            ((IChunkGroupParent)child).SplitChild(leaf, index, chunk, chunkHandler);
+            chunk.ResetChunk();
         }
 
         public bool HasChild => child != null;
