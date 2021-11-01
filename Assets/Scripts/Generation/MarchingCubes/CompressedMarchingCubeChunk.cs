@@ -43,8 +43,8 @@ namespace MarchingCubes
 
         public void ResetChunk()
         {
-            FreeAllMeshes();
             OnResetChunk();
+            FreeAllMeshes();
             GameObject.Destroy(chunkSimpleCollider.gameObject);
             IsReady = false;
             points = null;

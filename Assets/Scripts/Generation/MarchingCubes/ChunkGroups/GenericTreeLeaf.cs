@@ -4,26 +4,32 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public abstract class GenericTreeLeaf<T,P> : BaseChunkGroupOrganizer<T>
+    [System.Serializable]
+    public abstract class GenericTreeLeaf<T> : BaseChunkGroupOrganizer<T>
     {
 
-        public GenericTreeLeaf(P parent, T leaf, int index, int[] relativeAnchorPoint, int[] anchorPoint, int sizePower)
+        public GenericTreeLeaf()
+        {
+        }
+
+        public GenericTreeLeaf(T leaf, int index, int[] relativeAnchorPoint, int[] anchorPoint, int sizePower)
         {
             childIndex = index;
-            this.parent = parent;
             this.sizePower = sizePower;
             this.leaf = leaf;
             groupRelativeAnchorPosition = relativeAnchorPoint;
         }
 
+        [Save]
         protected int sizePower;
 
+        [Save]
         protected int childIndex;
 
-        public P parent;
-
+        [Save]
         public T leaf;
 
+        [Save]
         public int[] groupRelativeAnchorPosition;
 
         public override int[] GroupRelativeAnchorPosition => groupRelativeAnchorPosition;
@@ -39,7 +45,6 @@ namespace MarchingCubes
 
         public override void SetChunkAtLocalPosition(int[] pos, T chunk, bool allowOverride)
         {
-            
         }
 
         public override bool TryGetLeafAtLocalPosition(int[] pos, out T leaf)

@@ -5,10 +5,14 @@ using UnityEngine;
 namespace MarchingCubes
 {
 
+    [System.Serializable]
     public abstract class GenericTreeRoot<T,Leaf, Child> : IChunkGroupRoot<T>, IChunkGroupParent<Leaf> where T : ISizeManager where Child : IChunkGroupOrganizer<T> 
     {
 
+        public GenericTreeRoot() { }
+
         public GenericTreeRoot(int[] coord)
+
         {
             GroupAnchorPosition = new int[]{
             coord[0] * MarchingCubeChunkHandler.CHUNK_GROUP_SIZE,
@@ -17,13 +21,17 @@ namespace MarchingCubes
             };
         }
 
+        [Save]
         protected Child child;
 
         public int Size => MarchingCubeChunkHandler.CHUNK_GROUP_SIZE;
 
         public int SizePower => MarchingCubeChunkHandler.CHUNK_GROUP_SIZE_POWER;
 
-        public int[] GroupAnchorPosition { get; set; }
+        [Save]
+        public int[] groupAnchorPosition;
+
+        public int[] GroupAnchorPosition { get { return groupAnchorPosition; } set { groupAnchorPosition = value; } }
 
         public bool HasChild => child != null;
 

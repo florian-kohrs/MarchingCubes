@@ -88,7 +88,7 @@ namespace MarchingCubes
                     Debug.LogError(x);
                     //TODO: Reduce expected chunk finishes
                 }
-                lock (reabuildListLock)
+                lock (rebuildListLock)
                 {
                     readyChunks.Enqueue(this);
                 }

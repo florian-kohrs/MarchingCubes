@@ -4,10 +4,14 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
+
+    [System.Serializable]
     public abstract class GenericTreeNode<T, Node, Leaf> : BaseChunkGroupOrganizer<T>, IChunkGroupParent<Leaf> 
         where Node : IChunkGroupOrganizer<T>
         where T : ISizeManager 
     {
+
+        public GenericTreeNode() { }
 
         public GenericTreeNode(
         int[] anchorPosition,
@@ -21,12 +25,16 @@ namespace MarchingCubes
         }
 
 
+        [Save]
         public Node[] children = new Node[8];
 
+        [Save]
         public int sizePower;
 
+        [Save]
         protected int halfSize;
 
+        [Save]
         int[] groupRelativeAnchorPosition;
 
         public override int[] GroupRelativeAnchorPosition => groupRelativeAnchorPosition;
@@ -104,7 +112,6 @@ namespace MarchingCubes
             else
             {
                 Node child = GetOrCreateChildAt(childIndex, relativePosition);
-                //maybe let child substract anchor
                 child.SetChunkAtLocalPosition(relativePosition, chunk, allowOverride);
             }
         }
@@ -168,5 +175,6 @@ namespace MarchingCubes
         public abstract bool AreAllChildrenLeafs(int targetLodPower);
 
         public abstract Leaf[] GetLeafs();
+
     }
 }

@@ -5,16 +5,20 @@ using UnityEngine;
 namespace MarchingCubes
 {
 
-    public class ChunkGroupTreeLeaf : GenericTreeLeaf<IMarchingCubeChunk, IChunkGroupParent<ChunkGroupTreeLeaf>>
+    public class ChunkGroupTreeLeaf : GenericTreeLeaf<IMarchingCubeChunk>
     {
 
         public ChunkGroupTreeLeaf(IChunkGroupParent<ChunkGroupTreeLeaf> parent, IMarchingCubeChunk chunk, int index, int[] relativeAnchorPoint, int[] anchorPoint, int sizePower) 
-            : base(parent,chunk,index,relativeAnchorPoint,anchorPoint,sizePower)
+            : base(chunk,index,relativeAnchorPoint,anchorPoint,sizePower)
         {
+            this.parent = parent;
             chunk.AnchorPos = new Vector3Int(anchorPoint[0], anchorPoint[1],anchorPoint[2]);
             chunk.ChunkSizePower = sizePower;
             chunk.SetLeaf(this);
         }
+
+
+        public IChunkGroupParent<ChunkGroupTreeLeaf> parent;
 
 
         public bool AllSiblingsAreLeafsWithSameTargetLod()

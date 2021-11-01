@@ -4,8 +4,20 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public class StorageTreeLeaf
+
+    [System.Serializable]
+    public class StorageTreeLeaf : GenericTreeLeaf<StoredChunkEdits>
     {
+        public StorageTreeLeaf() { }
+
+        public StorageTreeLeaf(StoredChunkEdits leaf, int index, int[] relativeAnchorPoint, int[] anchorPoint, int sizePower) : base(leaf, index, relativeAnchorPoint, anchorPoint, sizePower)
+        {
+        }
+
+        public override bool RemoveLeafAtLocalPosition(int[] pos)
+        {
+            return false;
+        }
 
     }
 }

@@ -30,6 +30,9 @@ namespace MarchingCubes
 
         protected Dictionary<Vector3Int, MarchingCubeEntity> higherLodNeighbourCubes = new Dictionary<Vector3Int, MarchingCubeEntity>();
 
+
+        protected Dictionary<int, float> editedPointsValues = new Dictionary<int, float>();
+
         public MarchingCubeEntity GetEntityAt(Vector3Int v3)
         {
             return GetEntityAt(v3.x, v3.y, v3.z);
@@ -384,11 +387,21 @@ namespace MarchingCubes
             BuildAll();
         }
 
+        protected override void OnResetChunk()
+        {
+            SaveEditedChunkValues();
+        }
+
+        public void SaveEditedChunkValues()
+        {
+
+        }
+
         public bool IsInOtherThread { get; set; }
 
-        protected static object reabuildListLock = new object();
 
-      
+        protected static object rebuildListLock = new object();
+
 
         public void RebuildAround(float offsetX, float offsetY, float offsetZ, int radius, int posX, int posY, int posZ, float delta)
         {
@@ -447,6 +460,7 @@ namespace MarchingCubes
 
                             value += diff;
                             value = Mathf.Clamp(value, -2, 2);
+                            editedPointsValues[index] = value;
                             points[index] = value;
 
                         }

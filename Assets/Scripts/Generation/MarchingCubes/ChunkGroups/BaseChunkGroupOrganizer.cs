@@ -4,6 +4,8 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
+
+    [System.Serializable]
     public abstract class BaseChunkGroupOrganizer<T> : IChunkGroupOrganizer<T>
     {
 
