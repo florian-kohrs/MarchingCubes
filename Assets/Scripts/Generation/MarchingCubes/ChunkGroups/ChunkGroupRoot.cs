@@ -27,6 +27,8 @@ namespace MarchingCubes
 
         public int[] GroupRelativeAnchorPosition => GroupAnchorPosition;
 
+        public Vector3Int GroupAnchorPositionVector { get => new Vector3Int(GroupAnchorPosition[0], GroupAnchorPosition[1], GroupAnchorPosition[2]); }
+
         public IMarchingCubeChunk GetChunkAtLocalPosition(int[] pos)
         {
             return child.GetChunkAtLocalPosition(pos);
@@ -40,7 +42,7 @@ namespace MarchingCubes
             {
                 if (chunk.ChunkSizePower == SizePower)
                 {
-                    child = new ChunkGroupTreeLeaf(this, chunk, 0, GroupAnchorPosition, SizePower);
+                    child = new ChunkGroupTreeLeaf(this, chunk, 0, GroupAnchorPosition, GroupAnchorPosition, SizePower);
                 }
                 else
                 {
@@ -85,6 +87,16 @@ namespace MarchingCubes
             }
             ((IChunkGroupParent)child).SplitChild(leaf, index, chunk, chunkHandler);
             chunk.ResetChunk();
+        }
+
+        public ChunkGroupTreeLeaf[] GetLeafs()
+        {
+            return null;
+        }
+
+        public bool AreAllChildrenLeafs(int _)
+        {
+            return false;
         }
 
         public bool HasChild => child != null;

@@ -8,17 +8,18 @@ namespace MarchingCubes
     public class ChunkGroupTreeLeaf : BaseChunkGroupOrganizer
     {
 
-        public ChunkGroupTreeLeaf(IChunkGroupParent parent, IMarchingCubeChunk chunk, int index, int[] anchorPoint, int sizePower)
+        public ChunkGroupTreeLeaf(IChunkGroupParent parent, IMarchingCubeChunk chunk, int index, int[] relativeAnchorPoint, int[] anchorPoint, int sizePower)
         {
             childIndex = index;
             this.parent = parent;
             this.chunk = chunk;
             chunk.AnchorPos = new Vector3Int(anchorPoint[0], anchorPoint[1],anchorPoint[2]);
+            groupRelativeAnchorPosition = relativeAnchorPoint;
             chunk.ChunkSizePower = sizePower;
             chunk.SetLeaf(this);
         }
 
-        protected IChunkGroupParent parent;
+        public IChunkGroupParent parent;
          
         protected int childIndex;
 
@@ -27,13 +28,20 @@ namespace MarchingCubes
             parent.SplitChild(this, childIndex, chunk, chunkHandler);
         }
 
+        public bool AllSiblingsAreLeafsWithSameTargetLod()
+        {
+            return parent.AreAllChildrenLeafs(chunk.TargetLODPower);
+        }
+
         public override int SizePower => chunk.ChunkSizePower; 
 
-        protected IMarchingCubeChunk chunk;
+        public IMarchingCubeChunk chunk;
 
         public bool IsEmpty => chunk != null;
 
-        public override int[] GroupRelativeAnchorPosition => default;
+        public int[] groupRelativeAnchorPosition;
+
+        public override int[] GroupRelativeAnchorPosition => groupRelativeAnchorPosition;
 
         public IMarchingCubeChunk GetChunkAtLocal(Vector3Int pos)
         {

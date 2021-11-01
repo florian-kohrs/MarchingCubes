@@ -313,7 +313,7 @@ namespace MarchingCubes
             }
             Debug.Log("Total triangles: " + totalTriBuild);
 
-            Debug.Log($"Number of chunks: {ChunkGroups.Count}");
+           // Debug.Log($"Number of chunks: {ChunkGroups.Count}");
         }
 
         private void BuildRelevantChunksParallelBlockingAround()
@@ -521,21 +521,26 @@ namespace MarchingCubes
             return chunk != null;
         }
 
-        protected IMarchingCubeChunk CreateChunkAt(Vector3Int p)
+        protected IMarchingCubeChunk CreateChunkAt(Vector3Int p, bool allowOverride = false)
         {
-            return CreateChunkAt(p, PositionToChunkGroupCoord(p));
+            return CreateChunkAt(p, PositionToChunkGroupCoord(p), allowOverride);
         }
 
         //TODO:Check if collider can be removed from most chunks.
         //Collision can be approximated by calling noise function for lowest point of object and checking if its noise is larger than surface value
 
-        protected IMarchingCubeChunk CreateChunkAt(Vector3 pos, Vector3Int coord)
+        protected IMarchingCubeChunk CreateChunkAt(Vector3 pos, Vector3Int coord, bool allowOverride = false)
         {
             int lodPower;
             int chunkSizePower;
             bool careForNeighbours;
             GetSizeAndLodPowerForChunkPosition(pos, out chunkSizePower, out lodPower, out careForNeighbours);
-            IMarchingCubeChunk chunk = GetThreadedChunkObjectAt(VectorExtension.ToVector3Int(pos), coord, lodPower, chunkSizePower, false);
+            return CreateChunkWithProperties(VectorExtension.ToVector3Int(pos), coord, lodPower, chunkSizePower, careForNeighbours, allowOverride);
+        }
+
+        protected IMarchingCubeChunk CreateChunkWithProperties(Vector3Int pos, Vector3Int coord, int lodPower, int chunkSizePower, bool careForNeighbours, bool allowOverride)
+        {
+            IMarchingCubeChunk chunk = GetThreadedChunkObjectAt(pos, coord, lodPower, chunkSizePower, allowOverride);
             BuildChunk(chunk, RoundToPowerOf2(lodPower), careForNeighbours);
             return chunk;
         }
@@ -692,7 +697,7 @@ namespace MarchingCubes
         {
             GameObject g = new GameObject();
             SphereCollider sphere = g.AddComponent<SphereCollider>();
-            sphere.radius = c.ChunkSize / 2;
+            sphere.radius = 1;
 
             sphere.isTrigger = true;
 
@@ -705,9 +710,9 @@ namespace MarchingCubes
             g.transform.SetParent(colliderParent, true);
         }
 
-        protected IMarchingCubeChunk GetThreadedChunkObjectAt(Vector3Int pos, int lodPower, int chunkSize, bool allowOverride)
+        protected IMarchingCubeChunk GetThreadedChunkObjectAt(Vector3Int pos, int lodPower, int chunkSizePower, bool allowOverride)
         {
-            return GetThreadedChunkObjectAt(pos, PositionToChunkGroupCoord(pos), lodPower, chunkSize, allowOverride);
+            return GetThreadedChunkObjectAt(pos, PositionToChunkGroupCoord(pos), lodPower, chunkSizePower, allowOverride);
         }
 
 
@@ -786,31 +791,7 @@ namespace MarchingCubes
 
         }
 
-        protected void SplitArrayAt(int halfSize, int startIndexX, int startIndexY, int startIndexZ, float[] points, float[] writeInHere)
-        {
-            int pointsPerAxis = 2 * halfSize + 1;
-            int halfFrontJump = pointsPerAxis * halfSize;
-            int readIndex = 0;
-            int counter = 0;
-            int endX = startIndexX + halfSize;
-            int endY = startIndexY + halfSize;
-            int endZ = startIndexZ + halfSize;
-            for (int z = startIndexZ; z <= endZ; z++)
-            {
-                for (int y = startIndexY; y <= endY; y++)
-                {
-                    for (int x = startIndexX; x <= endX; x++)
-                    {
-                        writeInHere[counter] = points[readIndex];
-                        readIndex += 1;
-                        counter++;
-                    }
-                    readIndex += halfSize;
-                }
-                readIndex += halfFrontJump;
-            }
-        }
-
+      
 
         public float[][] GetSplittedNoiseArray(IMarchingCubeChunk chunk)
         {
@@ -853,7 +834,7 @@ namespace MarchingCubes
 
         protected void BuildChunk(IMarchingCubeChunk chunk, int lod, bool careForNeighbours)
         {
-            ApplyChunkDataAndDispatchAndGetShaderData(chunk, lod, careForNeighbours);
+            DispatchAndGetShaderData(chunk, lod, careForNeighbours);
             chunk.InitializeWithMeshData(tris, false);
         }
 
@@ -861,7 +842,7 @@ namespace MarchingCubes
 
         protected void BuildChunkParallel(IMarchingCubeChunk chunk, int lod, bool careForNeighbours)
         {
-            ApplyChunkDataAndDispatchAndGetShaderData(chunk, lod, careForNeighbours);
+            DispatchAndGetShaderData(chunk, lod, careForNeighbours);
             channeledChunks++;
             chunk.InitializeWithMeshDataParallel(tris, readyParallelChunks, false);
         }
@@ -881,9 +862,12 @@ namespace MarchingCubes
 
         public float[] RequestNoiseForChunk(IMarchingCubeChunk chunk)
         {
-            int pointsPerAxis = chunk.PointsPerAxis;
+            return RequestNoiseFor(chunk.PointsPerAxis, chunk.LOD, chunk.AnchorPos);
+        }
 
-            densityGenerator.Generate(pointsPerAxis, chunk.AnchorPos, chunk.LOD);
+        public float[] RequestNoiseFor(int pointsPerAxis, int LOD, Vector3Int anchor)
+        {
+            densityGenerator.Generate(pointsPerAxis, anchor, LOD);
             float[] result = new float[pointsPerAxis * pointsPerAxis * pointsPerAxis];
             pointsBuffer.GetData(result, 0, 0, result.Length);
 
@@ -891,7 +875,7 @@ namespace MarchingCubes
         }
 
 
-        protected void ApplyChunkDataAndDispatchAndGetShaderData(IMarchingCubeChunk chunk, int lod, bool careForNeighbours)
+        protected void DispatchAndGetShaderData(IMarchingCubeChunk chunk, int lod, bool careForNeighbours)
         {
             int chunkSize = chunk.ChunkSize;
 
@@ -995,14 +979,40 @@ namespace MarchingCubes
                 (int)(invLerp * steepB  + (1 - invLerp) * flatB)};
         }
 
+        public int GetFeasibleReducedLodForChunk(IMarchingCubeChunk c, int toLodPower)
+        {
+            return Mathf.Min(toLodPower, c.LODPower + 1);
+        }
 
         public void DecreaseChunkLod(IMarchingCubeChunk chunk, int toLodPower)
         {
+            toLodPower = GetFeasibleReducedLodForChunk(chunk, toLodPower);
             int toLod = RoundToPowerOf2(toLodPower);
-            int chunkSize = chunk.ChunkSize;
-            if (toLod <= chunk.LOD || chunkSize % toLod != 0)
-                throw new Exception("invalid new chunk lod");
+            if (toLod <= chunk.LOD || chunk.ChunkSize % toLod != 0)
+                Debug.LogWarning($"invalid new chunk lod {toLodPower} from lod {chunk.LODPower}");
 
+            if(chunk.GetLeaf().AllSiblingsAreLeafsWithSameTargetLod())
+            {
+                MergeAndReduceChunkBranch(chunk, toLodPower, toLod);
+            }
+            else
+            {
+                DecreaseSingleChunkLod(chunk, toLodPower, toLod);
+            }
+        }
+        public void DecreaseSingleChunkLod(IMarchingCubeChunk chunk, int toLodPower)
+        {
+            toLodPower = GetFeasibleReducedLodForChunk(chunk, toLodPower);
+            int toLod = RoundToPowerOf2(toLodPower);
+            if (toLod <= chunk.LOD || chunk.ChunkSize % toLod != 0)
+                Debug.LogWarning($"invalid new chunk lod {toLodPower} from lod {chunk.LODPower}");
+
+            DecreaseSingleChunkLod(chunk, toLodPower, toLod);
+        }
+
+        protected void DecreaseSingleChunkLod(IMarchingCubeChunk chunk, int toLodPower, int toLod)
+        {
+            int chunkSizePower = chunk.ChunkSizePower;
             int shrinkFactor = toLod / chunk.LOD;
             int originalPointsPerAxis = chunk.PointsPerAxis;
             float[] points = chunk.Points;
@@ -1013,14 +1023,73 @@ namespace MarchingCubes
 
             int originalPointsPerAxisSqr = originalPointsPerAxis * originalPointsPerAxis;
 
-            //int newPointsPerAxis = (originalPointsPerAxis - 1) / shrinkFactor + 1;
-
-
             float[] relevantPoints = new float[newPointsPerAxis * newPointsPerAxis * newPointsPerAxis];
 
-            int addCount = 0;
-
             //NotifyNeighbourChunksOnLodSwitch(chunk.ChunkAnchorPosition, toLodPower);
+
+            TransferPointsInto(points, relevantPoints, originalPointsPerAxis, originalPointsPerAxisSqr, shrinkFactor);
+
+            pointsBuffer.SetData(relevantPoints);
+
+            RequestCubesFromNoise(chunk, toLod);
+
+            //TryGetChunkAtPosition(chunk.CenterPos);
+            IMarchingCubeChunk compressedChunk = GetThreadedChunkObjectAt(chunk.AnchorPos, toLodPower, chunkSizePower, true);
+            //compressedChunk.InitializeWithMeshDataParallel(tris, relevantPoints, chunkSize, this, GetNeighbourLODSFrom(chunk), surfaceLevel,
+            //    delegate
+            //    {
+            //        chunk.ResetChunk();
+            //    });
+            compressedChunk.InitializeWithMeshData(tris, true);
+            chunk.ResetChunk();
+        }
+
+        public float[] GetNoiseForMergingChunkAt(IMarchingCubeChunk chunk, int toLod)
+        {
+            int[] pos = chunk.GetLeaf().parent.GroupAnchorPosition;
+            return RequestNoiseFor(chunk.PointsPerAxis, toLod, new Vector3Int(pos[0],pos[1],pos[2]));
+        }
+
+        public void MergeAndReduceChunkBranch(IMarchingCubeChunk chunk, int toLodPower, int toLod)
+        {
+            ChunkGroupTreeLeaf[] leafs = chunk.GetLeaf().parent.GetLeafs();
+            IMarchingCubeChunk compressedChunk = CreateChunkWithProperties(chunk.CenterPos, PositionToChunkGroupCoord(chunk.CenterPos), toLodPower, chunk.ChunkSizePower + 1, false, true);
+
+            //IMarchingCubeChunk compressedChunk = GetThreadedChunkObjectAt(chunk.CenterPos, toLodPower, chunk.ChunkSizePower + 1, true);
+
+            //densityGenerator.Generate(compressedChunk.PointsPerAxis, chunk.GetLeaf().parent.GroupAnchorPositionVector, toLod);
+
+            //float[] combinedPoints = GetNoiseForMergingChunkAt(chunk, toLod);
+            int deleted = 0;
+            for (int i = 0; i < 8; i++)
+            {
+                ChunkGroupTreeLeaf l = leafs[i];
+                if (l == null)
+                    continue;
+                
+                //int shrinkFactor = toLod / l.chunk.LOD;
+                //int pointsPerAxis = l.chunk.PointsPerAxis;
+                //int pointsPerAxisSqr = pointsPerAxis * pointsPerAxis;
+
+               // CombinePointsInto(l.GroupRelativeAnchorPosition, l.chunk.Points, combinedPoints, pointsPerAxis, pointsPerAxisSqr, shrinkFactor, toLod);
+                l.chunk.ResetChunk();
+                deleted++;
+            }
+            if(deleted< 2)
+            { }
+
+            //pointsBuffer.SetData(combinedPoints);
+
+            //RequestCubesFromNoise(chunk, toLod);
+
+            //compressedChunk.InitializeWithMeshData(tris, true);
+
+            Debug.Log($"Merged Chunk At {compressedChunk.CenterPos}");
+        }
+
+        protected void TransferPointsInto(float[] originalPoints, float[] writeInHere, int originalPointsPerAxis, int originalPointsPerAxisSqr, int shrinkFactor)
+        {
+            int addCount = 0;
 
             for (int z = 0; z < originalPointsPerAxis; z += shrinkFactor)
             {
@@ -1030,26 +1099,68 @@ namespace MarchingCubes
                     int yPoint = y * originalPointsPerAxis;
                     for (int x = 0; x < originalPointsPerAxis; x += shrinkFactor)
                     {
-                        float p = points[zPoint + yPoint + x];
-                        relevantPoints[addCount] = p;
+                        writeInHere[addCount] = originalPoints[zPoint + yPoint + x];
                         addCount++;
                     }
                 }
             }
+        }
 
-            pointsBuffer.SetData(relevantPoints);
 
-            RequestCubesFromNoise(chunk, toLod);
+        protected void CombinePointsInto(int[] startIndex, float[] originalPoints, float[] writeInHere, int pointsPerAxis, int pointsPerAxisSqr, int shrinkFactor, int toLod)
+        {
+            int halfSize = pointsPerAxis / 2;
+            int halfSizeCeil = halfSize;
+            int halfFrontJump = pointsPerAxis * halfSizeCeil;
 
-            //TryGetChunkAtPosition(chunk.CenterPos);
-            IMarchingCubeChunk compressedChunk = GetThreadedChunkObjectAt(chunk.AnchorPos, toLodPower, chunkSize, true);
-            //compressedChunk.InitializeWithMeshDataParallel(tris, relevantPoints, chunkSize, this, GetNeighbourLODSFrom(chunk), surfaceLevel,
-            //    delegate
-            //    {
-            //        chunk.ResetChunk();
-            //    });
-            compressedChunk.InitializeWithMeshData(tris, true);
-            chunk.ResetChunk();
+            int startwriteIndex = startIndex[0] / toLod + startIndex[1] / toLod * pointsPerAxis + startIndex[2] / toLod * pointsPerAxisSqr;
+            int writeIndex = startIndex[0] / toLod + startIndex[1] / toLod * pointsPerAxis + startIndex[2] / toLod * pointsPerAxisSqr;
+            int readIndex;
+
+            for (int z = 0; z < pointsPerAxis; z += shrinkFactor)
+            {
+                int zPoint = z * pointsPerAxisSqr;
+                for (int y = 0; y < pointsPerAxis; y += shrinkFactor)
+                {
+                    int yPoint = y * pointsPerAxis;
+                    readIndex = zPoint + yPoint;
+                    for (int x = 0; x < pointsPerAxis; x += shrinkFactor)
+                    {
+                        float val = originalPoints[readIndex + x];
+                        if(writeIndex >= writeInHere.Length)
+                        { }
+                        writeInHere[writeIndex] = val;
+                        writeIndex++;
+                    }
+                    writeIndex += halfSizeCeil;
+                }
+                writeIndex += halfFrontJump;
+            }
+        }
+
+        protected void SplitArrayAt(int halfSize, int startIndexX, int startIndexY, int startIndexZ, float[] points, float[] writeInHere)
+        {
+            int pointsPerAxis = 2 * halfSize + 1;
+            int halfFrontJump = pointsPerAxis * halfSize;
+            int readIndex = 0;
+            int counter = 0;
+            int endX = startIndexX + halfSize;
+            int endY = startIndexY + halfSize;
+            int endZ = startIndexZ + halfSize;
+            for (int z = startIndexZ; z <= endZ; z++)
+            {
+                for (int y = startIndexY; y <= endY; y++)
+                {
+                    for (int x = startIndexX; x <= endX; x++)
+                    {
+                        writeInHere[counter] = points[readIndex];
+                        readIndex += 1;
+                        counter++;
+                    }
+                    readIndex += halfSize;
+                }
+                readIndex += halfFrontJump;
+            }
         }
 
       

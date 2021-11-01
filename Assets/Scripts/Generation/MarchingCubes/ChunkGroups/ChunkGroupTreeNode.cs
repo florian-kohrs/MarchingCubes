@@ -38,6 +38,8 @@ namespace MarchingCubes
 
         public override int[] GroupRelativeAnchorPosition => groupRelativeAnchorPosition;
 
+        public Vector3Int GroupAnchorPositionVector { get => new Vector3Int(GroupAnchorPosition[0], GroupAnchorPosition[1], GroupAnchorPosition[2]); }
+
         protected int GetIndexForLocalPosition(int[] position)
         {
             int result = 0;
@@ -91,7 +93,7 @@ namespace MarchingCubes
                 int[] childAnchorPosition;
                 int[] childRelativeAnchorPosition;
                 GetAnchorPositionForChunkAt(relativePosition, out childAnchorPosition, out childRelativeAnchorPosition);
-                children[childIndex] = new ChunkGroupTreeLeaf(this, chunk, childIndex, childAnchorPosition, sizePower - 1);
+                children[childIndex] = new ChunkGroupTreeLeaf(this, chunk, childIndex, childRelativeAnchorPosition, childAnchorPosition, sizePower - 1);
             }
             else
             {
@@ -163,10 +165,28 @@ namespace MarchingCubes
             
         }
 
-        public void Fill(IMarchingCubeChunk chunk, IMarchingCubeChunkHandler chunkHandler)
+        public ChunkGroupTreeLeaf[] GetLeafs()
         {
-            float[][] noises = chunkHandler.GetSplittedNoiseArray(chunk);
+            //if(AreAllChildrenLeafs())
+            {
+                ChunkGroupTreeLeaf[] result = new ChunkGroupTreeLeaf[8];
+                for (int i = 0; i < 8; i++)
+                {
+                    result[i] = ((ChunkGroupTreeLeaf)children[i]);
+                }
+                return result;
+            }
+            return null;
+        }
 
+        public bool AreAllChildrenLeafs(int targetLodPower)
+        {
+            bool result = true;
+            for (int i = 0; i < 8 && result; i++)
+            {
+                result = children[i] == null || ((children[i] is ChunkGroupTreeLeaf l) && l.chunk.IsReady && l.chunk.TargetLODPower == targetLodPower);
+            }
+            return result;
         }
     }
 }

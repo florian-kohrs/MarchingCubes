@@ -62,6 +62,8 @@ namespace MarchingCubes
 
         void SetLeaf(ChunkGroupTreeLeaf leaf);
 
+        ChunkGroupTreeLeaf GetLeaf();
+
         //void InitializeEmpty(IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel);
 
 

@@ -45,6 +45,8 @@ namespace MarchingCubes
         {
             FreeAllMeshes();
             OnResetChunk();
+            GameObject.Destroy(chunkSimpleCollider.gameObject);
+            IsReady = false;
             points = null;
         }
 
@@ -114,7 +116,7 @@ namespace MarchingCubes
             {
                 return lod;
             }
-            set
+            protected set
             {
                 lod = value;
                 UpdateChunkData();
@@ -132,11 +134,12 @@ namespace MarchingCubes
             set
             {
                 lodPower = value;
+                targetLodPower = value;
                 LOD = (int)Mathf.Pow(2, lodPower);
             }
         }
 
-        protected int targetLodPower;
+        protected int targetLodPower = -1;
 
         public int TargetLODPower
         {
@@ -149,13 +152,13 @@ namespace MarchingCubes
                 targetLodPower = value;
                 if(targetLodPower > lodPower)
                 {
-                    chunkUpdater.lowerChunkLods.Remove(this);
-                    chunkUpdater.increaseChunkLods.Add(this);
+                    chunkUpdater.lowerChunkLods.Add(this);
+                    chunkUpdater.increaseChunkLods.Remove(this);
                 }
                 else if(targetLodPower < lodPower)
                 {
-                    chunkUpdater.increaseChunkLods.Remove(this);
-                    chunkUpdater.lowerChunkLods.Add(this);
+                    chunkUpdater.increaseChunkLods.Add(this);
+                    chunkUpdater.lowerChunkLods.Remove(this);
                 }
                 else
                 {
@@ -979,6 +982,11 @@ namespace MarchingCubes
             {
                 //build new connection
             }
+        }
+
+        public ChunkGroupTreeLeaf GetLeaf()
+        {
+            return leaf;
         }
     }
 

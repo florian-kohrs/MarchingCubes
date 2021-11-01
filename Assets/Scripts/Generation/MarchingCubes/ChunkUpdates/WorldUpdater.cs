@@ -116,7 +116,6 @@ namespace MarchingCubes
                 
                 last = f;
             }
-            
         }
 
         protected void CreateTriggerOfTypeForLod<T>(int lod, float radius, Transform parent) where T : BaseChunkLodTrigger
@@ -156,7 +155,23 @@ namespace MarchingCubes
 
         private void LateUpdate()
         {
-            
+            foreach (var item in increaseChunkLods)
+            {
+
+            }
+            List<IMarchingCubeChunk> chunks = new List<IMarchingCubeChunk>();
+            foreach (var item in lowerChunkLods)
+            {
+                if (!item.IsReady)
+                    continue;
+
+                chunkHandler.DecreaseChunkLod(item, item.TargetLODPower);
+                chunks.Add(item);
+            }
+            foreach (var c in chunks)
+            {
+                lowerChunkLods.Remove(c);
+            }
         }
 
     }

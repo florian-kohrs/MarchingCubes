@@ -11,6 +11,15 @@ namespace MarchingCubes
 
         void SplitChild(ChunkGroupTreeLeaf leaf, int index, IMarchingCubeChunk chunk, IMarchingCubeChunkHandler chunkHandler);
 
+        ChunkGroupTreeLeaf[] GetLeafs();
+
+        bool AreAllChildrenLeafs(int targetLodPower);
+
+        int[] GroupRelativeAnchorPosition { get; }
+
+        int[] GroupAnchorPosition { get; }
+        Vector3Int GroupAnchorPositionVector { get; }
+
     }
 
 }

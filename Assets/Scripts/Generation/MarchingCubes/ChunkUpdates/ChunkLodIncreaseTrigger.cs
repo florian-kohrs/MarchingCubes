@@ -10,7 +10,6 @@ namespace MarchingCubes
         private void OnTriggerEnter(Collider other)
         {
             IMarchingCubeChunk chunk = other.GetComponent<ChunkLodCollider>()?.chunk;
-            Debug.Log("Increase");
             if (chunk != null)
             {
                 chunk.TargetLODPower = Mathf.Min(chunk.TargetLODPower, lod);

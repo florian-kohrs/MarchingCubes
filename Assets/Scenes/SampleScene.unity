@@ -825,25 +825,25 @@ MonoBehaviour:
       time: 0
       value: 0
       inSlope: -0
-      outSlope: 0.01
+      outSlope: 0.006666667
       tangentMode: 69
       weightedMode: 0
       inWeight: 0.33333334
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 100
+      time: 150
       value: 1
-      inSlope: 0.01
-      outSlope: 0.005
+      inSlope: 0.006666667
+      outSlope: 0.0057142857
       tangentMode: 69
       weightedMode: 0
       inWeight: 0.33333334
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 300
+      time: 325
       value: 2
-      inSlope: 0.005
-      outSlope: 0.002
+      inSlope: 0.0057142857
+      outSlope: 0.002105263
       tangentMode: 69
       weightedMode: 0
       inWeight: 0.33333334
@@ -851,7 +851,7 @@ MonoBehaviour:
     - serializedVersion: 3
       time: 800
       value: 3
-      inSlope: 0.002
+      inSlope: 0.002105263
       outSlope: 0.0016666667
       tangentMode: 69
       weightedMode: 0
@@ -885,25 +885,25 @@ MonoBehaviour:
       time: 0
       value: 2
       inSlope: -0
-      outSlope: 0.01
+      outSlope: 0.006666667
       tangentMode: 69
       weightedMode: 0
       inWeight: 0.33333334
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 100
+      time: 150
       value: 3
-      inSlope: 0.01
-      outSlope: 0.005
+      inSlope: 0.006666667
+      outSlope: 0.0057142857
       tangentMode: 69
       weightedMode: 0
       inWeight: 0.33333334
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 300
+      time: 325
       value: 4
-      inSlope: 0.005
-      outSlope: 0.002
+      inSlope: 0.0057142857
+      outSlope: 0.002105263
       tangentMode: 69
       weightedMode: 0
       inWeight: 0.33333334
@@ -911,7 +911,7 @@ MonoBehaviour:
     - serializedVersion: 3
       time: 800
       value: 5
-      inSlope: 0.002
+      inSlope: 0.002105263
       outSlope: 0.0016666667
       tangentMode: 69
       weightedMode: 0
@@ -944,8 +944,9 @@ MonoBehaviour:
   chunkMaterial: {fileID: 2100000, guid: 97d2f9aa8d16b8241a90494b8d616c04, type: 2}
   surfaceLevel: 0.511
   player: {fileID: 1779183453}
-  buildAroundDistance: 1000
+  buildAroundDistance: 3000
   worldUpdater: {fileID: 1125545290}
+  colliderParent: {fileID: 1768635035}
   totalTriBuild: 0
   minSteepness: 11
   maxSteepness: 45
@@ -1252,6 +1253,36 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1721435364}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1768635034
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1768635035}
+  m_Layer: 0
+  m_Name: ChunkColliderParents
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1768635035
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1768635034}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 2072808059}
+  m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1779183452
 GameObject:
   m_ObjectHideFlags: 0
@@ -1641,6 +1672,7 @@ Transform:
   m_Children:
   - {fileID: 1125545287}
   - {fileID: 1484889473}
+  - {fileID: 1768635035}
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
