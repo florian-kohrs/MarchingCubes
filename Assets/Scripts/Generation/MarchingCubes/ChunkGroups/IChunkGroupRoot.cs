@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public interface IChunkGroupRoot //: IChunkGroupOrganizer
+    public interface IChunkGroupRoot<T> //: IChunkGroupOrganizer
     {
 
         /// <summary>
@@ -15,10 +15,10 @@ namespace MarchingCubes
         /// <param name="lodPower"></param>
         /// <param name="chunk"></param>
         /// <returns>returns the anchor position of the chunk</returns>
-        void SetChunkAtPosition(int[] pos, IMarchingCubeChunk chunk, bool allowOverride);
+        void SetLeafAtPosition(int[] pos, T chunk, bool allowOverride);
 
 
-        bool TryGetChunkAtGlobalPosition(Vector3Int pos, out IMarchingCubeChunk chunk);
+        bool TryGetLeafAtGlobalPosition(Vector3Int pos, out T chunk);
 
 
         bool HasChild { get; }

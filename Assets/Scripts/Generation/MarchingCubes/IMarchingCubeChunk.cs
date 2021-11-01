@@ -5,14 +5,12 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public interface IMarchingCubeChunk
+    public interface IMarchingCubeChunk : ISizeManager
     {
 
         bool IsReady { get; set; }
 
         int ChunkSize { get; }
-
-        int ChunkSizePower { get; set; }
 
         int TargetChunkSizePower { get; set; }
 

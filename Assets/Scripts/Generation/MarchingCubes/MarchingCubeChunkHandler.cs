@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
+using IChunkGroupRoot = MarchingCubes.IChunkGroupRoot<MarchingCubes.IMarchingCubeChunk>;
+
 
 namespace MarchingCubes
 {
@@ -594,7 +596,7 @@ namespace MarchingCubes
             {
                 if (chunkGroup.HasChild)
                 {
-                    if (/*chunkGroup.HasChild && */chunkGroup.TryGetChunkAtGlobalPosition(p, out chunk))
+                    if (/*chunkGroup.HasChild && */chunkGroup.TryGetLeafAtGlobalPosition(p, out chunk))
                     {
                         positionInOtherChunk = p - chunk.AnchorPos;
                         return true;
@@ -684,7 +686,7 @@ namespace MarchingCubes
             chunk.SurfaceLevel = surfaceLevel;
             chunk.LODPower = lodPower;
 
-            chunkGroup.SetChunkAtPosition(new int[] { position.x, position.y, position.z }, chunk, allowOverride);
+            chunkGroup.SetLeafAtPosition(new int[] { position.x, position.y, position.z }, chunk, allowOverride);
 
             BuildLodColliderForChunk(chunk);
 
@@ -1072,7 +1074,7 @@ namespace MarchingCubes
                 //int pointsPerAxisSqr = pointsPerAxis * pointsPerAxis;
 
                // CombinePointsInto(l.GroupRelativeAnchorPosition, l.chunk.Points, combinedPoints, pointsPerAxis, pointsPerAxisSqr, shrinkFactor, toLod);
-                l.chunk.ResetChunk();
+                l.leaf.ResetChunk();
                 deleted++;
             }
             if(deleted< 2)

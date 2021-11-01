@@ -6,18 +6,17 @@ using UnityEngine;
 namespace MarchingCubes
 {
 
-    public interface IChunkGroupParent
+    public interface IChunkGroupParent<L>
     {
 
-        void SplitChild(ChunkGroupTreeLeaf leaf, int index, IMarchingCubeChunk chunk, IMarchingCubeChunkHandler chunkHandler);
-
-        ChunkGroupTreeLeaf[] GetLeafs();
+        L[] GetLeafs();
 
         bool AreAllChildrenLeafs(int targetLodPower);
 
         int[] GroupRelativeAnchorPosition { get; }
 
         int[] GroupAnchorPosition { get; }
+
         Vector3Int GroupAnchorPositionVector { get; }
 
     }

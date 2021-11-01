@@ -4,21 +4,21 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public abstract class BaseChunkGroupOrganizer : IChunkGroupOrganizer
+    public abstract class BaseChunkGroupOrganizer<T> : IChunkGroupOrganizer<T>
     {
 
         public int[] GroupAnchorPosition { get; set; }
 
-        public IChunkBuilder ChunkBuilder { protected get; set; }
-
         public abstract int[] GroupRelativeAnchorPosition { get; }
+
+        public Vector3Int GroupAnchorPositionVector { get => new Vector3Int(GroupAnchorPosition[0], GroupAnchorPosition[1], GroupAnchorPosition[2]); }
 
         public abstract int SizePower { get; }
 
-        public abstract IMarchingCubeChunk GetChunkAtLocalPosition(int[] pos);
-        public abstract void SetChunkAtLocalPosition(int[] pos, IMarchingCubeChunk chunk, bool allowOverride);
-        public abstract bool TryGetChunkAtLocalPosition(int[] pos, out IMarchingCubeChunk chunk);
+        public abstract T GetChunkAtLocalPosition(int[] pos);
+        public abstract void SetChunkAtLocalPosition(int[] pos, T chunk, bool allowOverride);
+        public abstract bool TryGetLeafAtLocalPosition(int[] pos, out T chunk);
         public abstract bool HasChunkAtLocalPosition(int[] pos);
-        public abstract bool RemoveChunkAtLocalPosition(int[] pos);
+        public abstract bool RemoveLeafAtLocalPosition(int[] pos);
     }
 }
