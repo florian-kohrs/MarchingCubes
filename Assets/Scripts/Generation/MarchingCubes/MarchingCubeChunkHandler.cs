@@ -10,8 +10,8 @@ using IChunkGroupRoot = MarchingCubes.IChunkGroupRoot<MarchingCubes.IMarchingCub
 namespace MarchingCubes
 {
 
-    ///when saving: save for each chunk if it was initialized empty and a dictionary which modified point has which w
-    public class MarchingCubeChunkHandler : MonoBehaviour, IMarchingCubeChunkHandler
+    [System.Serializable]
+    public class MarchingCubeChunkHandler : SaveableMonoBehaviour, IMarchingCubeChunkHandler
     {
 
         protected int kernelId;
@@ -21,6 +21,10 @@ namespace MarchingCubes
         public const int MIN_CHUNK_SIZE = 8;
 
         public const int MIN_CHUNK_SIZE_POWER = 3;
+
+        public const int STORAGE_GROUP_SIZE = 128;
+
+        public const int STORAGE_GROUP_SIZE_POWER = 7;
 
         public const int CHUNK_GROUP_SIZE = 1024;
 
@@ -36,8 +40,10 @@ namespace MarchingCubes
 
         public const int MAX_CHUNK_LOD_BIT_REPRESENTATION_SIZE = 3;
 
-
         public Dictionary<Vector3Int, IChunkGroupRoot> chunkGroups = new Dictionary<Vector3Int, IChunkGroupRoot>();
+
+        [Save]
+        public Dictionary<Serializable3DIntVector, StorageTreeRoot> storageGroups = new Dictionary<Serializable3DIntVector, StorageTreeRoot>();
 
         public Dictionary<Vector3Int, IChunkGroupRoot> ChunkGroups => chunkGroups;
 
@@ -555,6 +561,13 @@ namespace MarchingCubes
             return chunkGroup;
         }
 
+        protected StorageTreeRoot CreateStorageGroupAtCoordinate(Vector3Int coord)
+        {
+            StorageTreeRoot chunkGroup = new StorageTreeRoot(new int[] { coord.x, coord.y, coord.z });
+            storageGroups.Add(coord, chunkGroup);
+            return chunkGroup;
+        }
+
         public bool TryGetChunkGroupAt(Vector3Int p, out IChunkGroupRoot chunkGroup)
         {
             Vector3Int coord = PositionToChunkGroupCoord(p);
@@ -574,6 +587,34 @@ namespace MarchingCubes
                 chunkGroup = CreateChunkGroupAtCoordinate(coord);
             }
             return chunkGroup;
+        }
+
+        public StorageTreeRoot GetOrCreateStorageGroupAtCoordinate(Vector3Int coord)
+        {
+            StorageTreeRoot chunkGroup;
+            if (!storageGroups.TryGetValue(coord, out chunkGroup))
+            {
+                chunkGroup = CreateStorageGroupAtCoordinate(coord);
+            }
+            return chunkGroup;
+        }
+
+        public bool TryGetStoredEditsAt(Vector3Int pos, out StoredChunkEdits edits)
+        {
+            Vector3Int coord = PositionToStorageGroupCoord(pos);
+            StorageTreeRoot chunkGroup;
+            if (storageGroups.TryGetValue(coord, out chunkGroup))
+            {
+                if (chunkGroup.HasChild)
+                {
+                    if (chunkGroup.TryGetLeafAtGlobalPosition(pos, out edits))
+                    {
+                        return true;
+                    }
+                }
+            }
+            edits = null;
+            return false;
         }
 
         protected bool HasChunkAtPosition(Vector3Int v3)
@@ -740,13 +781,31 @@ namespace MarchingCubes
         {
             return PositionToChunkGroupCoord(pos.x, pos.y, pos.z);
         }
-
         protected Vector3Int PositionToChunkGroupCoord(float x, float y, float z)
         {
             return new Vector3Int(
                 Mathf.FloorToInt(x / CHUNK_GROUP_SIZE),
                 Mathf.FloorToInt(y / CHUNK_GROUP_SIZE),
                 Mathf.FloorToInt(z / CHUNK_GROUP_SIZE));
+        }
+
+        protected Vector3Int PositionToStorageGroupCoord(Vector3 pos)
+        {
+            return PositionToStorageGroupCoord(pos.x, pos.y, pos.z);
+        }
+
+        
+        protected Vector3Int PositionToStorageGroupCoord(Vector3Int pos)
+        {
+            return PositionToStorageGroupCoord(pos.x, pos.y, pos.z);
+        }
+
+        protected Vector3Int PositionToStorageGroupCoord(float x, float y, float z)
+        {
+            return new Vector3Int(
+                Mathf.FloorToInt(x / STORAGE_GROUP_SIZE),
+                Mathf.FloorToInt(y / STORAGE_GROUP_SIZE),
+                Mathf.FloorToInt(z / STORAGE_GROUP_SIZE));
         }
 
 
@@ -836,17 +895,19 @@ namespace MarchingCubes
 
         protected void BuildChunk(IMarchingCubeChunk chunk, int lod, bool careForNeighbours)
         {
-            DispatchAndGetShaderData(chunk, lod, careForNeighbours);
-            chunk.InitializeWithMeshData(tris, false);
+            bool keepPoints;
+            DispatchAndGetShaderData(chunk, lod, careForNeighbours, out keepPoints);
+            chunk.InitializeWithMeshData(tris, keepPoints);
         }
 
         protected Queue<IThreadedMarchingCubeChunk> readyParallelChunks = new Queue<IThreadedMarchingCubeChunk>();
 
         protected void BuildChunkParallel(IMarchingCubeChunk chunk, int lod, bool careForNeighbours)
         {
-            DispatchAndGetShaderData(chunk, lod, careForNeighbours);
+            bool keepPoints;
+            DispatchAndGetShaderData(chunk, lod, careForNeighbours, out keepPoints);
             channeledChunks++;
-            chunk.InitializeWithMeshDataParallel(tris, readyParallelChunks, false);
+            chunk.InitializeWithMeshDataParallel(tris, readyParallelChunks, keepPoints);
         }
 
         public int minSteepness = 15;
@@ -864,20 +925,77 @@ namespace MarchingCubes
 
         public float[] RequestNoiseForChunk(IMarchingCubeChunk chunk)
         {
-            return RequestNoiseFor(chunk.PointsPerAxis, chunk.LOD, chunk.AnchorPos);
+            bool _;
+            return RequestNoiseFor(chunk.PointsPerAxis, chunk.LOD, chunk.AnchorPos, out _);
         }
 
-        public float[] RequestNoiseFor(int pointsPerAxis, int LOD, Vector3Int anchor)
+        public float[] RequestNoiseFor(int pointsPerAxis, int LOD, Vector3Int anchor, out bool keepPoints)
         {
-            densityGenerator.Generate(pointsPerAxis, anchor, LOD);
-            float[] result = new float[pointsPerAxis * pointsPerAxis * pointsPerAxis];
-            pointsBuffer.GetData(result, 0, 0, result.Length);
-
+            float[] result;
+            if (!GenerateNoise(pointsPerAxis, LOD, anchor, out keepPoints))
+            {
+                result = new float[pointsPerAxis * pointsPerAxis * pointsPerAxis];
+                pointsBuffer.GetData(result, 0, 0, result.Length);
+            }
+            else
+            {
+                result = pointsArray;
+            }
             return result;
         }
 
+        public bool GenerateNoise(int pointsPerAxis, int LOD, Vector3Int anchor, out bool keepPoints, bool loadNoiseData = true)
+        {
+            densityGenerator.Generate(pointsPerAxis, anchor, LOD);
+            if(loadNoiseData)
+            {
+                return WriteEditedNoiseDataIntoBuffer(pointsPerAxis, LOD, anchor, out keepPoints);
+            }
+            else
+            {
+                keepPoints = false;
+                return false;
+            }
+        }
 
-        protected void DispatchAndGetShaderData(IMarchingCubeChunk chunk, int lod, bool careForNeighbours)
+
+        protected bool WriteEditedNoiseDataIntoBuffer(int pointsPerAxis, int lod, Vector3Int anchor, out bool keepPoints)
+        {
+            keepPoints = false;
+            if(lod == 1)
+            {
+                StoredChunkEdits edits;
+                if(TryGetStoredEditsAt(anchor, out edits))
+                {
+                    System.Diagnostics.Stopwatch w = new System.Diagnostics.Stopwatch();
+                    w.Start();
+                    pointsArray = new float[pointsPerAxis * pointsPerAxis * pointsPerAxis];
+                    pointsBuffer.GetData(pointsArray, 0, 0, pointsArray.Length);
+                    w.Stop();
+                    Debug.Log($"elaspsed time for getting noise is {w.Elapsed.TotalMilliseconds}ms");
+                    w.Restart();
+                    WriteEditsIntoArray(edits, pointsArray);
+                    w.Stop();
+                    Debug.Log($"elaspsed time for writing values to noise is {w.Elapsed.TotalMilliseconds}ms");
+                    w.Restart();
+                    pointsBuffer.SetData(pointsArray);
+                    keepPoints = true;
+                    w.Stop();
+                    Debug.Log($"elaspsed time setting data is {w.Elapsed.TotalMilliseconds}ms");
+                }
+            }
+            return keepPoints;
+        }
+
+        protected void WriteEditsIntoArray(StoredChunkEdits edits, float[] arr)
+        {
+            foreach (var item in edits.editedPoints)
+            {
+                arr[item.Key] = item.Value;
+            }
+        }
+
+        protected void DispatchAndGetShaderData(IMarchingCubeChunk chunk, int lod, bool careForNeighbours, out bool keepPoints)
         {
             int chunkSize = chunk.ChunkSize;
 
@@ -888,15 +1006,17 @@ namespace MarchingCubes
             int pointsPerAxis = numVoxelsPerAxis + 1;
             int pointsVolume = pointsPerAxis * pointsPerAxis * pointsPerAxis;
 
-            float spacing = lod;
-            Vector3 anchor = chunk.AnchorPos;
-
-            densityGenerator.Generate(pointsPerAxis, anchor, spacing);
+            bool hasNoise = GenerateNoise(pointsPerAxis, lod, chunk.AnchorPos, out keepPoints);
 
             int numTris = RequestCubesFromNoise(chunk, lod);
-                
-            if ((numTris == 0 && !hasFoundInitialChunk) || careForNeighbours)
+
+            if(hasNoise)
             {
+                chunk.Points = pointsArray;
+            }
+            else if ((numTris == 0 && !hasFoundInitialChunk) || careForNeighbours)
+            {
+                
                 if (careForNeighbours)
                 {
                     pointsArray = new float[pointsVolume];
@@ -960,6 +1080,8 @@ namespace MarchingCubes
             float spacing = lod;
 
             triangleBuffer.SetCounterValue(0);
+
+            //TODO: Check if this needs to be checkd or if correct value is still set
             marshShader.SetInt("numPointsPerAxis", pointsPerAxis);
             marshShader.SetFloat("spacing", spacing);
             marshShader.SetVector("anchor", new Vector4(anchor.x, anchor.y, anchor.z));
@@ -1046,10 +1168,10 @@ namespace MarchingCubes
             chunk.ResetChunk();
         }
 
-        public float[] GetNoiseForMergingChunkAt(IMarchingCubeChunk chunk, int toLod)
+        public float[] GetNoiseForMergingChunkAt(IMarchingCubeChunk chunk, int toLod, out bool keepPoints)
         {
             int[] pos = chunk.GetLeaf().parent.GroupAnchorPosition;
-            return RequestNoiseFor(chunk.PointsPerAxis, toLod, new Vector3Int(pos[0],pos[1],pos[2]));
+            return RequestNoiseFor(chunk.PointsPerAxis, toLod, new Vector3Int(pos[0],pos[1],pos[2]), out keepPoints);
         }
 
         public void MergeAndReduceChunkBranch(IMarchingCubeChunk chunk, int toLodPower, int toLod)
@@ -1204,7 +1326,7 @@ namespace MarchingCubes
         }
 
 
-        void OnDestroy()
+        protected override void onDestroy()
         {
             if (Application.isPlaying)
             {
@@ -1212,5 +1334,10 @@ namespace MarchingCubes
             }
         }
 
+        public void Store(Vector3Int anchorPos, StoredChunkEdits edits)
+        {
+            StorageTreeRoot r = GetOrCreateStorageGroupAtCoordinate(PositionToStorageGroupCoord(anchorPos));
+            r.SetLeafAtPosition(anchorPos, edits, true);
+        }
     }
 }

@@ -272,7 +272,7 @@ public class GamePersistence
                 ///the objects were destroyed
                 onGameLoadFinish = null;
                 timer.finish("finished loading");
-                Debug.Log(TestStaticData.i);
+                //Debug.Log(TestStaticData.i);
             }
         };
     }

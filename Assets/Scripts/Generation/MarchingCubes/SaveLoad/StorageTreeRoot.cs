@@ -11,9 +11,14 @@ namespace MarchingCubes
 
         public StorageTreeRoot() { }
 
-        public StorageTreeRoot(int[] coord) : base(coord)
+        public StorageTreeRoot(int[] coord) : base(coord, MarchingCubeChunkHandler.STORAGE_GROUP_SIZE)
         {
         }
+
+        public override int Size => MarchingCubeChunkHandler.STORAGE_GROUP_SIZE;
+
+        public override int SizePower => MarchingCubeChunkHandler.STORAGE_GROUP_SIZE_POWER;
+
 
         public override IChunkGroupOrganizer<StoredChunkEdits> GetLeaf(StoredChunkEdits leaf, int index, int[] anchor, int[] relAnchor, int sizePow)
         {

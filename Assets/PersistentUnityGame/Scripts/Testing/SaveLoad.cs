@@ -5,7 +5,7 @@ using UnityEngine;
 public class SaveLoad : MonoBehaviour
 {
 
-    public static string GameSaveName = "SpackJerrow";
+    public static string GameSaveName = "TerrainSave";
 
     void Update()
     {

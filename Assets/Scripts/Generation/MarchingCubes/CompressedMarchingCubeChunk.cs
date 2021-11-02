@@ -198,7 +198,7 @@ namespace MarchingCubes
             }
             set
             {
-                points = Points;
+                points = value;
             }
         }
 

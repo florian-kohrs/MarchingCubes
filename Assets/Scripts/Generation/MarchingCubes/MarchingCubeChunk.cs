@@ -20,7 +20,7 @@ namespace MarchingCubes
             }
         }
 
-     
+        public const int MAX_NOISE_VALUE  = 100;
 
         public IMarchingCubeInteractableChunk GetChunk => this;
 
@@ -31,7 +31,34 @@ namespace MarchingCubes
         protected Dictionary<Vector3Int, MarchingCubeEntity> higherLodNeighbourCubes = new Dictionary<Vector3Int, MarchingCubeEntity>();
 
 
-        protected Dictionary<int, float> editedPointsValues = new Dictionary<int, float>();
+        protected StoredChunkEdits editedPointsStorage;
+
+        protected Dictionary<int,float> editedPointsDict;
+
+        protected Dictionary<int, float> EditedPointsDict
+        {
+            get
+            {
+                if (editedPointsDict == null)
+                {
+                    editedPointsDict = EditedPointsStorage.editedPoints;
+                }
+                return editedPointsDict;
+            }
+        }
+
+        protected StoredChunkEdits EditedPointsStorage
+        {
+            get
+            {
+                if(editedPointsStorage == null)
+                {
+                    editedPointsStorage = new StoredChunkEdits();
+                    chunkHandler.Store(AnchorPos, editedPointsStorage);
+                }
+                return editedPointsStorage;
+            }
+        }
 
         public MarchingCubeEntity GetEntityAt(Vector3Int v3)
         {
@@ -91,11 +118,7 @@ namespace MarchingCubes
         }
 
 
-
-
         protected NoiseFilter noiseFilter;
-
-
 
         public MarchingCubeEntity GetEntityInNeighbourAt(Vector3Int outsidePos)
         {
@@ -394,7 +417,7 @@ namespace MarchingCubes
 
         public void SaveEditedChunkValues()
         {
-
+           
         }
 
         public bool IsInOtherThread { get; set; }
@@ -455,14 +478,10 @@ namespace MarchingCubes
                             int index = PointIndexFromCoord(x, y, z);
                             value = points[index];
 
-                            //if (f(value))
-                            //    continue;
-
                             value += diff;
-                            value = Mathf.Clamp(value, -2, 2);
-                            editedPointsValues[index] = value;
+                            value = Mathf.Clamp(value, -MAX_NOISE_VALUE, MAX_NOISE_VALUE);
+                            EditedPointsDict[index] = value;
                             points[index] = value;
-
                         }
                         distanceZ++;
                     }

@@ -9,7 +9,7 @@ namespace MarchingCubes
     {
 
         [Save]
-        public Dictionary<Vector3Int, float> editedPoints = new Dictionary<Vector3Int, float>();
+        public Dictionary<int, float> editedPoints = new Dictionary<int, float>();
 
         
         int ISizeManager.ChunkSizePower { get => 5; set => throw new System.NotImplementedException(); }

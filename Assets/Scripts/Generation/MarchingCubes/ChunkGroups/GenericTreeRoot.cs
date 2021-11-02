@@ -11,22 +11,22 @@ namespace MarchingCubes
 
         public GenericTreeRoot() { }
 
-        public GenericTreeRoot(int[] coord)
+        public GenericTreeRoot(int[] coord, int size)
 
         {
             GroupAnchorPosition = new int[]{
-            coord[0] * MarchingCubeChunkHandler.CHUNK_GROUP_SIZE,
-            coord[1] * MarchingCubeChunkHandler.CHUNK_GROUP_SIZE,
-            coord[2] * MarchingCubeChunkHandler.CHUNK_GROUP_SIZE
+            coord[0] * size,
+            coord[1] * size,
+            coord[2] * size
             };
         }
 
         [Save]
         protected Child child;
 
-        public int Size => MarchingCubeChunkHandler.CHUNK_GROUP_SIZE;
+        public abstract int Size { get; }
 
-        public int SizePower => MarchingCubeChunkHandler.CHUNK_GROUP_SIZE_POWER;
+        public abstract int SizePower { get; }
 
         [Save]
         public int[] groupAnchorPosition;
@@ -57,6 +57,11 @@ namespace MarchingCubes
         public abstract Child GetLeaf(T leaf, int index, int[] anchor, int[] relAnchor, int sizePow);
 
         public abstract Child GetNode(int[] anchor, int[] relAnchor, int sizePow);
+
+        public void SetLeafAtPosition(Vector3Int v3, T leaf, bool allowOverride)
+        {
+            SetLeafAtPosition(new int[] { v3.x, v3.y, v3.z }, leaf, allowOverride);
+        }
 
         public void SetLeafAtPosition(int[] pos, T leaf, bool allowOverride)
         {
