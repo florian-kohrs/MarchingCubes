@@ -10,13 +10,13 @@ namespace MarchingCubes
     public class StorageTreeNode : GenericTreeNode<StoredChunkEdits, IStorageGroupOrganizer<StoredChunkEdits>, IStorageGroupOrganizer<StoredChunkEdits>>, IStorageGroupOrganizer<StoredChunkEdits>
     {
 
-        protected static int MIPMAP_SIZE = 32768;
-
         public static int NON_SET_NOISE_VALUE = -9999;
 
-        protected static int POINTS_PER_AXIS = 32;
+        protected static int POINTS_PER_AXIS = 33;
 
         protected static int POINTS_PER_AXIS_SQR = POINTS_PER_AXIS * POINTS_PER_AXIS;
+
+        protected static int MIPMAP_SIZE = POINTS_PER_AXIS_SQR * POINTS_PER_AXIS;
 
 
         public StorageTreeNode() { }
@@ -29,6 +29,8 @@ namespace MarchingCubes
         }
 
         protected StoredChunkEdits mipmap;
+
+        protected static float[] mipmapTemplate = new float[MIPMAP_SIZE].Fill(NON_SET_NOISE_VALUE);
 
         protected StoredChunkEdits Mipmap
         {
@@ -44,17 +46,21 @@ namespace MarchingCubes
 
         public float[] NoiseMap => Mipmap.vals;
 
-        protected int LOD => sizePower - 5;
+        protected int LOD => (int)Mathf.Pow(2, sizePower - 5);
 
         protected void CalculateMipMap()
         {
+            System.Diagnostics.Stopwatch w = new System.Diagnostics.Stopwatch();
+            w.Start();
             if(mipmap == null)
             {
                 mipmap = new StoredChunkEdits();
                 mipmap.vals = new float[MIPMAP_SIZE];
-                //TODO: Copy already set array 
-                mipmap.vals.Fill(NON_SET_NOISE_VALUE);
+                System.Array.Copy(mipmapTemplate, mipmap.vals, MIPMAP_SIZE);
             }
+            w.Stop();
+            Debug.Log($"Needed time to copy array: {w.Elapsed.TotalMilliseconds}ms" );
+            w.Restart();
             for (int i = 0; i < 8; i++)
             {
                 var c = children[i];
@@ -63,6 +69,8 @@ namespace MarchingCubes
                     CombinePointsInto(c.GroupRelativeAnchorPosition, c.NoiseMap, mipmap.vals, POINTS_PER_AXIS, POINTS_PER_AXIS_SQR, 2, LOD);
                 }
             }
+            w.Stop();
+            Debug.Log($"Needed time to build mipmap: {w.Elapsed.TotalMilliseconds}ms");
         }
 
         public bool TryGetMipMapOfChunkSizePower(int[] relativePosition, int sizePow, out float[] storedNoise)
@@ -96,6 +104,12 @@ namespace MarchingCubes
             int halfSizeCeil = halfSize;
             int halfFrontJump = pointsPerAxis * halfSizeCeil;
 
+            int startwriteIndex = startIndex[0] / toLod + startIndex[1] / toLod * pointsPerAxis + startIndex[2] / toLod * pointsPerAxisSqr;
+            Vector3Int startwriteVec = new Vector3Int
+                               (startwriteIndex % pointsPerAxisSqr % pointsPerAxis
+                               , startwriteIndex % pointsPerAxisSqr / pointsPerAxis
+                               , startwriteIndex / pointsPerAxisSqr
+                               );
             int writeIndex = startIndex[0] / toLod + startIndex[1] / toLod * pointsPerAxis + startIndex[2] / toLod * pointsPerAxisSqr;
             int readIndex;
 
@@ -108,7 +122,24 @@ namespace MarchingCubes
                     readIndex = zPoint + yPoint;
                     for (int x = 0; x < pointsPerAxis; x += shrinkFactor)
                     {
-                        float val = originalPoints[readIndex + x];
+                        int read = readIndex + x;
+                        Vector3Int readVec = new Vector3Int
+                               (read % pointsPerAxisSqr % pointsPerAxis
+                               , read % pointsPerAxisSqr / pointsPerAxis
+                               , read / pointsPerAxisSqr
+                               );
+
+                        Vector3Int writeVec = new Vector3Int
+                             (writeIndex % pointsPerAxisSqr % pointsPerAxis
+                             , writeIndex % pointsPerAxisSqr / pointsPerAxis
+                             , writeIndex / pointsPerAxisSqr
+                             );
+                        if(writeIndex >= writeInHere.Length)
+                        {
+
+                        }
+
+                        float val = originalPoints[read];
                         writeInHere[writeIndex] = val;
                         writeIndex++;
                     }

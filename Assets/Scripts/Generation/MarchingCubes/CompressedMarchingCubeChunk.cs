@@ -405,13 +405,13 @@ namespace MarchingCubes
             {
                 Vector3Int currentOrigin = ts[i].Origin;
 
-                if (careAboutNeighbourLODS && IsBorderCube(currentOrigin))
-                {
-                    if (MarchingCubeEntity.FindMissingNeighboursAt(ts[i].triIndex, currentOrigin, IsCubeInBounds, HasNeighbourInDirection))
-                    {
-                        ProcessNeighboursFromList(trisWithNeighboursOutOfBounds, currentOrigin);
-                    }
-                }
+                //if (careAboutNeighbourLODS && IsBorderCube(currentOrigin))
+                //{
+                //    if (MarchingCubeEntity.FindMissingNeighboursAt(ts[i].triIndex, currentOrigin, IsCubeInBounds, HasNeighbourInDirection))
+                //    {
+                //        ProcessNeighboursFromList(trisWithNeighboursOutOfBounds, currentOrigin);
+                //    }
+                //}
                 SetNeighbourAt(currentOrigin);
 
                 //if (chunkHandler.TryGetReadyChunkAt(target, out c))

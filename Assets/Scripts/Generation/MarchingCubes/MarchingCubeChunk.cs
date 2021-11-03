@@ -328,10 +328,10 @@ namespace MarchingCubes
                 if (!TryGetEntityAt(x, y, z, out cube))
                 {
                     cube = CreateAndAddEntityAt(x, y, z, ts[i].triIndex);
-                    if (careAboutNeighbourLODS && IsBorderCube(x, y, z))
-                    {
-                        CheckForConnectedChunk(x, y, z);
-                    }
+                    //if (careAboutNeighbourLODS && IsBorderCube(x, y, z))
+                    //{
+                    //    CheckForConnectedChunk(x, y, z);
+                    //}
                     SetNeighbourAt(x, y, z);
                 }
                 PathTriangle pathTri = new PathTriangle(cube, in ts[i].tri, ts[i].r, ts[i].g, ts[i].b, ts[i].steepness);

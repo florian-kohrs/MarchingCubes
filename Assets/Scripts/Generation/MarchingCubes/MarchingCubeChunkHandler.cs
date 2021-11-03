@@ -1235,7 +1235,7 @@ namespace MarchingCubes
 
             //compressedChunk.InitializeWithMeshData(tris, true);
 
-            Debug.Log($"Merged Chunk At {compressedChunk.CenterPos}");
+           //Debug.Log($"Merged Chunk At {compressedChunk.CenterPos}");
         }
 
         protected void TransferPointsInto(float[] originalPoints, float[] writeInHere, int originalPointsPerAxis, int originalPointsPerAxisSqr, int shrinkFactor)
