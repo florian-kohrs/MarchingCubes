@@ -104,12 +104,6 @@ namespace MarchingCubes
             int halfSizeCeil = halfSize;
             int halfFrontJump = pointsPerAxis * halfSizeCeil;
 
-            int startwriteIndex = startIndex[0] / toLod + startIndex[1] / toLod * pointsPerAxis + startIndex[2] / toLod * pointsPerAxisSqr;
-            Vector3Int startwriteVec = new Vector3Int
-                               (startwriteIndex % pointsPerAxisSqr % pointsPerAxis
-                               , startwriteIndex % pointsPerAxisSqr / pointsPerAxis
-                               , startwriteIndex / pointsPerAxisSqr
-                               );
             int writeIndex = startIndex[0] / toLod + startIndex[1] / toLod * pointsPerAxis + startIndex[2] / toLod * pointsPerAxisSqr;
             int readIndex;
 
@@ -122,24 +116,7 @@ namespace MarchingCubes
                     readIndex = zPoint + yPoint;
                     for (int x = 0; x < pointsPerAxis; x += shrinkFactor)
                     {
-                        int read = readIndex + x;
-                        Vector3Int readVec = new Vector3Int
-                               (read % pointsPerAxisSqr % pointsPerAxis
-                               , read % pointsPerAxisSqr / pointsPerAxis
-                               , read / pointsPerAxisSqr
-                               );
-
-                        Vector3Int writeVec = new Vector3Int
-                             (writeIndex % pointsPerAxisSqr % pointsPerAxis
-                             , writeIndex % pointsPerAxisSqr / pointsPerAxis
-                             , writeIndex / pointsPerAxisSqr
-                             );
-                        if(writeIndex >= writeInHere.Length)
-                        {
-
-                        }
-
-                        float val = originalPoints[read];
+                        float val = originalPoints[readIndex + x];
                         writeInHere[writeIndex] = val;
                         writeIndex++;
                     }
