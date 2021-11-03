@@ -37,7 +37,6 @@ namespace MarchingCubes
                 }
                 return result;
             }
-            return null;
         }
 
         public override IChunkGroupOrganizer<IMarchingCubeChunk> GetLeaf(IMarchingCubeChunk leaf, int index, int[] anchor, int[] relAnchor, int sizePow)

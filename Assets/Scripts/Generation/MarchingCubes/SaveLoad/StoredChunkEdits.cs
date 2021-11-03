@@ -8,6 +8,9 @@ namespace MarchingCubes
     public class StoredChunkEdits : ISizeManager
     {
 
+        //TODO: Also store how many triangle the chunk had -> almost no memory overhead
+        //and doesnt need to ask gpu so huge speed up
+
         [Save]
         public Dictionary<int, float> editedPoints = new Dictionary<int, float>();
 

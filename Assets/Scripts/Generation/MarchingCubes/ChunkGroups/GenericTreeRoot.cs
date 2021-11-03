@@ -65,16 +65,13 @@ namespace MarchingCubes
 
         public void SetLeafAtPosition(int[] pos, T leaf, bool allowOverride)
         {
-            if (!HasChild || allowOverride)
+            if (leaf.ChunkSizePower == SizePower && (!HasChild || allowOverride))
             {
-                if (leaf.ChunkSizePower == SizePower)
-                {
-                    child = GetLeaf(leaf, 0, GroupAnchorPosition, GroupAnchorPosition, SizePower);
-                }
-                else
-                {
-                    child = GetNode(GroupAnchorPosition, GroupAnchorPosition, SizePower);
-                }
+                child = GetLeaf(leaf, 0, GroupAnchorPosition, GroupAnchorPosition, SizePower);
+            }
+            else if(!HasChild)
+            {
+                child = GetNode(GroupAnchorPosition, GroupAnchorPosition, SizePower);
             }
             child.SetChunkAtLocalPosition(pos, leaf, allowOverride);
         }

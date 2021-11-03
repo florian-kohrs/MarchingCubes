@@ -102,7 +102,7 @@ namespace MarchingCubes
                         //ps = tri.Neighbours;
                         //p = tri;
 
-                        h.DecreaseChunkLod(chunk, chunk.LODPower + 1);
+                       // h.DecreaseChunkLod(chunk, chunk.LODPower + 1);
 
                         // chunk.GetChunkHandler.DecreaseChunkLod(chunk, 1);
                     }
@@ -122,7 +122,7 @@ namespace MarchingCubes
 
                     if (chunk != null)
                     {
-                        chunk.EditPointsAroundRayHit(pointDelta, hit,4);
+                        chunk.EditPointsAroundRayHit(pointDelta, hit,2);
                     }
                 }
             }

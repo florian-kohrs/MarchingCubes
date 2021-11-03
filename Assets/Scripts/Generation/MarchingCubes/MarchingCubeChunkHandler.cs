@@ -337,7 +337,7 @@ namespace MarchingCubes
                     isNextInProgress = HasChunkStartedAt(next);
                 } while (isNextInProgress && closestNeighbours.size > 0);
 
-                
+
                 if (!isNextInProgress)
                 {
                     CreateChunkParallelAt(next);
@@ -511,7 +511,7 @@ namespace MarchingCubes
             int chunkSizePower;
             bool careForNeighbours;
             GetSizeAndLodPowerForChunkPosition(pos, out chunkSizePower, out lodPower, out careForNeighbours);
-            
+
             IMarchingCubeChunk chunk = GetThreadedChunkObjectAt(Vector3Int.FloorToInt(pos), coord, lodPower, chunkSizePower, false);
             BuildChunkParallel(chunk, RoundToPowerOf2(lodPower), careForNeighbours);
         }
@@ -735,7 +735,7 @@ namespace MarchingCubes
 
             return chunk;
         }
-        
+
         protected void BuildLodColliderForChunk(IMarchingCubeChunk c)
         {
             GameObject g = new GameObject();
@@ -794,7 +794,7 @@ namespace MarchingCubes
             return PositionToStorageGroupCoord(pos.x, pos.y, pos.z);
         }
 
-        
+
         protected Vector3Int PositionToStorageGroupCoord(Vector3Int pos)
         {
             return PositionToStorageGroupCoord(pos.x, pos.y, pos.z);
@@ -852,7 +852,7 @@ namespace MarchingCubes
 
         }
 
-      
+
 
         public float[][] GetSplittedNoiseArray(IMarchingCubeChunk chunk)
         {
@@ -969,29 +969,30 @@ namespace MarchingCubes
                 {
                     System.Diagnostics.Stopwatch w = new System.Diagnostics.Stopwatch();
                     w.Start();
-                    pointsArray = new float[pointsPerAxis * pointsPerAxis * pointsPerAxis];
-                    pointsBuffer.GetData(pointsArray, 0, 0, pointsArray.Length);
-                    w.Stop();
-                    Debug.Log($"elaspsed time for getting noise is {w.Elapsed.TotalMilliseconds}ms");
-                    w.Restart();
-                    WriteEditsIntoArray(edits, pointsArray);
+                    //pointsArray = new float[pointsPerAxis * pointsPerAxis * pointsPerAxis];
+                    //pointsBuffer.GetData(pointsArray, 0, 0, pointsArray.Length);
+                    //w.Stop();
+                    //Debug.Log($"elaspsed time for getting noise is {w.Elapsed.TotalMilliseconds}ms");
+                    //w.Restart();
+                    WriteEditsIntoArray(edits);
                     w.Stop();
                     Debug.Log($"elaspsed time for writing values to noise is {w.Elapsed.TotalMilliseconds}ms");
-                    w.Restart();
-                    pointsBuffer.SetData(pointsArray);
-                    keepPoints = true;
-                    w.Stop();
-                    Debug.Log($"elaspsed time setting data is {w.Elapsed.TotalMilliseconds}ms");
+
+                    //pointsBuffer.SetData(pointsArray);
+                    //keepPoints = true;
                 }
             }
             return keepPoints;
         }
 
-        protected void WriteEditsIntoArray(StoredChunkEdits edits, float[] arr)
+        protected void WriteEditsIntoArray(StoredChunkEdits edits)
         {
-            foreach (var item in edits.editedPoints)
+            var arr = edits.editedPoints.Values.ToArray();
+            int i = 0;
+            foreach (var item in edits.editedPoints.Keys)
             {
-                arr[item.Key] = item.Value;
+                pointsBuffer.SetData(arr,i, item,1);
+                i++;
             }
         }
 
@@ -1016,7 +1017,7 @@ namespace MarchingCubes
             }
             else if ((numTris == 0 && !hasFoundInitialChunk) || careForNeighbours)
             {
-                
+
                 if (careForNeighbours)
                 {
                     pointsArray = new float[pointsVolume];
@@ -1190,7 +1191,7 @@ namespace MarchingCubes
                 ChunkGroupTreeLeaf l = leafs[i];
                 if (l == null)
                     continue;
-                
+
                 //int shrinkFactor = toLod / l.chunk.LOD;
                 //int pointsPerAxis = l.chunk.PointsPerAxis;
                 //int pointsPerAxisSqr = pointsPerAxis * pointsPerAxis;
@@ -1287,7 +1288,7 @@ namespace MarchingCubes
             }
         }
 
-      
+
         protected void CreateAllBuffersWithSizes(int numVoxelsPerAxis)
         {
             int points = numVoxelsPerAxis + 1;
@@ -1325,7 +1326,6 @@ namespace MarchingCubes
 
         }
 
-
         protected override void onDestroy()
         {
             if (Application.isPlaying)
@@ -1334,10 +1334,14 @@ namespace MarchingCubes
             }
         }
 
-        public void Store(Vector3Int anchorPos, StoredChunkEdits edits)
+        public void Store(Vector3Int anchorPos, out StoredChunkEdits edits)
         {
-            StorageTreeRoot r = GetOrCreateStorageGroupAtCoordinate(PositionToStorageGroupCoord(anchorPos));
-            r.SetLeafAtPosition(anchorPos, edits, true);
+            if(!TryGetStoredEditsAt(anchorPos, out edits))
+            {
+                edits = new StoredChunkEdits();
+                StorageTreeRoot r = GetOrCreateStorageGroupAtCoordinate(PositionToStorageGroupCoord(anchorPos));
+                r.SetLeafAtPosition(anchorPos, edits, true);
+            }
         }
     }
 }

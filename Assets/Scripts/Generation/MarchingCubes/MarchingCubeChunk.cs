@@ -53,8 +53,7 @@ namespace MarchingCubes
             {
                 if(editedPointsStorage == null)
                 {
-                    editedPointsStorage = new StoredChunkEdits();
-                    chunkHandler.Store(AnchorPos, editedPointsStorage);
+                    chunkHandler.Store(AnchorPos, out editedPointsStorage);
                 }
                 return editedPointsStorage;
             }

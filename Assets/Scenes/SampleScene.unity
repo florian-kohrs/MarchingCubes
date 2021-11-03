@@ -989,7 +989,7 @@ MonoBehaviour:
   chunkMaterial: {fileID: 2100000, guid: 97d2f9aa8d16b8241a90494b8d616c04, type: 2}
   surfaceLevel: 0.511
   player: {fileID: 1779183453}
-  buildAroundDistance: 3000
+  buildAroundDistance: 0
   worldUpdater: {fileID: 1125545290}
   colliderParent: {fileID: 1768635035}
   totalTriBuild: 0
