@@ -27,9 +27,9 @@ namespace MarchingCubes
 
         public int seed;
 
-        public virtual void Generate(int numPointsPerAxis, Vector3 anchor, float spacing)
+        public virtual void Generate(int numPointsPerAxis, Vector3 anchor, float spacing, bool tryLoad = false)
         {
-            ApplyShaderProperties(numPointsPerAxis, anchor, spacing);
+            ApplyShaderProperties(numPointsPerAxis, anchor, spacing, tryLoad);
 
             int numThreadsPerAxis = Mathf.CeilToInt(numPointsPerAxis / (float)threadGroupSize);
 
@@ -37,9 +37,10 @@ namespace MarchingCubes
 
         }
 
-        public void SetPointsBuffer(ComputeBuffer pointsBuffer)
+        public void SetBuffer(ComputeBuffer pointsBuffer, ComputeBuffer savedPointBuffer)
         {
             densityShader.SetBuffer(0, "points", pointsBuffer);
+            densityShader.SetBuffer(0, "savedPoints", savedPointBuffer);
         }
 
         private void Awake()
@@ -59,8 +60,10 @@ namespace MarchingCubes
             octaveOffsetsBuffer = null;
         }
 
-        protected void ApplyShaderProperties(int numPointsPerAxis, Vector3 anchor, float spacing)
+        protected void ApplyShaderProperties(int numPointsPerAxis, Vector3 anchor, float spacing, bool tryLoad)
         {
+            densityShader.SetBool("tryLoadData", tryLoad);
+            densityShader.SetInt("numPointsPerAxis", numPointsPerAxis);
             densityShader.SetInt("numPointsPerAxis", numPointsPerAxis);
             densityShader.SetFloat("spacing", spacing);
             densityShader.SetVector("anchor", new Vector4(anchor.x, anchor.y, anchor.z));

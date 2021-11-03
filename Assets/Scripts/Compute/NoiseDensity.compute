@@ -20,6 +20,8 @@ float radius;
 
 //Envirenment settings
 RWStructuredBuffer<float> points;
+RWStructuredBuffer<float> savedPoints;
+bool tryLoadData;
 int numPointsPerAxis;
 float3 anchor;
 float3 center;
@@ -201,6 +203,18 @@ void Density (int3 id : SV_DispatchThreadID)
     }
     //center is center of chunk, bound size is terrain size
 
+    int index = indexFromCoord(id.x, id.y, id.z);
+
+    if (tryLoadData) 
+    {
+        float storedNoise = savedPoints[index];
+        if (storedNoise > -9999)
+        {
+            points[index] = storedNoise;
+            return;
+        }
+    }
+
     float3 pos = anchor + id * spacing;
 
     Biom b = GetInterpolatedBiomAt((int3)pos);
@@ -242,7 +256,6 @@ void Density (int3 id : SV_DispatchThreadID)
         frequency *= b.lacunarity;
     }
 
-    int index = indexFromCoord(id.x, id.y, id.z);
     if (noise < -100)
         noise = -100;
     else if (noise > 100)

@@ -45,6 +45,8 @@ namespace MarchingCubes
         [Save]
         public Dictionary<Serializable3DIntVector, StorageTreeRoot> storageGroups = new Dictionary<Serializable3DIntVector, StorageTreeRoot>();
 
+        protected float[] storedNoiseData;
+
         public Dictionary<Vector3Int, IChunkGroupRoot> ChunkGroups => chunkGroups;
 
         [Range(1, 253)]
@@ -214,7 +216,7 @@ namespace MarchingCubes
             steepG = (int)(steepColor.g * 255);
             steepB = (int)(steepColor.b * 255);
 
-            densityGenerator.SetPointsBuffer(pointsBuffer);
+            densityGenerator.SetBuffer(pointsBuffer, savedPointBuffer);
             ApplyShaderProperties();
 
             watch.Start();
@@ -599,6 +601,16 @@ namespace MarchingCubes
             return chunkGroup;
         }
 
+        public bool TryGetMipMapAt(Vector3Int pos, int sizePower)
+        {
+            StorageTreeRoot chunkGroup;
+            if (storageGroups.TryGetValue(PositionToStorageGroupCoord(pos), out chunkGroup))
+            {
+                return chunkGroup.TryGetMipMapOfChunkSizePower(new int[] { pos.x, pos.y, pos.z }, sizePower, out storedNoiseData);
+            }
+            return false;
+        }
+
         public bool TryGetStoredEditsAt(Vector3Int pos, out StoredChunkEdits edits)
         {
             Vector3Int coord = PositionToStorageGroupCoord(pos);
@@ -815,7 +827,8 @@ namespace MarchingCubes
         float[] pointsArray;
 
         private ComputeBuffer triangleBuffer;
-        private ComputeBuffer pointsBuffer;
+        private ComputeBuffer pointsBuffer; 
+        private ComputeBuffer savedPointBuffer; 
         private ComputeBuffer triCountBuffer;
 
 
@@ -944,32 +957,69 @@ namespace MarchingCubes
             return result;
         }
 
+        public float[] GetNoiseRawFor(int pointsPerAxis, int LOD, Vector3Int anchor)
+        {
+            densityGenerator.Generate(pointsPerAxis, anchor, LOD);
+            float[] result = new float[pointsPerAxis * pointsPerAxis * pointsPerAxis];
+            pointsBuffer.GetData(result, 0, 0, result.Length);
+            return result;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="pointsPerAxis"></param>
+        /// <param name="LOD"></param>
+        /// <param name="anchor"></param>
+        /// <param name="keepPoints"></param>
+        /// <param name="loadNoiseData"></param>
+        /// <returns>returns true if the points were already read from gpu</returns>
         public bool GenerateNoise(int pointsPerAxis, int LOD, Vector3Int anchor, out bool keepPoints, bool loadNoiseData = true)
         {
-            if(!loadNoiseData || !WriteSavedNoiseDataIntoBuffer(pointsPerAxis, LOD, anchor, out keepPoints))
+            if(loadNoiseData)
+            {
+                TryLoadOrGenerateNoise(pointsPerAxis, LOD, anchor, out keepPoints);
+                return false;
+            }
+            else
             {
                 keepPoints = false;
-                densityGenerator.Generate(pointsPerAxis, anchor, LOD);
-                return false;
             }
             return true;
         }
 
 
-        protected bool WriteSavedNoiseDataIntoBuffer(int pointsPerAxis, int lod, Vector3Int anchor, out bool keepPoints)
+        protected void TryLoadOrGenerateNoise(int pointsPerAxis, int lod, Vector3Int anchor, out bool keepPoints)
         {
             keepPoints = false;
             if(lod == 1)
             {
+                keepPoints = false;
                 StoredChunkEdits edits;
                 if(TryGetStoredEditsAt(anchor, out edits))
                 {
                     pointsBuffer.SetData(edits.vals);
                     pointsArray = edits.vals;
-                    keepPoints = true;
+                }
+                else
+                {
+                    densityGenerator.Generate(pointsPerAxis, anchor, lod);
                 }
             }
-            return keepPoints;
+            else
+            {
+                int sizePow = (int)Mathf.Log(pointsPerAxis * lod, 2);
+                bool load = false;
+                if (sizePow <= STORAGE_GROUP_SIZE_POWER)
+                {
+                    load = TryGetMipMapAt(anchor, sizePow);
+                    if (load)
+                    {
+                        savedPointBuffer.SetData(storedNoiseData);
+                    }
+                }
+                densityGenerator.Generate(pointsPerAxis, anchor, lod, load);
+            }
         }
 
         protected void DispatchAndGetShaderData(IMarchingCubeChunk chunk, int lod, bool careForNeighbours, out bool keepPoints)
@@ -1214,7 +1264,6 @@ namespace MarchingCubes
             int halfSizeCeil = halfSize;
             int halfFrontJump = pointsPerAxis * halfSizeCeil;
 
-            int startwriteIndex = startIndex[0] / toLod + startIndex[1] / toLod * pointsPerAxis + startIndex[2] / toLod * pointsPerAxisSqr;
             int writeIndex = startIndex[0] / toLod + startIndex[1] / toLod * pointsPerAxis + startIndex[2] / toLod * pointsPerAxisSqr;
             int readIndex;
 
@@ -1228,8 +1277,6 @@ namespace MarchingCubes
                     for (int x = 0; x < pointsPerAxis; x += shrinkFactor)
                     {
                         float val = originalPoints[readIndex + x];
-                        if(writeIndex >= writeInHere.Length)
-                        { }
                         writeInHere[writeIndex] = val;
                         writeIndex++;
                     }
@@ -1273,6 +1320,7 @@ namespace MarchingCubes
             int maxTriangleCount = numVoxels * 2;
 
             pointsBuffer = new ComputeBuffer(numPoints, sizeof(float) * 1);
+            savedPointBuffer = new ComputeBuffer(numPoints, sizeof(float) * 1);
             triangleBuffer = new ComputeBuffer(maxTriangleCount, TriangleBuilder.SIZE_OF_TRI_BUILD, ComputeBufferType.Append);
             triCountBuffer = new ComputeBuffer(1, sizeof(int), ComputeBufferType.Raw);
         }
@@ -1281,6 +1329,7 @@ namespace MarchingCubes
         protected void ApplyShaderProperties()
         {
             marshShader.SetBuffer(0, "points", pointsBuffer);
+            marshShader.SetBuffer(0, "savedPoints", savedPointBuffer);
             marshShader.SetBuffer(0, "triangles", triangleBuffer);
 
             marshShader.SetInt("minSteepness", minSteepness);
@@ -1296,6 +1345,7 @@ namespace MarchingCubes
             {
                 triangleBuffer.Release();
                 pointsBuffer.Release();
+                savedPointBuffer.Release();
                 triCountBuffer.Release();
                 triangleBuffer = null;
             }

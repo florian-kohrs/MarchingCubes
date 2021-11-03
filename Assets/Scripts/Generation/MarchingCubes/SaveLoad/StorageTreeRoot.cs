@@ -6,7 +6,7 @@ namespace MarchingCubes
 {
 
     [System.Serializable]
-    public class StorageTreeRoot : GenericTreeRoot<StoredChunkEdits, StorageTreeLeaf, IChunkGroupOrganizer<StoredChunkEdits>>
+    public class StorageTreeRoot : GenericTreeRoot<StoredChunkEdits, StorageTreeLeaf, IStorageGroupOrganizer<StoredChunkEdits>>
     {
 
         public StorageTreeRoot() { }
@@ -20,12 +20,25 @@ namespace MarchingCubes
         public override int SizePower => MarchingCubeChunkHandler.STORAGE_GROUP_SIZE_POWER;
 
 
-        public override IChunkGroupOrganizer<StoredChunkEdits> GetLeaf(StoredChunkEdits leaf, int index, int[] anchor, int[] relAnchor, int sizePow)
+        public bool TryGetMipMapOfChunkSizePower(int[] relativePosition, int sizePow, out float[] storedNoise)
+        {
+            if (child != null)
+            {
+                return child.TryGetMipMapOfChunkSizePower(relativePosition, sizePow, out storedNoise);
+            }
+            else
+            {
+                storedNoise = null;
+                return false;
+            }
+        }
+
+        public override IStorageGroupOrganizer<StoredChunkEdits> GetLeaf(StoredChunkEdits leaf, int index, int[] anchor, int[] relAnchor, int sizePow)
         {
             return new StorageTreeLeaf(leaf, index, anchor, relAnchor, sizePow);
         }
 
-        public override IChunkGroupOrganizer<StoredChunkEdits> GetNode(int[] anchor, int[] relAnchor, int sizePow)
+        public override IStorageGroupOrganizer<StoredChunkEdits> GetNode(int[] anchor, int[] relAnchor, int sizePow)
         {
             return new StorageTreeNode(anchor, relAnchor, sizePow);
         }
