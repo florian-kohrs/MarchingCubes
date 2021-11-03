@@ -182,6 +182,8 @@ namespace MarchingCubes
 
         public BaseDensityGenerator densityGenerator;
 
+
+
         public bool useTerrainNoise;
 
 
@@ -1135,6 +1137,41 @@ namespace MarchingCubes
             return Mathf.Min(toLodPower, c.LODPower + 1);
         }
 
+        public int GetFeasibleIncreaseLodForChunk(IMarchingCubeChunk c, int toLodPower)
+        {
+            return Mathf.Max(toLodPower, c.LODPower - 1);
+        }
+
+        public void IncreaseChunkLod(IMarchingCubeChunk chunk, int toLodPower)
+        {
+            toLodPower = GetFeasibleIncreaseLodForChunk(chunk, toLodPower);
+            int toLod = RoundToPowerOf2(toLodPower);
+            if (toLod <= chunk.LOD || chunk.ChunkSize % toLod != 0)
+                Debug.LogWarning($"invalid new chunk lod {toLodPower} from lod {chunk.LODPower}");
+
+            SplitChunkAndIncreaseLod(chunk, toLodPower);
+        }
+
+        private void SplitChunkAndIncreaseLod(IMarchingCubeChunk chunk, int toLodPower)
+        {
+            
+        }
+
+        protected int NumberOfSavedChunksAt(Vector3Int pos, int sizePow)
+        {
+            Vector3Int coord = PositionToStorageGroupCoord(pos);
+            StorageTreeRoot r;
+            if(storageGroups.TryGetValue(coord, out r))
+            {
+                IStorageGroupOrganizer<StoredChunkEdits> node;
+                if(r.TryGetNodeWithSizePower(new int[] {pos.x,pos.y,pos.z}, sizePow, out node))
+                {
+                    return node.ChildrenWithMipMapReady;
+                }
+            }
+            return 0;
+        }
+
         public void DecreaseChunkLod(IMarchingCubeChunk chunk, int toLodPower)
         {
             toLodPower = GetFeasibleReducedLodForChunk(chunk, toLodPower);
@@ -1204,38 +1241,14 @@ namespace MarchingCubes
         public void MergeAndReduceChunkBranch(IMarchingCubeChunk chunk, int toLodPower, int toLod)
         {
             ChunkGroupTreeLeaf[] leafs = chunk.GetLeaf().parent.GetLeafs();
-            IMarchingCubeChunk compressedChunk = CreateChunkWithProperties(chunk.CenterPos, PositionToChunkGroupCoord(chunk.CenterPos), toLodPower, chunk.ChunkSizePower + 1, false, true);
-
-            //IMarchingCubeChunk compressedChunk = GetThreadedChunkObjectAt(chunk.CenterPos, toLodPower, chunk.ChunkSizePower + 1, true);
-
-            //densityGenerator.Generate(compressedChunk.PointsPerAxis, chunk.GetLeaf().parent.GroupAnchorPositionVector, toLod);
-
-            //float[] combinedPoints = GetNoiseForMergingChunkAt(chunk, toLod);
-            int deleted = 0;
+            CreateChunkWithProperties(chunk.CenterPos, PositionToChunkGroupCoord(chunk.CenterPos), toLodPower, chunk.ChunkSizePower + 1, false, true);
             for (int i = 0; i < 8; i++)
             {
                 ChunkGroupTreeLeaf l = leafs[i];
                 if (l == null)
                     continue;
-
-                //int shrinkFactor = toLod / l.chunk.LOD;
-                //int pointsPerAxis = l.chunk.PointsPerAxis;
-                //int pointsPerAxisSqr = pointsPerAxis * pointsPerAxis;
-
-               // CombinePointsInto(l.GroupRelativeAnchorPosition, l.chunk.Points, combinedPoints, pointsPerAxis, pointsPerAxisSqr, shrinkFactor, toLod);
                 l.leaf.ResetChunk();
-                deleted++;
             }
-            if(deleted< 2)
-            { }
-
-            //pointsBuffer.SetData(combinedPoints);
-
-            //RequestCubesFromNoise(chunk, toLod);
-
-            //compressedChunk.InitializeWithMeshData(tris, true);
-
-           //Debug.Log($"Merged Chunk At {compressedChunk.CenterPos}");
         }
 
         protected void TransferPointsInto(float[] originalPoints, float[] writeInHere, int originalPointsPerAxis, int originalPointsPerAxisSqr, int shrinkFactor)

@@ -48,6 +48,35 @@ namespace MarchingCubes
 
         protected int LOD => (int)Mathf.Pow(2, sizePower - 5);
 
+        public int ChildrenWithMipMapReady => CountChildrenWithMipmap();
+
+        public int DirectNonNullChildren => CountNonNullChildren();
+
+        public bool HasNoiseMapReady => mipmap != null;
+
+        protected int CountNonNullChildren()
+        {
+            int result = 0;
+            for (int i = 0; i < 8; i++)
+            {
+                if (children[i] != null)
+                    result++;
+            }
+            return result;
+        }
+
+        protected int CountChildrenWithMipmap()
+        {
+            int result = 0;
+            for (int i = 0; i < 8; i++)
+            {
+                if (children[i] != null && children[i].HasNoiseMapReady)
+                    result++;
+            }
+            return result;
+        }
+
+
         protected void CalculateMipMap()
         {
             if(mipmap == null)
@@ -66,30 +95,32 @@ namespace MarchingCubes
             }
         }
 
-        public bool TryGetMipMapOfChunkSizePower(int[] relativePosition, int sizePow, out float[] storedNoise)
-        {
-            if(sizePower == sizePow)
-            {
-                storedNoise = NoiseMap;
-            }
-            else
-            {
-                relativePosition[0] -= GroupRelativeAnchorPosition[0];
-                relativePosition[1] -= GroupRelativeAnchorPosition[1];
-                relativePosition[2] -= GroupRelativeAnchorPosition[2];
-                int childIndex = GetIndexForLocalPosition(relativePosition);
+        //public bool TryGetMipMapOfChunkSizePower(int[] relativePosition, int sizePow, out float[] storedNoise)
+        //{
+        //    if(sizePower == sizePow)
+        //    {
+        //        storedNoise = NoiseMap;
+        //    }
+        //    else
+        //    {
+        //        relativePosition[0] -= GroupRelativeAnchorPosition[0];
+        //        relativePosition[1] -= GroupRelativeAnchorPosition[1];
+        //        relativePosition[2] -= GroupRelativeAnchorPosition[2];
+        //        int childIndex = GetIndexForLocalPosition(relativePosition);
 
-                if (children[childIndex] == null)
-                {
-                    storedNoise = null;
-                }
-                else
-                {
-                    return children[childIndex].TryGetMipMapOfChunkSizePower(relativePosition, sizePow, out storedNoise);
-                }
-            }
-            return storedNoise != null;
-        }
+        //        if (children[childIndex] == null)
+        //        {
+        //            storedNoise = null;
+        //        }
+        //        else
+        //        {
+        //            return children[childIndex].TryGetMipMapOfChunkSizePower(relativePosition, sizePow, out storedNoise);
+        //        }
+        //    }
+        //    return storedNoise != null;
+        //}
+
+        
 
         protected void CombinePointsInto(int[] startIndex, float[] originalPoints, float[] writeInHere, int pointsPerAxis, int pointsPerAxisSqr, int shrinkFactor, int toLod)
         {
@@ -139,6 +170,31 @@ namespace MarchingCubes
             return new StorageTreeNode(anchor, relAnchor, sizePow);
         }
 
+        public bool TryGetNodeWithSizePower(int[] relativePosition, int sizePow, out IStorageGroupOrganizer<StoredChunkEdits> child)
+        {
+            if (sizePower == sizePow)
+            {
+                child = this;
+            }
+            else
+            {
+                relativePosition[0] -= GroupRelativeAnchorPosition[0];
+                relativePosition[1] -= GroupRelativeAnchorPosition[1];
+                relativePosition[2] -= GroupRelativeAnchorPosition[2];
+                int childIndex = GetIndexForLocalPosition(relativePosition);
+
+                if (children[childIndex] == null)
+                {
+                    child = null;
+                }
+                else
+                {
+                    return children[childIndex].TryGetNodeWithSizePower(relativePosition, sizePow, out child);
+                }
+            }
+            return child != null;
+        }
+        
     }
 
 }

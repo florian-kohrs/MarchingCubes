@@ -155,11 +155,16 @@ namespace MarchingCubes
 
         private void LateUpdate()
         {
+            List<IMarchingCubeChunk> chunks = new List<IMarchingCubeChunk>();
             foreach (var item in increaseChunkLods)
             {
-
+                chunkHandler.IncreaseChunkLod(item, item.TargetLODPower);
             }
-            List<IMarchingCubeChunk> chunks = new List<IMarchingCubeChunk>();
+            foreach (var c in chunks)
+            {
+                increaseChunkLods.Remove(c);
+            }
+            chunks.Clear();
             foreach (var item in lowerChunkLods)
             {
                 if (!item.IsReady)

@@ -17,9 +17,25 @@ namespace MarchingCubes
 
         public float[] NoiseMap => leaf.vals;
 
+        public int ChildrenWithMipMapReady => throw new System.NotImplementedException();
+
+        public int DirectNonNullChildren => throw new System.NotImplementedException();
+
+        public bool HasNoiseMapReady => true;
+
         public override bool RemoveLeafAtLocalPosition(int[] pos)
         {
             return false;
+        }
+
+        public bool TryGetNodeWithSizePower(int[] relativePosition, int sizePow, out IStorageGroupOrganizer<StoredChunkEdits> child)
+        {
+            if(sizePow == sizePower)
+                child = this;
+            else
+                child = null;
+            
+            return child != null;
         }
 
         public bool TryGetMipMapOfChunkSizePower(int[] relativePosition, int sizePow, out float[] storedNoise)

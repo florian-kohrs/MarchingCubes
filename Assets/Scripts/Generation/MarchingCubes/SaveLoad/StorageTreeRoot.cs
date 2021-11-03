@@ -22,14 +22,30 @@ namespace MarchingCubes
 
         public bool TryGetMipMapOfChunkSizePower(int[] relativePosition, int sizePow, out float[] storedNoise)
         {
-            if (child != null)
+            IStorageGroupOrganizer<StoredChunkEdits> node;
+            if (TryGetNodeWithSizePower(relativePosition,sizePow, out node))
             {
-                return child.TryGetMipMapOfChunkSizePower(relativePosition, sizePow, out storedNoise);
+                storedNoise = node.NoiseMap;
             }
             else
             {
                 storedNoise = null;
+            }
+
+            return storedNoise != null;
+        }
+
+
+        public bool TryGetNodeWithSizePower(int[] relativePosition, int sizePow, out IStorageGroupOrganizer<StoredChunkEdits> child)
+        {
+            if (this.child == null)
+            {
+                child = default;
                 return false;
+            }
+            else
+            {
+                return this.child.TryGetNodeWithSizePower(relativePosition, sizePow, out child);
             }
         }
 

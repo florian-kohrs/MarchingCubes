@@ -63,6 +63,7 @@ namespace MarchingCubes
             SetLeafAtPosition(new int[] { v3.x, v3.y, v3.z }, leaf, allowOverride);
         }
 
+
         public void SetLeafAtPosition(int[] pos, T leaf, bool allowOverride)
         {
             if (leaf.ChunkSizePower == SizePower && (!HasChild || allowOverride))
