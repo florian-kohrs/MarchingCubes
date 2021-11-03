@@ -8,7 +8,7 @@ namespace MarchingCubes
     public class ClickEditor : MonoBehaviour
     {
 
-        int pointDelta = -5;
+        int pointDelta = -100;
 
         protected PathTriangle firstTriIndex;
         protected PathTriangle secondTriIndex;
@@ -122,7 +122,7 @@ namespace MarchingCubes
 
                     if (chunk != null)
                     {
-                        chunk.EditPointsAroundRayHit(pointDelta, hit,2);
+                        chunk.EditPointsAroundRayHit(pointDelta, hit,7);
                     }
                 }
             }

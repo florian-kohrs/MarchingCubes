@@ -946,20 +946,17 @@ namespace MarchingCubes
 
         public bool GenerateNoise(int pointsPerAxis, int LOD, Vector3Int anchor, out bool keepPoints, bool loadNoiseData = true)
         {
-            densityGenerator.Generate(pointsPerAxis, anchor, LOD);
-            if(loadNoiseData)
-            {
-                return WriteEditedNoiseDataIntoBuffer(pointsPerAxis, LOD, anchor, out keepPoints);
-            }
-            else
+            if(!loadNoiseData || !WriteSavedNoiseDataIntoBuffer(pointsPerAxis, LOD, anchor, out keepPoints))
             {
                 keepPoints = false;
+                densityGenerator.Generate(pointsPerAxis, anchor, LOD);
                 return false;
             }
+            return true;
         }
 
 
-        protected bool WriteEditedNoiseDataIntoBuffer(int pointsPerAxis, int lod, Vector3Int anchor, out bool keepPoints)
+        protected bool WriteSavedNoiseDataIntoBuffer(int pointsPerAxis, int lod, Vector3Int anchor, out bool keepPoints)
         {
             keepPoints = false;
             if(lod == 1)
@@ -967,33 +964,12 @@ namespace MarchingCubes
                 StoredChunkEdits edits;
                 if(TryGetStoredEditsAt(anchor, out edits))
                 {
-                    System.Diagnostics.Stopwatch w = new System.Diagnostics.Stopwatch();
-                    w.Start();
-                    //pointsArray = new float[pointsPerAxis * pointsPerAxis * pointsPerAxis];
-                    //pointsBuffer.GetData(pointsArray, 0, 0, pointsArray.Length);
-                    //w.Stop();
-                    //Debug.Log($"elaspsed time for getting noise is {w.Elapsed.TotalMilliseconds}ms");
-                    //w.Restart();
-                    WriteEditsIntoArray(edits);
-                    w.Stop();
-                    Debug.Log($"elaspsed time for writing values to noise is {w.Elapsed.TotalMilliseconds}ms");
-
-                    //pointsBuffer.SetData(pointsArray);
-                    //keepPoints = true;
+                    pointsBuffer.SetData(edits.vals);
+                    pointsArray = edits.vals;
+                    keepPoints = true;
                 }
             }
             return keepPoints;
-        }
-
-        protected void WriteEditsIntoArray(StoredChunkEdits edits)
-        {
-            var arr = edits.editedPoints.Values.ToArray();
-            int i = 0;
-            foreach (var item in edits.editedPoints.Keys)
-            {
-                pointsBuffer.SetData(arr,i, item,1);
-                i++;
-            }
         }
 
         protected void DispatchAndGetShaderData(IMarchingCubeChunk chunk, int lod, bool careForNeighbours, out bool keepPoints)
@@ -1334,14 +1310,16 @@ namespace MarchingCubes
             }
         }
 
-        public void Store(Vector3Int anchorPos, out StoredChunkEdits edits)
+        public void Store(Vector3Int anchorPos, float[] noise)
         {
+            StoredChunkEdits edits;
             if(!TryGetStoredEditsAt(anchorPos, out edits))
             {
                 edits = new StoredChunkEdits();
                 StorageTreeRoot r = GetOrCreateStorageGroupAtCoordinate(PositionToStorageGroupCoord(anchorPos));
                 r.SetLeafAtPosition(anchorPos, edits, true);
             }
+            edits.vals = noise;
         }
     }
 }

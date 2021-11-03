@@ -30,33 +30,9 @@ namespace MarchingCubes
 
         protected Dictionary<Vector3Int, MarchingCubeEntity> higherLodNeighbourCubes = new Dictionary<Vector3Int, MarchingCubeEntity>();
 
-
-        protected StoredChunkEdits editedPointsStorage;
-
-        protected Dictionary<int,float> editedPointsDict;
-
-        protected Dictionary<int, float> EditedPointsDict
+        protected void StoreNoiseArray()
         {
-            get
-            {
-                if (editedPointsDict == null)
-                {
-                    editedPointsDict = EditedPointsStorage.editedPoints;
-                }
-                return editedPointsDict;
-            }
-        }
-
-        protected StoredChunkEdits EditedPointsStorage
-        {
-            get
-            {
-                if(editedPointsStorage == null)
-                {
-                    chunkHandler.Store(AnchorPos, out editedPointsStorage);
-                }
-                return editedPointsStorage;
-            }
+            chunkHandler.Store(AnchorPos, Points);
         }
 
         public MarchingCubeEntity GetEntityAt(Vector3Int v3)
@@ -432,6 +408,8 @@ namespace MarchingCubes
                 cubeEntities = new MarchingCubeEntity[ChunkSize, ChunkSize, ChunkSize];
             }
 
+            StoreNoiseArray();
+
             RequestPointsIfNotStored();
             ///at some point rather call gpu to compute this
             int ppMinus = pointsPerAxis - 1;
@@ -447,14 +425,6 @@ namespace MarchingCubes
             int endZ = Mathf.Min(ppMinus, posZ + radius + 1);
 
             float factorMaxDistance = radius + 0;
-
-            Func<float, bool> f;
-            if (delta > 0)
-                f = LargerThanSurface;
-            else if (delta < 0)
-                f = SmallerThanSurface;
-            else
-                return;
 
             float distanceX = startX - posX + offsetX;
 
@@ -479,7 +449,6 @@ namespace MarchingCubes
 
                             value += diff;
                             value = Mathf.Clamp(value, -MAX_NOISE_VALUE, MAX_NOISE_VALUE);
-                            EditedPointsDict[index] = value;
                             points[index] = value;
                         }
                         distanceZ++;

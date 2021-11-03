@@ -11,9 +11,11 @@ namespace MarchingCubes
         //TODO: Also store how many triangle the chunk had -> almost no memory overhead
         //and doesnt need to ask gpu so huge speed up
 
-        [Save]
-        public Dictionary<int, float> editedPoints = new Dictionary<int, float>();
+        //[Save]
+        //public Dictionary<int, float> editedPoints = new Dictionary<int, float>();
 
+
+        public float[] vals;
         
         int ISizeManager.ChunkSizePower { get => 5; set => throw new System.NotImplementedException(); }
     }

@@ -37,7 +37,7 @@ namespace MarchingCubes
 
         int[] GetColor(PathTriangle t, int steepness);
 
-        void Store(Vector3Int anchorPos, out StoredChunkEdits edits);
+        void Store(Vector3Int anchorPos, float[] noise);
 
         float[][] GetSplittedNoiseArray(IMarchingCubeChunk chunk);
 
