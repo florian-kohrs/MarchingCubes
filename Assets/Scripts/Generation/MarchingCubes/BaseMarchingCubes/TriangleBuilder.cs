@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -27,7 +28,31 @@ namespace MarchingCubes
         {
             get
             {
-                return new Vector3Int(x,y, z);
+                return new Vector3Int(x, y, z);
+            }
+        }
+
+        public int X
+        {
+            get
+            {
+                return x;
+            }
+        }
+
+        public int Y
+        {
+            get
+            {
+                return y;
+            }
+        }
+
+        public int Z
+        {
+            get
+            {
+                return z;
             }
         }
 

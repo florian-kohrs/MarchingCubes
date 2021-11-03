@@ -403,7 +403,7 @@ namespace MarchingCubes
             List<MissingNeighbourData> trisWithNeighboursOutOfBounds = new List<MissingNeighbourData>();
             for (int i = 0; i < ts.Length; ++i)
             {
-                Vector3Int currentOrigin = ts[i].Origin;
+                //Vector3Int currentOrigin = .Origin;
 
                 //if (careAboutNeighbourLODS && IsBorderCube(currentOrigin))
                 //{
@@ -412,7 +412,7 @@ namespace MarchingCubes
                 //        ProcessNeighboursFromList(trisWithNeighboursOutOfBounds, currentOrigin);
                 //    }
                 //}
-                SetNeighbourAt(currentOrigin);
+                SetNeighbourAt(ts[i].x, ts[i].y, ts[i].z);
 
                 //if (chunkHandler.TryGetReadyChunkAt(target, out c))
                 //{

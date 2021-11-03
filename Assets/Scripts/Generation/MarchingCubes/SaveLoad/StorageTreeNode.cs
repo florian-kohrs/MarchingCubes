@@ -50,17 +50,12 @@ namespace MarchingCubes
 
         protected void CalculateMipMap()
         {
-            System.Diagnostics.Stopwatch w = new System.Diagnostics.Stopwatch();
-            w.Start();
             if(mipmap == null)
             {
                 mipmap = new StoredChunkEdits();
                 mipmap.vals = new float[MIPMAP_SIZE];
                 System.Array.Copy(mipmapTemplate, mipmap.vals, MIPMAP_SIZE);
             }
-            w.Stop();
-            Debug.Log($"Needed time to copy array: {w.Elapsed.TotalMilliseconds}ms" );
-            w.Restart();
             for (int i = 0; i < 8; i++)
             {
                 var c = children[i];
@@ -69,8 +64,6 @@ namespace MarchingCubes
                     CombinePointsInto(c.GroupRelativeAnchorPosition, c.NoiseMap, mipmap.vals, POINTS_PER_AXIS, POINTS_PER_AXIS_SQR, 2, LOD);
                 }
             }
-            w.Stop();
-            Debug.Log($"Needed time to build mipmap: {w.Elapsed.TotalMilliseconds}ms");
         }
 
         public bool TryGetMipMapOfChunkSizePower(int[] relativePosition, int sizePow, out float[] storedNoise)
