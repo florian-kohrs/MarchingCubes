@@ -159,6 +159,7 @@ namespace MarchingCubes
             foreach (var item in increaseChunkLods)
             {
                 chunkHandler.IncreaseChunkLod(item, item.TargetLODPower);
+                chunks.Add(item);
             }
             foreach (var c in chunks)
             {
