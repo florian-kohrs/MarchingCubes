@@ -28,7 +28,11 @@ namespace MarchingCubes
         {
         }
 
+        //mark dirty when childs noise changes
         protected StoredChunkEdits mipmap;
+
+        protected bool isMipMapComplete;
+
 
         protected static float[] mipmapTemplate = new float[MIPMAP_SIZE].Fill(NON_SET_NOISE_VALUE);
 
@@ -95,32 +99,32 @@ namespace MarchingCubes
             }
         }
 
-        //public bool TryGetMipMapOfChunkSizePower(int[] relativePosition, int sizePow, out float[] storedNoise)
-        //{
-        //    if(sizePower == sizePow)
-        //    {
-        //        storedNoise = NoiseMap;
-        //    }
-        //    else
-        //    {
-        //        relativePosition[0] -= GroupRelativeAnchorPosition[0];
-        //        relativePosition[1] -= GroupRelativeAnchorPosition[1];
-        //        relativePosition[2] -= GroupRelativeAnchorPosition[2];
-        //        int childIndex = GetIndexForLocalPosition(relativePosition);
+        public bool TryGetMipMapOfChunkSizePower(int[] relativePosition, int sizePow, out float[] storedNoise, out bool isMipMapComplete)
+        {
+            if(sizePower == sizePow)
+            {
+                storedNoise = NoiseMap;
+                isMipMapComplete = this.isMipMapComplete;
+            }
+            else
+            {
+                relativePosition[0] -= GroupRelativeAnchorPosition[0];
+                relativePosition[1] -= GroupRelativeAnchorPosition[1];
+                relativePosition[2] -= GroupRelativeAnchorPosition[2];
+                int childIndex = GetIndexForLocalPosition(relativePosition);
 
-        //        if (children[childIndex] == null)
-        //        {
-        //            storedNoise = null;
-        //        }
-        //        else
-        //        {
-        //            return children[childIndex].TryGetMipMapOfChunkSizePower(relativePosition, sizePow, out storedNoise);
-        //        }
-        //    }
-        //    return storedNoise != null;
-        //}
-
-        
+                if (children[childIndex] == null)
+                {
+                    storedNoise = null;
+                    isMipMapComplete = false;
+                }
+                else
+                {
+                    return children[childIndex].TryGetMipMapOfChunkSizePower(relativePosition, sizePow, out storedNoise, out isMipMapComplete);
+                }
+            }
+            return storedNoise != null;
+        }
 
         protected void CombinePointsInto(int[] startIndex, float[] originalPoints, float[] writeInHere, int pointsPerAxis, int pointsPerAxisSqr, int shrinkFactor, int toLod)
         {
@@ -194,7 +198,7 @@ namespace MarchingCubes
             }
             return child != null;
         }
-        
+
     }
 
 }

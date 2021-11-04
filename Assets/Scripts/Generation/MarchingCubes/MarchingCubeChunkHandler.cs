@@ -603,13 +603,15 @@ namespace MarchingCubes
             return chunkGroup;
         }
 
-        public bool TryGetMipMapAt(Vector3Int pos, int sizePower)
+        public bool TryGetMipMapAt(Vector3Int pos, int sizePower, out float[] storedNoise, out bool isMipMapComplete)
         {
             StorageTreeRoot chunkGroup;
             if (storageGroups.TryGetValue(PositionToStorageGroupCoord(pos), out chunkGroup))
             {
-                return chunkGroup.TryGetMipMapOfChunkSizePower(new int[] { pos.x, pos.y, pos.z }, sizePower, out storedNoiseData);
+                return chunkGroup.TryGetMipMapOfChunkSizePower(new int[] { pos.x, pos.y, pos.z }, sizePower, out storedNoise, out isMipMapComplete);
             }
+            isMipMapComplete = false;
+            storedNoise = null;
             return false;
         }
 
@@ -941,13 +943,13 @@ namespace MarchingCubes
         public float[] RequestNoiseForChunk(IMarchingCubeChunk chunk)
         {
             bool _;
-            return RequestNoiseFor(chunk.PointsPerAxis, chunk.LOD, chunk.AnchorPos, out _);
+            return RequestNoiseFor(chunk.ChunkSizePower, chunk.PointsPerAxis, chunk.LOD, chunk.AnchorPos, out _);
         }
 
-        public float[] RequestNoiseFor(int pointsPerAxis, int LOD, Vector3Int anchor, out bool keepPoints)
+        public float[] RequestNoiseFor(int sizePow, int pointsPerAxis, int LOD, Vector3Int anchor, out bool keepPoints)
         {
             float[] result;
-            if (!GenerateNoise(pointsPerAxis, LOD, anchor, out keepPoints))
+            if (!GenerateNoise(sizePow, pointsPerAxis, LOD, anchor, out keepPoints))
             {
                 result = new float[pointsPerAxis * pointsPerAxis * pointsPerAxis];
                 pointsBuffer.GetData(result, 0, 0, result.Length);
@@ -976,52 +978,46 @@ namespace MarchingCubes
         /// <param name="keepPoints"></param>
         /// <param name="loadNoiseData"></param>
         /// <returns>returns true if the points were already read from gpu</returns>
-        public bool GenerateNoise(int pointsPerAxis, int LOD, Vector3Int anchor, out bool keepPoints, bool loadNoiseData = true)
+        public bool GenerateNoise(int sizePow, int pointsPerAxis, int LOD, Vector3Int anchor, out bool keepPoints, bool loadNoiseData = true)
         {
             if(loadNoiseData)
             {
-                TryLoadOrGenerateNoise(pointsPerAxis, LOD, anchor, out keepPoints);
+                TryLoadOrGenerateNoise(sizePow, pointsPerAxis, LOD, anchor, out keepPoints);
                 return false;
             }
             else
             {
+                densityGenerator.Generate(pointsPerAxis, anchor, LOD);
                 keepPoints = false;
             }
-            return true;
+            return false;
         }
 
 
-        protected void TryLoadOrGenerateNoise(int pointsPerAxis, int lod, Vector3Int anchor, out bool keepPoints)
+        protected void TryLoadOrGenerateNoise(int sizePow,  int pointsPerAxis, int lod, Vector3Int anchor, out bool keepPoints)
         {
             keepPoints = false;
-            if(lod == 1)
+            bool hasStoredData = false;
+            bool isMipMapComplete = false;
+            bool hasToDispatch = pointsPerAxis < DEFAULT_CHUNK_SIZE;
+            if (sizePow <= STORAGE_GROUP_SIZE_POWER)
             {
-                keepPoints = false;
-                StoredChunkEdits edits;
-                if(TryGetStoredEditsAt(anchor, out edits))
+                hasStoredData = TryGetMipMapAt(anchor, sizePow, out storedNoiseData, out isMipMapComplete);
+                if (hasStoredData && (!isMipMapComplete || hasToDispatch))
                 {
-                    pointsBuffer.SetData(edits.vals);
-                    pointsArray = edits.vals;
+                    savedPointBuffer.SetData(storedNoiseData);
                 }
-                else
-                {
-                    densityGenerator.Generate(pointsPerAxis, anchor, lod);
-                }
+            }
+            if (isMipMapComplete && !hasToDispatch)
+            {
+                pointsBuffer.SetData(storedNoiseData);
+                pointsArray = storedNoiseData;
             }
             else
             {
-                int sizePow = (int)Mathf.Log(pointsPerAxis * lod, 2);
-                bool load = false;
-                if (sizePow <= STORAGE_GROUP_SIZE_POWER)
-                {
-                    load = TryGetMipMapAt(anchor, sizePow);
-                    if (load)
-                    {
-                        savedPointBuffer.SetData(storedNoiseData);
-                    }
-                }
-                densityGenerator.Generate(pointsPerAxis, anchor, lod, load);
+                densityGenerator.Generate(pointsPerAxis, anchor, lod, hasStoredData);
             }
+            
         }
 
         protected void DispatchAndGetShaderData(IMarchingCubeChunk chunk, int lod, bool careForNeighbours, out bool keepPoints)
@@ -1035,7 +1031,7 @@ namespace MarchingCubes
             int pointsPerAxis = numVoxelsPerAxis + 1;
             int pointsVolume = pointsPerAxis * pointsPerAxis * pointsPerAxis;
 
-            bool hasNoise = GenerateNoise(pointsPerAxis, lod, chunk.AnchorPos, out keepPoints);
+            bool hasNoise = GenerateNoise(chunk.ChunkSizePower, pointsPerAxis, lod, chunk.AnchorPos, out keepPoints);
 
             int numTris = RequestCubesFromNoise(chunk, lod);
 
@@ -1215,6 +1211,7 @@ namespace MarchingCubes
 
             //NotifyNeighbourChunksOnLodSwitch(chunk.ChunkAnchorPosition, toLodPower);
 
+            //TODO: Write points into stored buffer and request points on gpu
             TransferPointsInto(points, relevantPoints, originalPointsPerAxis, originalPointsPerAxisSqr, shrinkFactor);
 
             pointsBuffer.SetData(relevantPoints);
@@ -1235,7 +1232,7 @@ namespace MarchingCubes
         public float[] GetNoiseForMergingChunkAt(IMarchingCubeChunk chunk, int toLod, out bool keepPoints)
         {
             int[] pos = chunk.GetLeaf().parent.GroupAnchorPosition;
-            return RequestNoiseFor(chunk.PointsPerAxis, toLod, new Vector3Int(pos[0],pos[1],pos[2]), out keepPoints);
+            return RequestNoiseFor(chunk.ChunkSizePower, chunk.PointsPerAxis, toLod, new Vector3Int(pos[0],pos[1],pos[2]), out keepPoints);
         }
 
         public void MergeAndReduceChunkBranch(IMarchingCubeChunk chunk, int toLodPower, int toLod)
