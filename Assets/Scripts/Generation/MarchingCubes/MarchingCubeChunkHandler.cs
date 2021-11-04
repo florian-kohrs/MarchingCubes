@@ -1199,7 +1199,10 @@ namespace MarchingCubes
             int chunkSizePower = chunk.ChunkSizePower;
             int shrinkFactor = toLod / chunk.LOD;
             int originalPointsPerAxis = chunk.PointsPerAxis;
-            float[] points = chunk.Points;
+            if (chunk.HasPoints)
+            {
+                float[] points = chunk.Points;
+            }
 
             chunk.LODPower = toLodPower;
 
