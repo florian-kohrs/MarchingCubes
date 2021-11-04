@@ -1,5 +1,7 @@
 ﻿#pragma kernel Density
 #include "/Includes/Noise.compute"
+#define MIP_MAP_SIZE 33
+#define MIP_MAP_SIZE_SQR 33 * 33
 
 static const int numThreads = 8;
 
@@ -195,19 +197,26 @@ int indexFromCoord(uint x, uint y, uint z) {
     return z * numPointsPerAxis * numPointsPerAxis + y * numPointsPerAxis + x;
 }
 
+int indexFromMipMap(uint x, uint y, uint z) {
+    return z * MIP_MAP_SIZE_SQR + y * MIP_MAP_SIZE + x;
+}
+
 [numthreads(numThreads,numThreads,numThreads)]
 void Density (int3 id : SV_DispatchThreadID)
 {
     if (id.x >= numPointsPerAxis || id.y >= numPointsPerAxis || id.z >= numPointsPerAxis) {
         return;
     }
-    //center is center of chunk, bound size is terrain size
+
+    //32 is saved array size
 
     int index = indexFromCoord(id.x, id.y, id.z);
 
     if (tryLoadData) 
     {
-        float storedNoise = savedPoints[index];
+        int savedPointsSpacing = (MIP_MAP_SIZE - 1) / (numPointsPerAxis - 1) ;
+        int savedPointIndex = indexFromMipMap(savedPointsSpacing * id.x, savedPointsSpacing * id.y, savedPointsSpacing * id.z);
+        float storedNoise = savedPoints[savedPointIndex];
         if (storedNoise > -9999)
         {
             points[index] = storedNoise;
@@ -260,6 +269,7 @@ void Density (int3 id : SV_DispatchThreadID)
         noise = -100;
     else if (noise > 100)
         noise = 100;
+
 
     points[index] = noise;
     

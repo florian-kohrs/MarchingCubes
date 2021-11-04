@@ -28,7 +28,11 @@ namespace MarchingCubes
         {
         }
 
+        //mark dirty when childs noise changes
         protected StoredChunkEdits mipmap;
+
+        protected bool isMipMapComplete;
+
 
         protected static float[] mipmapTemplate = new float[MIPMAP_SIZE].Fill(NON_SET_NOISE_VALUE);
 
@@ -73,11 +77,12 @@ namespace MarchingCubes
             Debug.Log($"Needed time to build mipmap: {w.Elapsed.TotalMilliseconds}ms");
         }
 
-        public bool TryGetMipMapOfChunkSizePower(int[] relativePosition, int sizePow, out float[] storedNoise)
+        public bool TryGetMipMapOfChunkSizePower(int[] relativePosition, int sizePow, out float[] storedNoise, out bool isMipMapComplete)
         {
             if(sizePower == sizePow)
             {
                 storedNoise = NoiseMap;
+                isMipMapComplete = this.isMipMapComplete;
             }
             else
             {
@@ -89,10 +94,11 @@ namespace MarchingCubes
                 if (children[childIndex] == null)
                 {
                     storedNoise = null;
+                    isMipMapComplete = false;
                 }
                 else
                 {
-                    return children[childIndex].TryGetMipMapOfChunkSizePower(relativePosition, sizePow, out storedNoise);
+                    return children[childIndex].TryGetMipMapOfChunkSizePower(relativePosition, sizePow, out storedNoise, out isMipMapComplete);
                 }
             }
             return storedNoise != null;

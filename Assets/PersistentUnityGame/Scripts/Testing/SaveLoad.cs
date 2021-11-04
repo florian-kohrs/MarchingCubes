@@ -11,7 +11,7 @@ public class SaveLoad : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.F5))
         {
-            Save();
+          //  Save();
         }
         if (Input.GetKeyDown(KeyCode.F9))
         {

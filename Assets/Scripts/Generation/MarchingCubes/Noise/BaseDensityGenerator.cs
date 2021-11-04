@@ -64,7 +64,6 @@ namespace MarchingCubes
         {
             densityShader.SetBool("tryLoadData", tryLoad);
             densityShader.SetInt("numPointsPerAxis", numPointsPerAxis);
-            densityShader.SetInt("numPointsPerAxis", numPointsPerAxis);
             densityShader.SetFloat("spacing", spacing);
             densityShader.SetVector("anchor", new Vector4(anchor.x, anchor.y, anchor.z));
         }

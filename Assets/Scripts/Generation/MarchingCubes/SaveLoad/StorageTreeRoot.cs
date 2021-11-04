@@ -20,15 +20,16 @@ namespace MarchingCubes
         public override int SizePower => MarchingCubeChunkHandler.STORAGE_GROUP_SIZE_POWER;
 
 
-        public bool TryGetMipMapOfChunkSizePower(int[] relativePosition, int sizePow, out float[] storedNoise)
+        public bool TryGetMipMapOfChunkSizePower(int[] relativePosition, int sizePow, out float[] storedNoise, out bool isMipMapComplete)
         {
             if (child != null)
             {
-                return child.TryGetMipMapOfChunkSizePower(relativePosition, sizePow, out storedNoise);
+                return child.TryGetMipMapOfChunkSizePower(relativePosition, sizePow, out storedNoise, out isMipMapComplete);
             }
             else
             {
                 storedNoise = null;
+                isMipMapComplete = false;
                 return false;
             }
         }

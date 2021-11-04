@@ -22,9 +22,12 @@ namespace MarchingCubes
             return false;
         }
 
-        public bool TryGetMipMapOfChunkSizePower(int[] relativePosition, int sizePow, out float[] storedNoise)
+        public bool TryGetMipMapOfChunkSizePower(int[] relativePosition, int sizePow, out float[] storedNoise, out bool isMipMapComplete)
         {
-            throw new System.Exception("Cant get mitmap of leaf. Dont request mipmap for sizepower <= 5!");
+            storedNoise = NoiseMap;
+            isMipMapComplete = true;
+            return true;
         }
+
     }
 }
