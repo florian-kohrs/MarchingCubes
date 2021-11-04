@@ -58,6 +58,8 @@ namespace MarchingCubes
 
         public bool HasNoiseMapReady => mipmap != null;
 
+        public bool IsMipMapComplete => isMipMapComplete;
+
         protected int CountNonNullChildren()
         {
             int result = 0;

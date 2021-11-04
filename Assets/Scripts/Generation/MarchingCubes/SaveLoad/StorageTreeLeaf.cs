@@ -23,6 +23,8 @@ namespace MarchingCubes
 
         public bool HasNoiseMapReady => true;
 
+        public bool IsMipMapComplete => true;
+
         public override bool RemoveLeafAtLocalPosition(int[] pos)
         {
             return false;

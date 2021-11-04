@@ -26,10 +26,12 @@ namespace MarchingCubes
             if (TryGetNodeWithSizePower(relativePosition,sizePow, out node))
             {
                 storedNoise = node.NoiseMap;
+                isMipMapComplete = node.IsMipMapComplete;
             }
             else
             {
                 storedNoise = null;
+                isMipMapComplete = false;
             }
 
             return storedNoise != null;
