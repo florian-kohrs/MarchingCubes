@@ -49,28 +49,6 @@ namespace MarchingCubes
             return new ChunkGroupTreeNode(anchor, relAnchor, sizePow);
         }
 
-        public void SplitLeaf(int index)
-        {
-            
-        }
-
-        public int[][] GetAllChildGlobalAnchorPosition()
-        {
-            int[][] result = new int[8][];
-            for (int i = 0; i < 8; i++)
-            {
-                var c = children[i];
-                if(c != null)
-                {
-                    result[i] = c.GroupAnchorPositionCopy;
-                }
-                else
-                {
-                    result[i] = GetGlobalAnchorPositionForIndex(i);
-                }
-
-            }
-            return result;
-        }
+    
     }
 }

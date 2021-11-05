@@ -85,24 +85,6 @@ namespace MarchingCubes
             };
         }
 
-        protected int[] GetGlobalAnchorPositionForIndex(int index)
-        {
-            int[] result = { GroupAnchorPosition[0], GroupAnchorPosition[1], GroupAnchorPosition[2] };
-            if(index == 1 || index == 3 || index == 5 ||index == 6)
-            {
-                result[0] += halfSize;
-            }
-            if(index == 2 || index == 3 || index > 5)
-            {
-                result[1] += halfSize;
-            }
-            if (index >= 4)
-            {
-                result[2] += halfSize;
-            }
-            return result;
-        }
-
         public override T GetChunkAtLocalPosition(int[] pos)
         {
             IChunkGroupOrganizer<T> child = children[GetIndexForLocalPosition(pos)];

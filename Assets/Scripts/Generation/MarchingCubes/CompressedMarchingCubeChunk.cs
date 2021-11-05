@@ -8,6 +8,8 @@ namespace MarchingCubes
     public class CompressedMarchingCubeChunk : IMarchingCubeChunk
     {
 
+        //TODO: Use this Graphics.DrawProceduralIndirect
+
         public virtual void InitializeWithMeshDataParallel(TriangleBuilder[] tris, Queue<IThreadedMarchingCubeChunk> readyChunks, bool keepPoints = false)
         {
             throw new Exception("This class doesnt support concurrency");

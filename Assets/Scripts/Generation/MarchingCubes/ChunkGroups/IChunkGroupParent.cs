@@ -9,10 +9,6 @@ namespace MarchingCubes
     public interface IChunkGroupParent<T> : ITreeNodeParent<T>
     {
 
-        void SplitLeaf(int index);
-
-        int[][] GetAllChildGlobalAnchorPosition();
-
     }
 
 }

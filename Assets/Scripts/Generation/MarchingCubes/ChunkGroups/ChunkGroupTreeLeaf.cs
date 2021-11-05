@@ -20,10 +20,37 @@ namespace MarchingCubes
 
         public IChunkGroupParent<ChunkGroupTreeLeaf> parent;
 
-        public void SplitLeaf()
+        public int[][] GetAllChildGlobalAnchorPosition()
         {
-            parent.SplitLeaf(childIndex);
+            int halfSize = leaf.ChunkSize / 2;
+
+            int[][] result = new int[8][];
+            for (int i = 0; i < 8; i++)
+            {
+                result[i] = GetGlobalAnchorPositionForIndex(i, halfSize);
+            }
+            return result;
         }
+
+
+        protected int[] GetGlobalAnchorPositionForIndex(int index, int halfSize)
+        {
+            int[] result = { GroupAnchorPosition[0], GroupAnchorPosition[1], GroupAnchorPosition[2] };
+            if (index == 1 || index == 3 || index == 5 || index == 6)
+            {
+                result[0] += halfSize;
+            }
+            if (index == 2 || index == 3 || index > 5)
+            {
+                result[1] += halfSize;
+            }
+            if (index >= 4)
+            {
+                result[2] += halfSize;
+            }
+            return result;
+        }
+
 
         public bool AllSiblingsAreLeafsWithSameTargetLod()
         {

@@ -1145,26 +1145,26 @@ namespace MarchingCubes
             if (toLod >= chunk.LOD || chunk.ChunkSize % toLod != 0)
                 Debug.LogWarning($"invalid new chunk lod {toLodPower} from lod {chunk.LODPower}");
 
-            SplitChunkAndIncreaseLod(chunk, toLodPower);
+            int newSizePow = DEFAULT_CHUNK_SIZE_POWER + toLodPower;
+            if (newSizePow == chunk.ChunkSizePower)
+            {
+                CreateChunkWithProperties(chunk.AnchorPos, PositionToChunkGroupCoord(chunk.AnchorPos), toLodPower, chunk.ChunkSizePower, false, true);
+            }
+            else
+            {
+                SplitChunkAndIncreaseLod(chunk, toLodPower, newSizePow);
+            }
             chunk.ResetChunk();
         }
 
         //TODO: Potentialy make async
-        private void SplitChunkAndIncreaseLod(IMarchingCubeChunk chunk, int toLodPower)
+        private void SplitChunkAndIncreaseLod(IMarchingCubeChunk chunk, int toLodPower, int newSizePow)
         {
-            int newSizePow = DEFAULT_CHUNK_SIZE_POWER + toLodPower;
-            if(newSizePow == chunk.ChunkSizePower)
+            int[][] anchors = chunk.GetLeaf().GetAllChildGlobalAnchorPosition();
+            for (int i = 0; i < 8; i++)
             {
-                CreateChunkWithProperties(chunk.AnchorPos, PositionToChunkGroupCoord(chunk.AnchorPos), toLodPower, newSizePow, false, true);
-            }
-            else
-            {
-                int[][] anchors = chunk.GetLeaf().parent.GetAllChildGlobalAnchorPosition();
-                for (int i = 0; i < 8; i++)
-                {
-                    Vector3Int v3 = IntVecToVector3(anchors[i]);
-                    CreateChunkWithProperties(v3, PositionToChunkGroupCoord(v3), toLodPower, newSizePow, false, true);
-                }
+                Vector3Int v3 = IntVecToVector3(anchors[i]);
+                CreateChunkWithProperties(v3, PositionToChunkGroupCoord(v3), toLodPower, newSizePow, false, true);
             }
         }
 

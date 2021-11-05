@@ -15,17 +15,6 @@ namespace MarchingCubes
 
         public override int SizePower => MarchingCubeChunkHandler.CHUNK_GROUP_SIZE_POWER;
 
-        public int[][] GetAllChildGlobalAnchorPosition()
-        {
-            if (child is ChunkGroupTreeNode node)
-            {
-                return node.GetAllChildGlobalAnchorPosition();
-            }
-            else
-            {
-                return ((ChunkGroupTreeNode)GetNode(GroupAnchorPosition, GroupAnchorPosition, SizePower)).GetAllChildGlobalAnchorPosition();
-            }
-        }
 
         public override IChunkGroupOrganizer<IMarchingCubeChunk> GetLeaf(IMarchingCubeChunk leaf, int index, int[] anchor, int[] relAnchor, int sizePow)
         {
