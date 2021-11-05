@@ -30,10 +30,28 @@ namespace MarchingCubes
 
         public float increaseChunkAtCorrectSizeDist = 0.25f;
 
+        public void RemoveLowerLodChunk(IMarchingCubeChunk c)
+        {
+            if(isInDecreasingChunkIteration)
+            {
+                removedLowerChunkLodsBuffer.Add(c);
+            }
+            else
+            {
+                lowerChunkLods.Remove(c);
+            }
+        }
+
         public HashSet<IMarchingCubeChunk> lowerChunkLods = new HashSet<IMarchingCubeChunk>();
         public HashSet<IMarchingCubeChunk> increaseChunkLods = new HashSet<IMarchingCubeChunk>();
 
+        public HashSet<IMarchingCubeChunk> removedLowerChunkLodsBuffer = new HashSet<IMarchingCubeChunk>();
+        public HashSet<IMarchingCubeChunk> increaseChunkLodsBuffer = new HashSet<IMarchingCubeChunk>();
+
         Stack<IEnumerator<IMarchingCubeChunk>> checkTheeseChunks = new Stack<IEnumerator<IMarchingCubeChunk>>();
+
+        protected bool isInIncreasingChunkIteration;
+        protected bool isInDecreasingChunkIteration;
 
         protected IEnumerator UpdateChunkSizes()
         {
@@ -156,28 +174,34 @@ namespace MarchingCubes
         private void LateUpdate()
         {
             List<IMarchingCubeChunk> chunks = new List<IMarchingCubeChunk>();
+            isInIncreasingChunkIteration = true;
             foreach (var item in increaseChunkLods)
             {
+                
                 //chunkHandler.IncreaseChunkLod(item, item.TargetLODPower);
                 chunks.Add(item);
             }
+            isInIncreasingChunkIteration = false;
             foreach (var c in chunks)
             {
                 increaseChunkLods.Remove(c);
             }
             chunks.Clear();
+            isInDecreasingChunkIteration = true;
             foreach (var item in lowerChunkLods)
             {
-                if (!item.IsReady)
+                bool contains = removedLowerChunkLodsBuffer.Contains(item);
+                if (!item.IsReady || contains)
                     continue;
 
                 chunkHandler.DecreaseChunkLod(item, item.TargetLODPower);
-                chunks.Add(item);
             }
-            foreach (var c in chunks)
+            isInDecreasingChunkIteration = false;
+            foreach (var c in removedLowerChunkLodsBuffer)
             {
                 lowerChunkLods.Remove(c);
             }
+            removedLowerChunkLodsBuffer.Clear();
         }
 
     }

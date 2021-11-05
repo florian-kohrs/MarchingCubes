@@ -45,6 +45,7 @@ namespace MarchingCubes
         {
             OnResetChunk();
             FreeAllMeshes();
+            chunkUpdater.RemoveLowerLodChunk(this);
             GameObject.Destroy(chunkSimpleCollider.gameObject);
             IsReady = false;
             points = null;
