@@ -177,8 +177,15 @@ namespace MarchingCubes
             isInIncreasingChunkIteration = true;
             foreach (var item in increaseChunkLods)
             {
-                chunkHandler.IncreaseChunkLod(item, item.TargetLODPower);
-                chunks.Add(item);
+                if (FrameTimer.HasTimeLeftInFrame)
+                {
+                    chunkHandler.IncreaseChunkLod(item, item.TargetLODPower);
+                    chunks.Add(item);
+                }
+                else
+                {
+                    break;
+                }
             }
             isInIncreasingChunkIteration = false;
             foreach (var c in chunks)
@@ -189,11 +196,18 @@ namespace MarchingCubes
             isInDecreasingChunkIteration = true;
             foreach (var item in lowerChunkLods)
             {
-                bool contains = removedLowerChunkLodsBuffer.Contains(item);
-                if (!item.IsReady || contains)
-                    continue;
+                if (FrameTimer.HasTimeLeftInFrame)
+                {
+                    bool contains = removedLowerChunkLodsBuffer.Contains(item);
+                    if (!item.IsReady || contains)
+                        continue;
 
-                chunkHandler.DecreaseChunkLod(item, item.TargetLODPower);
+                    chunkHandler.DecreaseChunkLod(item, item.TargetLODPower);
+                }
+                else
+                {
+                    break;
+                }
             }
             isInDecreasingChunkIteration = false;
             foreach (var c in removedLowerChunkLodsBuffer)

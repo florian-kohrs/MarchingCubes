@@ -11,6 +11,8 @@ public class FrameTimer : MonoBehaviour
     public static long MillisecondsSinceFrame => watch.ElapsedMilliseconds;
 
 
+    public static bool HasTimeLeftInFrame => watch.ElapsedMilliseconds < 15;
+
 
     private void Update()
     {
