@@ -11,6 +11,14 @@ namespace MarchingCubes
 
         public int[] GroupAnchorPosition { get; set; }
 
+        public int[] GroupAnchorPositionCopy
+        {
+            get
+            {
+                return new int[] { GroupAnchorPosition[0], GroupAnchorPosition[1], GroupAnchorPosition[2] };
+            }
+        }
+
         public abstract int[] GroupRelativeAnchorPosition { get; }
 
         public Vector3Int GroupAnchorPositionVector { get => new Vector3Int(GroupAnchorPosition[0], GroupAnchorPosition[1], GroupAnchorPosition[2]); }

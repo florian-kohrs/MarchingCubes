@@ -1142,16 +1142,33 @@ namespace MarchingCubes
         {
             toLodPower = GetFeasibleIncreaseLodForChunk(chunk, toLodPower);
             int toLod = RoundToPowerOf2(toLodPower);
-            if (toLod <= chunk.LOD || chunk.ChunkSize % toLod != 0)
+            if (toLod >= chunk.LOD || chunk.ChunkSize % toLod != 0)
                 Debug.LogWarning($"invalid new chunk lod {toLodPower} from lod {chunk.LODPower}");
 
             SplitChunkAndIncreaseLod(chunk, toLodPower);
+            chunk.ResetChunk();
         }
 
+        //TODO: Potentialy make async
         private void SplitChunkAndIncreaseLod(IMarchingCubeChunk chunk, int toLodPower)
         {
-            
+            int newSizePow = DEFAULT_CHUNK_SIZE_POWER + toLodPower;
+            if(newSizePow == chunk.ChunkSizePower)
+            {
+                CreateChunkWithProperties(chunk.AnchorPos, PositionToChunkGroupCoord(chunk.AnchorPos), toLodPower, newSizePow, false, true);
+            }
+            else
+            {
+                int[][] anchors = chunk.GetLeaf().parent.GetAllChildGlobalAnchorPosition();
+                for (int i = 0; i < 8; i++)
+                {
+                    Vector3Int v3 = IntVecToVector3(anchors[i]);
+                    CreateChunkWithProperties(v3, PositionToChunkGroupCoord(v3), toLodPower, newSizePow, false, true);
+                }
+            }
         }
+
+        protected Vector3Int IntVecToVector3(int[] arr) => new Vector3Int(arr[0], arr[1], arr[2]);
 
         protected int NumberOfSavedChunksAt(Vector3Int pos, int sizePow)
         {

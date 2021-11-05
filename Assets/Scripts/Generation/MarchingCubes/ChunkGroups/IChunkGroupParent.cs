@@ -6,18 +6,12 @@ using UnityEngine;
 namespace MarchingCubes
 {
 
-    public interface IChunkGroupParent<L>
+    public interface IChunkGroupParent<T> : ITreeNodeParent<T>
     {
 
-        L[] GetLeafs();
+        void SplitLeaf(int index);
 
-        bool AreAllChildrenLeafs(int targetLodPower);
-
-        int[] GroupRelativeAnchorPosition { get; }
-
-        int[] GroupAnchorPosition { get; }
-
-        Vector3Int GroupAnchorPositionVector { get; }
+        int[][] GetAllChildGlobalAnchorPosition();
 
     }
 

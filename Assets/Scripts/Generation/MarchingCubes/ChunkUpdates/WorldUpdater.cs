@@ -177,8 +177,7 @@ namespace MarchingCubes
             isInIncreasingChunkIteration = true;
             foreach (var item in increaseChunkLods)
             {
-                
-                //chunkHandler.IncreaseChunkLod(item, item.TargetLODPower);
+                chunkHandler.IncreaseChunkLod(item, item.TargetLODPower);
                 chunks.Add(item);
             }
             isInIncreasingChunkIteration = false;

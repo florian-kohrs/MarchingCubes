@@ -6,7 +6,7 @@ namespace MarchingCubes
 {
 
     [System.Serializable]
-    public abstract class GenericTreeRoot<T,Leaf, Child> : IChunkGroupRoot<T>, IChunkGroupParent<Leaf> where T : ISizeManager where Child : IChunkGroupOrganizer<T> 
+    public abstract class GenericTreeRoot<T,Leaf, Child> : IChunkGroupRoot<T>, ITreeNodeParent<Leaf> where T : ISizeManager where Child : IChunkGroupOrganizer<T> 
     {
 
         public GenericTreeRoot() { }
@@ -62,7 +62,6 @@ namespace MarchingCubes
         {
             SetLeafAtPosition(new int[] { v3.x, v3.y, v3.z }, leaf, allowOverride);
         }
-
 
         public void SetLeafAtPosition(int[] pos, T leaf, bool allowOverride)
         {

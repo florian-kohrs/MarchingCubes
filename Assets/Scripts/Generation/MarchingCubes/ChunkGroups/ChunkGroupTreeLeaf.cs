@@ -20,6 +20,10 @@ namespace MarchingCubes
 
         public IChunkGroupParent<ChunkGroupTreeLeaf> parent;
 
+        public void SplitLeaf()
+        {
+            parent.SplitLeaf(childIndex);
+        }
 
         public bool AllSiblingsAreLeafsWithSameTargetLod()
         {

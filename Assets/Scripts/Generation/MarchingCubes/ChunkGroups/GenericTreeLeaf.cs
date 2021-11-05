@@ -17,6 +17,7 @@ namespace MarchingCubes
             childIndex = index;
             this.sizePower = sizePower;
             this.leaf = leaf;
+            GroupAnchorPosition = anchorPoint;
             groupRelativeAnchorPosition = relativeAnchorPoint;
         }
 

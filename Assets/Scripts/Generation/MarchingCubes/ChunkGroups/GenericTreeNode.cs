@@ -6,7 +6,7 @@ namespace MarchingCubes
 {
 
     [System.Serializable]
-    public abstract class GenericTreeNode<T, Node, Leaf> : BaseChunkGroupOrganizer<T>, IChunkGroupParent<Leaf> 
+    public abstract class GenericTreeNode<T, Node, Leaf> : BaseChunkGroupOrganizer<T>, ITreeNodeParent<Leaf> 
         where Node : IChunkGroupOrganizer<T>
         where T : ISizeManager 
     {
@@ -85,6 +85,23 @@ namespace MarchingCubes
             };
         }
 
+        protected int[] GetGlobalAnchorPositionForIndex(int index)
+        {
+            int[] result = { GroupAnchorPosition[0], GroupAnchorPosition[1], GroupAnchorPosition[2] };
+            if(index == 1 || index == 3 || index == 5 ||index == 6)
+            {
+                result[0] += halfSize;
+            }
+            if(index == 2 || index == 3 || index > 5)
+            {
+                result[1] += halfSize;
+            }
+            if (index >= 4)
+            {
+                result[2] += halfSize;
+            }
+            return result;
+        }
 
         public override T GetChunkAtLocalPosition(int[] pos)
         {
@@ -111,14 +128,14 @@ namespace MarchingCubes
             }
             else
             {
-                Node child = GetOrCreateChildAt(childIndex, relativePosition);
+                Node child = GetOrCreateChildAt(childIndex, relativePosition, allowOverride);
                 child.SetChunkAtLocalPosition(relativePosition, chunk, allowOverride);
             }
         }
 
-        protected Node GetOrCreateChildAt(int index, int[] relativePosition)
+        protected Node GetOrCreateChildAt(int index, int[] relativePosition, bool allowOverride)
         {
-            if (children[index] == null)
+            if (children[index] == null || (allowOverride && children[index] is Leaf))
             {
                 int[] childAnchorPosition;
                 int[] childRelativeAnchorPosition;

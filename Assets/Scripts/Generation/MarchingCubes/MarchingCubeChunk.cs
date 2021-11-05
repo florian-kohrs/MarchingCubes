@@ -385,15 +385,6 @@ namespace MarchingCubes
             BuildAll();
         }
 
-        protected override void OnResetChunk()
-        {
-            SaveEditedChunkValues();
-        }
-
-        public void SaveEditedChunkValues()
-        {
-           
-        }
 
         public bool IsInOtherThread { get; set; }
 
