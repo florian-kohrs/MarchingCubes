@@ -1196,39 +1196,40 @@ namespace MarchingCubes
 
         protected void DecreaseSingleChunkLod(IMarchingCubeChunk chunk, int toLodPower, int toLod)
         {
-            int chunkSizePower = chunk.ChunkSizePower;
-            int shrinkFactor = toLod / chunk.LOD;
-            int originalPointsPerAxis = chunk.PointsPerAxis;
-            if (chunk.HasPoints)
-            {
-                float[] points = chunk.Points;
-            }
+            CreateChunkWithProperties(chunk.CenterPos, PositionToChunkGroupCoord(chunk.CenterPos), toLodPower, chunk.ChunkSizePower, false, true);
+            //int chunkSizePower = chunk.ChunkSizePower;
+            //int shrinkFactor = toLod / chunk.LOD;
+            //int originalPointsPerAxis = chunk.PointsPerAxis;
+            //if (chunk.HasPoints)
+            //{
+            //    float[] points = chunk.Points;
+            //}
 
-            chunk.LODPower = toLodPower;
+            //chunk.LODPower = toLodPower;
 
-            int newPointsPerAxis = chunk.PointsPerAxis;
+            //int newPointsPerAxis = chunk.PointsPerAxis;
 
-            int originalPointsPerAxisSqr = originalPointsPerAxis * originalPointsPerAxis;
+            //int originalPointsPerAxisSqr = originalPointsPerAxis * originalPointsPerAxis;
 
-            float[] relevantPoints = new float[newPointsPerAxis * newPointsPerAxis * newPointsPerAxis];
+            //float[] relevantPoints = new float[newPointsPerAxis * newPointsPerAxis * newPointsPerAxis];
 
-            //NotifyNeighbourChunksOnLodSwitch(chunk.ChunkAnchorPosition, toLodPower);
+            ////NotifyNeighbourChunksOnLodSwitch(chunk.ChunkAnchorPosition, toLodPower);
 
-            //TODO: Write points into stored buffer and request points on gpu
-            TransferPointsInto(points, relevantPoints, originalPointsPerAxis, originalPointsPerAxisSqr, shrinkFactor);
+            ////TODO: Write points into stored buffer and request points on gpu
+            //TransferPointsInto(points, relevantPoints, originalPointsPerAxis, originalPointsPerAxisSqr, shrinkFactor);
 
-            pointsBuffer.SetData(relevantPoints);
+            //pointsBuffer.SetData(relevantPoints);
 
-            RequestCubesFromNoise(chunk, toLod);
+            //RequestCubesFromNoise(chunk, toLod);
 
-            //TryGetChunkAtPosition(chunk.CenterPos);
-            IMarchingCubeChunk compressedChunk = GetThreadedChunkObjectAt(chunk.AnchorPos, toLodPower, chunkSizePower, true);
-            //compressedChunk.InitializeWithMeshDataParallel(tris, relevantPoints, chunkSize, this, GetNeighbourLODSFrom(chunk), surfaceLevel,
-            //    delegate
-            //    {
-            //        chunk.ResetChunk();
-            //    });
-            compressedChunk.InitializeWithMeshData(tris, true);
+            ////TryGetChunkAtPosition(chunk.CenterPos);
+            //IMarchingCubeChunk compressedChunk = GetThreadedChunkObjectAt(chunk.AnchorPos, toLodPower, chunkSizePower, true);
+            ////compressedChunk.InitializeWithMeshDataParallel(tris, relevantPoints, chunkSize, this, GetNeighbourLODSFrom(chunk), surfaceLevel,
+            ////    delegate
+            ////    {
+            ////        chunk.ResetChunk();
+            ////    });
+            //compressedChunk.InitializeWithMeshData(tris, true);
             chunk.ResetChunk();
         }
 

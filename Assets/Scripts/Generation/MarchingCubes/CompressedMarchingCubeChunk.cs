@@ -24,8 +24,8 @@ namespace MarchingCubes
                 isCompletlyAir = IsEmpty && points[0] < surfaceLevel;
             }
 
-            neighbourLODs = chunkHandler.GetNeighbourLODSFrom(this);
-            careAboutNeighbourLODS = neighbourLODs.HasNeighbourWithHigherLOD(LODPower);
+            //neighbourLODs = chunkHandler.GetNeighbourLODSFrom(this);
+            //careAboutNeighbourLODS = neighbourLODs.HasNeighbourWithHigherLOD(LODPower);
             if (!IsEmpty)
             {
                 BuildFromTriangleArray(tris);
