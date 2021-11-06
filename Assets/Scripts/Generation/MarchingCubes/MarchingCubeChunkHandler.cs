@@ -325,9 +325,10 @@ namespace MarchingCubes
             }
             Debug.Log("Total triangles: " + totalTriBuild);
 
-           // Debug.Log($"Number of chunks: {ChunkGroups.Count}");
+            // Debug.Log($"Number of chunks: {ChunkGroups.Count}");
         }
 
+        //Todo: try do this work on compute shader already
         private void BuildRelevantChunksParallelBlockingAround()
         {
             List<Exception> x = MarchingCubeChunkThreaded.xs;
@@ -410,7 +411,7 @@ namespace MarchingCubes
                 {
                     while ((closestNeighbours.size == 0 && channeledChunks > x.Count) /*|| channeledChunks > maxRunningThreads*/)
                     {
-                        while(readyParallelChunks.Count > 0)
+                        while (readyParallelChunks.Count > 0)
                         {
                             OnParallelChunkDoneCallBack(readyParallelChunks.Dequeue());
                         }
@@ -446,7 +447,7 @@ namespace MarchingCubes
                 v3 = VectorExtension.GetDirectionFromIndex(i) * (chunk.ChunkSize + 1) + chunk.CenterPos;
                 float sqrDist = (startPos - v3).sqrMagnitude;
 
-                if(sqrDist > buildAroundSqrDistance)
+                if (sqrDist > buildAroundSqrDistance)
                 {
 
                 }
@@ -509,11 +510,11 @@ namespace MarchingCubes
 
         public bool TryGetOrCreateChunkAt(Vector3Int p, out IMarchingCubeChunk chunk)
         {
-            if(!TryGetChunkAtPosition(p, out chunk))
+            if (!TryGetChunkAtPosition(p, out chunk))
             {
                 chunk = CreateChunkAt(p);
             }
-            if(chunk != null && !chunk.IsReady)
+            if (chunk != null && !chunk.IsReady)
             {
                 Debug.LogWarning("Unfinished chunk next to requested chunk. may lead to holes in mesh!");
             }
@@ -818,8 +819,8 @@ namespace MarchingCubes
         float[] pointsArray;
 
         private ComputeBuffer triangleBuffer;
-        private ComputeBuffer pointsBuffer; 
-        private ComputeBuffer savedPointBuffer; 
+        private ComputeBuffer pointsBuffer;
+        private ComputeBuffer savedPointBuffer;
         private ComputeBuffer triCountBuffer;
 
 
@@ -897,11 +898,12 @@ namespace MarchingCubes
             return result;
         }
 
+        //TODO:Remove keep points
         protected void BuildChunk(IMarchingCubeChunk chunk, int lod, bool careForNeighbours)
         {
             bool keepPoints;
-            DispatchAndGetShaderData(chunk, lod, careForNeighbours, out keepPoints);
-            chunk.InitializeWithMeshData(tris, keepPoints);
+            TriangleBuilder[] ts = DispatchAndGetShaderData(chunk, lod, careForNeighbours, out keepPoints);
+            chunk.InitializeWithMeshData(ts, keepPoints);
         }
 
         protected Queue<IThreadedMarchingCubeChunk> readyParallelChunks = new Queue<IThreadedMarchingCubeChunk>();
@@ -909,9 +911,9 @@ namespace MarchingCubes
         protected void BuildChunkParallel(IMarchingCubeChunk chunk, int lod, bool careForNeighbours)
         {
             bool keepPoints;
-            DispatchAndGetShaderData(chunk, lod, careForNeighbours, out keepPoints);
+            TriangleBuilder[] ts = DispatchAndGetShaderData(chunk, lod, careForNeighbours, out keepPoints);
             channeledChunks++;
-            chunk.InitializeWithMeshDataParallel(tris, readyParallelChunks, keepPoints);
+            chunk.InitializeWithMeshDataParallel(ts, readyParallelChunks, keepPoints);
         }
 
         public int minSteepness = 15;
@@ -967,7 +969,7 @@ namespace MarchingCubes
         /// <returns>returns true if the points were already read from gpu</returns>
         public bool GenerateNoise(int sizePow, int pointsPerAxis, int LOD, Vector3Int anchor, out bool keepPoints, bool loadNoiseData = true)
         {
-            if(loadNoiseData)
+            if (loadNoiseData)
             {
                 TryLoadOrGenerateNoise(sizePow, pointsPerAxis, LOD, anchor, out keepPoints);
                 return false;
@@ -981,7 +983,7 @@ namespace MarchingCubes
         }
 
 
-        protected void TryLoadOrGenerateNoise(int sizePow,  int pointsPerAxis, int lod, Vector3Int anchor, out bool keepPoints)
+        protected void TryLoadOrGenerateNoise(int sizePow, int pointsPerAxis, int lod, Vector3Int anchor, out bool keepPoints)
         {
             keepPoints = false;
             bool hasStoredData = false;
@@ -1004,12 +1006,40 @@ namespace MarchingCubes
             {
                 densityGenerator.Generate(pointsPerAxis, anchor, lod, hasStoredData);
             }
-            
+
+        }
+
+        protected TriangleBuilder[][] DispatchMultipleChunks(List<IMarchingCubeChunk> chunks)
+        {
+            triangleBuffer.SetCounterValue(0);
+            int chunkLength = chunks.Count;
+            for (int i = 0; i < chunkLength; i++)
+            {
+                AccumulateCubesFromNoise(chunks[i], i);
+            }
+            int[] triCounts = new int[chunks.Count];
+            triCountBuffer.GetData(triCounts,0,0, chunks.Count);
+            TriangleBuilder[][] result = new TriangleBuilder[chunks.Count][];
+            for (int i = 0; i < chunkLength; i++)
+            {
+                result[i] = ReadAccumulatedData(triCounts[i]);
+            }
+            return result;
+        }
+
+        protected TriangleBuilder[] ReadAccumulatedData(int triCount)
+        {
+            TriangleBuilder[] result = new TriangleBuilder[triCount];
+            if (triCount > 0)
+            {
+                triangleBuffer.GetData(result, 0, 0, triCount);
+            }
+            return result;
         }
 
         //TODO: Inform about Mesh subset and mesh set vertex buffer
-        //Subset may be used to only change parts of the mesh
-        protected void DispatchAndGetShaderData(IMarchingCubeChunk chunk, int lod, bool careForNeighbours, out bool keepPoints)
+        //Subset may be used to only change parts of the mesh -> dont need multiple mesh displayers with submeshes?
+        protected TriangleBuilder[] DispatchAndGetShaderData(IMarchingCubeChunk chunk, int lod, bool careForNeighbours, out bool keepPoints)
         {
             int chunkSize = chunk.ChunkSize;
 
@@ -1041,6 +1071,7 @@ namespace MarchingCubes
                 pointsBuffer.GetData(pointsArray, 0, 0, pointsArray.Length);
                 chunk.Points = pointsArray;
             }
+            return tris;
         }
 
         public TriangleBuilder[] GenerateCubesFromNoise(IMarchingCubeChunk chunk, int triCount, float[] noise)
@@ -1056,6 +1087,12 @@ namespace MarchingCubes
             RequestCubesFromNoise(chunk, lod);
             chunk.Points = noise;
             chunk.InitializeWithMeshData(tris, true);
+        }
+
+        public void AccumulateCubesFromNoise(IMarchingCubeChunk chunk, int offest)
+        {
+            ComputeCubesFromNoise(chunk.ChunkSize, chunk.AnchorPos, chunk.LOD, false);
+            ComputeBuffer.CopyCount(triangleBuffer, triCountBuffer, offest * 4);
         }
 
         public int RequestCubesFromNoise(IMarchingCubeChunk chunk, int lod, int triCount = -1)
@@ -1083,7 +1120,7 @@ namespace MarchingCubes
             return triCount;
         }
 
-        public void ComputeCubesFromNoise(int chunkSize, Vector3Int anchor, int lod)
+        public void ComputeCubesFromNoise(int chunkSize, Vector3Int anchor, int lod, bool resetCounter = true)
         {
             int numVoxelsPerAxis = chunkSize / lod;
             int pointsPerAxis = numVoxelsPerAxis + 1;
@@ -1092,7 +1129,10 @@ namespace MarchingCubes
 
             float spacing = lod;
 
-            triangleBuffer.SetCounterValue(0);
+            if (resetCounter)
+            {
+                triangleBuffer.SetCounterValue(0);
+            }
 
             //TODO: Check if this needs to be checkd or if correct value is still set
             marshShader.SetInt("numPointsPerAxis", pointsPerAxis);
@@ -1146,6 +1186,7 @@ namespace MarchingCubes
         }
 
         //TODO: Potentialy make async
+        //TODO: use single compute data request for all chunks -> let compute shader write into longer buffer!
         private void SplitChunkAndIncreaseLod(IMarchingCubeChunk chunk, int toLodPower, int newSizePow)
         {
             int[][] anchors = chunk.GetLeaf().GetAllChildGlobalAnchorPosition();
@@ -1308,9 +1349,10 @@ namespace MarchingCubes
             pointsBuffer = new ComputeBuffer(numPoints, sizeof(float) * 1);
             savedPointBuffer = new ComputeBuffer(numPoints, sizeof(float) * 1);
             triangleBuffer = new ComputeBuffer(maxTriangleCount, TriangleBuilder.SIZE_OF_TRI_BUILD, ComputeBufferType.Append);
-            triCountBuffer = new ComputeBuffer(1, sizeof(int), ComputeBufferType.Raw);
+            triCountBuffer = new ComputeBuffer(MAX_CHUNKS_PER_ITERATION, sizeof(int), ComputeBufferType.Raw);
         }
 
+        protected const int MAX_CHUNKS_PER_ITERATION = 99;
 
         protected void ApplyShaderProperties()
         {
