@@ -308,7 +308,7 @@ namespace MarchingCubes
         }
 
 
-        protected override void BuildFromTriangleArray(TriangleBuilder[] ts, bool buildMeshAswell = true)
+        protected override void BuildFromTriangleArray(TriangleChunkHeap heap, bool buildMeshAswell = true)
         {
             trisLeft = triCount;
             ResetArrayData();
@@ -316,11 +316,13 @@ namespace MarchingCubes
             int totalTreeCount = 0;
             int usedTriCount = 0;
 
+            TriangleBuilder[] ts = heap.tris;
             MarchingCubeEntity cube;
             cubeEntities = new MarchingCubeEntity[ChunkSize, ChunkSize, ChunkSize];
             int x, y, z;
-            int count = ts.Length;
-            for (int i = 0; i < count; ++i)
+            int count = heap.triCount;
+            int endIndex = heap.startIndex + heap.triCount;
+            for (int i = heap.startIndex; i < endIndex; ++i)
             {
                 x = ts[i].x;
                 y = ts[i].y;

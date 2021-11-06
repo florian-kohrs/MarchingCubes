@@ -10,15 +10,15 @@ namespace MarchingCubes
 
         //TODO: Use this Graphics.DrawProceduralIndirect
 
-        public virtual void InitializeWithMeshDataParallel(TriangleBuilder[] tris, Queue<IThreadedMarchingCubeChunk> readyChunks, bool keepPoints = false)
+        public virtual void InitializeWithMeshDataParallel(TriangleChunkHeap tris, Queue<IThreadedMarchingCubeChunk> readyChunks)
         {
             throw new Exception("This class doesnt support concurrency");
         }
 
-        public virtual void InitializeWithMeshData(TriangleBuilder[] tris, bool keepPoints = false)
+        public virtual void InitializeWithMeshData(TriangleChunkHeap tris)
         {
             HasStarted = true;
-            triCount = tris.Length * 3;
+            triCount = tris.triCount * 3;
 
             if (points != null)
             {
@@ -34,10 +34,7 @@ namespace MarchingCubes
 
                 WorkOnBuildedChunk();
 
-                if (!keepPoints)
-                {
-                    points = null;
-                }
+                points = null;
             }
             IsReady = true;
         }
@@ -344,6 +341,7 @@ namespace MarchingCubes
 
         public float SurfaceLevel { set => surfaceLevel = value; }
 
+        public bool IsChanneled { get; set ; }
 
         protected virtual void WorkOnBuildedChunk()
         {
@@ -394,7 +392,7 @@ namespace MarchingCubes
             return v3.x < 0 || v3.y < 0 || v3.z < 0;
         }
 
-        protected virtual void BuildFromTriangleArray(TriangleBuilder[] ts, bool buildMeshAswell = true)
+        protected virtual void BuildFromTriangleArray(TriangleChunkHeap heap, bool buildMeshAswell = true)
         {
             trisLeft = triCount;
 
@@ -404,7 +402,9 @@ namespace MarchingCubes
             int usedTriCount = 0;
 
             List<MissingNeighbourData> trisWithNeighboursOutOfBounds = new List<MissingNeighbourData>();
-            for (int i = 0; i < ts.Length; ++i)
+            TriangleBuilder[] ts = heap.tris;
+            int endIndex = heap.startIndex + heap.triCount;
+            for (int i = heap.startIndex; i < endIndex; ++i)
             {
                 //Vector3Int currentOrigin = .Origin;
 

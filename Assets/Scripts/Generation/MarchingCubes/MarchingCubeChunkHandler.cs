@@ -1002,7 +1002,7 @@ namespace MarchingCubes
             triCountBuffer.GetData(triCounts,0,0, chunkLength);
             TriangleChunkHeap[] result = new TriangleChunkHeap[chunkLength];
             TriangleBuilder[] allTris = new TriangleBuilder[triCounts[triCounts.Length - 1]];
-            triangleBuffer.GetData(result, 0, 0, allTris.Length);
+            triangleBuffer.GetData(allTris, 0, 0, allTris.Length);
             int last = 0;
             for (int i = 0; i < chunkLength; i++)
             {
@@ -1013,22 +1013,11 @@ namespace MarchingCubes
             return result;
         }
 
-        protected TriangleBuilder[] ReadAccumulatedData(TriangleBuilder[] source, int startIndex, int endIndex)
-        {
-            int length = endIndex - startIndex;
-            TriangleBuilder[] result = new TriangleBuilder[length];
-            if (length > 0)
-            {
-                triangleBuffer.GetData(result, 0, startIndex, length);
-            }
-            return result;
-        }
 
         //TODO: Inform about Mesh subset and mesh set vertex buffer
         //Subset may be used to only change parts of the mesh -> dont need multiple mesh displayers with submeshes?
         protected TriangleChunkHeap DispatchAndGetShaderData(IMarchingCubeChunk chunk, int lod, bool careForNeighbours)
         {
-            TriangleChunkHeap result;
             int chunkSize = chunk.ChunkSize;
 
             if (chunkSize % lod != 0)

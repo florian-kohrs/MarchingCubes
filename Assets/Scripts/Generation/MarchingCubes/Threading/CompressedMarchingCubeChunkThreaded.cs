@@ -13,11 +13,11 @@ namespace MarchingCubes
 
         protected Queue<IThreadedMarchingCubeChunk> readyChunks;
 
-        public override void InitializeWithMeshDataParallel(TriangleBuilder[] tris, Queue<IThreadedMarchingCubeChunk> readyChunks, bool keepPoints = false)
+        public override void InitializeWithMeshDataParallel(TriangleChunkHeap heap, Queue<IThreadedMarchingCubeChunk> readyChunks)
         {
             HasStarted = true;
             this.readyChunks = readyChunks;
-            ThreadPool.QueueUserWorkItem((o) => RequestChunk(tris, OnChunkDone, keepPoints));
+            ThreadPool.QueueUserWorkItem((o) => RequestChunk(heap, OnChunkDone));
         }
 
         public bool IsInOtherThread { get; set; }
@@ -30,12 +30,12 @@ namespace MarchingCubes
             }
         }
 
-        protected void RequestChunk(TriangleBuilder[] tris, Action OnChunkDone, bool keepPoints = false)
+        protected void RequestChunk(TriangleChunkHeap heap, Action OnChunkDone)
         {
             try
             {
                 IsInOtherThread = true;
-                InitializeWithMeshData(tris, keepPoints);
+                InitializeWithMeshData(heap);
                 OnChunkDone();
             }
             catch(Exception x)
