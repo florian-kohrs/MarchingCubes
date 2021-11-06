@@ -824,6 +824,7 @@ GameObject:
   - component: {fileID: 1125545287}
   - component: {fileID: 1125545288}
   - component: {fileID: 1125545290}
+  - component: {fileID: 1125545292}
   - component: {fileID: 1125545289}
   - component: {fileID: 1125545291}
   m_Layer: 0
@@ -989,7 +990,7 @@ MonoBehaviour:
   chunkMaterial: {fileID: 2100000, guid: 97d2f9aa8d16b8241a90494b8d616c04, type: 2}
   surfaceLevel: 0.511
   player: {fileID: 1779183453}
-  buildAroundDistance: 200
+  buildAroundDistance: 3000
   worldUpdater: {fileID: 1125545290}
   colliderParent: {fileID: 1768635035}
   totalTriBuild: 0
@@ -1056,6 +1057,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 63b85916aaec5554d8e39982652dbaa0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1125545292
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1125545286}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a17bd84ab3955242a4ba5a9401c5c94, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &1146147227
@@ -1649,7 +1662,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   c: {fileID: 2047378107}
-  speed: 100
+  speed: 333
 --- !u!143 &2047378107
 CharacterController:
   m_ObjectHideFlags: 0

@@ -54,7 +54,7 @@ namespace MarchingCubes
 
         void InitializeWithMeshData(TriangleBuilder[] tris, bool keepPoints);
 
-        void ResetChunk();
+        void ResetChunk(bool removeSimpleCollider = true);
 
         void ChangeNeighbourLodTo(int newLodPower, Vector3Int dir);
 
