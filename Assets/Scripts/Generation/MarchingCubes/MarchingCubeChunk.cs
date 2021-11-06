@@ -343,6 +343,7 @@ namespace MarchingCubes
             }
         }
 
+
       
         protected void BuildMeshFromCurrentTriangles()
         {
@@ -427,7 +428,7 @@ namespace MarchingCubes
                     float distanceZ = startZ - posZ + offsetZ;
                     for (int z = startZ; z <= endZ; z++)
                     {
-                        float sqrDistance = new Vector3(distanceX, distanceY, distanceZ).sqrMagnitude;
+                        float sqrDistance = distanceX * distanceX + distanceY * distanceY + distanceZ * distanceZ;
 
                         if (sqrDistance <= sqrEdit)
                         {
@@ -452,6 +453,7 @@ namespace MarchingCubes
             distanceX = startX - posX;
 
             float marchDistance = Vector3.one.magnitude + radius + 1;
+            float marchSquare = marchDistance * marchDistance;
             int voxelMinus = chunkSize - 1;
 
             startX = Mathf.Max(0, startX - 1);
@@ -474,8 +476,8 @@ namespace MarchingCubes
                         int zz = distanceZ * distanceZ;
                         //TODO: Replace with sqrDistance
                         //Maybe write changed coords in hashset instead and check here if they changed?
-                        float dis = Mathf.Sqrt(xx + yy + zz);
-                        if (dis <= marchDistance)
+                        float sqrDis = xx + yy + zz;
+                        if (sqrDis <= marchSquare)
                         {
                             MarchingCubeEntity cube;
                             if (TryGetEntityAt(x, y, z, out cube))

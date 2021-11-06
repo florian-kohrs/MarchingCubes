@@ -43,7 +43,7 @@ namespace MarchingCubes
             g.transform.SetParent(t, false);
         }
 
-        public BaseMeshDisplayer(IMarchingCubeInteractableChunk chunk, Transform t) : this(chunk, new GameObject($"{chunk.AnchorPos.x},{chunk.AnchorPos.y},{chunk.AnchorPos.z} "),t) { }
+        public BaseMeshDisplayer(IMarchingCubeInteractableChunk chunk, Transform t) : this(chunk, new GameObject(/*$"{chunk.AnchorPos.x},{chunk.AnchorPos.y},{chunk.AnchorPos.z} "*/),t) { }
 
         public BaseMeshDisplayer(Transform t) : this(new GameObject(),t) { }
 
@@ -52,6 +52,7 @@ namespace MarchingCubes
             this.g = g;
             this.collider = collider;
             this.mesh = mesh;
+            //this.mesh.Optimize();
             this.renderer = renderer;
             this.filter = filter;
             this.filter.mesh = mesh;

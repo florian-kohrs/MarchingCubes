@@ -479,7 +479,7 @@ namespace MarchingCubes
                 else
                     otherLodPower = neighbourLODs.GetLodPowerFromNeighbourInDirection(t.outsideNeighbour.offset);
 
-                //TODO: Only build chunk glue for cubes at right position
+                //TODO: Build Chunk glue on gpu
                 //BuildMarchingCubeChunkTransitionInDirection(origin, t, otherLodPower);
             }
         }

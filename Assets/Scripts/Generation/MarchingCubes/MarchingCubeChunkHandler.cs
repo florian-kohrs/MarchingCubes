@@ -350,7 +350,7 @@ namespace MarchingCubes
                 {
                     while ((closestNeighbours.size == 0 && channeledChunks > x.Count) /*|| channeledChunks > maxRunningThreads*/)
                     {
-                        //TODO: while waiting create mesh displayers!
+                        //TODO: while waiting create mesh displayers! -> led to worse performance?
                         while (readyParallelChunks.Count > 0)
                         {
                             OnParallelChunkDoneCallBack(readyParallelChunks.Dequeue());
@@ -490,19 +490,6 @@ namespace MarchingCubes
             hasFoundInitialChunk = true;
             return chunk;
         }
-
-        //TODO:Use late update to see how much time has passes so far, and if not so much use time to change neighbour chunks
-
-        //protected void SetActivationOfChunks(Vector3Int center)
-        //{
-        //    int deactivatedChunkSqrDistance = DeactivatedChunkDistance;
-        //    deactivatedChunkSqrDistance *= deactivatedChunkSqrDistance;
-        //    foreach (KeyValuePair<Vector3Int, IMarchingCubeChunk> kv in chunks)
-        //    {
-        //        int sqrMagnitude = (kv.Key - center).sqrMagnitude;
-        //        kv.Value.SetActive(magnitude <= deactivatedChunkSqrDistance);
-        //    }
-        //}
 
         protected void CreateChunkParallelAt(Vector3 pos)
         {
@@ -1020,6 +1007,8 @@ namespace MarchingCubes
             
         }
 
+        //TODO: Inform about Mesh subset and mesh set vertex buffer
+        //Subset may be used to only change parts of the mesh
         protected void DispatchAndGetShaderData(IMarchingCubeChunk chunk, int lod, bool careForNeighbours, out bool keepPoints)
         {
             int chunkSize = chunk.ChunkSize;
@@ -1041,7 +1030,6 @@ namespace MarchingCubes
             }
             else if ((numTris == 0 && !hasFoundInitialChunk) || careForNeighbours)
             {
-
                 if (careForNeighbours)
                 {
                     pointsArray = new float[pointsVolume];
@@ -1214,39 +1202,6 @@ namespace MarchingCubes
         protected void DecreaseSingleChunkLod(IMarchingCubeChunk chunk, int toLodPower, int toLod)
         {
             CreateChunkWithProperties(chunk.CenterPos, PositionToChunkGroupCoord(chunk.CenterPos), toLodPower, chunk.ChunkSizePower, false, true);
-            //int chunkSizePower = chunk.ChunkSizePower;
-            //int shrinkFactor = toLod / chunk.LOD;
-            //int originalPointsPerAxis = chunk.PointsPerAxis;
-            //if (chunk.HasPoints)
-            //{
-            //    float[] points = chunk.Points;
-            //}
-
-            //chunk.LODPower = toLodPower;
-
-            //int newPointsPerAxis = chunk.PointsPerAxis;
-
-            //int originalPointsPerAxisSqr = originalPointsPerAxis * originalPointsPerAxis;
-
-            //float[] relevantPoints = new float[newPointsPerAxis * newPointsPerAxis * newPointsPerAxis];
-
-            ////NotifyNeighbourChunksOnLodSwitch(chunk.ChunkAnchorPosition, toLodPower);
-
-            ////TODO: Write points into stored buffer and request points on gpu
-            //TransferPointsInto(points, relevantPoints, originalPointsPerAxis, originalPointsPerAxisSqr, shrinkFactor);
-
-            //pointsBuffer.SetData(relevantPoints);
-
-            //RequestCubesFromNoise(chunk, toLod);
-
-            ////TryGetChunkAtPosition(chunk.CenterPos);
-            //IMarchingCubeChunk compressedChunk = GetThreadedChunkObjectAt(chunk.AnchorPos, toLodPower, chunkSizePower, true);
-            ////compressedChunk.InitializeWithMeshDataParallel(tris, relevantPoints, chunkSize, this, GetNeighbourLODSFrom(chunk), surfaceLevel,
-            ////    delegate
-            ////    {
-            ////        chunk.ResetChunk();
-            ////    });
-            //compressedChunk.InitializeWithMeshData(tris, true);
             chunk.ResetChunk();
         }
 

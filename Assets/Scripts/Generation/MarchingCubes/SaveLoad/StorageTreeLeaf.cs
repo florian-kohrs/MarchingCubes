@@ -15,6 +15,8 @@ namespace MarchingCubes
         {
         }
 
+        //TODO: Maybe store for each chunk num of tris -> dont have to read from gpu
+
         public float[] NoiseMap => leaf.vals;
 
         public int ChildrenWithMipMapReady => throw new System.NotImplementedException();
