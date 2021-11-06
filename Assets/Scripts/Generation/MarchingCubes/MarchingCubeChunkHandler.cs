@@ -505,7 +505,7 @@ namespace MarchingCubes
             GetSizeAndLodPowerForChunkPosition(pos, out chunkSizePower, out lodPower, out careForNeighbours);
 
             IMarchingCubeChunk chunk = GetThreadedChunkObjectAt(Vector3Int.FloorToInt(pos), coord, lodPower, chunkSizePower, false);
-            BuildChunkParallel(chunk, RoundToPowerOf2(lodPower), careForNeighbours);
+            BuildChunkParallel(chunk, careForNeighbours);
         }
 
         public bool TryGetOrCreateChunkAt(Vector3Int p, out IMarchingCubeChunk chunk)
@@ -541,7 +541,7 @@ namespace MarchingCubes
         protected IMarchingCubeChunk CreateChunkWithProperties(Vector3Int pos, Vector3Int coord, int lodPower, int chunkSizePower, bool careForNeighbours, bool allowOverride)
         {
             IMarchingCubeChunk chunk = GetThreadedChunkObjectAt(pos, coord, lodPower, chunkSizePower, allowOverride);
-            BuildChunk(chunk, RoundToPowerOf2(lodPower), careForNeighbours);
+            BuildChunk(chunk, careForNeighbours);
             return chunk;
         }
 
@@ -766,6 +766,7 @@ namespace MarchingCubes
             }
         }
 
+        //Do this as work after compute shader dispatch and before data read
         protected void BuildLodColliderForChunk(IMarchingCubeChunk c)
         {
             GameObject g = new GameObject();
@@ -925,17 +926,17 @@ namespace MarchingCubes
         }
 
         //TODO:Remove keep points
-        protected void BuildChunk(IMarchingCubeChunk chunk, int lod, bool careForNeighbours)
+        protected void BuildChunk(IMarchingCubeChunk chunk, bool careForNeighbours)
         {
-            TriangleChunkHeap ts = DispatchAndGetShaderData(chunk, lod, careForNeighbours);
+            TriangleChunkHeap ts = DispatchAndGetShaderData(chunk, careForNeighbours);
             chunk.InitializeWithMeshData(ts);
         }
 
         protected Queue<IThreadedMarchingCubeChunk> readyParallelChunks = new Queue<IThreadedMarchingCubeChunk>();
 
-        protected void BuildChunkParallel(IMarchingCubeChunk chunk, int lod, bool careForNeighbours)
+        protected void BuildChunkParallel(IMarchingCubeChunk chunk, bool careForNeighbours)
         {
-            TriangleChunkHeap ts = DispatchAndGetShaderData(chunk, lod, careForNeighbours);
+            TriangleChunkHeap ts = DispatchAndGetShaderData(chunk, careForNeighbours);
             channeledChunks++;
             chunk.InitializeWithMeshDataParallel(ts, readyParallelChunks);
         }
@@ -1046,8 +1047,9 @@ namespace MarchingCubes
 
         //TODO: Inform about Mesh subset and mesh set vertex buffer
         //Subset may be used to only change parts of the mesh -> dont need multiple mesh displayers with submeshes?
-        protected TriangleChunkHeap DispatchAndGetShaderData(IMarchingCubeChunk chunk, int lod, bool careForNeighbours)
+        protected TriangleChunkHeap DispatchAndGetShaderData(IMarchingCubeChunk chunk, bool careForNeighbours)
         {
+            int lod = chunk.LOD;
             int chunkSize = chunk.ChunkSize;
 
             if (chunkSize % lod != 0)
@@ -1184,17 +1186,15 @@ namespace MarchingCubes
                         BuildEmptyChunkAt(v3);
                     }
                 }
+                chunk.ResetChunk();
             }
             else
             {
                 SplitChunkAndIncreaseLod(chunk, toLodPower, newSizePow);
             }
-
-            chunk.ResetChunk();
         }
 
-        //TODO: Potentialy make async
-        //TODO: use single compute data request for all chunks -> let compute shader write into longer buffer!
+
         private void SplitChunkAndIncreaseLod(IMarchingCubeChunk chunk, int toLodPower, int newSizePow)
         {
             int[][] anchors = chunk.GetLeaf().GetAllChildGlobalAnchorPosition();
@@ -1205,9 +1205,22 @@ namespace MarchingCubes
                 newChunks[i] = GetThreadedChunkObjectAt(v3, PositionToChunkGroupCoord(v3), toLodPower, newSizePow, true);
             }
             TriangleChunkHeap[] tris = DispatchMultipleChunks(newChunks);
+            object listLock = new object();
+            List<IThreadedMarchingCubeChunk> chunks = new List<IThreadedMarchingCubeChunk>();
+            chunk.FreeSimpleCollider();
             for (int i = 0; i < 8; i++)
             {
-                newChunks[i].InitializeWithMeshData(tris[i]);
+                newChunks[i].InitializeWithMeshDataParallel(tris[i], (c) =>
+                {
+                    lock (listLock) 
+                    {
+                        chunks.Add(c);
+                    }
+                    if(chunks.Count == 8)
+                    {
+                        worldUpdater.readyExchangeChunks.Push(new ReadyChunkExchange(chunk, chunks));
+                    }
+                });
             }
         }
 
@@ -1251,6 +1264,7 @@ namespace MarchingCubes
                 }
             }
         }
+
         public void DecreaseSingleChunkLod(IMarchingCubeChunk chunk, int toLodPower)
         {
             toLodPower = GetFeasibleReducedLodForChunk(chunk, toLodPower);

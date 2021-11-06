@@ -28,6 +28,8 @@ namespace MarchingCubes
 
         public ChunkLodCollider ChunkSimpleCollider { set; }
 
+        public void FreeSimpleCollider();
+
         bool IsEmpty { get; }
 
         bool IsCompletlyAir { get; }
@@ -52,6 +54,8 @@ namespace MarchingCubes
         // void InitializeWithMeshData(Material mat, TriangleBuilder[] tris, int activeTris, float[] points, IMarchingCubeChunkHandler handler, float surfaceLevel);
 
         void InitializeWithMeshDataParallel(TriangleChunkHeap triangleData, Queue<IThreadedMarchingCubeChunk> readyChunks);
+
+        void InitializeWithMeshDataParallel(TriangleChunkHeap triangleData, Action<IThreadedMarchingCubeChunk> OnChunkDone);
 
         void InitializeWithMeshData(TriangleChunkHeap triangleData);
 

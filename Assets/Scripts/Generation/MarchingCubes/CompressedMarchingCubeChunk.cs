@@ -15,6 +15,12 @@ namespace MarchingCubes
             throw new Exception("This class doesnt support concurrency");
         }
 
+
+        public virtual void InitializeWithMeshDataParallel(TriangleChunkHeap triangleData, Action<IThreadedMarchingCubeChunk> OnChunkDone)
+        {
+            throw new Exception("This class doesnt support concurrency");
+        }
+
         public virtual void InitializeWithMeshData(TriangleChunkHeap tris)
         {
             HasStarted = true;
@@ -47,7 +53,7 @@ namespace MarchingCubes
             chunkUpdater.RemoveLowerLodChunk(this);
             if (removeSimpleCollider)
             {
-                GameObject.Destroy(chunkSimpleCollider.gameObject);
+                FreeSimpleCollider();
             }
             IsReady = false;
             points = null;
@@ -73,6 +79,17 @@ namespace MarchingCubes
             }
         }
 
+
+        public void FreeSimpleCollider()
+        {
+            if(chunkSimpleCollider != null)
+            {
+                GameObject.Destroy(chunkSimpleCollider);
+                chunkSimpleCollider = null;
+                IsReady = false;
+                HasStarted = false;
+            }
+        }
 
         public WorldUpdater ChunkUpdater
         {
@@ -994,6 +1011,7 @@ namespace MarchingCubes
         {
             return leaf;
         }
+
     }
 
 }

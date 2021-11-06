@@ -11,12 +11,27 @@ namespace MarchingCubes
     public class MarchingCubeChunkThreaded : MarchingCubeChunk, IThreadedMarchingCubeChunk
     {
 
+  
         protected Queue<IThreadedMarchingCubeChunk> readyChunks;
+
+
+        protected Action<IThreadedMarchingCubeChunk> OnChunkFinished;
 
         public override void InitializeWithMeshDataParallel(TriangleChunkHeap heap, Queue<IThreadedMarchingCubeChunk> readyChunks)
         {
-            HasStarted = true;
             this.readyChunks = readyChunks;
+            StartParallel(heap);
+        }
+
+        public override void InitializeWithMeshDataParallel(TriangleChunkHeap heap, Action<IThreadedMarchingCubeChunk> OnChunkFinished)
+        {
+            this.OnChunkFinished = OnChunkFinished;
+            StartParallel(heap);
+        }
+
+        protected void StartParallel(TriangleChunkHeap heap)
+        {
+            HasStarted = true;
             ThreadPool.QueueUserWorkItem((o) => RequestChunk(heap));
         }
 
@@ -24,10 +39,14 @@ namespace MarchingCubes
 
         protected void OnChunkDone()
         {
-            lock (listLock)
+            if (readyChunks != null)
             {
-                readyChunks.Enqueue(this);
+                lock (MarchingCubeChunkThreaded.listLock)
+                {
+                    readyChunks.Enqueue(this);
+                }
             }
+            OnChunkFinished?.Invoke(this);
         }
 
         public static List<Exception> xs = new List<Exception>();

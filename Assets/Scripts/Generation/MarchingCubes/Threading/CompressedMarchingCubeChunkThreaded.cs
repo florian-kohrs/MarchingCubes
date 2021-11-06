@@ -13,24 +13,42 @@ namespace MarchingCubes
 
         protected Queue<IThreadedMarchingCubeChunk> readyChunks;
 
+
+        protected Action<IThreadedMarchingCubeChunk> OnChunkFinished;
+
         public override void InitializeWithMeshDataParallel(TriangleChunkHeap heap, Queue<IThreadedMarchingCubeChunk> readyChunks)
         {
+            this.readyChunks = readyChunks; 
+            StartParallel(heap);
+        }
+
+        public override void InitializeWithMeshDataParallel(TriangleChunkHeap heap, Action<IThreadedMarchingCubeChunk> OnChunkFinished)
+        {
+            this.OnChunkFinished = OnChunkFinished;
+            StartParallel(heap);
+        }
+
+        protected void StartParallel(TriangleChunkHeap heap)
+        {
             HasStarted = true;
-            this.readyChunks = readyChunks;
-            ThreadPool.QueueUserWorkItem((o) => RequestChunk(heap, OnChunkDone));
+            ThreadPool.QueueUserWorkItem((o) => RequestChunk(heap));
         }
 
         public bool IsInOtherThread { get; set; }
 
         protected void OnChunkDone()
         {
-            lock (MarchingCubeChunkThreaded.listLock)
+            if (readyChunks != null)
             {
-                readyChunks.Enqueue(this);
+                lock (MarchingCubeChunkThreaded.listLock)
+                {
+                    readyChunks.Enqueue(this);
+                }
             }
+            OnChunkFinished?.Invoke(this);
         }
 
-        protected void RequestChunk(TriangleChunkHeap heap, Action OnChunkDone)
+        protected void RequestChunk(TriangleChunkHeap heap)
         {
             try
             {

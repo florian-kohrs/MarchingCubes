@@ -30,6 +30,8 @@ namespace MarchingCubes
 
         public float increaseChunkAtCorrectSizeDist = 0.25f;
 
+        public Stack<ReadyChunkExchange> readyExchangeChunks = new Stack<ReadyChunkExchange>();
+
         public void RemoveLowerLodChunk(IMarchingCubeChunk c)
         {
             if(isInDecreasingChunkIteration)
@@ -176,14 +178,33 @@ namespace MarchingCubes
 
         private void LateUpdate()
         {
+
+            while(readyExchangeChunks.Count > 0 && FrameTimer.HasTimeLeftInFrame)
+            {
+                ReadyChunkExchange change = readyExchangeChunks.Pop();
+                List<IThreadedMarchingCubeChunk> chunk = change.chunks;
+                for (int i = 0; i < chunk.Count; i++)
+                {
+                    chunk[i].BuildAllMeshes();
+                }
+                change.old.ResetChunk();
+            }
+
             List<IMarchingCubeChunk> chunks = new List<IMarchingCubeChunk>();
             isInIncreasingChunkIteration = true;
             foreach (var item in increaseChunkLods)
             {
                 if (FrameTimer.HasTimeLeftInFrame)
                 {
-                    chunkHandler.IncreaseChunkLod(item, item.TargetLODPower);
-                    chunks.Add(item);
+                    if (item.IsReady)
+                    {
+                        chunkHandler.IncreaseChunkLod(item, item.TargetLODPower);
+                        chunks.Add(item);
+                    }
+                    else
+                    {
+
+                    }
                 }
                 else
                 {
@@ -201,11 +222,18 @@ namespace MarchingCubes
             {
                 if (FrameTimer.HasTimeLeftInFrame)
                 {
-                    bool contains = removedLowerChunkLodsBuffer.Contains(item);
-                    if (!item.IsReady || contains)
-                        continue;
+                    if (item.IsReady)
+                    {
+                        bool contains = removedLowerChunkLodsBuffer.Contains(item);
+                        if (!item.IsReady || contains)
+                            continue;
 
-                    chunkHandler.DecreaseChunkLod(item, item.TargetLODPower);
+                        chunkHandler.DecreaseChunkLod(item, item.TargetLODPower);
+                    }
+                    else
+                    {
+
+                    }
                 }
                 else
                 {
