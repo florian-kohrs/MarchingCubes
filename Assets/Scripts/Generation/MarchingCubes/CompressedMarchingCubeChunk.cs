@@ -40,12 +40,15 @@ namespace MarchingCubes
         }
 
 
-        public void ResetChunk()
+        public void ResetChunk(bool removeSimpleCollider = true)
         {
             OnResetChunk();
             FreeAllMeshes();
             chunkUpdater.RemoveLowerLodChunk(this);
-            GameObject.Destroy(chunkSimpleCollider.gameObject);
+            if (removeSimpleCollider)
+            {
+                GameObject.Destroy(chunkSimpleCollider.gameObject);
+            }
             IsReady = false;
             points = null;
         }

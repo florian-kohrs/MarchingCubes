@@ -36,7 +36,7 @@ namespace MarchingCubes
 
         public const int DEFAULT_MIN_CHUNK_LOD_POWER = 0;
 
-        public const int MAX_CHUNK_LOD_POWER = 7;
+        public const int MAX_CHUNK_LOD_POWER = 5;
 
         public const int MAX_CHUNK_LOD_BIT_REPRESENTATION_SIZE = 3;
 
@@ -447,15 +447,15 @@ namespace MarchingCubes
                 v3 = VectorExtension.GetDirectionFromIndex(i) * (chunk.ChunkSize + 1) + chunk.CenterPos;
                 float sqrDist = (startPos - v3).sqrMagnitude;
 
-                if (sqrDist > buildAroundSqrDistance)
-                {
-
-                }
                 ///only add neighbours if
                 if (sqrDist <= buildAroundSqrDistance
                     && !HasChunkAtPosition(v3))
                 {
                     closestNeighbours.Enqueue(sqrDist, v3);
+                }
+                else
+                {
+                    BuildEmptyChunkAt(v3);
                 }
             }
         }
@@ -512,7 +512,7 @@ namespace MarchingCubes
         {
             if (!TryGetChunkAtPosition(p, out chunk))
             {
-                chunk = CreateChunkAt(p);
+                chunk = CreateChunkWithProperties(p, PositionToChunkGroupCoord(p), 0, DEFAULT_CHUNK_SIZE_POWER, false, false);
             }
             if (chunk != null && !chunk.IsReady)
             {
@@ -718,6 +718,7 @@ namespace MarchingCubes
 
         public Transform colliderParent;
 
+
         protected IMarchingCubeChunk GetChunkObjectAt<T>(Vector3Int position, Vector3Int coord, int lodPower, int chunkSizePower, bool allowOverride) where T : IMarchingCubeChunk, new()
         {
             ///Pot racecondition
@@ -733,11 +734,36 @@ namespace MarchingCubes
 
             chunkGroup.SetLeafAtPosition(new int[] { position.x, position.y, position.z }, chunk, allowOverride);
 
+            //TODO: Dont do this for empty chunk (unless its border chunk)
             BuildLodColliderForChunk(chunk);
 
             worldUpdater.AddChunk(chunk);
 
             return chunk;
+        }
+
+        protected void BuildEmptyChunkAt(Vector3Int pos)
+        {
+            IChunkGroupRoot chunkGroup = GetOrCreateChunkGroupAtCoordinate(PositionToChunkGroupCoord(pos));
+            IMarchingCubeChunk chunk;
+
+            if(!chunkGroup.TryGetLeafAtGlobalPosition(pos, out chunk))
+            {
+                chunk = new CompressedMarchingCubeChunk();
+
+                chunk.ChunkHandler = this;
+                chunk.ChunkSizePower = CHUNK_GROUP_SIZE_POWER;
+                chunk.ChunkUpdater = worldUpdater;
+                chunk.Material = chunkMaterial;
+                chunk.SurfaceLevel = surfaceLevel;
+                chunk.LODPower = MAX_CHUNK_LOD_POWER + 1;
+
+                chunkGroup.SetLeafAtPosition(new int[] { pos.x, pos.y, pos.z }, chunk, false);
+
+                BuildLodColliderForChunk(chunk);
+
+                worldUpdater.AddChunk(chunk);
+            }
         }
 
         protected void BuildLodColliderForChunk(IMarchingCubeChunk c)
@@ -962,6 +988,10 @@ namespace MarchingCubes
             }
         }
 
+        public void GenerateMaxBorderChunk()
+        {
+
+        }
 
         protected void TryLoadOrGenerateNoise(int sizePow, int pointsPerAxis, int lod, Vector3Int anchor)
         {
@@ -1139,14 +1169,27 @@ namespace MarchingCubes
                 Debug.LogWarning($"invalid new chunk lod {toLodPower} from lod {chunk.LODPower}");
 
             int newSizePow = DEFAULT_CHUNK_SIZE_POWER + toLodPower;
-            if (newSizePow == chunk.ChunkSizePower)
+            if (newSizePow == chunk.ChunkSizePower || newSizePow == CHUNK_GROUP_SIZE_POWER)
             {
-                CreateChunkWithProperties(chunk.AnchorPos, PositionToChunkGroupCoord(chunk.AnchorPos), toLodPower, chunk.ChunkSizePower, false, true);
+                IMarchingCubeChunk current = CreateChunkWithProperties(chunk.AnchorPos, PositionToChunkGroupCoord(chunk.AnchorPos), toLodPower, chunk.ChunkSizePower, false, true);
+                if(newSizePow == CHUNK_GROUP_SIZE_POWER)
+                {
+                    bool[] dirs = current.HasNeighbourInDirection;
+                    int count = dirs.Length;
+                    for (int i = 0; i < count; i++)
+                    {
+                        if (!dirs[i])
+                            continue;
+                        Vector3Int v3 = VectorExtension.GetDirectionFromIndex(i) * (current.ChunkSize + 1) + current.CenterPos;
+                        BuildEmptyChunkAt(v3);
+                    }
+                }
             }
             else
             {
                 SplitChunkAndIncreaseLod(chunk, toLodPower, newSizePow);
             }
+
             chunk.ResetChunk();
         }
 
@@ -1187,18 +1230,25 @@ namespace MarchingCubes
 
         public void DecreaseChunkLod(IMarchingCubeChunk chunk, int toLodPower)
         {
-            toLodPower = GetFeasibleReducedLodForChunk(chunk, toLodPower);
-            int toLod = RoundToPowerOf2(toLodPower);
-            if (toLod <= chunk.LOD || chunk.ChunkSize % toLod != 0)
-                Debug.LogWarning($"invalid new chunk lod {toLodPower} from lod {chunk.LODPower}");
-
-            if(chunk.GetLeaf().AllSiblingsAreLeafsWithSameTargetLod())
+            if (toLodPower > MAX_CHUNK_LOD_POWER)
             {
-                MergeAndReduceChunkBranch(chunk, toLodPower, toLod);
+                chunk.ResetChunk(false);
             }
             else
             {
-                DecreaseSingleChunkLod(chunk, toLodPower, toLod);
+                toLodPower = GetFeasibleReducedLodForChunk(chunk, toLodPower);
+                int toLod = RoundToPowerOf2(toLodPower);
+                if (toLod <= chunk.LOD || chunk.ChunkSize % toLod != 0)
+                    Debug.LogWarning($"invalid new chunk lod {toLodPower} from lod {chunk.LODPower}");
+
+                if (chunk.GetLeaf().AllSiblingsAreLeafsWithSameTargetLod())
+                {
+                    MergeAndReduceChunkBranch(chunk, toLodPower, toLod);
+                }
+                else
+                {
+                    DecreaseSingleChunkLod(chunk, toLodPower, toLod);
+                }
             }
         }
         public void DecreaseSingleChunkLod(IMarchingCubeChunk chunk, int toLodPower)

@@ -69,7 +69,7 @@ namespace MarchingCubes
             {
                 child = GetLeaf(leaf, 0, GroupAnchorPosition, GroupAnchorPosition, SizePower);
             }
-            else if(!HasChild)
+            else if(!HasChild || allowOverride)
             {
                 child = GetNode(GroupAnchorPosition, GroupAnchorPosition, SizePower);
             }
@@ -78,6 +78,11 @@ namespace MarchingCubes
 
         public bool TryGetLeafAtGlobalPosition(Vector3Int pos, out T chunk)
         {
+            if(child == null)
+            {
+                chunk = default;
+                return false;
+            }
             return child.TryGetLeafAtLocalPosition(new int[] { pos.x, pos.y, pos.z }, out chunk);
         }
 
