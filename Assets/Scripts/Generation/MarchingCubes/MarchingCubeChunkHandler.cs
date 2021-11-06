@@ -730,6 +730,7 @@ namespace MarchingCubes
 
         public Transform colliderParent;
 
+
         protected IMarchingCubeChunk GetChunkObjectAt<T>(Vector3Int position, Vector3Int coord, int lodPower, int chunkSizePower, bool allowOverride) where T : IMarchingCubeChunk, new()
         {
             ///Pot racecondition
@@ -745,6 +746,7 @@ namespace MarchingCubes
 
             chunkGroup.SetLeafAtPosition(new int[] { position.x, position.y, position.z }, chunk, allowOverride);
 
+            //TODO: Dont do this for empty chunk (unless its border chunk)
             BuildLodColliderForChunk(chunk);
 
             worldUpdater.AddChunk(chunk);
@@ -1174,14 +1176,27 @@ namespace MarchingCubes
                 Debug.LogWarning($"invalid new chunk lod {toLodPower} from lod {chunk.LODPower}");
 
             int newSizePow = DEFAULT_CHUNK_SIZE_POWER + toLodPower;
-            if (newSizePow == chunk.ChunkSizePower)
+            if (newSizePow == chunk.ChunkSizePower || newSizePow == CHUNK_GROUP_SIZE_POWER)
             {
-                CreateChunkWithProperties(chunk.AnchorPos, PositionToChunkGroupCoord(chunk.AnchorPos), toLodPower, chunk.ChunkSizePower, false, true);
+                IMarchingCubeChunk current = CreateChunkWithProperties(chunk.AnchorPos, PositionToChunkGroupCoord(chunk.AnchorPos), toLodPower, chunk.ChunkSizePower, false, true);
+                if(newSizePow == CHUNK_GROUP_SIZE_POWER)
+                {
+                    bool[] dirs = current.HasNeighbourInDirection;
+                    int count = dirs.Length;
+                    for (int i = 0; i < count; i++)
+                    {
+                        if (!dirs[i])
+                            continue;
+                        Vector3Int v3 = VectorExtension.GetDirectionFromIndex(i) * (current.ChunkSize + 1) + current.CenterPos;
+                        BuildEmptyChunkAt(v3);
+                    }
+                }
             }
             else
             {
                 SplitChunkAndIncreaseLod(chunk, toLodPower, newSizePow);
             }
+
             chunk.ResetChunk();
         }
 
