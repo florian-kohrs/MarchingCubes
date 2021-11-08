@@ -73,13 +73,41 @@ namespace MarchingCubes
 
         //protected HashSet<BaseMeshChild> inUseDisplayer = new HashSet<BaseMeshChild>();
 
-        protected Stack<BaseMeshDisplayer> unusedDisplayer = new Stack<BaseMeshDisplayer>();
-
-        protected Stack<BaseMeshDisplayer> unusedInteractableDisplayer = new Stack<BaseMeshDisplayer>();
 
         public void StartWaitForParralelChunkDoneCoroutine(IEnumerator e)
         {
             StartCoroutine(e);
+        }
+
+
+        protected Stack<BaseMeshDisplayer> unusedDisplayer = new Stack<BaseMeshDisplayer>();
+
+        protected Stack<BaseMeshDisplayer> unusedInteractableDisplayer = new Stack<BaseMeshDisplayer>();
+
+        protected Stack<ChunkLodCollider> freechunkCollider = new Stack<ChunkLodCollider>();
+
+
+        public void SetChunkColliderOf(IMarchingCubeChunk c)
+        {
+            ChunkLodCollider collider;
+            if (freechunkCollider.Count > 0)
+            {
+                collider = freechunkCollider.Pop();
+                collider.chunk = c;
+                collider.transform.position = c.CenterPos;
+                c.ChunkSimpleCollider = collider;
+                collider.enabled = true;
+            }
+            else
+            {
+                BuildAndSetLodColliderForChunk(c);
+            }
+        }
+
+        public void FreeCollider(ChunkLodCollider c)
+        {
+            c.enabled = false;
+            freechunkCollider.Push(c);
         }
 
         public BaseMeshDisplayer GetNextMeshDisplayer()
@@ -734,9 +762,6 @@ namespace MarchingCubes
 
             chunkGroup.SetLeafAtPosition(new int[] { position.x, position.y, position.z }, chunk, allowOverride);
 
-            //TODO: Dont do this for empty chunk (unless its border chunk)
-            BuildLodColliderForChunk(chunk);
-
             worldUpdater.AddChunk(chunk);
 
             return chunk;
@@ -747,7 +772,7 @@ namespace MarchingCubes
             IChunkGroupRoot chunkGroup = GetOrCreateChunkGroupAtCoordinate(PositionToChunkGroupCoord(pos));
             IMarchingCubeChunk chunk;
 
-            if(!chunkGroup.TryGetLeafAtGlobalPosition(pos, out chunk))
+            if (!chunkGroup.TryGetLeafAtGlobalPosition(pos, out chunk))
             {
                 chunk = new CompressedMarchingCubeChunk();
 
@@ -760,14 +785,15 @@ namespace MarchingCubes
 
                 chunkGroup.SetLeafAtPosition(new int[] { pos.x, pos.y, pos.z }, chunk, false);
 
-                BuildLodColliderForChunk(chunk);
+                SetChunkColliderOf(chunk);
 
                 worldUpdater.AddChunk(chunk);
             }
         }
 
         //Do this as work after compute shader dispatch and before data read
-        protected void BuildLodColliderForChunk(IMarchingCubeChunk c)
+        //also give put object back into stack for empty chunks and read from stack
+        protected void BuildAndSetLodColliderForChunk(IMarchingCubeChunk c)
         {
             GameObject g = new GameObject();
             SphereCollider sphere = g.AddComponent<SphereCollider>();
@@ -989,11 +1015,6 @@ namespace MarchingCubes
             }
         }
 
-        public void GenerateMaxBorderChunk()
-        {
-
-        }
-
         protected void TryLoadOrGenerateNoise(int sizePow, int pointsPerAxis, int lod, Vector3Int anchor)
         {
             bool hasStoredData = false;
@@ -1030,7 +1051,13 @@ namespace MarchingCubes
                 AccumulateCubesFromNoise(c, i);
             }
             int[] triCounts = new int[chunkLength];
-            triCountBuffer.GetData(triCounts,0,0, chunkLength);
+
+            for (int i = 0; i < chunkLength; i++)
+            {
+                SetChunkColliderOf(chunks[i]);
+            }
+
+            triCountBuffer.GetData(triCounts, 0, 0, chunkLength);
             TriangleChunkHeap[] result = new TriangleChunkHeap[chunkLength];
             TriangleBuilder[] allTris = new TriangleBuilder[triCounts[triCounts.Length - 1]];
             triangleBuffer.GetData(allTris, 0, 0, allTris.Length);
@@ -1038,8 +1065,14 @@ namespace MarchingCubes
             for (int i = 0; i < chunkLength; i++)
             {
                 int current = triCounts[i];
-                result[i] = new TriangleChunkHeap(allTris, last, current - last);
+                int length = current - last;
+                result[i] = new TriangleChunkHeap(allTris, last, length);
                 last = current;
+
+                if(length == 0)
+                {
+                    chunks[i].FreeSimpleCollider();
+                }
             }
             return result;
         }
@@ -1061,7 +1094,20 @@ namespace MarchingCubes
 
             GenerateNoise(chunk.ChunkSizePower, pointsPerAxis, lod, chunk.AnchorPos);
 
-            int numTris = RequestCubesFromNoise(chunk, lod);
+            ComputeCubesFromNoise(chunk.ChunkSize, chunk.AnchorPos, lod);
+
+            ///Do work for chunk here, before data from gpu is read, to give gpu time to finish
+
+            SetChunkColliderOf(chunk);
+
+            ///read data from gpu
+            
+            int numTris = ReadCurrentTriangleData();
+
+            if(numTris == 0)
+            {
+                chunk.FreeSimpleCollider();
+            }
 
             if ((numTris == 0 && !hasFoundInitialChunk) || careForNeighbours)
             {
@@ -1095,6 +1141,11 @@ namespace MarchingCubes
         public int RequestCubesFromNoise(IMarchingCubeChunk chunk, int lod, int triCount = -1)
         {
             ComputeCubesFromNoise(chunk.ChunkSize, chunk.AnchorPos, lod);
+            return ReadCurrentTriangleData(triCount);
+        }
+
+        protected int ReadCurrentTriangleData(int triCount = -1)
+        {
             if (triCount < 0)
             {
                 ///Get number of triangles in the triangle buffer
@@ -1174,7 +1225,7 @@ namespace MarchingCubes
             if (newSizePow == chunk.ChunkSizePower || newSizePow == CHUNK_GROUP_SIZE_POWER)
             {
                 IMarchingCubeChunk current = CreateChunkWithProperties(chunk.AnchorPos, PositionToChunkGroupCoord(chunk.AnchorPos), toLodPower, chunk.ChunkSizePower, false, true);
-                if(newSizePow == CHUNK_GROUP_SIZE_POWER)
+                if (newSizePow == CHUNK_GROUP_SIZE_POWER)
                 {
                     bool[] dirs = current.HasNeighbourInDirection;
                     int count = dirs.Length;
@@ -1212,11 +1263,11 @@ namespace MarchingCubes
             {
                 newChunks[i].InitializeWithMeshDataParallel(tris[i], (c) =>
                 {
-                    lock (listLock) 
+                    lock (listLock)
                     {
                         chunks.Add(c);
                     }
-                    if(chunks.Count == 8)
+                    if (chunks.Count == 8)
                     {
                         worldUpdater.readyExchangeChunks.Push(new ReadyChunkExchange(chunk, chunks));
                     }
@@ -1230,10 +1281,10 @@ namespace MarchingCubes
         {
             Vector3Int coord = PositionToStorageGroupCoord(pos);
             StorageTreeRoot r;
-            if(storageGroups.TryGetValue(coord, out r))
+            if (storageGroups.TryGetValue(coord, out r))
             {
                 IStorageGroupOrganizer<StoredChunkEdits> node;
-                if(r.TryGetNodeWithSizePower(new int[] {pos.x,pos.y,pos.z}, sizePow, out node))
+                if (r.TryGetNodeWithSizePower(new int[] { pos.x, pos.y, pos.z }, sizePow, out node))
                 {
                     return node.ChildrenWithMipMapReady;
                 }
@@ -1284,7 +1335,7 @@ namespace MarchingCubes
         public float[] GetNoiseForMergingChunkAt(IMarchingCubeChunk chunk, int toLod)
         {
             int[] pos = chunk.GetLeaf().parent.GroupAnchorPosition;
-            return RequestNoiseFor(chunk.ChunkSizePower, chunk.PointsPerAxis, toLod, new Vector3Int(pos[0],pos[1],pos[2]));
+            return RequestNoiseFor(chunk.ChunkSizePower, chunk.PointsPerAxis, toLod, new Vector3Int(pos[0], pos[1], pos[2]));
         }
 
         public void MergeAndReduceChunkBranch(IMarchingCubeChunk chunk, int toLodPower, int toLod)
@@ -1384,7 +1435,7 @@ namespace MarchingCubes
 
             pointsBuffer = new ComputeBuffer(numPoints, sizeof(float) * 1);
             savedPointBuffer = new ComputeBuffer(numPoints, sizeof(float) * 1);
-            triangleBuffer = new ComputeBuffer(maxTriangleCount , TriangleBuilder.SIZE_OF_TRI_BUILD, ComputeBufferType.Append);
+            triangleBuffer = new ComputeBuffer(maxTriangleCount, TriangleBuilder.SIZE_OF_TRI_BUILD, ComputeBufferType.Append);
             triCountBuffer = new ComputeBuffer(MAX_CHUNKS_PER_ITERATION, sizeof(int), ComputeBufferType.Raw);
         }
 
@@ -1427,7 +1478,7 @@ namespace MarchingCubes
         public void Store(Vector3Int anchorPos, float[] noise)
         {
             StoredChunkEdits edits;
-            if(!TryGetStoredEditsAt(anchorPos, out edits))
+            if (!TryGetStoredEditsAt(anchorPos, out edits))
             {
                 edits = new StoredChunkEdits();
                 StorageTreeRoot r = GetOrCreateStorageGroupAtCoordinate(PositionToStorageGroupCoord(anchorPos));

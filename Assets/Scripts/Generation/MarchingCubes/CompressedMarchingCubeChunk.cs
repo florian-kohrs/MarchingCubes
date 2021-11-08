@@ -84,10 +84,8 @@ namespace MarchingCubes
         {
             if(chunkSimpleCollider != null)
             {
-                GameObject.Destroy(chunkSimpleCollider);
+                chunkHandler.FreeCollider(chunkSimpleCollider);
                 chunkSimpleCollider = null;
-                IsReady = false;
-                HasStarted = false;
             }
         }
 
