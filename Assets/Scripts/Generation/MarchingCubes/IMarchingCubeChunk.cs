@@ -50,6 +50,7 @@ namespace MarchingCubes
 
         int PointsPerAxis { get; }
         bool IsChanneled { get; set; }
+        bool IsSpawner { get; set; }
 
         // void InitializeWithMeshData(Material mat, TriangleBuilder[] tris, int activeTris, float[] points, IMarchingCubeChunkHandler handler, float surfaceLevel);
 

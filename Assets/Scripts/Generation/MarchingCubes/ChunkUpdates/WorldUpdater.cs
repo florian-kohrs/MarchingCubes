@@ -34,7 +34,7 @@ namespace MarchingCubes
 
         public void RemoveLowerLodChunk(IMarchingCubeChunk c)
         {
-            if(isInDecreasingChunkIteration)
+            if (isInDecreasingChunkIteration)
             {
                 removedLowerChunkLodsBuffer.Add(c);
             }
@@ -79,7 +79,7 @@ namespace MarchingCubes
                             yield return null;
                         }
                         chunk = chunks.Current;
-                        if(CheckSizeOfChunk(chunk))
+                        if (CheckSizeOfChunk(chunk))
                         {
                             break;
                         }
@@ -133,12 +133,12 @@ namespace MarchingCubes
 
                 CreateTriggerOfTypeForLod<ChunkLodIncreaseTrigger>(i - 1, f.time - extraTime, increaseTriggerParent);
                 CreateTriggerOfTypeForLod<ChunkLodDecreaseTrigger>(i, f.time + extraTime, decreaseTriggerParent);
-                
+
                 last = f;
             }
 
             CreateTriggerOfTypeForLod<ChunkLodIncreaseTrigger>(MarchingCubeChunkHandler.MAX_CHUNK_LOD_POWER, chunkHandler.buildAroundDistance, increaseTriggerParent);
-            CreateTriggerOfTypeForLod<ChunkLodDecreaseTrigger>(MarchingCubeChunkHandler.MAX_CHUNK_LOD_POWER + 1, chunkHandler.buildAroundDistance * (1+distThreshold), decreaseTriggerParent);
+            CreateTriggerOfTypeForLod<ChunkLodDecreaseTrigger>(MarchingCubeChunkHandler.MAX_CHUNK_LOD_POWER + 1, chunkHandler.buildAroundDistance * (1 + distThreshold), decreaseTriggerParent);
         }
 
         protected void CreateTriggerOfTypeForLod<T>(int lod, float radius, Transform parent) where T : BaseChunkLodTrigger
@@ -179,16 +179,26 @@ namespace MarchingCubes
         private void LateUpdate()
         {
 
-            while(readyExchangeChunks.Count > 0 && FrameTimer.HasTimeLeftInFrame)
+            while (readyExchangeChunks.Count > 0 && FrameTimer.HasTimeLeftInFrame)
             {
                 ReadyChunkExchange change = readyExchangeChunks.Pop();
                 List<IThreadedMarchingCubeChunk> chunk = change.chunks;
+                List<IMarchingCubeChunk> olds = change.old;
                 for (int i = 0; i < chunk.Count; i++)
                 {
+                    //TODO: dont do this for empty chunks, check that no mesh displayer is request for 0 tris
                     chunk[i].BuildAllMeshes();
                 }
-                change.old.ResetChunk();
+                for (int i = 0; i < olds.Count; i++)
+                {
+                    olds[i].ResetChunk();
+                }
+                if (olds[0].IsSpawner)
+                {
+                    chunkHandler.SpawnEmptyChunksAround(chunk[0]);
+                }
             }
+
 
             List<IMarchingCubeChunk> chunks = new List<IMarchingCubeChunk>();
             isInIncreasingChunkIteration = true;
@@ -196,14 +206,10 @@ namespace MarchingCubes
             {
                 if (FrameTimer.HasTimeLeftInFrame)
                 {
-                    if (item.IsReady)
+                    if (item.IsReady || item.IsSpawner)
                     {
                         chunkHandler.IncreaseChunkLod(item, item.TargetLODPower);
                         chunks.Add(item);
-                    }
-                    else
-                    {
-
                     }
                 }
                 else
@@ -229,10 +235,6 @@ namespace MarchingCubes
                             continue;
 
                         chunkHandler.DecreaseChunkLod(item, item.TargetLODPower);
-                    }
-                    else
-                    {
-
                     }
                 }
                 else

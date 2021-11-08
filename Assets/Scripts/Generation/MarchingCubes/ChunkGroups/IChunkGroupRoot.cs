@@ -17,6 +17,7 @@ namespace MarchingCubes
         /// <returns>returns the anchor position of the chunk</returns>
         void SetLeafAtPosition(int[] pos, T chunk, bool allowOverride);
 
+        public bool TrySetChild(T leaf);
 
         bool TryGetLeafAtGlobalPosition(Vector3Int pos, out T chunk);
 

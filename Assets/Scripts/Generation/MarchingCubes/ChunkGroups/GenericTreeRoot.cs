@@ -76,6 +76,16 @@ namespace MarchingCubes
             child.SetChunkAtLocalPosition(pos, leaf, allowOverride);
         }
 
+        public bool TrySetChild(T leaf)
+        {
+            bool result = !HasChild;
+            if(result)
+            {
+                child = GetLeaf(leaf, 0, GroupAnchorPosition, GroupRelativeAnchorPosition, SizePower);
+            }
+            return result;
+        }
+
         public bool TryGetLeafAtGlobalPosition(Vector3Int pos, out T chunk)
         {
             if(child == null)

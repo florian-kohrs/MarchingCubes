@@ -361,6 +361,8 @@ namespace MarchingCubes
 
         public bool IsChanneled { get; set ; }
 
+        public bool IsSpawner { get; set; }
+
         protected virtual void WorkOnBuildedChunk()
         {
             if (neighbourChunksGlue.Count > 0)

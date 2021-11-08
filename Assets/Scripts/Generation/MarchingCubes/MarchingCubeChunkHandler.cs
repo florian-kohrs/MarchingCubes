@@ -783,6 +783,8 @@ namespace MarchingCubes
                 chunk.SurfaceLevel = surfaceLevel;
                 chunk.LODPower = MAX_CHUNK_LOD_POWER + 1;
 
+                chunk.IsSpawner = true;
+
                 chunkGroup.SetLeafAtPosition(new int[] { pos.x, pos.y, pos.z }, chunk, false);
 
                 SetChunkColliderOf(chunk);
@@ -1069,7 +1071,7 @@ namespace MarchingCubes
                 result[i] = new TriangleChunkHeap(allTris, last, length);
                 last = current;
 
-                if(length == 0)
+                if (length == 0)
                 {
                     chunks[i].FreeSimpleCollider();
                 }
@@ -1101,10 +1103,10 @@ namespace MarchingCubes
             SetChunkColliderOf(chunk);
 
             ///read data from gpu
-            
+
             int numTris = ReadCurrentTriangleData();
 
-            if(numTris == 0)
+            if (numTris == 0)
             {
                 chunk.FreeSimpleCollider();
             }
@@ -1217,6 +1219,7 @@ namespace MarchingCubes
         public void IncreaseChunkLod(IMarchingCubeChunk chunk, int toLodPower)
         {
             toLodPower = GetFeasibleIncreaseLodForChunk(chunk, toLodPower);
+            int oldLodPow = chunk.LODPower;
             int toLod = RoundToPowerOf2(toLodPower);
             if (toLod >= chunk.LOD || chunk.ChunkSize % toLod != 0)
                 Debug.LogWarning($"invalid new chunk lod {toLodPower} from lod {chunk.LODPower}");
@@ -1224,20 +1227,8 @@ namespace MarchingCubes
             int newSizePow = DEFAULT_CHUNK_SIZE_POWER + toLodPower;
             if (newSizePow == chunk.ChunkSizePower || newSizePow == CHUNK_GROUP_SIZE_POWER)
             {
-                IMarchingCubeChunk current = CreateChunkWithProperties(chunk.AnchorPos, PositionToChunkGroupCoord(chunk.AnchorPos), toLodPower, chunk.ChunkSizePower, false, true);
-                if (newSizePow == CHUNK_GROUP_SIZE_POWER)
-                {
-                    bool[] dirs = current.HasNeighbourInDirection;
-                    int count = dirs.Length;
-                    for (int i = 0; i < count; i++)
-                    {
-                        if (!dirs[i])
-                            continue;
-                        Vector3Int v3 = VectorExtension.GetDirectionFromIndex(i) * (current.ChunkSize + 1) + current.CenterPos;
-                        BuildEmptyChunkAt(v3);
-                    }
-                }
-                chunk.ResetChunk();
+                    //if previous chunk was border chunk, build spawners at neighbours
+                    IMarchingCubeChunk current = ExchangeSingleChunkParallel(chunk, chunk.AnchorPos, toLodPower, chunk.ChunkSizePower, false, true);
             }
             else
             {
@@ -1245,6 +1236,37 @@ namespace MarchingCubes
             }
         }
 
+        public void SpawnEmptyChunksAround(IMarchingCubeChunk c)
+        {
+            bool[] dirs = c.HasNeighbourInDirection;
+            int count = dirs.Length;
+            for (int i = 0; i < count; i++)
+            {
+                if (!dirs[i])
+                    continue;
+                Vector3Int v3 = VectorExtension.GetDirectionFromIndex(i) * (c.ChunkSize + 1) + c.CenterPos;
+                BuildEmptyChunkAt(v3);
+            }
+        }
+
+        protected IMarchingCubeChunk ExchangeSingleChunkParallel(IMarchingCubeChunk from, Vector3Int anchorPos, int lodPow, int sizePow, bool careForNeighbours, bool allowOveride)
+        {
+            from.FreeSimpleCollider();
+            return ExchangeChunkParallel(anchorPos, lodPow, sizePow, careForNeighbours, allowOveride, (c) => { FinishParallelChunk(from, c); });
+        }
+
+        protected void FinishParallelChunk(IMarchingCubeChunk from, IThreadedMarchingCubeChunk newChunk)
+        {
+            worldUpdater.readyExchangeChunks.Push(new ReadyChunkExchange(from, newChunk));
+        }
+
+
+        protected IMarchingCubeChunk ExchangeChunkParallel(Vector3Int anchorPos, int lodPow, int sizePow, bool careForNeighbours, bool allowOveride, Action<IThreadedMarchingCubeChunk> onChunkDone)
+        {
+            IMarchingCubeChunk newChunk = GetThreadedChunkObjectAt(anchorPos, lodPow, sizePow, allowOveride);
+            newChunk.InitializeWithMeshDataParallel(DispatchAndGetShaderData(newChunk, careForNeighbours), onChunkDone);
+            return newChunk;
+        }
 
         private void SplitChunkAndIncreaseLod(IMarchingCubeChunk chunk, int toLodPower, int newSizePow)
         {
@@ -1274,6 +1296,7 @@ namespace MarchingCubes
                 });
             }
         }
+
 
         protected Vector3Int IntVecToVector3(int[] arr) => new Vector3Int(arr[0], arr[1], arr[2]);
 
@@ -1328,8 +1351,7 @@ namespace MarchingCubes
 
         protected void DecreaseSingleChunkLod(IMarchingCubeChunk chunk, int toLodPower, int toLod)
         {
-            CreateChunkWithProperties(chunk.CenterPos, PositionToChunkGroupCoord(chunk.CenterPos), toLodPower, chunk.ChunkSizePower, false, true);
-            chunk.ResetChunk();
+            ExchangeSingleChunkParallel(chunk, chunk.CenterPos, toLodPower, chunk.ChunkSizePower, false, true);
         }
 
         public float[] GetNoiseForMergingChunkAt(IMarchingCubeChunk chunk, int toLod)
@@ -1341,14 +1363,25 @@ namespace MarchingCubes
         public void MergeAndReduceChunkBranch(IMarchingCubeChunk chunk, int toLodPower, int toLod)
         {
             ChunkGroupTreeLeaf[] leafs = chunk.GetLeaf().parent.GetLeafs();
-            CreateChunkWithProperties(chunk.CenterPos, PositionToChunkGroupCoord(chunk.CenterPos), toLodPower, chunk.ChunkSizePower + 1, false, true);
             for (int i = 0; i < 8; i++)
             {
                 ChunkGroupTreeLeaf l = leafs[i];
                 if (l == null)
                     continue;
-                l.leaf.ResetChunk();
+                l.leaf.FreeSimpleCollider();
             }
+            ExchangeChunkParallel(chunk.CenterPos, toLodPower, chunk.ChunkSizePower + 1, false, true, (c) =>
+            {
+                List<IMarchingCubeChunk> oldChunks = new List<IMarchingCubeChunk>();
+                for (int i = 0; i < 8; i++)
+                {
+                    ChunkGroupTreeLeaf l = leafs[i];
+                    if (l == null)
+                        continue;
+                    oldChunks.Add(l.leaf);
+                }
+                worldUpdater.readyExchangeChunks.Push(new ReadyChunkExchange(oldChunks, c));
+            });
         }
 
         protected void TransferPointsInto(float[] originalPoints, float[] writeInHere, int originalPointsPerAxis, int originalPointsPerAxisSqr, int shrinkFactor)
