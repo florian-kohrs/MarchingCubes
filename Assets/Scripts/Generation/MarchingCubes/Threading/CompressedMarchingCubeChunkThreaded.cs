@@ -34,7 +34,6 @@ namespace MarchingCubes
             ThreadPool.QueueUserWorkItem((o) => RequestChunk(heap));
         }
 
-        public bool IsInOtherThread { get; set; }
 
         protected void OnChunkDone()
         {

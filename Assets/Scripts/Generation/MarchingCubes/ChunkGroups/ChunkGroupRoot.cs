@@ -26,6 +26,14 @@ namespace MarchingCubes
             return new ChunkGroupTreeNode(anchor, relAnchor, sizePow);
         }
 
+        public void RemoveChildAtIndex(int index, IMarchingCubeChunk chunk)
+        {
+            if(child.IsLeaf && child is ChunkGroupTreeLeaf leaf && leaf.leaf == chunk)
+            {
+                child = null;
+            }
+        }
+
         public void SplitLeaf(int index)
         {
             throw new System.NotImplementedException();

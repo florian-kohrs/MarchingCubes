@@ -388,10 +388,6 @@ namespace MarchingCubes
             BuildAll();
         }
 
-
-        public bool IsInOtherThread { get; set; }
-
-
         protected static object rebuildListLock = new object();
 
 
@@ -500,6 +496,12 @@ namespace MarchingCubes
                 }
                 distanceX++;
             }
+
+            if(!IsEmpty)
+            {
+                GetSimpleCollider();
+            }
+
             RebuildMesh();
         }
 

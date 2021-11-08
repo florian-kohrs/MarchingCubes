@@ -9,6 +9,9 @@ namespace MarchingCubes
     public interface IChunkGroupParent<T> : ITreeNodeParent<T>
     {
 
+        void RemoveChildAtIndex(int index, IMarchingCubeChunk chunk);
+
+
     }
 
 }

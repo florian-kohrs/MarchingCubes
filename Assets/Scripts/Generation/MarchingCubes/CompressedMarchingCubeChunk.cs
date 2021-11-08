@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
+
     public class CompressedMarchingCubeChunk : IMarchingCubeChunk
     {
 
@@ -20,6 +21,7 @@ namespace MarchingCubes
         {
             throw new Exception("This class doesnt support concurrency");
         }
+        public bool IsInOtherThread { get; set; }
 
         public virtual void InitializeWithMeshData(TriangleChunkHeap tris)
         {
@@ -42,7 +44,9 @@ namespace MarchingCubes
 
                 points = null;
             }
+
             IsReady = true;
+
         }
 
 
@@ -50,12 +54,8 @@ namespace MarchingCubes
         {
             OnResetChunk();
             FreeAllMeshes();
-            chunkUpdater.RemoveLowerLodChunk(this);
-            if (removeSimpleCollider)
-            {
-                FreeSimpleCollider();
-            }
-            IsReady = false;
+
+            PrepareDestruction();
             points = null;
         }
 
@@ -79,6 +79,23 @@ namespace MarchingCubes
             }
         }
 
+
+        public void PrepareDestruction()
+        {
+            chunkUpdater.RemoveLowerLodChunk(this);
+            leaf.RemoveLeaf(this);
+            IsReady = false;
+            HasStarted = false;
+            FreeSimpleCollider();
+        }
+
+        public void GetSimpleCollider()
+        {
+            if (chunkSimpleCollider == null)
+            {
+                chunkHandler.SetChunkColliderOf(this);
+            }
+        }
 
         public void FreeSimpleCollider()
         {

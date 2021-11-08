@@ -96,7 +96,7 @@ namespace MarchingCubes
                 collider.chunk = c;
                 collider.transform.position = c.CenterPos;
                 c.ChunkSimpleCollider = collider;
-                collider.enabled = true;
+                collider.coll.enabled = true;
             }
             else
             {
@@ -106,7 +106,8 @@ namespace MarchingCubes
 
         public void FreeCollider(ChunkLodCollider c)
         {
-            c.enabled = false;
+            c.coll.enabled = false;
+            //c.chunk = null;
             freechunkCollider.Push(c);
         }
 
@@ -460,30 +461,35 @@ namespace MarchingCubes
             }
 
             chunk.IsInOtherThread = false;
-            chunk.BuildAllMeshes();
-            chunk.IsReady = true;
-
-
-            Vector3Int v3;
-            bool[] dirs = chunk.HasNeighbourInDirection;
-            int count = dirs.Length;
-            for (int i = 0; i < count; ++i)
+            if(chunk.IsEmpty)
             {
-                if (!dirs[i])
-                    continue;
+                chunk.ResetChunk();
+            }
+            else
+            {
+                chunk.BuildAllMeshes();
+                chunk.IsReady = true;
 
-                v3 = VectorExtension.GetDirectionFromIndex(i) * (chunk.ChunkSize + 1) + chunk.CenterPos;
-                float sqrDist = (startPos - v3).sqrMagnitude;
+                Vector3Int v3;
+                bool[] dirs = chunk.HasNeighbourInDirection;
+                int count = dirs.Length;
+                for (int i = 0; i < count; ++i)
+                {
+                    if (!dirs[i])
+                        continue;
 
-                ///only add neighbours if
-                if (sqrDist <= buildAroundSqrDistance
-                    && !HasChunkAtPosition(v3))
-                {
-                    closestNeighbours.Enqueue(sqrDist, v3);
-                }
-                else
-                {
-                    BuildEmptyChunkAt(v3);
+                    v3 = VectorExtension.GetDirectionFromIndex(i) * (chunk.ChunkSize + 1) + chunk.CenterPos;
+                    float sqrDist = (startPos - v3).sqrMagnitude;
+
+                    if (sqrDist <= buildAroundSqrDistance
+                        && !HasChunkAtPosition(v3))
+                    {
+                        closestNeighbours.Enqueue(sqrDist, v3);
+                    }
+                    else
+                    {
+                        BuildEmptyChunkAt(v3);
+                    }
                 }
             }
         }
@@ -799,12 +805,13 @@ namespace MarchingCubes
         {
             GameObject g = new GameObject();
             SphereCollider sphere = g.AddComponent<SphereCollider>();
-            sphere.radius = 1;
+            sphere.radius = 16;
 
             sphere.isTrigger = true;
 
             g.transform.position = c.CenterPos;
             ChunkLodCollider coll = g.AddComponent<ChunkLodCollider>();
+            coll.coll = sphere;
             coll.chunk = c;
             c.ChunkSimpleCollider = coll;
 
@@ -1227,11 +1234,13 @@ namespace MarchingCubes
             int newSizePow = DEFAULT_CHUNK_SIZE_POWER + toLodPower;
             if (newSizePow == chunk.ChunkSizePower || newSizePow == CHUNK_GROUP_SIZE_POWER)
             {
+                Debug.Log("Simple decrease");
                     //if previous chunk was border chunk, build spawners at neighbours
-                    IMarchingCubeChunk current = ExchangeSingleChunkParallel(chunk, chunk.AnchorPos, toLodPower, chunk.ChunkSizePower, false, true);
+                IMarchingCubeChunk current = ExchangeSingleChunkParallel(chunk, chunk.AnchorPos, toLodPower, chunk.ChunkSizePower, false, true);
             }
             else
             {
+                Debug.Log("split");
                 SplitChunkAndIncreaseLod(chunk, toLodPower, newSizePow);
             }
         }
@@ -1251,13 +1260,18 @@ namespace MarchingCubes
 
         protected IMarchingCubeChunk ExchangeSingleChunkParallel(IMarchingCubeChunk from, Vector3Int anchorPos, int lodPow, int sizePow, bool careForNeighbours, bool allowOveride)
         {
-            from.FreeSimpleCollider();
+            from.PrepareDestruction();
             return ExchangeChunkParallel(anchorPos, lodPow, sizePow, careForNeighbours, allowOveride, (c) => { FinishParallelChunk(from, c); });
         }
 
+        public static object exchangeLocker = new object();
+
         protected void FinishParallelChunk(IMarchingCubeChunk from, IThreadedMarchingCubeChunk newChunk)
         {
-            worldUpdater.readyExchangeChunks.Push(new ReadyChunkExchange(from, newChunk));
+            lock (exchangeLocker)
+            {
+                worldUpdater.readyExchangeChunks.Push(new ReadyChunkExchange(from, newChunk));
+            }
         }
 
 
@@ -1277,10 +1291,10 @@ namespace MarchingCubes
                 Vector3Int v3 = IntVecToVector3(anchors[i]);
                 newChunks[i] = GetThreadedChunkObjectAt(v3, PositionToChunkGroupCoord(v3), toLodPower, newSizePow, true);
             }
+            chunk.PrepareDestruction();
             TriangleChunkHeap[] tris = DispatchMultipleChunks(newChunks);
             object listLock = new object();
             List<IThreadedMarchingCubeChunk> chunks = new List<IThreadedMarchingCubeChunk>();
-            chunk.FreeSimpleCollider();
             for (int i = 0; i < 8; i++)
             {
                 newChunks[i].InitializeWithMeshDataParallel(tris[i], (c) =>
@@ -1291,7 +1305,10 @@ namespace MarchingCubes
                     }
                     if (chunks.Count == 8)
                     {
-                        worldUpdater.readyExchangeChunks.Push(new ReadyChunkExchange(chunk, chunks));
+                        lock (exchangeLocker)
+                        {
+                            worldUpdater.readyExchangeChunks.Push(new ReadyChunkExchange(chunk, chunks));
+                        }
                     }
                 });
             }
@@ -1368,7 +1385,7 @@ namespace MarchingCubes
                 ChunkGroupTreeLeaf l = leafs[i];
                 if (l == null)
                     continue;
-                l.leaf.FreeSimpleCollider();
+                l.leaf.PrepareDestruction();
             }
             ExchangeChunkParallel(chunk.CenterPos, toLodPower, chunk.ChunkSizePower + 1, false, true, (c) =>
             {
@@ -1380,7 +1397,10 @@ namespace MarchingCubes
                         continue;
                     oldChunks.Add(l.leaf);
                 }
-                worldUpdater.readyExchangeChunks.Push(new ReadyChunkExchange(oldChunks, c));
+                lock (exchangeLocker)
+                {
+                    worldUpdater.readyExchangeChunks.Push(new ReadyChunkExchange(oldChunks, c));
+                }
             });
         }
 

@@ -33,6 +33,11 @@ namespace MarchingCubes
         }
 
 
+        public void RemoveLeaf(IMarchingCubeChunk chunk)
+        {
+            parent.RemoveChildAtIndex(childIndex, chunk);
+        }
+
         protected int[] GetGlobalAnchorPositionForIndex(int index, int halfSize)
         {
             int[] result = { GroupAnchorPosition[0], GroupAnchorPosition[1], GroupAnchorPosition[2] };

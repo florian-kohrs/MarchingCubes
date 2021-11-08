@@ -24,6 +24,7 @@ namespace MarchingCubes
             groupRelativeAnchorPosition = relativeAnchorPosition;
         }
 
+        public override bool IsLeaf => false;
 
         [Save]
         public Node[] children = new Node[8];
@@ -117,7 +118,7 @@ namespace MarchingCubes
 
         protected Node GetOrCreateChildAt(int index, int[] relativePosition, bool allowOverride)
         {
-            if (children[index] == null || (allowOverride && children[index] is Leaf))
+            if (children[index] == null || (allowOverride && children[index].IsLeaf))
             {
                 int[] childAnchorPosition;
                 int[] childRelativeAnchorPosition;

@@ -178,21 +178,33 @@ namespace MarchingCubes
 
         private void LateUpdate()
         {
-
             while (readyExchangeChunks.Count > 0 && FrameTimer.HasTimeLeftInFrame)
             {
-                ReadyChunkExchange change = readyExchangeChunks.Pop();
+                ReadyChunkExchange change;
+                lock (MarchingCubeChunkHandler.exchangeLocker)
+                {
+                    change = readyExchangeChunks.Pop();
+                }
                 List<IThreadedMarchingCubeChunk> chunk = change.chunks;
                 List<IMarchingCubeChunk> olds = change.old;
-                for (int i = 0; i < chunk.Count; i++)
-                {
-                    //TODO: dont do this for empty chunks, check that no mesh displayer is request for 0 tris
-                    chunk[i].BuildAllMeshes();
-                }
                 for (int i = 0; i < olds.Count; i++)
                 {
                     olds[i].ResetChunk();
                 }
+                for (int i = 0; i < chunk.Count; i++)
+                {
+                    if (chunk[i].IsEmpty && !chunk[i].IsSpawner)
+                    {
+                        chunk[i].ResetChunk();
+                    }
+                    else
+                    {
+                        //TODO: dont do this for empty chunks, check that no mesh displayer is request for 0 tris
+                        chunk[i].IsInOtherThread = false;
+                        chunk[i].BuildAllMeshes();
+                    }
+                }
+                //dont let chunk be reset while still in building phase -> will be null here
                 if (olds[0].IsSpawner)
                 {
                     chunkHandler.SpawnEmptyChunksAround(chunk[0]);
@@ -212,7 +224,7 @@ namespace MarchingCubes
                         chunks.Add(item);
                     }
                 }
-                else
+                else 
                 {
                     break;
                 }

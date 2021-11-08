@@ -9,10 +9,7 @@ namespace MarchingCubes
 
         public IMarchingCubeChunk chunk;
 
-        private void Start()
-        {
-            
-        }
+        public SphereCollider coll;
 
     }
 }

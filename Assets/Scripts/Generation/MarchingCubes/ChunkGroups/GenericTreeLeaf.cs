@@ -21,6 +21,9 @@ namespace MarchingCubes
             groupRelativeAnchorPosition = relativeAnchorPoint;
         }
 
+        public override bool IsLeaf => true;
+
+
         [Save]
         protected int sizePower;
 
@@ -38,6 +41,7 @@ namespace MarchingCubes
         public bool IsEmpty => leaf != null;
 
         public override int SizePower => sizePower;
+
 
         public override T GetChunkAtLocalPosition(int[] pos)
         {

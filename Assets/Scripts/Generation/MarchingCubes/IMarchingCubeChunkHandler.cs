@@ -13,6 +13,8 @@ namespace MarchingCubes
 
         void FreeCollider(ChunkLodCollider c);
 
+        void SetChunkColliderOf(IMarchingCubeChunk c);
+
         bool TryGetReadyChunkAt(Vector3Int p, out IMarchingCubeChunk chunk);
 
         bool TryGetOrCreateChunkAt(Vector3Int p, out IMarchingCubeChunk chunk);

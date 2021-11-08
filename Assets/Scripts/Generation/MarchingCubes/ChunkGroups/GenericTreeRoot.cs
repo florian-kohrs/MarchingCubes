@@ -69,7 +69,7 @@ namespace MarchingCubes
             {
                 child = GetLeaf(leaf, 0, GroupAnchorPosition, GroupAnchorPosition, SizePower);
             }
-            else if(!HasChild || allowOverride)
+            else if(!HasChild || (allowOverride && child.IsLeaf))
             {
                 child = GetNode(GroupAnchorPosition, GroupAnchorPosition, SizePower);
             }

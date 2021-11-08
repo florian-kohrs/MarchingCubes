@@ -26,9 +26,11 @@ namespace MarchingCubes
 
         IMarchingCubeChunkHandler ChunkHandler { set; }
 
-        public ChunkLodCollider ChunkSimpleCollider { set; }
+        ChunkLodCollider ChunkSimpleCollider { set; }
 
-        public void FreeSimpleCollider();
+        void FreeSimpleCollider();
+
+        void PrepareDestruction();
 
         bool IsEmpty { get; }
 

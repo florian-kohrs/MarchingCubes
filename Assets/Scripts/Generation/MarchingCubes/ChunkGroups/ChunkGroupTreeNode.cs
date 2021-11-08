@@ -26,6 +26,18 @@ namespace MarchingCubes
         }
 
 
+        public void RemoveChildAtIndex(int index, IMarchingCubeChunk chunk)
+        {
+            if(children[index] != null 
+                && children[index].IsLeaf 
+                && children[index] is ChunkGroupTreeLeaf leaf 
+                && leaf.leaf == chunk)
+            {
+                children[index] = null;
+            }
+        }
+
+
         public override ChunkGroupTreeLeaf[] GetLeafs()
         {
             //if(AreAllChildrenLeafs())
