@@ -753,11 +753,10 @@ namespace MarchingCubes
         public Transform colliderParent;
 
 
-        protected IMarchingCubeChunk GetChunkObjectAt<T>(Vector3Int position, Vector3Int coord, int lodPower, int chunkSizePower, bool allowOverride) where T : IMarchingCubeChunk, new()
+        protected IMarchingCubeChunk GetChunkObjectAt(IMarchingCubeChunk chunk, Vector3Int position, Vector3Int coord, int lodPower, int chunkSizePower, bool allowOverride)
         {
             ///Pot racecondition
             IChunkGroupRoot chunkGroup = GetOrCreateChunkGroupAtCoordinate(coord);
-            IMarchingCubeChunk chunk = new T();
 
             chunk.ChunkHandler = this;
             chunk.ChunkSizePower = chunkSizePower;
@@ -828,9 +827,9 @@ namespace MarchingCubes
         protected IMarchingCubeChunk GetThreadedChunkObjectAt(Vector3Int position, Vector3Int coord, int lodPower, int chunkSizePower, bool allowOverride)
         {
             if (lodPower <= DEFAULT_MIN_CHUNK_LOD_POWER)
-                return GetChunkObjectAt<MarchingCubeChunkThreaded>(position, coord, lodPower, chunkSizePower, allowOverride);
+                return GetChunkObjectAt(new MarchingCubeChunkThreaded(), position, coord, lodPower, chunkSizePower, allowOverride);
             else
-                return GetChunkObjectAt<CompressedMarchingCubeChunkThreaded>(position, coord, lodPower, chunkSizePower, allowOverride);
+                return GetChunkObjectAt(new CompressedMarchingCubeChunkThreaded(), position, coord, lodPower, chunkSizePower, allowOverride);
         }
 
         protected Vector3Int CoordToPosition(Vector3Int coord)
