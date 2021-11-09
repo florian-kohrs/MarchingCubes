@@ -91,28 +91,28 @@ namespace MarchingCubes
             }
         }
 
-        public void RebuildAroundParallel(float offsetX, float offsetY, float offsetZ, int radius, int posX, int posY, int posZ, float delta, Queue<MarchingCubeChunkThreaded> readyChunks)
-        {
-            IsInOtherThread = true;
+        //public void RebuildAroundParallel(float offsetX, float offsetY, float offsetZ, int radius, int posX, int posY, int posZ, float delta, Queue<MarchingCubeChunkThreaded> readyChunks)
+        //{
+        //    IsInOtherThread = true;
 
-            RequestPointsIfNotStored();
-            ThreadPool.QueueUserWorkItem(delegate
-            {
-                try
-                {
-                    RebuildAround(offsetX, offsetY, offsetZ, radius, posX, posY, posZ, delta);
-                }
-                catch(Exception x)
-                {
-                    Debug.LogError(x);
-                    //TODO: Reduce expected chunk finishes
-                }
-                lock (rebuildListLock)
-                {
-                    readyChunks.Enqueue(this);
-                }
-            });
-        }
+        //    RequestPointsIfNotStored();
+        //    ThreadPool.QueueUserWorkItem(delegate
+        //    {
+        //        try
+        //        {
+        //            RebuildAround(offsetX, offsetY, offsetZ, radius, posX, posY, posZ, delta);
+        //        }
+        //        catch(Exception x)
+        //        {
+        //            Debug.LogError(x);
+        //            //TODO: Reduce expected chunk finishes
+        //        }
+        //        lock (rebuildListLock)
+        //        {
+        //            readyChunks.Enqueue(this);
+        //        }
+        //    });
+        //}
 
         protected List<MeshData> data = new List<MeshData>();
 

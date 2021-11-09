@@ -193,13 +193,11 @@ namespace MarchingCubes
                 cubeEntities = new MarchingCubeEntity[ChunkSize, ChunkSize, ChunkSize];
             }
 
-            StoreNoiseArray();
-
-            RequestPointsIfNotStored();
             ///at some point rather call gpu to compute this
             int ppMinus = pointsPerAxis - 1;
             float sqrEdit = radius * radius;
 
+            int editedNoiseCount = 0;
 
             ///define loop ranges
             int startX = Mathf.Max(0, posX - radius);
@@ -230,11 +228,16 @@ namespace MarchingCubes
                             float diff = factor * delta;
                             float value;
                             int index = PointIndexFromCoord(x, y, z);
-                            value = points[index];
+                            value = Points[index];
 
-                            value += diff;
-                            value = Mathf.Clamp(value, -MAX_NOISE_VALUE, MAX_NOISE_VALUE);
-                            points[index] = value;
+                            if (factor > 0 && ((value != -MAX_NOISE_VALUE || diff >= 0)
+                                && (value != MAX_NOISE_VALUE || diff < 0)))
+                            {
+                                editedNoiseCount++;
+                                value += diff;
+                                value = Mathf.Clamp(value, -MAX_NOISE_VALUE, MAX_NOISE_VALUE);
+                                points[index] = value;
+                            }
                         }
                         distanceZ++;
                     }
@@ -243,7 +246,16 @@ namespace MarchingCubes
                 distanceX++;
             }
 
-            distanceX = startX - posX;
+            if (editedNoiseCount > 0)
+            {
+                StoreNoiseArray();
+                RebuildFromNoiseAround(radius, posX, posY, posZ, startX, startY,startZ, endX, endY, endZ);
+            }
+        }
+
+        protected void RebuildFromNoiseAround(int radius, int posX, int posY, int posZ,int startX, int startY, int startZ, int endX, int endY, int endZ)
+        {
+            float distanceX = startX - posX;
 
             float marchDistance = Vector3.one.magnitude + radius + 1;
             float marchSquare = marchDistance * marchDistance;
@@ -290,7 +302,7 @@ namespace MarchingCubes
                 distanceX++;
             }
 
-            if(!IsEmpty)
+            if (!IsEmpty)
             {
                 GetSimpleCollider();
             }
@@ -409,6 +421,11 @@ namespace MarchingCubes
         protected bool SmallerThanSurface(float f) => f < surfaceLevel;
         protected bool LargerThanSurface(float f) => f >= surfaceLevel;
 
+        protected void EditPointsAroundRayHitOnGPU()
+        {
+
+        }
+
         public void EditPointsAroundRayHit(float delta, RaycastHit hit, int editDistance)
         {
             System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
@@ -426,20 +443,12 @@ namespace MarchingCubes
             float hitOffsetY = hitDiff.y;
             float hitOffsetZ = hitDiff.z;
 
-            Queue<MarchingCubeChunkThreaded> readyChunks = new Queue<MarchingCubeChunkThreaded>();
-
             Vector3Int[] neighbourDirs = NeighbourDirections(originX, originY, originZ, editDistance + 1);
 
             int length = neighbourDirs.Length;
 
-            int totalChunks = length + 1;
-            int expectedFinishes;
-
-            List<Tuple<MarchingCubeChunkThreaded, Vector3Int>>[] chunks = new List<Tuple<MarchingCubeChunkThreaded, Vector3Int>>[2];
-            chunks[0] = new List<Tuple<MarchingCubeChunkThreaded, Vector3Int>>();
-            chunks[1] = new List<Tuple<MarchingCubeChunkThreaded, Vector3Int>>();
-
-            chunks[points != null ? 1 : 0].Add(Tuple.Create((MarchingCubeChunkThreaded)this, origin));
+            List<Tuple<IMarchingCubeInteractableChunk, Vector3Int>> chunks = new List<Tuple<IMarchingCubeInteractableChunk, Vector3Int>>();
+            chunks.Add(Tuple.Create<IMarchingCubeInteractableChunk, Vector3Int>(this, origin));
 
             IMarchingCubeChunk chunk;
             for (int i = 0; i < length; i++)
@@ -448,10 +457,10 @@ namespace MarchingCubes
                 Vector3Int newChunkPos = AnchorPos + offset;
                 if (ChunkHandler.TryGetOrCreateChunkAt(newChunkPos, out chunk))
                 {
-                    if (chunk is MarchingCubeChunkThreaded threadedChunk)
+                    if (chunk is IMarchingCubeInteractableChunk threadedChunk)
                     {
                         Vector3Int v3 = origin - offset;
-                        chunks[threadedChunk.points == null ? 1 : 0].Add(Tuple.Create(threadedChunk,v3));
+                        chunks.Add(Tuple.Create(threadedChunk, v3));
                     }
                     else
                     {
@@ -460,79 +469,15 @@ namespace MarchingCubes
                 }
             }
 
-            expectedFinishes = 0;
-
-            int mainThreadChunks;
-            if(chunks[1].Count >= 2)
-            {
-                mainThreadChunks = 8;
-            }
-            else
-            {
-                mainThreadChunks = 8;
-            }
-            
-
-            int count = chunks[0].Count;
-
+            int count = chunks.Count;
             for (int i = 0; i < count; i++)
             {
-                Vector3Int v3 = chunks[0][i].Item2;
-                if (totalChunks - i > mainThreadChunks)
-                {
-                    chunks[0][i].Item1.RebuildAroundParallel(hitOffsetX, hitOffsetY, hitOffsetZ, editDistance, v3.x, v3.y, v3.z, delta, readyChunks);
-                    expectedFinishes++;
-                }
-                else
-                {
-                    chunks[0][i].Item1.RebuildAround(hitOffsetX, hitOffsetY, hitOffsetZ, editDistance, v3.x, v3.y, v3.z, delta);
-                }
+                Vector3Int v3 = chunks[i].Item2;
+                chunks[i].Item1.RebuildAround(hitOffsetX, hitOffsetY, hitOffsetZ, editDistance, v3.x, v3.y, v3.z, delta);
             }
 
-            totalChunks -= count;
-
-            count = chunks[1].Count;
-            for (int i = 0; i < count; i++)
-            {
-                Vector3Int v3 = chunks[1][i].Item2;
-                if (totalChunks - i > mainThreadChunks)
-                {
-                    chunks[1][i].Item1.RebuildAroundParallel(hitOffsetX, hitOffsetY, hitOffsetZ, editDistance, v3.x, v3.y, v3.z, delta, readyChunks);
-                    expectedFinishes++;
-                }
-                else
-                {
-                    chunks[1][i].Item1.RebuildAround(hitOffsetX, hitOffsetY, hitOffsetZ, editDistance, v3.x, v3.y, v3.z, delta);
-                }
-            }
-
-            int handlelChunks = 0;
-            System.Diagnostics.Stopwatch watch2 = new System.Diagnostics.Stopwatch();
-            watch2.Start();
-            while (handlelChunks < expectedFinishes)
-            {
-                while(readyChunks.Count > 0)
-                {
-                    watch2.Stop();
-                    MarchingCubeChunkThreaded c = readyChunks.Dequeue();
-                    c.SoftResetMeshDisplayers();
-                    c.BuildAllMeshes();
-                    c.IsInOtherThread = false;
-                    handlelChunks++;
-                    watch2.Start();
-                }
-                if(watch.ElapsedMilliseconds > 1000)
-                {
-                    Debug.LogError("Watch exeeded a second. interupt!");
-                    break;
-                }
-            }
-            Debug.Log(watch2.Elapsed.TotalMilliseconds + "ms for wait of parallel chunks");
-
-
-            //RebuildAround(selfEditedPoints);
-            TimeSpan spam = watch.Elapsed;
-            Debug.Log(spam.TotalMilliseconds + "ms for total rebuild of " + (length + 1) + " chunks");
+            watch.Stop();
+            Debug.Log($"Time to rebuild {count} chunks: {watch.Elapsed.TotalMilliseconds} ms.");
         }
 
 
