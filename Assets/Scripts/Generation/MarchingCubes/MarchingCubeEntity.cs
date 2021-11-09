@@ -169,42 +169,6 @@ namespace MarchingCubes
             }
         }
 
-        public bool FindMissingNeighbours(Func<int, int, int, bool> IsInBounds, List<MissingNeighbourData> addHere)
-        {
-            bool hasNeighbourOutOfBounds = true;
-            OutsideEdgeNeighbourDirection neighbour;
-            int count = NeighbourData.OutsideNeighbours.Count;
-            for (int i = 0; i < count; ++i)
-            {
-                neighbour = neighbourData.OutsideNeighbours[i];
-                if (!IsInBounds(origin.x + neighbour.offset.x, origin.y + neighbour.offset.y, origin.z + neighbour.offset.z))
-                {
-                    hasNeighbourOutOfBounds = false;
-                    addHere.Add(new MissingNeighbourData(neighbour, origin));
-                }
-            }
-            neighbourData = null;
-            return hasNeighbourOutOfBounds;
-        }
-
-        public static bool FindMissingNeighboursAt(int triangulationIndex, Vector3Int origin, Func<Vector3Int, bool> IsInBounds, bool[] hasNeighbourInDirection)
-        {
-            bool hasNeighbourOutOfBounds = true;
-            TriangulationNeighbours neighbourData = TriangulationTableStaticData.GetNeighbourData(triangulationIndex);
-            OutsideEdgeNeighbourDirection neighbour;
-            int count = neighbourData.OutsideNeighbours.Count;
-            for (int i = 0; i < count; ++i)
-            {
-                neighbour = neighbourData.OutsideNeighbours[i];
-                Vector3Int newPos = origin + neighbour.offset;
-                if (!IsInBounds(newPos))
-                {
-                    hasNeighbourOutOfBounds = false;
-                    hasNeighbourInDirection[VectorExtension.GetIndexFromDirection(neighbour.offset)] = true;
-                }
-            }
-            return hasNeighbourOutOfBounds;
-        }
 
         public int IndexOfTri(PathTriangle tri)
         {

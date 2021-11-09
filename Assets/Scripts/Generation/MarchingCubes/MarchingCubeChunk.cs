@@ -28,8 +28,6 @@ namespace MarchingCubes
 
         public HashSet<MarchingCubeEntity> entities = new HashSet<MarchingCubeEntity>();
 
-        protected Dictionary<Vector3Int, MarchingCubeEntity> higherLodNeighbourCubes = new Dictionary<Vector3Int, MarchingCubeEntity>();
-
         protected void StoreNoiseArray()
         {
             chunkHandler.Store(AnchorPos, Points);
@@ -92,9 +90,6 @@ namespace MarchingCubes
             cubeEntities[x, y, z] = e;
         }
 
-
-        protected NoiseFilter noiseFilter;
-
         public MarchingCubeEntity GetEntityInNeighbourAt(Vector3Int outsidePos)
         {
             IMarchingCubeChunk chunk;
@@ -115,44 +110,6 @@ namespace MarchingCubes
             FreeAllMeshes();
             cubeEntities = null;
             triCount = 0;
-        }
-
-
-
-        protected void BuildAll(int localLod = 1)
-        {
-            triCount = 0;
-
-            MarchingCubeEntity e;
-
-            for (int x = 0; x < vertexSize / localLod; x++)
-            {
-                for (int y = 0; y < vertexSize / localLod; y++)
-                {
-                    for (int z = 0; z < vertexSize / localLod; z++)
-                    {
-                       
-                        e = MarchAt(x, y, z, this);
-                        if (e != null)
-                        {
-                            AddEntityAt(x, y, z, e);
-                        }
-                    }
-                }
-            }
-        }
-
-        protected bool GetOrAddEntityAt(int x, int y, int z, int triangulationIndex, out MarchingCubeEntity e)
-        {
-            e = GetEntityAt(x, y, z);
-            if (e == null)
-            {
-                e = new MarchingCubeEntity(this, triangulationIndex);
-                e.origin = new Vector3Int(x, y, z);
-                AddEntityAt(x, y, z, e);
-                return false;
-            }
-            return true;
         }
 
         protected MarchingCubeEntity CreateAndAddEntityAt(int x, int y, int z, int triangulationIndex)
@@ -186,10 +143,6 @@ namespace MarchingCubes
                 if (!TryGetEntityAt(x, y, z, out cube))
                 {
                     cube = CreateAndAddEntityAt(x, y, z, ts[i].triIndex);
-                    //if (careAboutNeighbourLODS && IsBorderCube(x, y, z))
-                    //{
-                    //    CheckForConnectedChunk(x, y, z);
-                    //}
                     SetNeighbourAt(x, y, z);
                 }
                 PathTriangle pathTri = new PathTriangle(cube, in ts[i].tri, ts[i].r, ts[i].g, ts[i].b, ts[i].steepness);
@@ -215,14 +168,6 @@ namespace MarchingCubes
             int totalTreeCount = 0;
             int usedTriCount = 0;
 
-            //int triangles = triCount / 3;
-            //TriangleBuilder[] tris = chunkHandler.GenerateCubesFromNoise(this, triangles, Points);
-            //TriangleBuilder t;
-            //for (int i = 0; i < triangles; i++)
-            //{
-            //    t = tris[i];
-            //    AddTriangleToMeshData(t.tri, t.GetColor(), ref usedTriCount, ref totalTreeCount, false);
-            //}
             MarchingCubeEntity e;
             int count;
             IEnumerator<MarchingCubeEntity> enumerator = entities.GetEnumerator();
@@ -236,12 +181,6 @@ namespace MarchingCubes
                 }
             }
 
-        }
-
-        public void Rebuild()
-        {
-            ResetAll();
-            BuildAll();
         }
 
         protected static object rebuildListLock = new object();
@@ -328,8 +267,6 @@ namespace MarchingCubes
                     for (int z = startZ; z <= endZ; z++)
                     {
                         int zz = distanceZ * distanceZ;
-                        //TODO: Replace with sqrDistance
-                        //Maybe write changed coords in hashset instead and check here if they changed?
                         float sqrDis = xx + yy + zz;
                         if (sqrDis <= marchSquare)
                         {
