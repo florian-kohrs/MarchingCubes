@@ -53,7 +53,7 @@ namespace MarchingCubes
         float[] Points { get; set; }
 
         int PointsPerAxis { get; }
-        bool IsChanneled { get; set; }
+
         bool IsSpawner { get; set; }
 
         // void InitializeWithMeshData(Material mat, TriangleBuilder[] tris, int activeTris, float[] points, IMarchingCubeChunkHandler handler, float surfaceLevel);
@@ -67,8 +67,6 @@ namespace MarchingCubes
         void ResetChunk(bool removeSimpleCollider = true);
 
         void AddDisplayer(MarchingCubeMeshDisplayer b);
-
-        void ChangeNeighbourLodTo(int newLodPower, Vector3Int dir);
 
         void SetLeaf(ChunkGroupTreeLeaf leaf);
 
