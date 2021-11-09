@@ -438,86 +438,16 @@ namespace MarchingCubes
             int totalTreeCount = 0;
             int usedTriCount = 0;
 
-            List<MissingNeighbourData> trisWithNeighboursOutOfBounds = new List<MissingNeighbourData>();
             TriangleBuilder[] ts = heap.tris;
             int endIndex = heap.startIndex + heap.triCount;
             for (int i = heap.startIndex; i < endIndex; ++i)
             {
-                //Vector3Int currentOrigin = .Origin;
-
-                //if (careAboutNeighbourLODS && IsBorderCube(currentOrigin))
-                //{
-                //    if (MarchingCubeEntity.FindMissingNeighboursAt(ts[i].triIndex, currentOrigin, IsCubeInBounds, HasNeighbourInDirection))
-                //    {
-                //        ProcessNeighboursFromList(trisWithNeighboursOutOfBounds, currentOrigin);
-                //    }
-                //}
                 SetNeighbourAt(ts[i].x, ts[i].y, ts[i].z);
-
-                //if (chunkHandler.TryGetReadyChunkAt(target, out c))
-                //{
-                //    if (c.LODPower > LODPower)
-                //    {
-                //        BuildMarchingCubeChunkTransitionInDirection(neighbour.originCubeEntity, neighbour, c.LODPower);
-                //    }
-                //}
 
                 if (buildMeshAswell)
                 {
                     AddTriangleToMeshData(in ts[i], ref usedTriCount, ref totalTreeCount);
                 }
-            }
-
-
-            //MissingNeighbourData neighbour;
-            //IMarchingCubeChunk c;
-
-            //int missingNeighbourCount = trisWithNeighboursOutOfBounds.Count;
-            //for (int i = 0; i < missingNeighbourCount; ++i)
-            //{
-            //    neighbour = trisWithNeighboursOutOfBounds[i];
-            //    Vector3Int target = AnchorPos + (neighbour.outsideNeighbour.offset);
-            //    Vector3Int border = neighbour.originCubeEntity + neighbour.outsideNeighbour.offset;
-
-            //    AddNeighbourFromEntity(neighbour.outsideNeighbour.offset);
-
-            //    if (chunkHandler.TryGetReadyChunkAt(target, out c))
-            //    {
-            //        if (c.LODPower > LODPower)
-            //        {
-            //            BuildMarchingCubeChunkTransitionInDirection(neighbour.originCubeEntity, neighbour, c.LODPower);
-            //        }
-            //    }
-            //    else if (careAboutNeighbourLODS)
-            //    {
-            //        int neighbourLodPower = neighbourLODs.GetLodPowerFromNeighbourInDirection(neighbour.outsideNeighbour.offset);
-            //        if (neighbourLodPower > LODPower)
-            //        {
-            //            BuildMarchingCubeChunkTransitionInDirection(neighbour.originCubeEntity, neighbour, neighbourLodPower);
-            //        }
-            //    }
-            //}
-        }
-
-
-        protected void ProcessNeighboursFromList(List<MissingNeighbourData> l, Vector3Int origin)
-        {
-            int count = l.Count;
-            for (int i = 0; i < count; ++i)
-            {
-                MissingNeighbourData t = l[i];
-                Vector3Int target = AnchorPos + origin + t.outsideNeighbour.offset;
-                //AddNeighbourFromEntity(t.outsideNeighbour.offset);
-                IMarchingCubeChunk c;
-                int otherLodPower;
-                //TODO: may also take non ready chunks!
-                if (chunkHandler.TryGetReadyChunkAt(target, out c))
-                    otherLodPower = c.LODPower;
-                else
-                    otherLodPower = neighbourLODs.GetLodPowerFromNeighbourInDirection(t.outsideNeighbour.offset);
-
-                //TODO: Build Chunk glue on gpu
-                //BuildMarchingCubeChunkTransitionInDirection(origin, t, otherLodPower);
             }
         }
 

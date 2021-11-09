@@ -615,7 +615,7 @@ public class GamePersistence
     /// <returns></returns>
     public T LoadSaveable<T>(string path)
     {
-        T result = default(T);
+        T result = default;
         //Debug.Log("loadthis." + path);
         if (File.Exists(path))
         {

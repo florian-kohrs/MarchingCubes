@@ -47,8 +47,6 @@ namespace MarchingCubes
 
         protected float[] storedNoiseData;
 
-        public Dictionary<Vector3Int, IChunkGroupRoot> ChunkGroups => chunkGroups;
-
         [Range(1, 253)]
         public int blockAroundPlayer = 16;
 
@@ -107,7 +105,6 @@ namespace MarchingCubes
         public void FreeCollider(ChunkLodCollider c)
         {
             c.coll.enabled = false;
-            //c.chunk = null;
             freechunkCollider.Push(c);
         }
 
@@ -211,8 +208,6 @@ namespace MarchingCubes
 
         public BaseDensityGenerator densityGenerator;
 
-
-
         public bool useTerrainNoise;
 
 
@@ -256,16 +251,7 @@ namespace MarchingCubes
             startPos = player.position;
             IMarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
             maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
-            //BuildRelevantChunksAround(chunk);
             BuildRelevantChunksParallelBlockingAround(chunk);
-            //StartCoroutine(BuildRelevantChunksParallelAround(chunk));
-        }
-
-
-
-        private void Update()
-        {
-            //CheckChunksAround(player.position);
         }
 
         protected IEnumerator UpdateChunks()
@@ -285,41 +271,6 @@ namespace MarchingCubes
         protected Queue<Vector3Int> neighbours = new Queue<Vector3Int>();
 
         protected BinaryHeap<float, Vector3Int> closestNeighbours = new BinaryHeap<float, Vector3Int>(float.MinValue, float.MaxValue, 200);
-
-        public void BuildRelevantChunksAround(IMarchingCubeChunk chunk)
-        {
-            Queue<IMarchingCubeChunk> neighboursToBuild = new Queue<IMarchingCubeChunk>();
-            neighboursToBuild.Enqueue(chunk);
-            while (neighboursToBuild.Count > 0)
-            {
-                IMarchingCubeChunk current = neighboursToBuild.Dequeue();
-                bool[] dirs = current.HasNeighbourInDirection;
-                int count = dirs.Length;
-                for (int i = 0; i < count; i++)
-                {
-                    if (!dirs[i])
-                        continue;
-                    Vector3Int v3 = VectorExtension.GetDirectionFromIndex(i) * (current.ChunkSize + 1) + current.CenterPos;
-                    if (!HasChunkAtPosition(v3) && (startPos - v3).magnitude < buildAroundDistance)
-                    {
-                        neighboursToBuild.Enqueue(CreateChunkAt(v3));
-                        if (totalTriBuild >= maxTrianglesLeft)
-                        {
-                            Debug.Log("Aborted");
-                            neighboursToBuild.Clear();
-                            break;
-                        }
-                    }
-                }
-            }
-
-            watch.Stop();
-            Debug.Log("Total millis: " + watch.Elapsed.TotalMilliseconds);
-
-            Debug.Log("Total triangles: " + totalTriBuild);
-
-            Debug.Log($"Number of chunkgroups: {ChunkGroups.Count}");
-        }
 
 
         public void BuildRelevantChunksParallelBlockingAround(IMarchingCubeChunk chunk)
@@ -415,15 +366,13 @@ namespace MarchingCubes
                 Debug.Log("Aborted");
             }
             Debug.Log("Total triangles: " + totalTriBuild);
-
-            Debug.Log($"Number of chunks: {ChunkGroups.Count}");
         }
 
         private IEnumerator BuildRelevantChunksParallelAround()
         {
             List<Exception> x = MarchingCubeChunkThreaded.xs;
             Vector3Int next;
-            bool isNextInProgress = false;
+            bool isNextInProgress;
             while (closestNeighbours.size > 0)
             {
                 do
@@ -691,16 +640,6 @@ namespace MarchingCubes
             return false;
         }
 
-        public void RemoveChunk(IMarchingCubeChunk chunk)
-        {
-            Vector3Int coord = PositionToChunkGroupCoord(chunk.AnchorPos);
-            IChunkGroupRoot chunkGroup;
-            if (chunkGroups.TryGetValue(coord, out chunkGroup))
-            {
-                chunkGroup.RemoveChunkAtGlobalPosition(chunk.AnchorPos);
-            }
-        }
-
         public bool TryGetReadyChunkAt(Vector3Int p, out IMarchingCubeChunk chunk)
         {
             return TryGetChunkAtPosition(p, out chunk) && chunk.IsReady;
@@ -711,32 +650,6 @@ namespace MarchingCubes
             return TryGetChunkAtPosition(p, out chunk, out relativePositionInChunk) && chunk.IsReady;
         }
 
-        /// <summary>
-        /// gets or creates a chunk at position. Fails if at position a chunk is being created
-        /// </summary>
-        /// <param name="p"></param>
-        /// <param name="chunk"></param>
-        /// <returns></returns>
-        public bool TryGetOrCreateChunk(Vector3Int p, out IMarchingCubeChunk chunk)
-        {
-            if (TryGetChunkAtPosition(p, out chunk))
-            {
-                if (chunk.IsReady)
-                {
-                    return true;
-                }
-                else
-                {
-                    chunk = null;
-                    return false;
-                }
-            }
-            else
-            {
-                chunk = CreateChunkAt(p);
-                return true;
-            }
-        }
 
         public bool HasChunkStartedAt(Vector3Int p)
         {
@@ -804,7 +717,7 @@ namespace MarchingCubes
         {
             GameObject g = new GameObject();
             SphereCollider sphere = g.AddComponent<SphereCollider>();
-            sphere.radius = 16;
+            sphere.radius = 1;
 
             sphere.isTrigger = true;
 
@@ -884,62 +797,7 @@ namespace MarchingCubes
         private ComputeBuffer savedPointBuffer;
         private ComputeBuffer triCountBuffer;
 
-
-        //TODO: Check to iterate loops in parallel(https://michaelscodingspot.com/array-iteration-vs-parallelism-in-c-net/)
-
-        protected void SplitArray(int halfSize, float[] splitThis,
-           float[] frontBotLeft, float[] frontBotRight, float[] frontTopLeft, float[] frontTopRight,
-           float[] backBotLeft, float[] backBotRight, float[] backTopLeft, float[] backTopRight)
-        {
-            //ThreadPool.GetAvailableThreads(out availableThreads, out availableSyncThreads);
-            //if (availableThreads >= 8)
-            //{
-            //    ThreadPool.QueueUserWorkItem((o) => SplitArrayAtParallel(done, 0, halfSize, 0, 0, 0, splitThis, frontBotLeft));
-            //    ThreadPool.QueueUserWorkItem((o) => SplitArrayAtParallel(done, 1, halfSize, halfSize, 0, 0, splitThis, frontBotRight));
-            //    ThreadPool.QueueUserWorkItem((o) => SplitArrayAtParallel(done, 2, halfSize, 0, halfSize, 0, splitThis, frontTopLeft));
-            //    ThreadPool.QueueUserWorkItem((o) => SplitArrayAtParallel(done, 3, halfSize, halfSize, halfSize, 0, splitThis, frontTopRight));
-            //    ThreadPool.QueueUserWorkItem((o) => SplitArrayAtParallel(done, 4, halfSize, 0, 0, halfSize, splitThis, backBotLeft));
-            //    ThreadPool.QueueUserWorkItem((o) => SplitArrayAtParallel(done, 5, halfSize, halfSize, 0, halfSize, splitThis, backBotRight));
-            //    ThreadPool.QueueUserWorkItem((o) => SplitArrayAtParallel(done, 6, halfSize, 0, halfSize, halfSize, splitThis, backTopLeft));
-            //    ThreadPool.QueueUserWorkItem((o) => SplitArrayAtParallel(done,7,halfSize, halfSize, halfSize, halfSize, splitThis, backTopRight));
-            //}
-            //while (done.Contains(false))
-            //{
-
-            //}
-            SplitArrayAt(halfSize, 0, 0, 0, splitThis, frontBotLeft);
-            SplitArrayAt(halfSize, halfSize, 0, 0, splitThis, frontBotRight);
-            SplitArrayAt(halfSize, 0, halfSize, 0, splitThis, frontTopLeft);
-            SplitArrayAt(halfSize, halfSize, halfSize, 0, splitThis, frontTopRight);
-            SplitArrayAt(halfSize, 0, 0, halfSize, splitThis, backBotLeft);
-            SplitArrayAt(halfSize, halfSize, 0, halfSize, splitThis, backBotRight);
-            SplitArrayAt(halfSize, 0, halfSize, halfSize, splitThis, backTopLeft);
-            SplitArrayAt(halfSize, halfSize, halfSize, halfSize, splitThis, backTopRight);
-
-        }
-
-
-
-        public float[][] GetSplittedNoiseArray(IMarchingCubeChunk chunk)
-        {
-            float[] points = chunk.Points;
-            int halfSize = chunk.ChunkSize / 2;
-            int halfPlus = halfSize + 1;
-            int size = halfPlus * halfPlus * halfPlus;
-            float[] frontBotLeft = new float[size];
-            float[] frontBotRight = new float[size];
-            float[] frontTopLeft = new float[size];
-            float[] frontTopRight = new float[size];
-            float[] backBotLeft = new float[size];
-            float[] backBotRight = new float[size];
-            float[] backTopLeft = new float[size];
-            float[] backTopRight = new float[size];
-            SplitArray(halfSize, points, frontBotLeft, frontBotRight, frontTopLeft, frontTopRight, backBotLeft, backBotRight, backTopLeft, backTopRight);
-
-            return new float[][] { frontBotLeft, backTopLeft, frontBotRight, backBotRight, frontTopLeft, backTopLeft, frontTopRight, backTopRight };
-        }
-
-
+   
         public MarchingCubeChunkNeighbourLODs GetNeighbourLODSFrom(IMarchingCubeChunk chunk)
         {
             MarchingCubeChunkNeighbourLODs result = new MarchingCubeChunkNeighbourLODs();
@@ -1002,14 +860,6 @@ namespace MarchingCubes
             return result;
         }
 
-        public float[] GetNoiseRawFor(int pointsPerAxis, int LOD, Vector3Int anchor)
-        {
-            densityGenerator.Generate(pointsPerAxis, anchor, LOD);
-            float[] result = new float[pointsPerAxis * pointsPerAxis * pointsPerAxis];
-            pointsBuffer.GetData(result, 0, 0, result.Length);
-            return result;
-        }
-
 
         public void GenerateNoise(int sizePow, int pointsPerAxis, int LOD, Vector3Int anchor, bool loadNoiseData = true)
         {
@@ -1048,6 +898,7 @@ namespace MarchingCubes
 
         }
 
+        //TODO: Maybe remove pooling theese -> could reduce size of buffer for faster reads
         protected TriangleChunkHeap[] DispatchMultipleChunks(IMarchingCubeChunk[] chunks)
         {
             triangleBuffer.SetCounterValue(0);
@@ -1225,7 +1076,6 @@ namespace MarchingCubes
         public void IncreaseChunkLod(IMarchingCubeChunk chunk, int toLodPower)
         {
             toLodPower = GetFeasibleIncreaseLodForChunk(chunk, toLodPower);
-            int oldLodPow = chunk.LODPower;
             int toLod = RoundToPowerOf2(toLodPower);
             if (toLod >= chunk.LOD || chunk.ChunkSize % toLod != 0)
                 Debug.LogWarning($"invalid new chunk lod {toLodPower} from lod {chunk.LODPower}");
@@ -1288,6 +1138,7 @@ namespace MarchingCubes
             for (int i = 0; i < 8; i++)
             {
                 Vector3Int v3 = IntVecToVector3(anchors[i]);
+                //TODO:use already referenced parent to set children
                 newChunks[i] = GetThreadedChunkObjectAt(v3, PositionToChunkGroupCoord(v3), toLodPower, newSizePow, true);
             }
             chunk.PrepareDestruction();
@@ -1346,37 +1197,18 @@ namespace MarchingCubes
 
                 if (chunk.GetLeaf().AllSiblingsAreLeafsWithSameTargetLod())
                 {
-                    MergeAndReduceChunkBranch(chunk, toLodPower, toLod);
+                    MergeAndReduceChunkBranch(chunk, toLodPower);
                 }
                 else
                 {
-                    DecreaseSingleChunkLod(chunk, toLodPower, toLod);
+                    ///Decrease single chunk lod
+                    ExchangeSingleChunkParallel(chunk, chunk.CenterPos, toLodPower, chunk.ChunkSizePower, false, true);
                 }
             }
         }
 
-        public void DecreaseSingleChunkLod(IMarchingCubeChunk chunk, int toLodPower)
-        {
-            toLodPower = GetFeasibleReducedLodForChunk(chunk, toLodPower);
-            int toLod = RoundToPowerOf2(toLodPower);
-            if (toLod <= chunk.LOD || chunk.ChunkSize % toLod != 0)
-                Debug.LogWarning($"invalid new chunk lod {toLodPower} from lod {chunk.LODPower}");
 
-            DecreaseSingleChunkLod(chunk, toLodPower, toLod);
-        }
-
-        protected void DecreaseSingleChunkLod(IMarchingCubeChunk chunk, int toLodPower, int toLod)
-        {
-            ExchangeSingleChunkParallel(chunk, chunk.CenterPos, toLodPower, chunk.ChunkSizePower, false, true);
-        }
-
-        public float[] GetNoiseForMergingChunkAt(IMarchingCubeChunk chunk, int toLod)
-        {
-            int[] pos = chunk.GetLeaf().parent.GroupAnchorPosition;
-            return RequestNoiseFor(chunk.ChunkSizePower, chunk.PointsPerAxis, toLod, new Vector3Int(pos[0], pos[1], pos[2]));
-        }
-
-        public void MergeAndReduceChunkBranch(IMarchingCubeChunk chunk, int toLodPower, int toLod)
+        public void MergeAndReduceChunkBranch(IMarchingCubeChunk chunk, int toLodPower)
         {
             ChunkGroupTreeLeaf[] leafs = chunk.GetLeaf().parent.GetLeafs();
             for (int i = 0; i < 8; i++)
@@ -1403,79 +1235,6 @@ namespace MarchingCubes
             });
         }
 
-        protected void TransferPointsInto(float[] originalPoints, float[] writeInHere, int originalPointsPerAxis, int originalPointsPerAxisSqr, int shrinkFactor)
-        {
-            int addCount = 0;
-
-            for (int z = 0; z < originalPointsPerAxis; z += shrinkFactor)
-            {
-                int zPoint = z * originalPointsPerAxisSqr;
-                for (int y = 0; y < originalPointsPerAxis; y += shrinkFactor)
-                {
-                    int yPoint = y * originalPointsPerAxis;
-                    for (int x = 0; x < originalPointsPerAxis; x += shrinkFactor)
-                    {
-                        writeInHere[addCount] = originalPoints[zPoint + yPoint + x];
-                        addCount++;
-                    }
-                }
-            }
-        }
-
-
-        protected void CombinePointsInto(int[] startIndex, float[] originalPoints, float[] writeInHere, int pointsPerAxis, int pointsPerAxisSqr, int shrinkFactor, int toLod)
-        {
-            int halfSize = pointsPerAxis / 2;
-            int halfSizeCeil = halfSize;
-            int halfFrontJump = pointsPerAxis * halfSizeCeil;
-
-            int writeIndex = startIndex[0] / toLod + startIndex[1] / toLod * pointsPerAxis + startIndex[2] / toLod * pointsPerAxisSqr;
-            int readIndex;
-
-            for (int z = 0; z < pointsPerAxis; z += shrinkFactor)
-            {
-                int zPoint = z * pointsPerAxisSqr;
-                for (int y = 0; y < pointsPerAxis; y += shrinkFactor)
-                {
-                    int yPoint = y * pointsPerAxis;
-                    readIndex = zPoint + yPoint;
-                    for (int x = 0; x < pointsPerAxis; x += shrinkFactor)
-                    {
-                        float val = originalPoints[readIndex + x];
-                        writeInHere[writeIndex] = val;
-                        writeIndex++;
-                    }
-                    writeIndex += halfSizeCeil;
-                }
-                writeIndex += halfFrontJump;
-            }
-        }
-
-        protected void SplitArrayAt(int halfSize, int startIndexX, int startIndexY, int startIndexZ, float[] points, float[] writeInHere)
-        {
-            int pointsPerAxis = 2 * halfSize + 1;
-            int halfFrontJump = pointsPerAxis * halfSize;
-            int readIndex = 0;
-            int counter = 0;
-            int endX = startIndexX + halfSize;
-            int endY = startIndexY + halfSize;
-            int endZ = startIndexZ + halfSize;
-            for (int z = startIndexZ; z <= endZ; z++)
-            {
-                for (int y = startIndexY; y <= endY; y++)
-                {
-                    for (int x = startIndexX; x <= endX; x++)
-                    {
-                        writeInHere[counter] = points[readIndex];
-                        readIndex += 1;
-                        counter++;
-                    }
-                    readIndex += halfSize;
-                }
-                readIndex += halfFrontJump;
-            }
-        }
-
 
         protected void CreateAllBuffersWithSizes(int numVoxelsPerAxis)
         {
@@ -1491,7 +1250,7 @@ namespace MarchingCubes
             triCountBuffer = new ComputeBuffer(MAX_CHUNKS_PER_ITERATION, sizeof(int), ComputeBufferType.Raw);
         }
 
-        protected const int MAX_CHUNKS_PER_ITERATION = 15;
+        protected const int MAX_CHUNKS_PER_ITERATION = 8;
 
         protected void ApplyShaderProperties()
         {
@@ -1538,5 +1297,6 @@ namespace MarchingCubes
             }
             edits.vals = noise;
         }
+
     }
 }

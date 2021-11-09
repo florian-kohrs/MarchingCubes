@@ -43,8 +43,6 @@ namespace MarchingCubes
 
         void Store(Vector3Int anchorPos, float[] noise);
 
-        float[][] GetSplittedNoiseArray(IMarchingCubeChunk chunk);
-
         //IMarchingCubeChunk CreateChunkFromNoiseAt(ChunkGroupTreeLeaf leaf, float[] noise);
 
     }

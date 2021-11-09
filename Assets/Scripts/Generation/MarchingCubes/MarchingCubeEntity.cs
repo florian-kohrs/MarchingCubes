@@ -74,6 +74,7 @@ namespace MarchingCubes
 
         public PathTriangle[] triangles;
 
+        //TODO: Maybe just use 3 ints
         public Vector3Int origin;
 
         public Vector3Int Origin => origin;
