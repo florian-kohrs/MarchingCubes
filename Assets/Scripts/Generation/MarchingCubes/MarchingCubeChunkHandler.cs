@@ -154,7 +154,7 @@ namespace MarchingCubes
             }
         }
 
-        public void FreeMeshDisplayer(MarchingCubeMeshDisplayer display)
+        public void TakeMeshDisplayerBack(MarchingCubeMeshDisplayer display)
         {
             if (display.HasCollider)
             {
@@ -164,6 +164,11 @@ namespace MarchingCubes
             {
                 unusedDisplayer.Push(display);
             }
+        }
+
+        public void FreeMeshDisplayer(MarchingCubeMeshDisplayer display)
+        {
+            TakeMeshDisplayerBack(display);
             display.Reset();
         }
 
@@ -941,7 +946,7 @@ namespace MarchingCubes
 
                 if (length == 0)
                 {
-                    chunks[i].FreeDataFromEmptyChunk();
+                    chunks[i].FreeSimpleChunkCollider();
                 }
             }
             return result;
@@ -977,7 +982,8 @@ namespace MarchingCubes
 
             if (numTris == 0)
             {
-                chunk.FreeDataFromEmptyChunk();
+                chunk.FreeSimpleChunkCollider();
+                chunk.GiveUnusedDisplayerBack();
             }
 
             if ((numTris == 0 && !hasFoundInitialChunk) || careForNeighbours)

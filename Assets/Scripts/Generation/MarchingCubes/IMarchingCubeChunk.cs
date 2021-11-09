@@ -28,7 +28,9 @@ namespace MarchingCubes
 
         ChunkLodCollider ChunkSimpleCollider { set; }
 
-        void FreeDataFromEmptyChunk();
+        void FreeSimpleChunkCollider();
+
+        void SoftResetMeshDisplayers();
 
         void PrepareDestruction();
 
@@ -71,6 +73,7 @@ namespace MarchingCubes
         void SetLeaf(ChunkGroupTreeLeaf leaf);
 
         ChunkGroupTreeLeaf GetLeaf();
+        void GiveUnusedDisplayerBack();
 
         //void InitializeEmpty(IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel);
 

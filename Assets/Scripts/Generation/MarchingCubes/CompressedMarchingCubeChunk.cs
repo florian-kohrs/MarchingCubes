@@ -86,7 +86,7 @@ namespace MarchingCubes
             leaf.RemoveLeaf(this);
             IsReady = false;
             HasStarted = false;
-            FreeDataFromEmptyChunk();
+            FreeSimpleChunkCollider();
         }
 
         public void GetSimpleCollider()
@@ -97,14 +97,13 @@ namespace MarchingCubes
             }
         }
 
-        public void FreeDataFromEmptyChunk()
+        public void FreeSimpleChunkCollider()
         {
             if(chunkSimpleCollider != null)
             {
                 chunkHandler.FreeCollider(chunkSimpleCollider);
                 chunkSimpleCollider = null;
             }
-            SoftResetMeshDisplayers();
         }
 
         public WorldUpdater ChunkUpdater
@@ -666,11 +665,17 @@ namespace MarchingCubes
             }
         }
 
+        public void GiveUnusedDisplayerBack()
+        {
+            chunkHandler.TakeMeshDisplayerBack(freeDisplayer);
+            activeDisplayers.Clear();
+            freeDisplayer = null;
+        }
 
         /// <summary>
         /// only resets mesh with a collider active (does not include border connections meshed)
         /// </summary>
-        protected void SoftResetMeshDisplayers()
+        public void SoftResetMeshDisplayers()
         {
             for (int i = 0; i < activeDisplayers.Count; ++i)
             {
