@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public class BaseMeshDisplayer : IHasInteractableMarchingCubeChunk
+    public class MarchingCubeMeshDisplayer : IHasInteractableMarchingCubeChunk
     {
 
         public Mesh mesh;
@@ -27,7 +27,7 @@ namespace MarchingCubes
 
         public IMarchingCubeInteractableChunk GetChunk => throw new System.NotImplementedException();
 
-        protected BaseMeshDisplayer(IMarchingCubeInteractableChunk chunk, GameObject g, Transform t) : this(g, g.AddComponent<MeshFilter>(), g.AddComponent<MeshRenderer>(), new Mesh(), g.AddComponent<MeshCollider>())
+        protected MarchingCubeMeshDisplayer(IMarchingCubeInteractableChunk chunk, GameObject g, Transform t) : this(g, g.AddComponent<MeshFilter>(), g.AddComponent<MeshRenderer>(), new Mesh(), g.AddComponent<MeshCollider>())
         {
             g.transform.SetParent(t, false);
             if (chunk is IMarchingCubeInteractableChunk interactable)
@@ -38,16 +38,23 @@ namespace MarchingCubes
         }
 
 
-        protected BaseMeshDisplayer(GameObject g, Transform t) : this(g, g.AddComponent<MeshFilter>(), g.AddComponent<MeshRenderer>(), new Mesh())
+        protected MarchingCubeMeshDisplayer(GameObject g, Transform t) : this(g, g.AddComponent<MeshFilter>(), g.AddComponent<MeshRenderer>(), new Mesh())
         {
             g.transform.SetParent(t, false);
         }
 
-        public BaseMeshDisplayer(IMarchingCubeInteractableChunk chunk, Transform t) : this(chunk, new GameObject(/*$"{chunk.AnchorPos.x},{chunk.AnchorPos.y},{chunk.AnchorPos.z} "*/),t) { }
+        public MarchingCubeMeshDisplayer(IMarchingCubeInteractableChunk chunk, Transform t) : this(chunk, new GameObject(/*$"{chunk.AnchorPos.x},{chunk.AnchorPos.y},{chunk.AnchorPos.z} "*/),t) { }
 
-        public BaseMeshDisplayer(Transform t) : this(new GameObject(),t) { }
+        public MarchingCubeMeshDisplayer(Transform t, bool useCollider) : this(new GameObject(),t) 
+        { 
+            if(useCollider)
+            {
+                GetCubeForwarder();
+                GetCollider();
+            }
+        }
 
-        public BaseMeshDisplayer(GameObject g, MeshFilter filter, MeshRenderer renderer, Mesh mesh, MeshCollider collider = null)
+        public MarchingCubeMeshDisplayer(GameObject g, MeshFilter filter, MeshRenderer renderer, Mesh mesh, MeshCollider collider = null)
         {
             this.g = g;
             this.collider = collider;

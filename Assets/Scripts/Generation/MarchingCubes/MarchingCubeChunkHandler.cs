@@ -78,9 +78,9 @@ namespace MarchingCubes
         }
 
 
-        protected Stack<BaseMeshDisplayer> unusedDisplayer = new Stack<BaseMeshDisplayer>();
+        protected Stack<MarchingCubeMeshDisplayer> unusedDisplayer = new Stack<MarchingCubeMeshDisplayer>();
 
-        protected Stack<BaseMeshDisplayer> unusedInteractableDisplayer = new Stack<BaseMeshDisplayer>();
+        protected Stack<MarchingCubeMeshDisplayer> unusedInteractableDisplayer = new Stack<MarchingCubeMeshDisplayer>();
 
         protected Stack<ChunkLodCollider> freechunkCollider = new Stack<ChunkLodCollider>();
 
@@ -108,23 +108,23 @@ namespace MarchingCubes
             freechunkCollider.Push(c);
         }
 
-        public BaseMeshDisplayer GetNextMeshDisplayer()
+        public MarchingCubeMeshDisplayer GetNextMeshDisplayer()
         {
-            BaseMeshDisplayer displayer;
+            MarchingCubeMeshDisplayer displayer;
             if (unusedDisplayer.Count > 0)
             {
                 displayer = unusedDisplayer.Pop();
             }
             else
             {
-                displayer = new BaseMeshDisplayer(transform);
+                displayer = new MarchingCubeMeshDisplayer(transform,false);
             }
             return displayer;
         }
 
-        public BaseMeshDisplayer GetNextInteractableMeshDisplayer(IMarchingCubeInteractableChunk forChunk)
+        public MarchingCubeMeshDisplayer GetNextInteractableMeshDisplayer(IMarchingCubeInteractableChunk forChunk)
         {
-            BaseMeshDisplayer displayer;
+            MarchingCubeMeshDisplayer displayer;
             if (unusedInteractableDisplayer.Count > 0)
             {
                 displayer = unusedInteractableDisplayer.Pop();
@@ -137,13 +137,24 @@ namespace MarchingCubes
             }
             else
             {
-                displayer = new BaseMeshDisplayer(forChunk, transform);
+                displayer = new MarchingCubeMeshDisplayer(forChunk, transform);
             }
             return displayer;
         }
 
+        protected void SetDisplayerOfChunk(IMarchingCubeChunk c)
+        {
+            if (c is IMarchingCubeInteractableChunk interactableChunk)
+            {
+                interactableChunk.AddDisplayer(GetNextInteractableMeshDisplayer(interactableChunk));
+            }
+            else
+            {
+                c.AddDisplayer(GetNextMeshDisplayer());
+            }
+        }
 
-        public void FreeMeshDisplayer(BaseMeshDisplayer display)
+        public void FreeMeshDisplayer(MarchingCubeMeshDisplayer display)
         {
             if (display.HasCollider)
             {
@@ -156,7 +167,7 @@ namespace MarchingCubes
             display.Reset();
         }
 
-        public void FreeAllDisplayers(List<BaseMeshDisplayer> displayers)
+        public void FreeAllDisplayers(List<MarchingCubeMeshDisplayer> displayers)
         {
             for (int i = 0; i < displayers.Count; ++i)
             {
@@ -930,7 +941,7 @@ namespace MarchingCubes
 
                 if (length == 0)
                 {
-                    chunks[i].FreeSimpleCollider();
+                    chunks[i].FreeDataFromEmptyChunk();
                 }
             }
             return result;
@@ -957,6 +968,7 @@ namespace MarchingCubes
 
             ///Do work for chunk here, before data from gpu is read, to give gpu time to finish
 
+            SetDisplayerOfChunk(chunk);
             SetChunkColliderOf(chunk);
 
             ///read data from gpu
@@ -965,7 +977,7 @@ namespace MarchingCubes
 
             if (numTris == 0)
             {
-                chunk.FreeSimpleCollider();
+                chunk.FreeDataFromEmptyChunk();
             }
 
             if ((numTris == 0 && !hasFoundInitialChunk) || careForNeighbours)
@@ -1085,7 +1097,7 @@ namespace MarchingCubes
             {
                 Debug.Log("Simple decrease");
                     //if previous chunk was border chunk, build spawners at neighbours
-                IMarchingCubeChunk current = ExchangeSingleChunkParallel(chunk, chunk.AnchorPos, toLodPower, chunk.ChunkSizePower, false, true);
+                ExchangeSingleChunkParallel(chunk, chunk.AnchorPos, toLodPower, chunk.ChunkSizePower, false, true);
             }
             else
             {

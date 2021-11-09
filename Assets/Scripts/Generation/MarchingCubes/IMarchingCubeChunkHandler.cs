@@ -21,15 +21,15 @@ namespace MarchingCubes
 
         bool TryGetReadyChunkAt(Vector3Int p, out IMarchingCubeChunk chunk, out Vector3Int positionInOtherChunk);
 
-        BaseMeshDisplayer GetNextMeshDisplayer();
+        MarchingCubeMeshDisplayer GetNextMeshDisplayer();
 
-        BaseMeshDisplayer GetNextInteractableMeshDisplayer(IMarchingCubeInteractableChunk forChunk);
+        MarchingCubeMeshDisplayer GetNextInteractableMeshDisplayer(IMarchingCubeInteractableChunk forChunk);
 
         void StartWaitForParralelChunkDoneCoroutine(IEnumerator e);
 
-        void FreeMeshDisplayer(BaseMeshDisplayer display);
+        void FreeMeshDisplayer(MarchingCubeMeshDisplayer display);
 
-        void FreeAllDisplayers(List<BaseMeshDisplayer> displayers);
+        void FreeAllDisplayers(List<MarchingCubeMeshDisplayer> displayers);
 
         void DecreaseChunkLod(IMarchingCubeChunk chunk, int toLodPower);
 

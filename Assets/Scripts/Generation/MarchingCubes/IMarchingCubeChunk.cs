@@ -28,7 +28,7 @@ namespace MarchingCubes
 
         ChunkLodCollider ChunkSimpleCollider { set; }
 
-        void FreeSimpleCollider();
+        void FreeDataFromEmptyChunk();
 
         void PrepareDestruction();
 
@@ -63,6 +63,8 @@ namespace MarchingCubes
         void InitializeWithMeshData(TriangleChunkHeap triangleData);
 
         void ResetChunk(bool removeSimpleCollider = true);
+
+        void AddDisplayer(MarchingCubeMeshDisplayer b);
 
         void ChangeNeighbourLodTo(int newLodPower, Vector3Int dir);
 

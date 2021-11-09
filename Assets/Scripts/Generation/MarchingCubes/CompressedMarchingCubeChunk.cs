@@ -86,7 +86,7 @@ namespace MarchingCubes
             leaf.RemoveLeaf(this);
             IsReady = false;
             HasStarted = false;
-            FreeSimpleCollider();
+            FreeDataFromEmptyChunk();
         }
 
         public void GetSimpleCollider()
@@ -97,13 +97,14 @@ namespace MarchingCubes
             }
         }
 
-        public void FreeSimpleCollider()
+        public void FreeDataFromEmptyChunk()
         {
             if(chunkSimpleCollider != null)
             {
                 chunkHandler.FreeCollider(chunkSimpleCollider);
                 chunkSimpleCollider = null;
             }
+            SoftResetMeshDisplayers();
         }
 
         public WorldUpdater ChunkUpdater
@@ -141,7 +142,7 @@ namespace MarchingCubes
 
         protected bool careAboutNeighbourLODS;
 
-        protected List<BaseMeshDisplayer> activeDisplayers = new List<BaseMeshDisplayer>();
+        protected List<MarchingCubeMeshDisplayer> activeDisplayers = new List<MarchingCubeMeshDisplayer>();
 
         protected int lod = 1;
 
@@ -612,14 +613,31 @@ namespace MarchingCubes
             }
         }
 
-        protected BaseMeshDisplayer GetMeshDisplayer()
+        protected MarchingCubeMeshDisplayer freeDisplayer;
+
+        public void AddDisplayer(MarchingCubeMeshDisplayer b)
         {
-            BaseMeshDisplayer d = chunkHandler.GetNextMeshDisplayer();
-            activeDisplayers.Add(d);
-            return d;
+            freeDisplayer = b;
+            activeDisplayers.Add(b);
         }
 
-        protected BaseMeshDisplayer GetBestMeshDisplayer()
+        protected MarchingCubeMeshDisplayer GetMeshDisplayer()
+        {
+            if(freeDisplayer != null)
+            {
+                MarchingCubeMeshDisplayer result = freeDisplayer;
+                freeDisplayer = null;
+                return result;
+            }
+            else
+            {
+                MarchingCubeMeshDisplayer d = chunkHandler.GetNextMeshDisplayer();
+                activeDisplayers.Add(d);
+                return d;
+            }
+        }
+
+        protected MarchingCubeMeshDisplayer GetBestMeshDisplayer()
         {
             if (this is IMarchingCubeInteractableChunk i)
             {
@@ -631,11 +649,21 @@ namespace MarchingCubes
             }
         }
 
-        protected BaseMeshDisplayer GetMeshInteractableDisplayer(IMarchingCubeInteractableChunk interactable)
+        protected MarchingCubeMeshDisplayer GetMeshInteractableDisplayer(IMarchingCubeInteractableChunk interactable)
         {
-            BaseMeshDisplayer d = chunkHandler.GetNextInteractableMeshDisplayer(interactable);
-            activeDisplayers.Add(d);
-            return d;
+            if (freeDisplayer != null)
+            {
+                MarchingCubeMeshDisplayer result = freeDisplayer;
+                result.SetInteractableChunk(interactable);
+                freeDisplayer = null;
+                return result;
+            }
+            else
+            {
+                MarchingCubeMeshDisplayer d = chunkHandler.GetNextInteractableMeshDisplayer(interactable);
+                activeDisplayers.Add(d);
+                return d;
+            }
         }
 
 
@@ -649,6 +677,7 @@ namespace MarchingCubes
                 if (activeDisplayers[i].IsColliderActive)
                     FreeMeshDisplayerAt(ref i);
             }
+            freeDisplayer = null;
         }
 
         protected void FreeMeshDisplayerAt(ref int index)
@@ -691,7 +720,7 @@ namespace MarchingCubes
 
         protected virtual void SetCurrentMeshData(bool isBorderConnectionMesh)
         {
-            BaseMeshDisplayer displayer = GetBestMeshDisplayer();
+            MarchingCubeMeshDisplayer displayer = GetBestMeshDisplayer();
             bool useCollider = !isBorderConnectionMesh && !(this is CompressedMarchingCubeChunkThreaded);
             displayer.ApplyMesh(colorData, vertices, meshTriangles, Material, useCollider);
         }

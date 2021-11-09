@@ -127,7 +127,7 @@ namespace MarchingCubes
 
         protected void ApplyChangesToMesh(MeshData d)
         {
-            BaseMeshDisplayer displayer = GetMeshInteractableDisplayer(this);
+            MarchingCubeMeshDisplayer displayer = GetMeshInteractableDisplayer(this);
             displayer.ApplyMesh(d.colorData, d.vertices, d.triangles, Material, d.useCollider);
         }
 

@@ -518,7 +518,7 @@ namespace MarchingCubes
                     }
                     else
                     {
-                        Debug.LogWarning("Ediiting of non parallel chunks is not supported!");
+                        Debug.LogWarning("Ediiting of compressed marchingcube chunks is not supported!");
                     }
                 }
             }
