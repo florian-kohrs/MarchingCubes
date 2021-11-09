@@ -42,7 +42,10 @@ namespace MarchingCubes
         int[] GetColor(PathTriangle t, int steepness);
 
         void Store(Vector3Int anchorPos, float[] noise);
+
         void TakeMeshDisplayerBack(MarchingCubeMeshDisplayer freeDisplayer);
+
+        int ReadCurrentTriangleData(out TriangleBuilder[] ts, int triCount = -1);
 
         //IMarchingCubeChunk CreateChunkFromNoiseAt(ChunkGroupTreeLeaf leaf, float[] noise);
 

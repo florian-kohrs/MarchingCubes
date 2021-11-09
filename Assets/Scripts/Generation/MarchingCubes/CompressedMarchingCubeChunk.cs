@@ -38,7 +38,7 @@ namespace MarchingCubes
             //careAboutNeighbourLODS = neighbourLODs.HasNeighbourWithHigherLOD(LODPower);
             if (!IsEmpty)
             {
-                BuildFromTriangleArray(tris);
+                RebuildFromTriangleArray(tris);
 
                 WorkOnBuildedChunk();
 
@@ -401,7 +401,7 @@ namespace MarchingCubes
         }
 
 
-        protected virtual void BuildFromTriangleArray(TriangleChunkHeap heap, bool buildMeshAswell = true)
+        protected virtual void RebuildFromTriangleArray(TriangleChunkHeap heap)
         {
             trisLeft = triCount;
 
@@ -416,10 +416,7 @@ namespace MarchingCubes
             {
                 SetNeighbourAt(ts[i].x, ts[i].y, ts[i].z);
 
-                if (buildMeshAswell)
-                {
-                    AddTriangleToMeshData(in ts[i], ref usedTriCount, ref totalTreeCount);
-                }
+                AddTriangleToMeshData(in ts[i], ref usedTriCount, ref totalTreeCount);
             }
         }
 

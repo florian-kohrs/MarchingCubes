@@ -863,6 +863,7 @@ MonoBehaviour:
   dontSaveScriptValues: 0
   blockAroundPlayer: 40
   marshShader: {fileID: 7200000, guid: 85821faa1826fb64b8a447b36cf4fae9, type: 3}
+  rebuildShader: {fileID: 7200000, guid: b1411f2c4106df340b56fc9e4c44c25e, type: 3}
   noiseOffset: {x: 0, y: 0, z: 0}
   lodPowerForDistances:
     serializedVersion: 2
@@ -1662,7 +1663,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   c: {fileID: 2047378107}
-  speed: 666
+  speed: 111
 --- !u!143 &2047378107
 CharacterController:
   m_ObjectHideFlags: 0

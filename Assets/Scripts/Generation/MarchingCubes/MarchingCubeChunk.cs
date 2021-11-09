@@ -28,6 +28,14 @@ namespace MarchingCubes
 
         public HashSet<MarchingCubeEntity> entities = new HashSet<MarchingCubeEntity>();
 
+        public int kernelId;
+
+        public ComputeShader rebuildShader;
+
+        public ComputeBuffer rebuildNoiseBuffer;
+        public ComputeBuffer rebuildTriResult;
+        public ComputeBuffer rebuildTriCounter;
+
         protected void StoreNoiseArray()
         {
             chunkHandler.Store(AnchorPos, Points);
@@ -121,7 +129,7 @@ namespace MarchingCubes
         }
 
 
-        protected override void BuildFromTriangleArray(TriangleChunkHeap heap, bool buildMeshAswell = true)
+        protected override void RebuildFromTriangleArray(TriangleChunkHeap heap)
         {
             trisLeft = triCount;
             ResetArrayData();
@@ -147,15 +155,31 @@ namespace MarchingCubes
                 }
                 PathTriangle pathTri = new PathTriangle(cube, in ts[i].tri, ts[i].r, ts[i].g, ts[i].b, ts[i].steepness);
                 cube.AddTriangle(pathTri);
-                if (buildMeshAswell)
-                {
-                    AddTriangleToMeshData(in ts[i], ref usedTriCount, ref totalTreeCount);
-                }
+                AddTriangleToMeshData(in ts[i], ref usedTriCount, ref totalTreeCount);
             }
         }
 
+        protected void AddFromTriangleArray(TriangleBuilder[] ts)
+        {
+            int count = ts.Length;
+            int x, y, z;
+            MarchingCubeEntity cube;
 
-      
+            for (int i = 0; i < count; ++i)
+            {
+                x = ts[i].x;
+                y = ts[i].y;
+                z = ts[i].z;
+                if (!TryGetEntityAt(x, y, z, out cube))
+                {
+                    cube = CreateAndAddEntityAt(x, y, z, ts[i].triIndex);
+                    SetNeighbourAt(x, y, z);
+                }
+                PathTriangle pathTri = new PathTriangle(cube, in ts[i].tri, ts[i].r, ts[i].g, ts[i].b, ts[i].steepness);
+                cube.AddTriangle(pathTri);
+            }
+        }
+
         protected void BuildMeshFromCurrentTriangles()
         {
             if (IsEmpty)
@@ -249,8 +273,84 @@ namespace MarchingCubes
             if (editedNoiseCount > 0)
             {
                 StoreNoiseArray();
-                RebuildFromNoiseAround(radius, posX, posY, posZ, startX, startY,startZ, endX, endY, endZ);
+                RebuildFromNoiseAroundOnGPU(radius, posX, posY, posZ, startX, startY,startZ, endX, endY, endZ);
             }
+        }
+
+        protected void RebuildFromNoiseAroundOnGPU(int radius, int posX, int posY, int posZ, int startX, int startY, int startZ, int endX, int endY, int endZ)
+        {
+            float marchDistance = Vector3.one.magnitude + radius + 1;
+            int marchDistCeil = Mathf.CeilToInt(marchDistance + radius);
+            float marchSquare = marchDistance * marchDistance;
+
+            radius += 1;
+            Vector3Int start = new Vector3Int(posX - radius, posY - radius, posZ - radius);
+            int voxelMinus = chunkSize - 1;
+            endX = Mathf.Min(voxelMinus, endX + 1);
+            endY = Mathf.Min(voxelMinus, endY + 1);
+            endZ = Mathf.Min(voxelMinus, endZ + 1);
+
+            rebuildShader.SetVector("pos", new Vector4(posX, posY, posZ, 0));
+            rebuildShader.SetVector("start", new Vector4(start.x,start.y,start.z,0));
+            rebuildShader.SetVector("end", new Vector4(endX, endY, endZ, 0));
+            rebuildShader.SetVector("anchor", new Vector4(AnchorPos.x, AnchorPos.y, AnchorPos.z, 0));
+            rebuildShader.SetInt("numPointsPerAxis", pointsPerAxis);
+            rebuildShader.SetInt("spacing", 1);
+            rebuildNoiseBuffer.SetData(Points);
+            rebuildShader.SetFloat("sqrRadius", marchSquare);
+            rebuildTriResult.SetCounterValue(0);
+
+            rebuildShader.Dispatch(0, pointsPerAxis, pointsPerAxis, pointsPerAxis);
+
+            startX = Mathf.Max(0, startX - 4);
+            startY = Mathf.Max(0, startY - 4);
+            startZ = Mathf.Max(0, startZ - 4);
+
+
+            //float distanceX = startX - posX;
+            //for (int x = startX; x <= endX; x++)
+            //{
+            //    int distanceY = startY - posY;
+            //    float xx = distanceX * distanceX;
+            //    for (int y = startY; y <= endY; y++)
+            //    {
+            //        int distanceZ = startZ - posZ;
+            //        int yy = distanceY * distanceY;
+            //        for (int z = startZ; z <= endZ; z++)
+            //        {
+            //            int zz = distanceZ * distanceZ;
+            //            float sqrDis = xx + yy + zz;
+            //            if (sqrDis <= marchSquare)
+            //            {
+            //                MarchingCubeEntity cube;
+            //                if (TryGetEntityAt(x, y, z, out cube))
+            //                {
+            //                    triCount -= cube.triangles.Length * 3;
+            //                    RemoveEntityAt(x, y, z, cube);
+            //                }
+            //            }
+
+            //            distanceZ++;
+            //        }
+            //        distanceY++;
+            //    }
+            //    distanceX++;
+            //}
+            entities = new HashSet<MarchingCubeEntity>();
+            cubeEntities = new MarchingCubeEntity[chunkSize, chunkSize, chunkSize];
+
+            TriangleBuilder[] ts;
+            int numTris = ChunkHandler.ReadCurrentTriangleData(out ts);
+            triCount = numTris;
+
+            AddFromTriangleArray(ts);
+
+            if (!IsEmpty)
+            {
+                GetSimpleCollider();
+            }
+
+            RebuildMesh();
         }
 
         protected void RebuildFromNoiseAround(int radius, int posX, int posY, int posZ,int startX, int startY, int startZ, int endX, int endY, int endZ)
@@ -263,7 +363,7 @@ namespace MarchingCubes
 
             startX = Mathf.Max(0, startX - 1);
             startY = Mathf.Max(0, startY - 1);
-            startZ = Mathf.Max(0, startZ - 5);
+            startZ = Mathf.Max(0, startZ - 1);
             endX = Mathf.Min(voxelMinus, endX + 1);
             endY = Mathf.Min(voxelMinus, endY + 1);
             endZ = Mathf.Min(voxelMinus, endZ + 1);
@@ -455,6 +555,7 @@ namespace MarchingCubes
             {
                 Vector3Int offset = ChunkSize * neighbourDirs[i];
                 Vector3Int newChunkPos = AnchorPos + offset;
+                //TODO: Get empty chunk first, only request actual noise when noise values change
                 if (ChunkHandler.TryGetOrCreateChunkAt(newChunkPos, out chunk))
                 {
                     if (chunk is IMarchingCubeInteractableChunk threadedChunk)

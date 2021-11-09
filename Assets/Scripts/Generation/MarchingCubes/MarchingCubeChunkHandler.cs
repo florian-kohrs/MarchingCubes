@@ -15,6 +15,7 @@ namespace MarchingCubes
     {
 
         protected int kernelId;
+        protected int rebuildKernelId;
 
         protected const int threadGroupSize = 8;
 
@@ -53,6 +54,8 @@ namespace MarchingCubes
         private const int maxTrianglesLeft = 5000000;
 
         public ComputeShader marshShader;
+
+        public ComputeShader rebuildShader;
 
 
         [Header("Voxel Settings")]
@@ -259,7 +262,8 @@ namespace MarchingCubes
             steepB = (int)(steepColor.b * 255);
 
             densityGenerator.SetBuffer(pointsBuffer, savedPointBuffer);
-            ApplyShaderProperties();
+            ApplyShaderProperties(marshShader);
+            ApplyShaderProperties(rebuildShader);
 
             watch.Start();
             buildAroundSqrDistance = (long)buildAroundDistance * buildAroundDistance;
@@ -756,9 +760,18 @@ namespace MarchingCubes
         protected IMarchingCubeChunk GetThreadedChunkObjectAt(Vector3Int position, Vector3Int coord, int lodPower, int chunkSizePower, bool allowOverride)
         {
             if (lodPower <= DEFAULT_MIN_CHUNK_LOD_POWER)
-                return GetChunkObjectAt(new MarchingCubeChunkThreaded(), position, coord, lodPower, chunkSizePower, allowOverride);
+            {
+                MarchingCubeChunkThreaded chunk = new MarchingCubeChunkThreaded();
+                chunk.rebuildShader = rebuildShader;
+                chunk.rebuildTriCounter = triCountBuffer;
+                chunk.rebuildTriResult = triangleBuffer;
+                chunk.rebuildNoiseBuffer = pointsBuffer;
+                return GetChunkObjectAt(chunk, position, coord, lodPower, chunkSizePower, allowOverride);
+            }
             else
+            {
                 return GetChunkObjectAt(new CompressedMarchingCubeChunkThreaded(), position, coord, lodPower, chunkSizePower, allowOverride);
+            }
         }
 
         protected Vector3Int CoordToPosition(Vector3Int coord)
@@ -978,7 +991,7 @@ namespace MarchingCubes
 
             ///read data from gpu
 
-            int numTris = ReadCurrentTriangleData();
+            int numTris = ReadCurrentTriangleData(out tris);
 
             if (numTris == 0)
             {
@@ -1018,10 +1031,10 @@ namespace MarchingCubes
         public int RequestCubesFromNoise(IMarchingCubeChunk chunk, int lod, int triCount = -1)
         {
             ComputeCubesFromNoise(chunk.ChunkSize, chunk.AnchorPos, lod);
-            return ReadCurrentTriangleData(triCount);
+            return ReadCurrentTriangleData(out tris, triCount);
         }
 
-        protected int ReadCurrentTriangleData(int triCount = -1)
+        public int ReadCurrentTriangleData(out TriangleBuilder[] tris, int triCount = -1)
         {
             if (triCount < 0)
             {
@@ -1270,17 +1283,17 @@ namespace MarchingCubes
 
         protected const int MAX_CHUNKS_PER_ITERATION = 8;
 
-        protected void ApplyShaderProperties()
+        protected void ApplyShaderProperties(ComputeShader s)
         {
-            marshShader.SetBuffer(0, "points", pointsBuffer);
-            marshShader.SetBuffer(0, "savedPoints", savedPointBuffer);
-            marshShader.SetBuffer(0, "triangles", triangleBuffer);
+            s.SetBuffer(0, "points", pointsBuffer);
+            s.SetBuffer(0, "savedPoints", savedPointBuffer);
+            s.SetBuffer(0, "triangles", triangleBuffer);
 
-            marshShader.SetInt("minSteepness", minSteepness);
-            marshShader.SetInt("maxSteepness", maxSteepness);
-            marshShader.SetInts("flatColor", Mathf.RoundToInt(flatColor.r * 255), Mathf.RoundToInt(flatColor.g * 255), Mathf.RoundToInt(flatColor.b * 255));
-            marshShader.SetInts("steepColor", Mathf.RoundToInt(steepColor.r * 255), Mathf.RoundToInt(steepColor.g * 255), Mathf.RoundToInt(steepColor.b * 255));
-            marshShader.SetFloat("surfaceLevel", surfaceLevel);
+            s.SetInt("minSteepness", minSteepness);
+            s.SetInt("maxSteepness", maxSteepness);
+            s.SetInts("flatColor", Mathf.RoundToInt(flatColor.r * 255), Mathf.RoundToInt(flatColor.g * 255), Mathf.RoundToInt(flatColor.b * 255));
+            s.SetInts("steepColor", Mathf.RoundToInt(steepColor.r * 255), Mathf.RoundToInt(steepColor.g * 255), Mathf.RoundToInt(steepColor.b * 255));
+            s.SetFloat("surfaceLevel", surfaceLevel);
         }
 
         protected void ReleaseBuffers()
@@ -1316,5 +1329,6 @@ namespace MarchingCubes
             edits.vals = noise;
         }
 
+       
     }
 }
