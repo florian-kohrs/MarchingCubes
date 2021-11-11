@@ -8,17 +8,11 @@ using UnityEngine;
 namespace MarchingCubes
 {
 
+    //TODO: Dont use as Interactablechunk when destruction begun
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
     public class MarchingCubeChunk : CompressedMarchingCubeChunk, IMarchingCubeInteractableChunk, IHasInteractableMarchingCubeChunk, ICubeNeighbourFinder
     {
          
-        protected override void WorkOnBuildedChunk()
-        {
-            if (neighbourChunksGlue.Count > 0)
-            {
-                BuildMeshToConnectHigherLodChunks();
-            }
-        }
 
         public const int MAX_NOISE_VALUE  = 100;
 

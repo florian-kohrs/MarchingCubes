@@ -872,51 +872,51 @@ MonoBehaviour:
       time: 0
       value: 0
       inSlope: -0
-      outSlope: 0.006666667
+      outSlope: 0.0040139197
       tangentMode: 69
       weightedMode: 0
       inWeight: 0.33333334
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 150
+      time: 249.13304
       value: 1
-      inSlope: 0.006666667
-      outSlope: 0.0057142857
+      inSlope: 0.0040139197
+      outSlope: 0.0034405026
       tangentMode: 69
       weightedMode: 0
       inWeight: 0.33333334
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 325
+      time: 539.78827
       value: 2
-      inSlope: 0.0057142857
-      outSlope: 0.002105263
+      inSlope: 0.0034405026
+      outSlope: 0.0012675533
       tangentMode: 69
       weightedMode: 0
       inWeight: 0.33333334
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 800
+      time: 1328.7097
       value: 3
-      inSlope: 0.002105263
-      outSlope: 0.0016666667
+      inSlope: 0.0012675533
+      outSlope: 0.0010034798
       tangentMode: 69
       weightedMode: 0
       inWeight: 0.33333334
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 1400
+      time: 2325.242
       value: 4
-      inSlope: 0.0016666667
-      outSlope: 0.0016666667
+      inSlope: 0.0010034798
+      outSlope: 0.00100348
       tangentMode: 69
       weightedMode: 0
       inWeight: 0.33333334
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 2000
+      time: 3321.774
       value: 5
-      inSlope: 0.0016666667
+      inSlope: 0.00100348
       outSlope: 0
       tangentMode: 69
       weightedMode: 0
@@ -932,51 +932,51 @@ MonoBehaviour:
       time: 0
       value: 2
       inSlope: -0
-      outSlope: 0.006666667
+      outSlope: 0.0040139197
       tangentMode: 69
       weightedMode: 0
       inWeight: 0.33333334
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 150
+      time: 249.13304
       value: 3
-      inSlope: 0.006666667
-      outSlope: 0.0057142857
+      inSlope: 0.0040139197
+      outSlope: 0.0034405026
       tangentMode: 69
       weightedMode: 0
       inWeight: 0.33333334
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 325
+      time: 539.78827
       value: 4
-      inSlope: 0.0057142857
-      outSlope: 0.002105263
+      inSlope: 0.0034405026
+      outSlope: 0.0012675533
       tangentMode: 69
       weightedMode: 0
       inWeight: 0.33333334
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 800
+      time: 1328.7097
       value: 5
-      inSlope: 0.002105263
-      outSlope: 0.0016666667
+      inSlope: 0.0012675533
+      outSlope: 0.0010034798
       tangentMode: 69
       weightedMode: 0
       inWeight: 0.33333334
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 1400
+      time: 2325.242
       value: 6
-      inSlope: 0.0016666667
-      outSlope: 0.0016666667
+      inSlope: 0.0010034798
+      outSlope: 0.00100348
       tangentMode: 69
       weightedMode: 0
       inWeight: 0.33333334
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 2000
+      time: 3321.774
       value: 7
-      inSlope: 0.0016666667
+      inSlope: 0.00100348
       outSlope: 0
       tangentMode: 69
       weightedMode: 0
@@ -991,7 +991,7 @@ MonoBehaviour:
   chunkMaterial: {fileID: 2100000, guid: 97d2f9aa8d16b8241a90494b8d616c04, type: 2}
   surfaceLevel: 0.511
   player: {fileID: 1779183453}
-  buildAroundDistance: 3000
+  buildAroundDistance: 4000
   worldUpdater: {fileID: 1125545290}
   colliderParent: {fileID: 1768635035}
   totalTriBuild: 0
@@ -1537,7 +1537,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   planet: {fileID: 1125545287}
-  maxSpeed: 5
+  maxSpeed: 211
   acceleration: 10
   jumpPower: 10
   airTime: 0
@@ -1663,7 +1663,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   c: {fileID: 2047378107}
-  speed: 111
+  speed: 666
 --- !u!143 &2047378107
 CharacterController:
   m_ObjectHideFlags: 0

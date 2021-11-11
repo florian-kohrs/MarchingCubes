@@ -136,9 +136,10 @@ namespace MarchingCubes
 
                 last = f;
             }
-
+            float chunkDeactivateDist = chunkHandler.buildAroundDistance * (1 + distThreshold);
             CreateTriggerOfTypeForLod<ChunkLodIncreaseTrigger>(MarchingCubeChunkHandler.MAX_CHUNK_LOD_POWER, chunkHandler.buildAroundDistance, increaseTriggerParent);
-            CreateTriggerOfTypeForLod<ChunkLodDecreaseTrigger>(MarchingCubeChunkHandler.MAX_CHUNK_LOD_POWER + 1, chunkHandler.buildAroundDistance * (1 + distThreshold), decreaseTriggerParent);
+            CreateTriggerOfTypeForLod<ChunkLodDecreaseTrigger>(MarchingCubeChunkHandler.MAX_CHUNK_LOD_POWER + 1, chunkDeactivateDist, decreaseTriggerParent);
+            CreateTriggerOfTypeForLod<ChunkLodDecreaseTrigger>(MarchingCubeChunkHandler.DESTROY_CHUNK_LOD, chunkDeactivateDist + MarchingCubeChunkHandler.CHUNK_GROUP_SIZE, decreaseTriggerParent);
         }
 
         protected void CreateTriggerOfTypeForLod<T>(int lod, float radius, Transform parent) where T : BaseChunkLodTrigger
@@ -189,13 +190,13 @@ namespace MarchingCubes
                 List<IMarchingCubeChunk> olds = change.old;
                 for (int i = 0; i < olds.Count; i++)
                 {
-                    olds[i].ResetChunk();
+                    olds[i].DestroyChunk();
                 }
                 for (int i = 0; i < chunk.Count; i++)
                 {
                     if (chunk[i].IsEmpty && !chunk[i].IsSpawner)
                     {
-                        chunk[i].ResetChunk();
+                        chunk[i].DestroyChunk();
                     }
                     else
                     {

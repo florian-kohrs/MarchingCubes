@@ -8,13 +8,6 @@ namespace MarchingCubes
     {
 
         public IMarchingCubeInteractableChunk chunk;
-        public Vector3Int chunk2;
-
-        private void Update()
-        {
-            if(chunk != null)
-                chunk2 = chunk.AnchorPos;
-        }
 
         public IMarchingCubeInteractableChunk GetChunk => chunk;
     }

@@ -12,8 +12,6 @@ namespace MarchingCubes
 
         int ChunkSize { get; }
 
-        int TargetChunkSizePower { get; set; }
-
         WorldUpdater ChunkUpdater { set; }
 
         Vector3Int AnchorPos { get; set; }
@@ -54,6 +52,8 @@ namespace MarchingCubes
 
         int PointsPerAxis { get; }
 
+        void ResetChunk();
+
         bool IsSpawner { get; set; }
 
         // void InitializeWithMeshData(Material mat, TriangleBuilder[] tris, int activeTris, float[] points, IMarchingCubeChunkHandler handler, float surfaceLevel);
@@ -64,7 +64,7 @@ namespace MarchingCubes
 
         void InitializeWithMeshData(TriangleChunkHeap triangleData);
 
-        void ResetChunk(bool removeSimpleCollider = true);
+        void DestroyChunk();
 
         void AddDisplayer(MarchingCubeMeshDisplayer b);
 

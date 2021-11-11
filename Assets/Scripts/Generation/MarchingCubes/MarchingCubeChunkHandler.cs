@@ -41,6 +41,10 @@ namespace MarchingCubes
 
         public const int MAX_CHUNK_LOD_BIT_REPRESENTATION_SIZE = 3;
 
+        public const int DESTROY_CHUNK_LOD = MAX_CHUNK_LOD_POWER + 2;
+
+        public const int DEACTIVATE_CHUNK_LOD = MAX_CHUNK_LOD_POWER + 1;
+
         public Dictionary<Vector3Int, IChunkGroupRoot> chunkGroups = new Dictionary<Vector3Int, IChunkGroupRoot>();
 
         [Save]
@@ -108,6 +112,7 @@ namespace MarchingCubes
         public void FreeCollider(ChunkLodCollider c)
         {
             c.coll.enabled = false;
+            c.chunk = null;
             freechunkCollider.Push(c);
         }
 
@@ -271,7 +276,7 @@ namespace MarchingCubes
             startPos = player.position;
             IMarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
             maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
-            BuildRelevantChunksParallelBlockingAround(chunk);
+           // BuildRelevantChunksParallelBlockingAround(chunk);
         }
 
         protected IEnumerator UpdateChunks()
@@ -432,7 +437,7 @@ namespace MarchingCubes
             chunk.IsInOtherThread = false;
             if(chunk.IsEmpty)
             {
-                chunk.ResetChunk();
+                chunk.DestroyChunk();
             }
             else
             {
@@ -705,7 +710,7 @@ namespace MarchingCubes
             return chunk;
         }
 
-        protected void BuildEmptyChunkAt(Vector3Int pos)
+        public void BuildEmptyChunkAt(Vector3Int pos)
         {
             IChunkGroupRoot chunkGroup = GetOrCreateChunkGroupAtCoordinate(PositionToChunkGroupCoord(pos));
             IMarchingCubeChunk chunk;
@@ -747,6 +752,7 @@ namespace MarchingCubes
             coll.chunk = c;
             c.ChunkSimpleCollider = coll;
 
+            //TODO:maybe have layer for each lod level
             g.layer = 6;
             g.transform.SetParent(colliderParent, true);
         }
@@ -1114,13 +1120,11 @@ namespace MarchingCubes
             int newSizePow = DEFAULT_CHUNK_SIZE_POWER + toLodPower;
             if (newSizePow == chunk.ChunkSizePower || newSizePow == CHUNK_GROUP_SIZE_POWER)
             {
-                Debug.Log("Simple decrease");
                     //if previous chunk was border chunk, build spawners at neighbours
                 ExchangeSingleChunkParallel(chunk, chunk.AnchorPos, toLodPower, chunk.ChunkSizePower, false, true);
             }
             else
             {
-                Debug.Log("split");
                 SplitChunkAndIncreaseLod(chunk, toLodPower, newSizePow);
             }
         }
@@ -1164,6 +1168,7 @@ namespace MarchingCubes
 
         private void SplitChunkAndIncreaseLod(IMarchingCubeChunk chunk, int toLodPower, int newSizePow)
         {
+            Debug.Log("plit");
             int[][] anchors = chunk.GetLeaf().GetAllChildGlobalAnchorPosition();
             IMarchingCubeChunk[] newChunks = new IMarchingCubeChunk[8];
             for (int i = 0; i < 8; i++)
@@ -1215,9 +1220,13 @@ namespace MarchingCubes
 
         public void DecreaseChunkLod(IMarchingCubeChunk chunk, int toLodPower)
         {
-            if (toLodPower > MAX_CHUNK_LOD_POWER)
+            if (toLodPower == DESTROY_CHUNK_LOD)
             {
-                chunk.ResetChunk(false);
+                chunk.DestroyChunk();
+            }
+            else if(toLodPower == DEACTIVATE_CHUNK_LOD)
+            {
+                chunk.ResetChunk();
             }
             else
             {

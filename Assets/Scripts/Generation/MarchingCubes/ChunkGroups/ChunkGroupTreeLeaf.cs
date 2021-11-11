@@ -8,6 +8,11 @@ namespace MarchingCubes
     public class ChunkGroupTreeLeaf : GenericTreeLeaf<IMarchingCubeChunk>
     {
 
+        ~ChunkGroupTreeLeaf()
+        {
+            Debug.Log("destroyed leaf");
+        }
+
         public ChunkGroupTreeLeaf(IChunkGroupParent<ChunkGroupTreeLeaf> parent, IMarchingCubeChunk chunk, int index, int[] relativeAnchorPoint, int[] anchorPoint, int sizePower) 
             : base(chunk,index,relativeAnchorPoint,anchorPoint,sizePower)
         {
@@ -64,7 +69,7 @@ namespace MarchingCubes
 
         public override bool RemoveLeafAtLocalPosition(int[] pos)
         {
-            leaf.ResetChunk();
+            leaf.DestroyChunk();
             return true;
         }
     }

@@ -16,6 +16,10 @@ namespace MarchingCubes
             throw new Exception("This class doesnt support concurrency");
         }
 
+        ~CompressedMarchingCubeChunk()
+        {
+            Debug.Log("Destroyed chunk");
+        }
 
         public virtual void InitializeWithMeshDataParallel(TriangleChunkHeap triangleData, Action<IThreadedMarchingCubeChunk> OnChunkDone)
         {
@@ -40,8 +44,6 @@ namespace MarchingCubes
             {
                 RebuildFromTriangleArray(tris);
 
-                WorkOnBuildedChunk();
-
                 points = null;
             }
 
@@ -50,13 +52,21 @@ namespace MarchingCubes
         }
 
 
-        public void ResetChunk(bool removeSimpleCollider = true)
+        public void ResetChunk()
         {
-            OnResetChunk();
-            FreeAllMeshes();
-
-            PrepareDestruction();
+            triCount = 0;
             points = null;
+            meshTriangles = null;
+            lodPower = MarchingCubeChunkHandler.DEACTIVATE_CHUNK_LOD;
+            lod = (int)Mathf.Pow(2, lodPower);
+            vertices = null;
+            FreeAllMeshes();
+        }
+
+        public void DestroyChunk()
+        {
+            FreeAllMeshes();
+            PrepareDestruction();
         }
 
         public void SetLeaf(ChunkGroupTreeLeaf leaf)
@@ -83,7 +93,11 @@ namespace MarchingCubes
         public void PrepareDestruction()
         {
             chunkUpdater.RemoveLowerLodChunk(this);
-            leaf.RemoveLeaf(this);
+            if (leaf != null)
+            {
+                leaf.RemoveLeaf(this);
+                leaf = null;
+            }
             IsReady = false;
             HasStarted = false;
             FreeSimpleChunkCollider();
@@ -114,8 +128,6 @@ namespace MarchingCubes
             }
         }
 
-        protected virtual void OnResetChunk() { }
-
         public bool IsReady { get; set; }
 
         public bool HasStarted { get; protected set; }
@@ -124,8 +136,6 @@ namespace MarchingCubes
         protected float surfaceLevel;
 
         protected const int MAX_TRIANGLES_PER_MESH = 65000;
-
-        protected bool careAboutNeighbourLODS;
 
         protected List<MarchingCubeMeshDisplayer> activeDisplayers = new List<MarchingCubeMeshDisplayer>();
 
@@ -171,7 +181,11 @@ namespace MarchingCubes
             set
             {
                 targetLodPower = value;
-                if(targetLodPower > lodPower)
+                if(targetLodPower == MarchingCubeChunkHandler.DESTROY_CHUNK_LOD)
+                {
+                    DestroyChunk();
+                }
+                else if(targetLodPower > lodPower)
                 {
                     chunkUpdater.lowerChunkLods.Add(this);
                     chunkUpdater.increaseChunkLods.Remove(this);
@@ -186,20 +200,6 @@ namespace MarchingCubes
                     chunkUpdater.lowerChunkLods.Remove(this);
                     chunkUpdater.increaseChunkLods.Remove(this);
                 }
-            }
-        }
-
-        protected int targetChunkSizePower;
-
-        public int TargetChunkSizePower
-        {
-            get
-            {
-                return targetChunkSizePower;
-            }
-            set
-            {
-                targetChunkSizePower = value;
             }
         }
 
@@ -232,8 +232,6 @@ namespace MarchingCubes
         }
 
         protected int triCount;
-
-        protected int connectorTriangleCount = 0;
 
         protected int trisLeft;
 
@@ -361,14 +359,6 @@ namespace MarchingCubes
         public float SurfaceLevel { set => surfaceLevel = value; }
 
         public bool IsSpawner { get; set; }
-
-        protected virtual void WorkOnBuildedChunk()
-        {
-            if (neighbourChunksGlue.Count > 0)
-            {
-                BuildMeshToConnectHigherLodChunks();
-            }
-        }
 
         protected void SetNeighbourAt(int x, int y, int z)
         {
@@ -655,7 +645,7 @@ namespace MarchingCubes
         {
             SetCurrentMeshData(isBorderConnectionMesh);
             trisLeft -= meshTriangles.Length;
-            if (trisLeft > 0)
+            //if (trisLeft > 0)
             {
                 ResetArrayData();
             }
@@ -671,28 +661,6 @@ namespace MarchingCubes
             colorData = new Color[size];
         }
 
-
-        protected void BuildMeshToConnectHigherLodChunks()
-        {
-            trisLeft = connectorTriangleCount;
-
-            ResetArrayData();
-
-            int totalTreeCount = 0;
-            int usedTriCount = 0;
-
-            var outerEnum = neighbourChunksGlue.Values.GetEnumerator();
-            MarchingCubeEntity e;
-            while (outerEnum.MoveNext())
-            {
-                e = outerEnum.Current;
-                int count = e.triangles.Length;
-                for (int i = 0; i < count; ++i)
-                {
-                    AddTriangleToMeshData(e.triangles[i], e.triangles[i].GetColor(), ref usedTriCount, ref totalTreeCount, true);
-                }
-            }
-        }
 
         public bool IsPointInBounds(Vector3Int v)
         {
