@@ -8,25 +8,25 @@ namespace MarchingCubes
     public class ReadyChunkExchange
     {
 
-        public ReadyChunkExchange(IMarchingCubeChunk old, List<IThreadedMarchingCubeChunk> chunks)
+        public ReadyChunkExchange(IMarchingCubeChunk old, List<IMarchingCubeChunk> chunks)
         {
             this.old = new List<IMarchingCubeChunk>() { old };
             this.chunks = chunks;
         }
 
-        public ReadyChunkExchange(List<IMarchingCubeChunk> old, IThreadedMarchingCubeChunk chunks)
+        public ReadyChunkExchange(List<IMarchingCubeChunk> old, IMarchingCubeChunk chunks)
         {
             this.old = old ;
-            this.chunks = new List<IThreadedMarchingCubeChunk>() { chunks };
+            this.chunks = new List<IMarchingCubeChunk>() { chunks };
         }
 
-        public ReadyChunkExchange(IMarchingCubeChunk old, IThreadedMarchingCubeChunk chunks)
+        public ReadyChunkExchange(IMarchingCubeChunk old, IMarchingCubeChunk chunks)
         {
             this.old = new List<IMarchingCubeChunk>() { old };
-            this.chunks = new List<IThreadedMarchingCubeChunk>() { chunks };
+            this.chunks = new List<IMarchingCubeChunk>() { chunks };
         }
 
-        public ReadyChunkExchange(List<IMarchingCubeChunk> old, List<IThreadedMarchingCubeChunk> chunks)
+        public ReadyChunkExchange(List<IMarchingCubeChunk> old, List<IMarchingCubeChunk> chunks)
         {
             this.old = old;
             this.chunks = chunks;
@@ -34,7 +34,7 @@ namespace MarchingCubes
 
         public List<IMarchingCubeChunk> old;
 
-        public List<IThreadedMarchingCubeChunk> chunks;
+        public List<IMarchingCubeChunk> chunks;
 
     }
 }

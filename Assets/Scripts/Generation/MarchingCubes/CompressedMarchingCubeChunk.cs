@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 
 namespace MarchingCubes
@@ -11,21 +12,153 @@ namespace MarchingCubes
 
         //TODO: Check this: Graphics.DrawProceduralIndirect
 
-        public virtual void InitializeWithMeshDataParallel(TriangleChunkHeap tris, Queue<IThreadedMarchingCubeChunk> readyChunks)
-        {
-            throw new Exception("This class doesnt support concurrency");
-        }
-
         ~CompressedMarchingCubeChunk()
         {
             Debug.Log("Destroyed chunk");
         }
 
-        public virtual void InitializeWithMeshDataParallel(TriangleChunkHeap triangleData, Action<IThreadedMarchingCubeChunk> OnChunkDone)
-        {
-            throw new Exception("This class doesnt support concurrency");
-        }
+        #region static fields
+
+        protected static object listLock = new object();
+
+        public static List<Exception> xs = new List<Exception>();
+
+        #endregion
+
+        #region fields and attributes
+
+
+
+        protected ChunkGroupTreeLeaf leaf;
+
+        protected WorldUpdater chunkUpdater;
+
+        protected ChunkLodCollider chunkSimpleCollider;
+
+
+        public bool IsReady { get; set; }
+
+        public bool HasStarted { get; protected set; }
+
+
+
+        protected const int MAX_TRIANGLES_PER_MESH = 65000;
+
+        protected List<MarchingCubeMeshDisplayer> activeDisplayers = new List<MarchingCubeMeshDisplayer>();
+
+        protected int lod = 1;
+
+        protected int targetLodPower = -1;
+
+        protected float[] points;
+
+        protected int triCount;
+
+        protected int trisLeft;
+
+        protected int chunkSize;
+
+        protected int chunkSizePower;
+
+        protected int vertexSize;
+
+        protected int maxEntityIndexPerAxis;
+
+        protected int pointsPerAxis;
+
+        protected int sqrPointsPerAxis;
+
+        public Material Material { protected get; set; }
+
+
+        protected MarchingCubeMeshDisplayer freeDisplayer;
+
+
+        protected Vector3Int chunkCenterPosition;
+
+
+        public IMarchingCubeChunkHandler chunkHandler;
+
+        public bool[] HasNeighbourInDirection { get; private set; } = new bool[6];
+
+        /// <summary>
+        /// stores chunkEntities based on their position as index
+        /// </summary>
+        protected Dictionary<int, MarchingCubeEntity> neighbourChunksGlue = new Dictionary<int, MarchingCubeEntity>();
+
+        /// <summary>
+        /// stores for each direction of the neighbour all cubes
+        /// </summary>
+        protected Dictionary<int, List<MarchingCubeEntity>> cubesForNeighbourInDirection = new Dictionary<int, List<MarchingCubeEntity>>();
+
+        //protected List<BaseMeshChild> children = new List<BaseMeshChild>();
+        protected Vector3[] vertices;
+        protected int[] meshTriangles;
+        protected Color[] colorData;
+
+        public bool IsEmpty => triCount == 0;
+
+        /// <summary>
+        /// chunk is completly air
+        /// </summary>
+        public bool IsCompletlyAir => isCompletlyAir;
+
+        protected bool isCompletlyAir;
+
+        public float SurfaceLevel { set => surfaceLevel = value; }
+
+        public bool IsSpawner { get; set; }
+
+        private Vector3Int anchorPos;
+
+        int IMarchingCubeChunk.PointsPerAxis => pointsPerAxis;
+
+        #region may remove or do otherwise
+
+        protected float surfaceLevel;
+
+        #endregion
+
+
+        protected Queue<IMarchingCubeChunk> readyChunks;
+
+
+        protected Action<IMarchingCubeChunk> OnChunkFinished;
+
         public bool IsInOtherThread { get; set; }
+
+        protected List<MeshData> data = new List<MeshData>();
+
+        #endregion
+
+
+        protected int PointsPerAxis => pointsPerAxis;
+
+        public Vector3Int CenterPos => chunkCenterPosition;
+
+        public void InitializeWithMeshDataParallel(TriangleChunkHeap heap, Queue<IMarchingCubeChunk> readyChunks)
+        {
+            this.readyChunks = readyChunks;
+            StartParallel(heap);
+        }
+
+        public void InitializeWithMeshDataParallel(TriangleChunkHeap heap, Action<IMarchingCubeChunk> OnChunkFinished)
+        {
+            this.OnChunkFinished = OnChunkFinished;
+            StartParallel(heap);
+        }
+
+        protected void StartParallel(TriangleChunkHeap heap)
+        {
+            HasStarted = true;
+            ThreadPool.QueueUserWorkItem((o) => RequestChunk(heap));
+        }
+
+
+        protected void OnChunkThreadedDone()
+        {
+            IsInOtherThread = false;
+        }
 
         public virtual void InitializeWithMeshData(TriangleChunkHeap tris)
         {
@@ -34,7 +167,6 @@ namespace MarchingCubes
 
             if (points != null)
             {
-                isCompletlySolid = IsEmpty && points[0] >= surfaceLevel;
                 isCompletlyAir = IsEmpty && points[0] < surfaceLevel;
             }
 
@@ -73,13 +205,6 @@ namespace MarchingCubes
         {
             this.leaf = leaf;
         }
-
-        protected ChunkGroupTreeLeaf leaf;
-
-        protected WorldUpdater chunkUpdater;
-
-        protected ChunkLodCollider chunkSimpleCollider;
-
 
         public ChunkLodCollider ChunkSimpleCollider
         {
@@ -128,19 +253,6 @@ namespace MarchingCubes
             }
         }
 
-        public bool IsReady { get; set; }
-
-        public bool HasStarted { get; protected set; }
-
-
-        protected float surfaceLevel;
-
-        protected const int MAX_TRIANGLES_PER_MESH = 65000;
-
-        protected List<MarchingCubeMeshDisplayer> activeDisplayers = new List<MarchingCubeMeshDisplayer>();
-
-        protected int lod = 1;
-
         public int LOD
         {
             get
@@ -169,8 +281,6 @@ namespace MarchingCubes
                 LOD = (int)Mathf.Pow(2, lodPower);
             }
         }
-
-        protected int targetLodPower = -1;
 
         public int TargetLODPower
         {
@@ -203,10 +313,6 @@ namespace MarchingCubes
             }
         }
 
-        protected int GetLODPowerFromLOD(int lod) => (int)Mathf.Log(lod, 2);
-
-        protected float[] points;
-
         public float[] Points
         {
             get
@@ -231,36 +337,6 @@ namespace MarchingCubes
             }
         }
 
-        protected int triCount;
-
-        protected int trisLeft;
-
-        protected int chunkSize;
-
-        protected int chunkSizePower;
-
-        protected int vertexSize;
-
-        protected int maxEntityIndexPerAxis;
-
-        protected int pointsPerAxis;
-
-        protected int sqrPointsPerAxis;
-
-        public Material Material { protected get; set; }
-
-
-        protected int PointsPerAxis => pointsPerAxis;
-
-
-        //protected Vector3Int chunkOffset;
-
-        protected Vector3Int chunkCenterPosition;
-
-        public Vector3Int CenterPos => chunkCenterPosition;
-
-        public IMarchingCubeChunkHandler chunkHandler;
-
         public IMarchingCubeChunkHandler ChunkHandler
         {
             protected get
@@ -276,39 +352,8 @@ namespace MarchingCubes
         public IMarchingCubeChunkHandler GetChunkHandler => chunkHandler;
 
 
-        public bool[] HasNeighbourInDirection { get; private set; } = new bool[6];
+   
 
-        /// <summary>
-        /// stores chunkEntities based on their position as index
-        /// </summary>
-        protected Dictionary<int, MarchingCubeEntity> neighbourChunksGlue = new Dictionary<int, MarchingCubeEntity>();
-
-        /// <summary>
-        /// stores for each direction of the neighbour all cubes
-        /// </summary>
-        protected Dictionary<int, List<MarchingCubeEntity>> cubesForNeighbourInDirection = new Dictionary<int, List<MarchingCubeEntity>>();
-
-        //protected List<BaseMeshChild> children = new List<BaseMeshChild>();
-        protected Vector3[] vertices;
-        protected int[] meshTriangles;
-        protected Color[] colorData;
-
-        public bool IsEmpty => triCount == 0;
-
-        //TODO:Maybe remove this from chunks
-        /// <summary>
-        /// chunk is completly underground
-        /// </summary>
-        public bool IsCompletlySolid => isCompletlySolid;
-
-        protected bool isCompletlySolid;
-
-        /// <summary>
-        /// chunk is completly air
-        /// </summary>
-        public bool IsCompletlyAir => isCompletlyAir;
-
-        protected bool isCompletlyAir;
 
         public Vector3Int AnchorPos
         {
@@ -339,10 +384,7 @@ namespace MarchingCubes
             pointsPerAxis = vertexSize + 1;
             sqrPointsPerAxis = pointsPerAxis * pointsPerAxis;
         }
-
-        private Vector3Int anchorPos;
-
-        int IMarchingCubeChunk.PointsPerAxis => pointsPerAxis;
+       
 
         public int ChunkSize
         {
@@ -355,10 +397,6 @@ namespace MarchingCubes
             get => chunkSizePower;
             set { chunkSizePower = value; ChunkSize = (int)Mathf.Pow(2, chunkSizePower); }
         }
-
-        public float SurfaceLevel { set => surfaceLevel = value; }
-
-        public bool IsSpawner { get; set; }
 
         protected void SetNeighbourAt(int x, int y, int z)
         {
@@ -483,7 +521,7 @@ namespace MarchingCubes
             return MarchAt(x, y, z, finder, 1);
         }
 
-        protected void AddTriangleToMeshData(PathTriangle tri, Color c, ref int usedTriCount, ref int totalTriCount, bool isBorderConnectionMesh = false)
+        protected void AddTriangleToMeshData(PathTriangle tri, Color c, ref int usedTriCount, ref int totalTriCount)
         {
             Triangle t = tri.tri;
 
@@ -504,12 +542,12 @@ namespace MarchingCubes
             totalTriCount++;
             if (usedTriCount >= MAX_TRIANGLES_PER_MESH || usedTriCount >= trisLeft)
             {
-                ApplyChangesToMesh(isBorderConnectionMesh);
+                ApplyChangesToMesh();
                 usedTriCount = 0;
             }
         }
 
-        protected void AddTriangleToMeshData(in TriangleBuilder t, ref int usedTriCount, ref int totalTriCount, bool isBorderConnectionMesh = false)
+        protected void AddTriangleToMeshData(in TriangleBuilder t, ref int usedTriCount, ref int totalTriCount)
         {
             Color c = new Color(t.r / 255f, t.g / 255f, t.b / 255f, 1);
 
@@ -529,12 +567,10 @@ namespace MarchingCubes
             totalTriCount++;
             if (usedTriCount >= MAX_TRIANGLES_PER_MESH || usedTriCount >= trisLeft)
             {
-                ApplyChangesToMesh(isBorderConnectionMesh);
+                ApplyChangesToMesh();
                 usedTriCount = 0;
             }
         }
-
-        protected MarchingCubeMeshDisplayer freeDisplayer;
 
         public void AddDisplayer(MarchingCubeMeshDisplayer b)
         {
@@ -594,26 +630,6 @@ namespace MarchingCubes
             freeDisplayer = null;
         }
 
-        /// <summary>
-        /// only resets mesh with a collider active (does not include border connections meshed)
-        /// </summary>
-        public void SoftResetMeshDisplayers()
-        {
-            for (int i = 0; i < activeDisplayers.Count; ++i)
-            {
-                if (activeDisplayers[i].IsColliderActive)
-                    FreeMeshDisplayerAt(ref i);
-            }
-            freeDisplayer = null;
-        }
-
-        protected void FreeMeshDisplayerAt(ref int index)
-        {
-            chunkHandler.FreeMeshDisplayer(activeDisplayers[index]);
-            activeDisplayers.RemoveAt(index);
-            index -= 1;
-        }
-
         protected void FreeAllMeshes()
         {
             chunkHandler.FreeAllDisplayers(activeDisplayers);
@@ -632,25 +648,73 @@ namespace MarchingCubes
             cubes.Add(c);
         }
 
+        protected virtual bool UseColliderForMesh => false;
 
-        protected virtual void SetCurrentMeshData(bool isBorderConnectionMesh)
+        protected virtual void SetCurrentMeshData()
         {
             MarchingCubeMeshDisplayer displayer = GetBestMeshDisplayer();
-            bool useCollider = !isBorderConnectionMesh && !(this is CompressedMarchingCubeChunkThreaded);
-            displayer.ApplyMesh(colorData, vertices, meshTriangles, Material, useCollider);
+            displayer.ApplyMesh(colorData, vertices, meshTriangles, Material, UseColliderForMesh);
         }
 
 
-        protected void ApplyChangesToMesh(bool isBorderConnectionMesh)
+        protected void ApplyChangesToMesh()
         {
-            SetCurrentMeshData(isBorderConnectionMesh);
-            trisLeft -= meshTriangles.Length;
-            //if (trisLeft > 0)
+            if (IsInOtherThread)
             {
-                ResetArrayData();
+                data.Add(new MeshData(meshTriangles, vertices, colorData, UseColliderForMesh));
+            }
+            else
+            {
+                SetCurrentMeshData();
+                trisLeft -= meshTriangles.Length;
+                //if (trisLeft > 0)
+                {
+                    ResetArrayData();
+                }
             }
         }
 
+        protected void OnChunkDone()
+        {
+            if (readyChunks != null)
+            {
+                lock (listLock)
+                {
+                    readyChunks.Enqueue(this);
+                }
+            }
+            OnChunkFinished?.Invoke(this);
+        }
+
+        protected void RequestChunk(TriangleChunkHeap heap)
+        {
+            try
+            {
+                IsInOtherThread = true;
+                InitializeWithMeshData(heap);
+                OnChunkDone();
+            }
+            catch (Exception x)
+            {
+                xs.Add(x);
+                Console.WriteLine(x);
+                //Debug.LogException(x);
+            }
+        }
+
+        public void BuildAllMeshes()
+        {
+            for (int i = 0; i < data.Count; ++i)
+            {
+                ApplyChangesToMesh(data[i]);
+            }
+        }
+
+        protected void ApplyChangesToMesh(in MeshData d)
+        {
+            MarchingCubeMeshDisplayer displayer = GetMeshDisplayer();
+            displayer.ApplyMesh(d.colorData, d.vertices, d.triangles, Material, d.useCollider);
+        }
 
 
         protected void ResetArrayData()

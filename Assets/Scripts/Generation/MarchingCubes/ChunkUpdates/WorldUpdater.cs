@@ -186,7 +186,7 @@ namespace MarchingCubes
                 {
                     change = readyExchangeChunks.Pop();
                 }
-                List<IThreadedMarchingCubeChunk> chunk = change.chunks;
+                List<IMarchingCubeChunk> chunk = change.chunks;
                 List<IMarchingCubeChunk> olds = change.old;
                 for (int i = 0; i < olds.Count; i++)
                 {

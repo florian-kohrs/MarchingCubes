@@ -30,6 +30,9 @@ namespace MarchingCubes
         public ComputeBuffer rebuildTriResult;
         public ComputeBuffer rebuildTriCounter;
 
+
+        protected override bool UseColliderForMesh => true;
+
         protected void StoreNoiseArray()
         {
             chunkHandler.Store(AnchorPos, Points);
@@ -195,7 +198,7 @@ namespace MarchingCubes
                 count = e.triangles.Length;
                 for (int i = 0; i < count; ++i)
                 {
-                    AddTriangleToMeshData(e.triangles[i], e.triangles[i].GetColor(), ref usedTriCount, ref totalTreeCount, false);
+                    AddTriangleToMeshData(e.triangles[i], e.triangles[i].GetColor(), ref usedTriCount, ref totalTreeCount);
                 }
             }
 
@@ -267,7 +270,7 @@ namespace MarchingCubes
             if (editedNoiseCount > 0)
             {
                 StoreNoiseArray();
-                RebuildFromNoiseAroundOnGPU(radius, posX, posY, posZ, startX, startY,startZ, endX, endY, endZ);
+                RebuildFromNoiseAround(radius, posX, posY, posZ, startX, startY,startZ, endX, endY, endZ);
             }
         }
 
@@ -408,7 +411,7 @@ namespace MarchingCubes
         {
             if (!IsInOtherThread)
             {
-                SoftResetMeshDisplayers();
+                FreeAllMeshes();
             }
             BuildMeshFromCurrentTriangles();
         }

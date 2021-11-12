@@ -28,8 +28,6 @@ namespace MarchingCubes
 
         void FreeSimpleChunkCollider();
 
-        void SoftResetMeshDisplayers();
-
         void PrepareDestruction();
 
         bool IsEmpty { get; }
@@ -37,8 +35,6 @@ namespace MarchingCubes
         bool IsCompletlyAir { get; }
 
         float SurfaceLevel { set; }
-
-        bool IsCompletlySolid { get; }
 
         int LOD { get; }
 
@@ -58,9 +54,9 @@ namespace MarchingCubes
 
         // void InitializeWithMeshData(Material mat, TriangleBuilder[] tris, int activeTris, float[] points, IMarchingCubeChunkHandler handler, float surfaceLevel);
 
-        void InitializeWithMeshDataParallel(TriangleChunkHeap triangleData, Queue<IThreadedMarchingCubeChunk> readyChunks);
+        void InitializeWithMeshDataParallel(TriangleChunkHeap triangleData, Queue<IMarchingCubeChunk> readyChunks);
 
-        void InitializeWithMeshDataParallel(TriangleChunkHeap triangleData, Action<IThreadedMarchingCubeChunk> OnChunkDone);
+        void InitializeWithMeshDataParallel(TriangleChunkHeap triangleData, Action<IMarchingCubeChunk> OnChunkDone);
 
         void InitializeWithMeshData(TriangleChunkHeap triangleData);
 
@@ -75,6 +71,9 @@ namespace MarchingCubes
 
         //void InitializeEmpty(IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel);
 
+        bool IsInOtherThread { set; }
+
+        void BuildAllMeshes();
 
 
     }
