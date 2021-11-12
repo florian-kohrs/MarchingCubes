@@ -25,20 +25,12 @@ namespace MarchingCubes
 
         #endregion
 
-        #region fields and attributes
+        #region fields
 
-
-
-        protected ChunkGroupTreeLeaf leaf;
 
         protected WorldUpdater chunkUpdater;
 
         protected ChunkLodCollider chunkSimpleCollider;
-
-
-        public bool IsReady { get; set; }
-
-        public bool HasStarted { get; protected set; }
 
 
 
@@ -47,6 +39,8 @@ namespace MarchingCubes
         protected List<MarchingCubeMeshDisplayer> activeDisplayers = new List<MarchingCubeMeshDisplayer>();
 
         protected int lod = 1;
+
+        protected int lodPower;
 
         protected int targetLodPower = -1;
 
@@ -68,8 +62,6 @@ namespace MarchingCubes
 
         protected int sqrPointsPerAxis;
 
-        public Material Material { protected get; set; }
-
 
         protected MarchingCubeMeshDisplayer freeDisplayer;
 
@@ -78,8 +70,6 @@ namespace MarchingCubes
 
 
         public IMarchingCubeChunkHandler chunkHandler;
-
-        public bool[] HasNeighbourInDirection { get; private set; } = new bool[6];
 
         /// <summary>
         /// stores chunkEntities based on their position as index
@@ -105,36 +95,178 @@ namespace MarchingCubes
 
         protected bool isCompletlyAir;
 
-        public float SurfaceLevel { set => surfaceLevel = value; }
-
-        public bool IsSpawner { get; set; }
-
         private Vector3Int anchorPos;
 
         int IMarchingCubeChunk.PointsPerAxis => pointsPerAxis;
 
-        #region may remove or do otherwise
-
         protected float surfaceLevel;
-
-        #endregion
-
 
         protected Queue<IMarchingCubeChunk> readyChunks;
 
-
         protected Action<IMarchingCubeChunk> OnChunkFinished;
-
-        public bool IsInOtherThread { get; set; }
 
         protected List<MeshData> data = new List<MeshData>();
 
+        public bool IsReady { get; set; }
+
+        public bool HasStarted { get; protected set; }
+
+        public Material Material { protected get; set; }
+
+        public bool[] HasNeighbourInDirection { get; private set; } = new bool[6];
+
+        public bool IsSpawner { get; set; }
+
+        public bool IsInOtherThread { get; set; }
+
         #endregion
 
+        #region properties
+
+        public ChunkGroupTreeLeaf Leaf { get; set; }
+
+        public float SurfaceLevel { set => surfaceLevel = value; }
 
         protected int PointsPerAxis => pointsPerAxis;
 
         public Vector3Int CenterPos => chunkCenterPosition;
+
+        public ChunkLodCollider ChunkSimpleCollider { set { chunkSimpleCollider = value; } }
+
+        public WorldUpdater ChunkUpdater { set { chunkUpdater = value; } }
+
+        public int LOD
+        {
+            get
+            {
+                return lod;
+            }
+            protected set
+            {
+                lod = value;
+                UpdateChunkData();
+            }
+        }
+
+        public int LODPower
+        {
+            get
+            {
+                return lodPower;
+            }
+            set
+            {
+                lodPower = value;
+                targetLodPower = value;
+                LOD = (int)Mathf.Pow(2, lodPower);
+            }
+        }
+
+        public int TargetLODPower
+        {
+            get
+            {
+                return targetLodPower;
+            }
+            set
+            {
+                targetLodPower = value;
+                if (targetLodPower == MarchingCubeChunkHandler.DESTROY_CHUNK_LOD)
+                {
+                    DestroyChunk();
+                }
+                else if (targetLodPower > lodPower)
+                {
+                    chunkUpdater.lowerChunkLods.Add(this);
+                    chunkUpdater.increaseChunkLods.Remove(this);
+                }
+                else if (targetLodPower < lodPower)
+                {
+                    chunkUpdater.increaseChunkLods.Add(this);
+                    chunkUpdater.lowerChunkLods.Remove(this);
+                }
+                else
+                {
+                    chunkUpdater.lowerChunkLods.Remove(this);
+                    chunkUpdater.increaseChunkLods.Remove(this);
+                }
+            }
+        }
+
+        public float[] Points
+        {
+            get
+            {
+                if (points == null)
+                {
+                    points = chunkHandler.RequestNoiseForChunk(this);
+                }
+                return points;
+            }
+            set
+            {
+                points = value;
+            }
+        }
+
+
+        public IMarchingCubeChunkHandler ChunkHandler
+        {
+            protected get
+            {
+                return chunkHandler;
+            }
+            set
+            {
+                chunkHandler = value;
+            }
+        }
+
+
+        public Vector3Int AnchorPos
+        {
+            get
+            {
+                return anchorPos;
+            }
+            set
+            {
+                anchorPos = value;
+                UpdateChunkCenterPos();
+            }
+        }
+
+
+        public int ChunkSize
+        {
+            get => chunkSize;
+            protected set { chunkSize = value; UpdateChunkCenterPos(); UpdateChunkData(); }
+        }
+
+        public int ChunkSizePower
+        {
+            get => chunkSizePower;
+            set { chunkSizePower = value; ChunkSize = (int)Mathf.Pow(2, chunkSizePower); }
+        }
+
+        protected virtual bool UseColliderForMesh => false;
+
+
+        #endregion properties
+
+        #region getter and setter methods
+
+        public void SetSimpleCollider()
+        {
+            if (chunkSimpleCollider == null)
+            {
+                chunkHandler.SetChunkColliderOf(this);
+            }
+        }
+
+        #endregion
+
+        #region async chunk building
 
         public void InitializeWithMeshDataParallel(TriangleChunkHeap heap, Queue<IMarchingCubeChunk> readyChunks)
         {
@@ -154,11 +286,62 @@ namespace MarchingCubes
             ThreadPool.QueueUserWorkItem((o) => RequestChunk(heap));
         }
 
+        protected void RequestChunk(TriangleChunkHeap heap)
+        {
+            try
+            {
+                IsInOtherThread = true;
+                InitializeWithMeshData(heap);
+                OnChunkDone();
+            }
+            catch (Exception x)
+            {
+                xs.Add(x);
+                Console.WriteLine(x);
+                //Debug.LogException(x);
+            }
+        }
 
-        protected void OnChunkThreadedDone()
+        protected void OnChunkDone()
+        {
+            if (readyChunks != null)
+            {
+                lock (listLock)
+                {
+                    readyChunks.Enqueue(this);
+                }
+            }
+            OnChunkFinished?.Invoke(this);
+        }
+
+        public void BuildAllMeshes()
+        {
+            for (int i = 0; i < data.Count; ++i)
+            {
+                ApplyChangesToMesh(data[i]);
+            }
+        }
+
+        protected void ApplyChangesToMesh(in MeshData d)
+        {
+            MarchingCubeMeshDisplayer displayer = GetMeshDisplayer();
+            displayer.ApplyMesh(d.colorData, d.vertices, d.triangles, Material, d.useCollider);
+        }
+
+        public void SetChunkOnMainThread()
         {
             IsInOtherThread = false;
+            if (!IsEmpty)
+            {
+                BuildAllMeshes();
+            }
         }
+
+        #endregion async chunk building
+
+
+
+
 
         public virtual void InitializeWithMeshData(TriangleChunkHeap tris)
         {
@@ -201,40 +384,21 @@ namespace MarchingCubes
             PrepareDestruction();
         }
 
-        public void SetLeaf(ChunkGroupTreeLeaf leaf)
-        {
-            this.leaf = leaf;
-        }
-
-        public ChunkLodCollider ChunkSimpleCollider
-        {
-            set
-            {
-                chunkSimpleCollider = value;
-            }
-        }
-
-
+  
         public void PrepareDestruction()
         {
             chunkUpdater.RemoveLowerLodChunk(this);
-            if (leaf != null)
+            if (Leaf != null)
             {
-                leaf.RemoveLeaf(this);
-                leaf = null;
+                Leaf.RemoveLeaf(this);
+                Leaf = null;
             }
             IsReady = false;
             HasStarted = false;
             FreeSimpleChunkCollider();
         }
 
-        public void GetSimpleCollider()
-        {
-            if (chunkSimpleCollider == null)
-            {
-                chunkHandler.SetChunkColliderOf(this);
-            }
-        }
+      
 
         public void FreeSimpleChunkCollider()
         {
@@ -245,128 +409,6 @@ namespace MarchingCubes
             }
         }
 
-        public WorldUpdater ChunkUpdater
-        {
-            set
-            {
-                chunkUpdater = value;
-            }
-        }
-
-        public int LOD
-        {
-            get
-            {
-                return lod;
-            }
-            protected set
-            {
-                lod = value;
-                UpdateChunkData();
-            }
-        }
-
-        protected int lodPower;
-
-        public int LODPower
-        {
-            get
-            {
-                return lodPower;
-            }
-            set
-            {
-                lodPower = value;
-                targetLodPower = value;
-                LOD = (int)Mathf.Pow(2, lodPower);
-            }
-        }
-
-        public int TargetLODPower
-        {
-            get
-            {
-                return targetLodPower;
-            }
-            set
-            {
-                targetLodPower = value;
-                if(targetLodPower == MarchingCubeChunkHandler.DESTROY_CHUNK_LOD)
-                {
-                    DestroyChunk();
-                }
-                else if(targetLodPower > lodPower)
-                {
-                    chunkUpdater.lowerChunkLods.Add(this);
-                    chunkUpdater.increaseChunkLods.Remove(this);
-                }
-                else if(targetLodPower < lodPower)
-                {
-                    chunkUpdater.increaseChunkLods.Add(this);
-                    chunkUpdater.lowerChunkLods.Remove(this);
-                }
-                else
-                {
-                    chunkUpdater.lowerChunkLods.Remove(this);
-                    chunkUpdater.increaseChunkLods.Remove(this);
-                }
-            }
-        }
-
-        public float[] Points
-        {
-            get
-            {
-                if (points == null)
-                {
-                    points = chunkHandler.RequestNoiseForChunk(this);
-                }
-                return points;
-            }
-            set
-            {
-                points = value;
-            }
-        }
-
-        protected void RequestPointsIfNotStored()
-        {
-            if (points == null)
-            {
-                points = chunkHandler.RequestNoiseForChunk(this);
-            }
-        }
-
-        public IMarchingCubeChunkHandler ChunkHandler
-        {
-            protected get
-            {
-                return chunkHandler;
-            }
-            set
-            {
-                chunkHandler = value;
-            }
-        }
-
-        public IMarchingCubeChunkHandler GetChunkHandler => chunkHandler;
-
-
-   
-
-
-        public Vector3Int AnchorPos
-        {
-            get
-            {
-                return anchorPos;
-            }
-            set
-            {
-                anchorPos = value;
-                UpdateChunkCenterPos();
-            }
-        }
 
         private void UpdateChunkCenterPos()
         {
@@ -385,18 +427,6 @@ namespace MarchingCubes
             sqrPointsPerAxis = pointsPerAxis * pointsPerAxis;
         }
        
-
-        public int ChunkSize
-        {
-            get => chunkSize;
-            protected set { chunkSize = value; UpdateChunkCenterPos(); UpdateChunkData(); }
-        }
-
-        public int ChunkSizePower
-        {
-            get => chunkSizePower;
-            set { chunkSizePower = value; ChunkSize = (int)Mathf.Pow(2, chunkSizePower); }
-        }
 
         protected void SetNeighbourAt(int x, int y, int z)
         {
@@ -448,6 +478,7 @@ namespace MarchingCubes
             }
         }
 
+        #region March
         public virtual MarchingCubeEntity MarchAt(int x, int y, int z, ICubeNeighbourFinder chunk, int lod)
         {
             float[] noisePoints = GetNoiseInCornersForPoint(x, y, z, lod);
@@ -500,6 +531,16 @@ namespace MarchingCubes
             }
         }
 
+        public virtual MarchingCubeEntity MarchAt(int x, int y, int z, int lod)
+        {
+            return MarchAt(x, y, z, null, lod);
+        }
+
+        public virtual MarchingCubeEntity MarchAt(int x, int y, int z, ICubeNeighbourFinder finder)
+        {
+            return MarchAt(x, y, z, finder, 1);
+        }
+
         protected Vector3 InterpolateVerts(int[] cubeCorners, float[] points, int startIndex1, int startIndex2)
         {
             int index1 = startIndex1 * 3;
@@ -511,15 +552,53 @@ namespace MarchingCubes
                 cubeCorners[index1 + 2] + t * (cubeCorners[index2 + 2] - cubeCorners[index1 + 2]));
         }
 
-        public virtual MarchingCubeEntity MarchAt(int x, int y, int z, int lod)
+        protected int[] GetCubeCornerArrayForPoint(int x, int y, int z, int spacing)
         {
-            return MarchAt(x, y, z, null, lod);
+            Vector3Int v3 = AnchorPos;
+            x *= lod;
+            y *= lod;
+            z *= lod;
+            x += v3.x;
+            y += v3.y;
+            z += v3.z;
+
+            int offset = spacing * lod;
+            return new int[]
+            {
+                x, y, z,
+                x + offset, y,z,
+                x + offset, y, z + offset,
+                x, y, z + offset,
+                x, y + offset, z,
+                x + offset, y + offset, z,
+                x + offset, y + offset, z + offset,
+                x, y + offset, z + offset
+            };
         }
 
-        public virtual MarchingCubeEntity MarchAt(int x, int y, int z, ICubeNeighbourFinder finder)
+         protected float[] GetNoiseInCornersForPoint(int x, int y, int z, int lod)
         {
-            return MarchAt(x, y, z, finder, 1);
+            int pointsLod = pointsPerAxis * lod;
+            int sqrPointsLod = sqrPointsPerAxis * lod;
+            int pointIndex = PointIndexFromCoord(x, y, z);
+            return new float[]
+            {
+                points[pointIndex],
+                points[pointIndex + lod],
+                points[pointIndex + lod + sqrPointsLod],
+                points[pointIndex + sqrPointsLod],
+                points[pointIndex + pointsLod],
+                points[pointIndex + lod + pointsLod],
+                points[pointIndex + lod + pointsLod + sqrPointsLod],
+                points[pointIndex + pointsLod + sqrPointsLod]
+            };
         }
+
+        #endregion
+
+
+
+        #region build mesh from triangles
 
         protected void AddTriangleToMeshData(PathTriangle tri, Color c, ref int usedTriCount, ref int totalTriCount)
         {
@@ -571,6 +650,14 @@ namespace MarchingCubes
                 usedTriCount = 0;
             }
         }
+
+        #endregion
+
+
+
+
+
+
 
         public void AddDisplayer(MarchingCubeMeshDisplayer b)
         {
@@ -637,18 +724,6 @@ namespace MarchingCubes
         }
 
 
-        protected void AddCubeForNeigbhourInDirection(int key, MarchingCubeEntity c)
-        {
-            List<MarchingCubeEntity> cubes;
-            if (!cubesForNeighbourInDirection.TryGetValue(key, out cubes))
-            {
-                cubes = new List<MarchingCubeEntity>();
-                cubesForNeighbourInDirection.Add(key, cubes);
-            }
-            cubes.Add(c);
-        }
-
-        protected virtual bool UseColliderForMesh => false;
 
         protected virtual void SetCurrentMeshData()
         {
@@ -674,48 +749,6 @@ namespace MarchingCubes
             }
         }
 
-        protected void OnChunkDone()
-        {
-            if (readyChunks != null)
-            {
-                lock (listLock)
-                {
-                    readyChunks.Enqueue(this);
-                }
-            }
-            OnChunkFinished?.Invoke(this);
-        }
-
-        protected void RequestChunk(TriangleChunkHeap heap)
-        {
-            try
-            {
-                IsInOtherThread = true;
-                InitializeWithMeshData(heap);
-                OnChunkDone();
-            }
-            catch (Exception x)
-            {
-                xs.Add(x);
-                Console.WriteLine(x);
-                //Debug.LogException(x);
-            }
-        }
-
-        public void BuildAllMeshes()
-        {
-            for (int i = 0; i < data.Count; ++i)
-            {
-                ApplyChangesToMesh(data[i]);
-            }
-        }
-
-        protected void ApplyChangesToMesh(in MeshData d)
-        {
-            MarchingCubeMeshDisplayer displayer = GetMeshDisplayer();
-            displayer.ApplyMesh(d.colorData, d.vertices, d.triangles, Material, d.useCollider);
-        }
-
 
         protected void ResetArrayData()
         {
@@ -725,6 +758,7 @@ namespace MarchingCubes
             colorData = new Color[size];
         }
 
+        #region chunk queries
 
         public bool IsPointInBounds(Vector3Int v)
         {
@@ -746,6 +780,45 @@ namespace MarchingCubes
                 && y <= 0 && y >= pointsPerAxis - 1
                 && z <= 0 && z >= pointsPerAxis - 1;
         }
+
+        public bool IsCubeInBounds(int x, int y, int z)
+        {
+            return
+                x >= 0 && x < vertexSize
+                && y >= 0 && y < vertexSize
+                && z >= 0 && z < vertexSize;
+        }
+
+        protected bool IsBorderCube(int x, int y, int z)
+        {
+            return x == 0 || x == maxEntityIndexPerAxis
+                || y == 0 || y == maxEntityIndexPerAxis
+                || z == 0 || z == maxEntityIndexPerAxis;
+        }
+
+        #endregion chunk queries
+
+        #region index and point transformations
+        public Vector3Int CoordFromPointIndex(int i)
+        {
+            return new Vector3Int
+               (i % sqrPointsPerAxis % pointsPerAxis
+               , i % sqrPointsPerAxis / pointsPerAxis
+               , i / sqrPointsPerAxis
+               );
+        }
+
+        public int PointIndexFromCoord(int x, int y, int z)
+        {
+            int index = z * sqrPointsPerAxis + y * pointsPerAxis + x;
+            return index;
+        }
+
+
+
+        #endregion index and point transformations
+
+      
 
 
         public Vector3Int[] NeighbourDirections(int x, int y, int z, int space = 0)
@@ -784,83 +857,8 @@ namespace MarchingCubes
             return v3.GetAllNonDefaultAxisCombinations();
         }
 
-        public bool IsCubeInBounds(int x, int y, int z)
-        {
-            return
-                x >= 0 && x < vertexSize
-                && y >= 0 && y < vertexSize
-                && z >= 0 && z < vertexSize;
-        }
 
-        protected bool IsBorderCube(int x, int y, int z)
-        {
-            return x == 0 || x == maxEntityIndexPerAxis
-                || y == 0 || y == maxEntityIndexPerAxis
-                || z == 0 || z == maxEntityIndexPerAxis;
-        }
-
-        public Vector3Int CoordFromPointIndex(int i)
-        {
-            return new Vector3Int
-               (i % sqrPointsPerAxis % pointsPerAxis
-               , i % sqrPointsPerAxis / pointsPerAxis
-               , i / sqrPointsPerAxis
-               );
-        }
-
-        public int PointIndexFromCoord(int x, int y, int z)
-        {
-            int index = z * sqrPointsPerAxis + y * pointsPerAxis + x;
-            return index;
-        }
-
-
-        protected int[] GetCubeCornerArrayForPoint(int x, int y, int z, int spacing)
-        {
-            Vector3Int v3 = AnchorPos;
-            x *= lod;
-            y *= lod;
-            z *= lod;
-            x += v3.x;
-            y += v3.y;
-            z += v3.z;
-
-            int offset = spacing * lod;
-            return new int[]
-            {
-                x, y, z,
-                x + offset, y,z,
-                x + offset, y, z + offset,
-                x, y, z + offset,
-                x, y + offset, z,
-                x + offset, y + offset, z,
-                x + offset, y + offset, z + offset,
-                x, y + offset, z + offset
-            };
-        }
-
-        protected float[] GetNoiseInCornersForPoint(int x, int y, int z, int lod)
-        {
-            int pointsLod = pointsPerAxis * lod;
-            int sqrPointsLod = sqrPointsPerAxis * lod;
-            int pointIndex = PointIndexFromCoord(x, y, z);
-            return new float[]
-            {
-                points[pointIndex],
-                points[pointIndex + lod],
-                points[pointIndex + lod + sqrPointsLod],
-                points[pointIndex + sqrPointsLod],
-                points[pointIndex + pointsLod],
-                points[pointIndex + lod + pointsLod],
-                points[pointIndex + lod + pointsLod + sqrPointsLod],
-                points[pointIndex + pointsLod + sqrPointsLod]
-            };
-        }
-
-        public ChunkGroupTreeLeaf GetLeaf()
-        {
-            return leaf;
-        }
+       
 
     }
 

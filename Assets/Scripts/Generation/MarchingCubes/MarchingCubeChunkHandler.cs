@@ -356,7 +356,7 @@ namespace MarchingCubes
                 {
                     while ((closestNeighbours.size == 0 && channeledChunks > x.Count) /*|| channeledChunks > maxRunningThreads*/)
                     {
-                        //TODO: while waiting create mesh displayers! -> led to worse performance?
+                        //TODO: while waiting create mesh displayers! -> leads to worse performance?
                         while (readyParallelChunks.Count > 0)
                         {
                             OnParallelChunkDoneCallBack(readyParallelChunks.Dequeue());
@@ -428,20 +428,13 @@ namespace MarchingCubes
         {
             channeledChunks--;
 
-            if (chunk == null)
-            {
-                Debug.Log("Chunk is null?");
-                return;
-            }
-
-            chunk.IsInOtherThread = false;
+            chunk.SetChunkOnMainThread();
             if(chunk.IsEmpty)
             {
                 chunk.DestroyChunk();
             }
             else
             {
-                chunk.BuildAllMeshes();
                 chunk.IsReady = true;
 
                 Vector3Int v3;
@@ -1169,7 +1162,7 @@ namespace MarchingCubes
         private void SplitChunkAndIncreaseLod(IMarchingCubeChunk chunk, int toLodPower, int newSizePow)
         {
             Debug.Log("plit");
-            int[][] anchors = chunk.GetLeaf().GetAllChildGlobalAnchorPosition();
+            int[][] anchors = chunk.Leaf.GetAllChildGlobalAnchorPosition();
             IMarchingCubeChunk[] newChunks = new IMarchingCubeChunk[8];
             for (int i = 0; i < 8; i++)
             {
@@ -1235,7 +1228,7 @@ namespace MarchingCubes
                 if (toLod <= chunk.LOD || chunk.ChunkSize % toLod != 0)
                     Debug.LogWarning($"invalid new chunk lod {toLodPower} from lod {chunk.LODPower}");
 
-                if (chunk.GetLeaf().AllSiblingsAreLeafsWithSameTargetLod())
+                if (chunk.Leaf.AllSiblingsAreLeafsWithSameTargetLod())
                 {
                     MergeAndReduceChunkBranch(chunk, toLodPower);
                 }
@@ -1250,7 +1243,7 @@ namespace MarchingCubes
 
         public void MergeAndReduceChunkBranch(IMarchingCubeChunk chunk, int toLodPower)
         {
-            ChunkGroupTreeLeaf[] leafs = chunk.GetLeaf().parent.GetLeafs();
+            ChunkGroupTreeLeaf[] leafs = chunk.Leaf.parent.GetLeafs();
             for (int i = 0; i < 8; i++)
             {
                 ChunkGroupTreeLeaf l = leafs[i];

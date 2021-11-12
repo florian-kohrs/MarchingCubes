@@ -64,18 +64,13 @@ namespace MarchingCubes
 
         void AddDisplayer(MarchingCubeMeshDisplayer b);
 
-        void SetLeaf(ChunkGroupTreeLeaf leaf);
+        ChunkGroupTreeLeaf Leaf { get; set; }
 
-        ChunkGroupTreeLeaf GetLeaf();
         void GiveUnusedDisplayerBack();
 
         //void InitializeEmpty(IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel);
 
-        bool IsInOtherThread { set; }
-
-        void BuildAllMeshes();
-
-
+        void SetChunkOnMainThread();
     }
 
 }

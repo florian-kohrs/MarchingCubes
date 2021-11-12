@@ -18,10 +18,6 @@ namespace MarchingCubes
 
         MarchingCubeEntity GetEntityAt(int x, int y, int z);
 
-        IMarchingCubeChunkHandler GetChunkHandler { get; }
-
-        //void RebuildAround(List<Vector3Int> changedPoints);
-
         void RebuildAround(float offsetX, float offsetY, float offsetZ, int radius, int posX, int posY, int posZ, float delta);
 
 

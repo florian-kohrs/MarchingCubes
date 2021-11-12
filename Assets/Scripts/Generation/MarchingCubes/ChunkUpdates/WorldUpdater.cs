@@ -200,9 +200,7 @@ namespace MarchingCubes
                     }
                     else
                     {
-                        //TODO: dont do this for empty chunks, check that no mesh displayer is request for 0 tris
-                        chunk[i].IsInOtherThread = false;
-                        chunk[i].BuildAllMeshes();
+                        chunk[i].SetChunkOnMainThread();
                     }
                 }
                 //dont let chunk be reset while still in building phase -> will be null here

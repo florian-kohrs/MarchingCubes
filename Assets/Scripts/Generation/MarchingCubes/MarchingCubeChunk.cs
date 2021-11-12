@@ -344,7 +344,7 @@ namespace MarchingCubes
 
             if (!IsEmpty)
             {
-                GetSimpleCollider();
+                SetSimpleCollider();
             }
 
             RebuildMesh();
@@ -401,7 +401,7 @@ namespace MarchingCubes
 
             if (!IsEmpty)
             {
-                GetSimpleCollider();
+                SetSimpleCollider();
             }
 
             RebuildMesh();

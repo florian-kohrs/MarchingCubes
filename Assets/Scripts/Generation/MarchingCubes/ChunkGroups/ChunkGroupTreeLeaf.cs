@@ -19,7 +19,7 @@ namespace MarchingCubes
             this.parent = parent;
             chunk.AnchorPos = new Vector3Int(anchorPoint[0], anchorPoint[1],anchorPoint[2]);
             chunk.ChunkSizePower = sizePower;
-            chunk.SetLeaf(this);
+            chunk.Leaf = this;
         }
 
 
