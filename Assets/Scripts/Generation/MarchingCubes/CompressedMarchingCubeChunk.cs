@@ -249,7 +249,7 @@ namespace MarchingCubes
             set { chunkSizePower = value; ChunkSize = (int)Mathf.Pow(2, chunkSizePower); }
         }
 
-        protected virtual bool UseColliderForMesh => false;
+        public virtual bool UseCollider => false;
 
 
         #endregion properties
@@ -728,7 +728,7 @@ namespace MarchingCubes
         protected virtual void SetCurrentMeshData()
         {
             MarchingCubeMeshDisplayer displayer = GetBestMeshDisplayer();
-            displayer.ApplyMesh(colorData, vertices, meshTriangles, Material, UseColliderForMesh);
+            displayer.ApplyMesh(colorData, vertices, meshTriangles, Material, UseCollider);
         }
 
 
@@ -736,7 +736,7 @@ namespace MarchingCubes
         {
             if (IsInOtherThread)
             {
-                data.Add(new MeshData(meshTriangles, vertices, colorData, UseColliderForMesh));
+                data.Add(new MeshData(meshTriangles, vertices, colorData, UseCollider));
             }
             else
             {

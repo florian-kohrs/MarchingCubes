@@ -10,6 +10,8 @@ namespace MarchingCubes
 
         bool IsReady { get; set; }
 
+        bool UseCollider { get; }
+
         int ChunkSize { get; }
 
         WorldUpdater ChunkUpdater { set; }

@@ -31,7 +31,7 @@ namespace MarchingCubes
         public ComputeBuffer rebuildTriCounter;
 
 
-        protected override bool UseColliderForMesh => true;
+        public override bool UseCollider => true;
 
         protected void StoreNoiseArray()
         {

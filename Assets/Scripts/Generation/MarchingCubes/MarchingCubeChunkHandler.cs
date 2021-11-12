@@ -15,6 +15,7 @@ namespace MarchingCubes
     {
 
         protected int kernelId;
+
         protected int rebuildKernelId;
 
         protected const int threadGroupSize = 8;
@@ -85,69 +86,30 @@ namespace MarchingCubes
         }
 
 
-        protected Stack<MarchingCubeMeshDisplayer> unusedDisplayer = new Stack<MarchingCubeMeshDisplayer>();
+        protected MeshDisplayerPool displayerPool;
 
-        protected Stack<MarchingCubeMeshDisplayer> unusedInteractableDisplayer = new Stack<MarchingCubeMeshDisplayer>();
+        protected InteractableMeshDisplayPool interactableDisplayerPool;
 
-        protected Stack<ChunkLodCollider> freechunkCollider = new Stack<ChunkLodCollider>();
-
-
-        public void SetChunkColliderOf(IMarchingCubeChunk c)
-        {
-            ChunkLodCollider collider;
-            if (freechunkCollider.Count > 0)
-            {
-                collider = freechunkCollider.Pop();
-                collider.chunk = c;
-                collider.transform.position = c.CenterPos;
-                c.ChunkSimpleCollider = collider;
-                collider.coll.enabled = true;
-            }
-            else
-            {
-                BuildAndSetLodColliderForChunk(c);
-            }
-        }
+        protected SimpleChunkColliderPool simpleChunkColliderPool;
 
         public void FreeCollider(ChunkLodCollider c)
         {
-            c.coll.enabled = false;
-            c.chunk = null;
-            freechunkCollider.Push(c);
+            simpleChunkColliderPool.ReturnItemToPool(c);
+        }
+
+        public void SetChunkColliderOf(IMarchingCubeChunk c)
+        {
+            simpleChunkColliderPool.GetItemFromPoolFor(c);
         }
 
         public MarchingCubeMeshDisplayer GetNextMeshDisplayer()
         {
-            MarchingCubeMeshDisplayer displayer;
-            if (unusedDisplayer.Count > 0)
-            {
-                displayer = unusedDisplayer.Pop();
-            }
-            else
-            {
-                displayer = new MarchingCubeMeshDisplayer(transform,false);
-            }
-            return displayer;
+            return displayerPool.GetItemFromPoolFor(null);
         }
 
-        public MarchingCubeMeshDisplayer GetNextInteractableMeshDisplayer(IMarchingCubeInteractableChunk forChunk)
+        public MarchingCubeMeshDisplayer GetNextInteractableMeshDisplayer(IMarchingCubeInteractableChunk chunk)
         {
-            MarchingCubeMeshDisplayer displayer;
-            if (unusedInteractableDisplayer.Count > 0)
-            {
-                displayer = unusedInteractableDisplayer.Pop();
-                displayer.SetInteractableChunk(forChunk);
-            }
-            else if (unusedDisplayer.Count > 0)
-            {
-                displayer = unusedDisplayer.Pop();
-                displayer.SetInteractableChunk(forChunk);
-            }
-            else
-            {
-                displayer = new MarchingCubeMeshDisplayer(forChunk, transform);
-            }
-            return displayer;
+            return interactableDisplayerPool.GetItemFromPoolFor(chunk);
         }
 
         protected void SetDisplayerOfChunk(IMarchingCubeChunk c)
@@ -166,25 +128,24 @@ namespace MarchingCubes
         {
             if (display.HasCollider)
             {
-                unusedInteractableDisplayer.Push(display);
+                interactableDisplayerPool.ReturnItemToPool(display);
             }
             else
             {
-                unusedDisplayer.Push(display);
+                displayerPool.ReturnItemToPool(display);
             }
         }
 
         public void FreeMeshDisplayer(MarchingCubeMeshDisplayer display)
         {
             TakeMeshDisplayerBack(display);
-            display.Reset();
         }
 
         public void FreeAllDisplayers(List<MarchingCubeMeshDisplayer> displayers)
         {
             for (int i = 0; i < displayers.Count; ++i)
             {
-                FreeMeshDisplayer(displayers[i]);
+                TakeMeshDisplayerBack(displayers[i]);
             }
         }
 
@@ -254,6 +215,9 @@ namespace MarchingCubes
 
         private void Start()
         {
+            simpleChunkColliderPool = new SimpleChunkColliderPool(transform);
+            displayerPool = new MeshDisplayerPool(transform);
+            interactableDisplayerPool = new InteractableMeshDisplayPool(transform);
             CreateAllBuffersWithSizes(65);
 
             TriangulationTableStaticData.BuildLookUpTables();
@@ -723,32 +687,12 @@ namespace MarchingCubes
 
                 chunkGroup.SetLeafAtPosition(new int[] { pos.x, pos.y, pos.z }, chunk, false);
 
-                SetChunkColliderOf(chunk);
+                simpleChunkColliderPool.GetItemFromPoolFor(chunk);
 
                 worldUpdater.AddChunk(chunk);
             }
         }
 
-        //Do this as work after compute shader dispatch and before data read
-        //also give put object back into stack for empty chunks and read from stack
-        protected void BuildAndSetLodColliderForChunk(IMarchingCubeChunk c)
-        {
-            GameObject g = new GameObject();
-            SphereCollider sphere = g.AddComponent<SphereCollider>();
-            sphere.radius = 1;
-
-            sphere.isTrigger = true;
-
-            g.transform.position = c.CenterPos;
-            ChunkLodCollider coll = g.AddComponent<ChunkLodCollider>();
-            coll.coll = sphere;
-            coll.chunk = c;
-            c.ChunkSimpleCollider = coll;
-
-            //TODO:maybe have layer for each lod level
-            g.layer = 6;
-            g.transform.SetParent(colliderParent, true);
-        }
 
         protected IMarchingCubeChunk GetThreadedChunkObjectAt(Vector3Int pos, int lodPower, int chunkSizePower, bool allowOverride)
         {
@@ -941,7 +885,7 @@ namespace MarchingCubes
 
             for (int i = 0; i < chunkLength; i++)
             {
-                SetChunkColliderOf(chunks[i]);
+                simpleChunkColliderPool.GetItemFromPoolFor(chunks[i]);
             }
 
             triCountBuffer.GetData(triCounts, 0, 0, chunkLength);
@@ -986,7 +930,7 @@ namespace MarchingCubes
             ///Do work for chunk here, before data from gpu is read, to give gpu time to finish
 
             SetDisplayerOfChunk(chunk);
-            SetChunkColliderOf(chunk);
+            simpleChunkColliderPool.GetItemFromPoolFor(chunk);
 
             ///read data from gpu
 
@@ -1331,6 +1275,5 @@ namespace MarchingCubes
             edits.vals = noise;
         }
 
-       
     }
 }
