@@ -23,9 +23,7 @@ namespace MarchingCubes
         public HashSet<MarchingCubeEntity> entities = new HashSet<MarchingCubeEntity>();
 
         public int kernelId;
-
         public ComputeShader rebuildShader;
-
         public ComputeBuffer rebuildNoiseBuffer;
         public ComputeBuffer rebuildTriResult;
         public ComputeBuffer rebuildTriCounter;

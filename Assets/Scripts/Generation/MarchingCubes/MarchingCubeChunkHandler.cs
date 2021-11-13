@@ -399,8 +399,6 @@ namespace MarchingCubes
             }
             else
             {
-                chunk.IsReady = true;
-
                 Vector3Int v3;
                 bool[] dirs = chunk.HasNeighbourInDirection;
                 int count = dirs.Length;
@@ -1105,7 +1103,6 @@ namespace MarchingCubes
 
         private void SplitChunkAndIncreaseLod(IMarchingCubeChunk chunk, int toLodPower, int newSizePow)
         {
-            Debug.Log("plit");
             int[][] anchors = chunk.Leaf.GetAllChildGlobalAnchorPosition();
             IMarchingCubeChunk[] newChunks = new IMarchingCubeChunk[8];
             for (int i = 0; i < 8; i++)

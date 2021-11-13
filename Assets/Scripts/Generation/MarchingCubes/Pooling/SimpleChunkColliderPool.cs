@@ -24,16 +24,17 @@ namespace MarchingCubes
         protected override ChunkLodCollider CreateItem()
         {
             GameObject g = new GameObject();
-            SphereCollider sphere = g.AddComponent<SphereCollider>();
-            sphere.radius = 1;
-
-            sphere.isTrigger = true;
-            ChunkLodCollider coll = g.AddComponent<ChunkLodCollider>();
-            coll.coll = sphere;
+            g.transform.SetParent(colliderParent, true);
             //TODO:maybe have layer for each lod level
             g.layer = 6;
-            g.transform.SetParent(colliderParent, true);
 
+            SphereCollider sphere = g.AddComponent<SphereCollider>();
+            sphere.radius = 1;
+            sphere.isTrigger = true;
+
+            ChunkLodCollider coll = g.AddComponent<ChunkLodCollider>();
+            coll.coll = sphere;
+           
             return coll;
         }
 

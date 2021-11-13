@@ -8,7 +8,7 @@ namespace MarchingCubes
     public interface IMarchingCubeChunk : ISizeManager
     {
 
-        bool IsReady { get; set; }
+        bool IsReady { get; }
 
         bool UseCollider { get; }
 

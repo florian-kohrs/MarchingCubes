@@ -548,7 +548,7 @@ Camera:
     width: 1
     height: 1
   near clip plane: 0.3
-  far clip plane: 2000
+  far clip plane: 4000
   field of view: 60
   orthographic: 0
   orthographic size: 5
@@ -991,7 +991,7 @@ MonoBehaviour:
   chunkMaterial: {fileID: 2100000, guid: 97d2f9aa8d16b8241a90494b8d616c04, type: 2}
   surfaceLevel: 0.511
   player: {fileID: 1779183453}
-  buildAroundDistance: 4000
+  buildAroundDistance: 7000
   worldUpdater: {fileID: 1125545290}
   colliderParent: {fileID: 1768635035}
   totalTriBuild: 0
@@ -1162,7 +1162,13 @@ MonoBehaviour:
     frequency: 2.05
     scale: 18.5
     heightOffset: 0
-  biomSize: 250
+  - amplitude: 50
+    lacunarity: 2
+    persistence: 0.518
+    frequency: 2.05
+    scale: 18.5
+    heightOffset: 600
+  biomSize: 1000
   biomSpacing: 14
   radius: 65000
   octaves: 9
@@ -1663,7 +1669,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   c: {fileID: 2047378107}
-  speed: 666
+  speed: 111
 --- !u!143 &2047378107
 CharacterController:
   m_ObjectHideFlags: 0

@@ -21,11 +21,5 @@ namespace MarchingCubes
         void RebuildAround(float offsetX, float offsetY, float offsetZ, int radius, int posX, int posY, int posZ, float delta);
 
 
-        bool IsPointInBounds(int x, int y, int z);
-
-        bool IsPointInBounds(Vector3Int v);
-
-
-
     }
 }
