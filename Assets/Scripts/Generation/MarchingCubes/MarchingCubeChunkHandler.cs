@@ -14,8 +14,6 @@ namespace MarchingCubes
     public class MarchingCubeChunkHandler : SaveableMonoBehaviour, IMarchingCubeChunkHandler
     {
 
-        protected int kernelId;
-
         protected int rebuildKernelId;
 
         protected const int threadGroupSize = 8;
@@ -236,7 +234,6 @@ namespace MarchingCubes
 
             watch.Start();
             buildAroundSqrDistance = (long)buildAroundDistance * buildAroundDistance;
-            kernelId = marshShader.FindKernel("March");
             startPos = player.position;
             IMarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
             maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
