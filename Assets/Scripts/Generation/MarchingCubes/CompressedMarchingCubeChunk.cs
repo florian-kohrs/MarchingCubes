@@ -12,10 +12,10 @@ namespace MarchingCubes
 
         //TODO: Check this: Graphics.DrawProceduralIndirect
 
-        ~CompressedMarchingCubeChunk()
-        {
-            Debug.Log("Destroyed chunk");
-        }
+        //~CompressedMarchingCubeChunk()
+        //{
+        //    Debug.Log("Destroyed chunk");
+        //}
 
         #region static fields
 
@@ -311,7 +311,11 @@ namespace MarchingCubes
                     readyChunks.Enqueue(this);
                 }
             }
-            OnChunkFinished?.Invoke(this);
+            if(OnChunkFinished != null)
+            {
+                OnChunkFinished(this);
+                OnChunkFinished = null;
+            }
         }
 
         public void BuildAllMeshes()
