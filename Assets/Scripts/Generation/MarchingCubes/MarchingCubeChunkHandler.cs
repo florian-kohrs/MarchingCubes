@@ -660,8 +660,6 @@ namespace MarchingCubes
 
             chunkGroup.SetLeafAtPosition(new int[] { position.x, position.y, position.z }, chunk, allowOverride);
 
-            worldUpdater.AddChunk(chunk);
-
             return chunk;
         }
 
@@ -686,8 +684,6 @@ namespace MarchingCubes
                 chunkGroup.SetLeafAtPosition(new int[] { pos.x, pos.y, pos.z }, chunk, false);
 
                 simpleChunkColliderPool.GetItemFromPoolFor(chunk);
-
-                worldUpdater.AddChunk(chunk);
             }
         }
 

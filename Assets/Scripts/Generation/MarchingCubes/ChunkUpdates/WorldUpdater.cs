@@ -50,71 +50,12 @@ namespace MarchingCubes
         public HashSet<IMarchingCubeChunk> removedLowerChunkLodsBuffer = new HashSet<IMarchingCubeChunk>();
         public HashSet<IMarchingCubeChunk> increaseChunkLodsBuffer = new HashSet<IMarchingCubeChunk>();
 
-        Stack<IEnumerator<IMarchingCubeChunk>> checkTheeseChunks = new Stack<IEnumerator<IMarchingCubeChunk>>();
-
         protected bool isInIncreasingChunkIteration;
         protected bool isInDecreasingChunkIteration;
-
-        protected IEnumerator UpdateChunkSizes()
-        {
-            IEnumerator<IMarchingCubeChunk> chunks;
-            IMarchingCubeChunk chunk;
-            while (true)
-            {
-                if (checkTheeseChunks.Count == 0)
-                {
-                    int count = chunksAtSizes.Length;
-                    for (int i = 0; i < count; i++)
-                    {
-                        checkTheeseChunks.Push(chunksAtSizes[i].GetEnumerator());
-                    }
-                }
-                while (checkTheeseChunks.Count > 0)
-                {
-                    chunks = checkTheeseChunks.Pop();
-                    while (chunks.MoveNext())
-                    {
-                        if (FrameTimer.MillisecondsSinceFrame >= maxFrameTime)
-                        {
-                            yield return null;
-                        }
-                        chunk = chunks.Current;
-                        if (CheckSizeOfChunk(chunk))
-                        {
-                            break;
-                        }
-                    }
-                }
-                yield return null;
-            }
-        }
-
-
-        protected bool CheckSizeOfChunk(IMarchingCubeChunk c)
-        {
-            float dist = (c.CenterPos - player.position).magnitude;
-            float sizePower = lodPowerAtDistance.Evaluate(dist);
-            float distanceToNext = sizePower - (int)sizePower;
-            if (distanceToNext < -reduceChunkAtCorrectSizeDist)
-            {
-                //chunkHandler.GetSplittedNoiseArray(c);
-                return true;
-            }
-            else if (distanceToNext > increaseChunkAtCorrectSizeDist)
-            {
-                chunkHandler.DecreaseChunkLod(c, c.LODPower + 1);
-                return true;
-            }
-            return false;
-        }
 
 
         private void Awake()
         {
-            for (int i = 0; i <= MarchingCubeChunkHandler.CHUNK_GROUP_SIZE_POWER; i++)
-            {
-                chunksAtSizes[i] = new HashSet<IMarchingCubeChunk>();
-            }
             lodPowerAtDistance = chunkHandler.lodPowerForDistances;
             GenerateTriggers();
             //StartCoroutine(UpdateChunkSizes());
@@ -154,20 +95,6 @@ namespace MarchingCubes
             c.radius = radius;
         }
 
-        /// <summary>
-        /// chunks with small sizes have to be checked more frequently if they need to be changed
-        /// </summary>
-        public HashSet<IMarchingCubeChunk>[] chunksAtSizes = new HashSet<IMarchingCubeChunk>[MarchingCubeChunkHandler.CHUNK_GROUP_SIZE_POWER + 1];
-
-        public void AddChunk(IMarchingCubeChunk chunk)
-        {
-            chunksAtSizes[chunk.ChunkSizePower].Add(chunk);
-        }
-
-        public void RemoveChunkUnsafe(IMarchingCubeChunk chunk)
-        {
-            chunksAtSizes[chunk.ChunkSizePower].Remove(chunk);
-        }
 
         public int maxMillisecondsPerFrame = 30;
 
