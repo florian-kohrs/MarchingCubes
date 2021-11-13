@@ -328,7 +328,7 @@ namespace MarchingCubes
 
         protected void ApplyChangesToMesh(in MeshData d)
         {
-            MarchingCubeMeshDisplayer displayer = GetMeshDisplayer();
+            MarchingCubeMeshDisplayer displayer = GetFittingMeshDisplayer();
             displayer.ApplyMesh(d.colorData, d.vertices, d.triangles, Material, d.useCollider);
         }
 
@@ -657,12 +657,6 @@ namespace MarchingCubes
 
         #endregion
 
-
-
-
-
-
-
         public void AddDisplayer(MarchingCubeMeshDisplayer b)
         {
             freeDisplayer = b;
@@ -685,11 +679,11 @@ namespace MarchingCubes
             }
         }
 
-        protected MarchingCubeMeshDisplayer GetBestMeshDisplayer()
+        protected MarchingCubeMeshDisplayer GetFittingMeshDisplayer()
         {
-            if (this is IMarchingCubeInteractableChunk i)
+            if (UseCollider)
             {
-                return GetMeshInteractableDisplayer(i);
+                return GetMeshInteractableDisplayer((IMarchingCubeInteractableChunk)this);
             }
             else
             {
@@ -731,7 +725,7 @@ namespace MarchingCubes
 
         protected virtual void SetCurrentMeshData()
         {
-            MarchingCubeMeshDisplayer displayer = GetBestMeshDisplayer();
+            MarchingCubeMeshDisplayer displayer = GetFittingMeshDisplayer();
             displayer.ApplyMesh(colorData, vertices, meshTriangles, Material, UseCollider);
         }
 

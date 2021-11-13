@@ -879,6 +879,8 @@ namespace MarchingCubes
 
             for (int i = 0; i < chunkLength; i++)
             {
+                //TODO:check if this reduces wait time from gpu
+                SetDisplayerOfChunk(chunks[i]);
                 simpleChunkColliderPool.GetItemFromPoolFor(chunks[i]);
             }
 
@@ -1051,7 +1053,6 @@ namespace MarchingCubes
             int newSizePow = DEFAULT_CHUNK_SIZE_POWER + toLodPower;
             if (newSizePow == chunk.ChunkSizePower || newSizePow == CHUNK_GROUP_SIZE_POWER)
             {
-                    //if previous chunk was border chunk, build spawners at neighbours
                 ExchangeSingleChunkParallel(chunk, chunk.AnchorPos, toLodPower, chunk.ChunkSizePower, false, true);
             }
             else
@@ -1103,7 +1104,7 @@ namespace MarchingCubes
             IMarchingCubeChunk[] newChunks = new IMarchingCubeChunk[8];
             for (int i = 0; i < 8; i++)
             {
-                Vector3Int v3 = IntVecToVector3(anchors[i]);
+                Vector3Int v3 = IntArrToVector3(anchors[i]);
                 //TODO:use already referenced parent to set children
                 newChunks[i] = GetThreadedChunkObjectAt(v3, PositionToChunkGroupCoord(v3), toLodPower, newSizePow, true);
             }
@@ -1131,7 +1132,7 @@ namespace MarchingCubes
         }
 
 
-        protected Vector3Int IntVecToVector3(int[] arr) => new Vector3Int(arr[0], arr[1], arr[2]);
+        protected Vector3Int IntArrToVector3(int[] arr) => new Vector3Int(arr[0], arr[1], arr[2]);
 
         protected int NumberOfSavedChunksAt(Vector3Int pos, int sizePow)
         {

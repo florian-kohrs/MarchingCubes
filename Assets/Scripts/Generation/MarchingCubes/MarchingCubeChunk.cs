@@ -205,6 +205,7 @@ namespace MarchingCubes
         protected static object rebuildListLock = new object();
 
 
+        //TODO: When editing chunk that spawns new chunk build neighbours of new chunk if existing
         public void RebuildAround(float offsetX, float offsetY, float offsetZ, int radius, int posX, int posY, int posZ, float delta)
         {
             if (cubeEntities == null)

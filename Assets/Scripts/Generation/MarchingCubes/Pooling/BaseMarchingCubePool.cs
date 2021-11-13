@@ -19,9 +19,13 @@ namespace MarchingCubes
         {
             T item;
             if (pool.Count > 0)
+            {
                 item = pool.Pop();
+            }
             else
+            {
                 item = CreateItem();
+            }
             ApplyChunkToItem(item, chunk);
             return item;
         }

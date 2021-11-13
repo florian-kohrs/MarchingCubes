@@ -14,12 +14,16 @@ namespace MarchingCubes
 
         protected Transform transform;
 
+        protected int creationCount = 0;
+
         protected override void ApplyChunkToItem(MarchingCubeMeshDisplayer item, IMarchingCubeChunk c)
         {
         }
 
         protected override MarchingCubeMeshDisplayer CreateItem()
         {
+            creationCount++;
+            Debug.Log("Created default number " + creationCount);
             return new MarchingCubeMeshDisplayer(transform, false);
         }
 

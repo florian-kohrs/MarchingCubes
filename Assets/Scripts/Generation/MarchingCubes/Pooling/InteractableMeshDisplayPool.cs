@@ -14,7 +14,6 @@ namespace MarchingCubes
 
         protected Transform transform;
 
-
         protected override void ApplyChunkToItem(MarchingCubeMeshDisplayer item, IMarchingCubeInteractableChunk c)
         {
             item.SetInteractableChunk(c);

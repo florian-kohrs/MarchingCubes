@@ -115,6 +115,11 @@ namespace MarchingCubes
                 }
                 List<IMarchingCubeChunk> chunk = change.chunks;
                 List<IMarchingCubeChunk> olds = change.old;
+                
+                if (olds[0].IsSpawner)
+                {
+                    chunkHandler.SpawnEmptyChunksAround(chunk[0]);
+                }
                 for (int i = 0; i < olds.Count; i++)
                 {
                     olds[i].DestroyChunk();
@@ -130,11 +135,7 @@ namespace MarchingCubes
                         chunk[i].SetChunkOnMainThread();
                     }
                 }
-                //dont let chunk be reset while still in building phase -> will be null here
-                if (olds[0].IsSpawner)
-                {
-                    chunkHandler.SpawnEmptyChunksAround(chunk[0]);
-                }
+               
             }
 
 
