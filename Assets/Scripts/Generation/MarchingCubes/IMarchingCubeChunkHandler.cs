@@ -25,15 +25,11 @@ namespace MarchingCubes
 
         MarchingCubeMeshDisplayer GetNextInteractableMeshDisplayer(IMarchingCubeInteractableChunk forChunk);
 
-        void StartWaitForParralelChunkDoneCoroutine(IEnumerator e);
-
         void FreeMeshDisplayer(MarchingCubeMeshDisplayer display);
 
         void FreeAllDisplayers(List<MarchingCubeMeshDisplayer> displayers);
 
         void DecreaseChunkLod(IMarchingCubeChunk chunk, int toLodPower);
-
-        MarchingCubeChunkNeighbourLODs GetNeighbourLODSFrom(IMarchingCubeChunk chunk);
 
         float[] RequestNoiseForChunk(IMarchingCubeChunk chunk);
 

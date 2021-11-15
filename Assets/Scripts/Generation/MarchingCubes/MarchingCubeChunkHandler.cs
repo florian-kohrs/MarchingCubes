@@ -78,17 +78,29 @@ namespace MarchingCubes
         //protected HashSet<BaseMeshChild> inUseDisplayer = new HashSet<BaseMeshChild>();
 
 
-        public void StartWaitForParralelChunkDoneCoroutine(IEnumerator e)
-        {
-            StartCoroutine(e);
-        }
-
-
         protected MeshDisplayerPool displayerPool;
 
         protected InteractableMeshDisplayPool interactableDisplayerPool;
 
         protected SimpleChunkColliderPool simpleChunkColliderPool;
+
+
+
+        protected int channeledChunks = 0;
+
+        protected bool hasFoundInitialChunk;
+
+
+        public int totalTriBuild;
+
+        TriangleBuilder[] tris;// = new TriangleBuilder[CHUNK_VOLUME * 5];
+        float[] pointsArray;
+
+        private ComputeBuffer triangleBuffer;
+        private ComputeBuffer pointsBuffer;
+        private ComputeBuffer savedPointBuffer;
+        private ComputeBuffer triCountBuffer;
+
 
         public void FreeCollider(ChunkLodCollider c)
         {
@@ -209,6 +221,9 @@ namespace MarchingCubes
 
         System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
 
+        public static object exchangeLocker = new object();
+
+
         //TODO:GPU instancing from script generated meshes and add simple colliders as game objects
 
         private void Start()
@@ -240,21 +255,8 @@ namespace MarchingCubes
             BuildRelevantChunksParallelBlockingAround(chunk);
         }
 
-        protected IEnumerator UpdateChunks()
-        {
-            yield return null;
-
-
-            yield return new WaitForSeconds(3);
-
-            yield return UpdateChunks();
-        }
-
-        protected int marshCounter;
-
         protected Vector3 startPos;
         protected float maxSqrChunkDistance;
-        protected Queue<Vector3Int> neighbours = new Queue<Vector3Int>();
 
         protected BinaryHeap<float, Vector3Int> closestNeighbours = new BinaryHeap<float, Vector3Int>(float.MinValue, float.MaxValue, 200);
 
@@ -419,11 +421,6 @@ namespace MarchingCubes
                 }
             }
         }
-
-        protected int channeledChunks = 0;
-
-        protected bool hasFoundInitialChunk;
-
 
         protected IMarchingCubeChunk FindNonEmptyChunkAround(Vector3 pos)
         {
@@ -749,36 +746,25 @@ namespace MarchingCubes
                 Mathf.FloorToInt(z / STORAGE_GROUP_SIZE));
         }
 
-
-        public int totalTriBuild;
-
-        TriangleBuilder[] tris;// = new TriangleBuilder[CHUNK_VOLUME * 5];
-        float[] pointsArray;
-
-        private ComputeBuffer triangleBuffer;
-        private ComputeBuffer pointsBuffer;
-        private ComputeBuffer savedPointBuffer;
-        private ComputeBuffer triCountBuffer;
-
    
-        public MarchingCubeChunkNeighbourLODs GetNeighbourLODSFrom(IMarchingCubeChunk chunk)
-        {
-            MarchingCubeChunkNeighbourLODs result = new MarchingCubeChunkNeighbourLODs();
-            Vector3Int[] coords = VectorExtension.GetAllAdjacentDirections;
-            for (int i = 0; i < coords.Length; ++i)
-            {
-                MarchingCubeNeighbour neighbour = new MarchingCubeNeighbour();
-                Vector3Int neighbourPos = chunk.CenterPos + chunk.ChunkSize * coords[i];
-                if (!TryGetChunkAtPosition(neighbourPos, out neighbour.chunk))
-                {
-                    //change name to extectedLodPower
-                    neighbour.estimatedLodPower = GetLodPowerAt(neighbourPos);
-                }
-                result[i] = neighbour;
-            }
+        //public MarchingCubeChunkNeighbourLODs GetNeighbourLODSFrom(IMarchingCubeChunk chunk)
+        //{
+        //    MarchingCubeChunkNeighbourLODs result = new MarchingCubeChunkNeighbourLODs();
+        //    Vector3Int[] coords = VectorExtension.GetAllAdjacentDirections;
+        //    for (int i = 0; i < coords.Length; ++i)
+        //    {
+        //        MarchingCubeNeighbour neighbour = new MarchingCubeNeighbour();
+        //        Vector3Int neighbourPos = chunk.CenterPos + chunk.ChunkSize * coords[i];
+        //        if (!TryGetChunkAtPosition(neighbourPos, out neighbour.chunk))
+        //        {
+        //            //change name to extectedLodPower
+        //            neighbour.estimatedLodPower = GetLodPowerAt(neighbourPos);
+        //        }
+        //        result[i] = neighbour;
+        //    }
 
-            return result;
-        }
+        //    return result;
+        //}
 
         //TODO:Remove keep points
         protected void BuildChunk(IMarchingCubeChunk chunk, bool careForNeighbours)
@@ -1077,7 +1063,6 @@ namespace MarchingCubes
             return ExchangeChunkParallel(anchorPos, lodPow, sizePow, careForNeighbours, allowOveride, (c) => { FinishParallelChunk(from, c); });
         }
 
-        public static object exchangeLocker = new object();
 
         protected void FinishParallelChunk(IMarchingCubeChunk from, IMarchingCubeChunk newChunk)
         {
