@@ -174,11 +174,6 @@ namespace MarchingCubes
             }
         }
 
-        public override bool AreAllChildrenLeafs(int targetLodPower)
-        {
-            return sizePower == MarchingCubeChunkHandler.DEFAULT_CHUNK_SIZE_POWER + 1;
-        }
-
         public override IStorageGroupOrganizer<StoredChunkEdits> GetLeaf(StoredChunkEdits leaf, int index, int[] anchor, int[] relAnchor, int sizePow)
         {
             return new StorageTreeLeaf(leaf, index, anchor, relAnchor,sizePow);

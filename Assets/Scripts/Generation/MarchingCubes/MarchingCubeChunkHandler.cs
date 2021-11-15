@@ -228,7 +228,7 @@ namespace MarchingCubes
 
         private void Start()
         {
-            simpleChunkColliderPool = new SimpleChunkColliderPool(transform);
+            simpleChunkColliderPool = new SimpleChunkColliderPool(colliderParent);
             displayerPool = new MeshDisplayerPool(transform);
             interactableDisplayerPool = new InteractableMeshDisplayPool(transform);
             CreateAllBuffersWithSizes(65);
@@ -252,7 +252,7 @@ namespace MarchingCubes
             startPos = player.position;
             IMarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
             maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
-            BuildRelevantChunksParallelBlockingAround(chunk);
+            //BuildRelevantChunksParallelBlockingAround(chunk);
         }
 
         protected Vector3 startPos;
@@ -1163,24 +1163,11 @@ namespace MarchingCubes
 
         public void MergeAndReduceChunkBranch(IMarchingCubeChunk chunk, int toLodPower)
         {
-            ChunkGroupTreeLeaf[] leafs = chunk.Leaf.parent.GetLeafs();
-            for (int i = 0; i < 8; i++)
-            {
-                ChunkGroupTreeLeaf l = leafs[i];
-                if (l == null)
-                    continue;
-                l.leaf.PrepareDestruction();
-            }
+            List<IMarchingCubeChunk> oldChunks = new List<IMarchingCubeChunk>();
+            chunk.Leaf.parent.PrepareBranchDestruction(oldChunks);
+
             ExchangeChunkParallel(chunk.CenterPos, toLodPower, chunk.ChunkSizePower + 1, false, true, (c) =>
             {
-                List<IMarchingCubeChunk> oldChunks = new List<IMarchingCubeChunk>();
-                for (int i = 0; i < 8; i++)
-                {
-                    ChunkGroupTreeLeaf l = leafs[i];
-                    if (l == null)
-                        continue;
-                    oldChunks.Add(l.leaf);
-                }
                 lock (exchangeLocker)
                 {
                     worldUpdater.readyExchangeChunks.Push(new ReadyChunkExchange(oldChunks, c));

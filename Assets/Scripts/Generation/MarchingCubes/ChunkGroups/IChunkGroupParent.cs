@@ -11,6 +11,9 @@ namespace MarchingCubes
 
         void RemoveChildAtIndex(int index, IMarchingCubeChunk chunk);
 
+        bool EntireHirachyHasAtLeastTargetLod(int targetLodPower);
+
+        void PrepareBranchDestruction(List<IMarchingCubeChunk> oldChunks);
 
     }
 

@@ -64,7 +64,7 @@ namespace MarchingCubes
 
         public bool AllSiblingsAreLeafsWithSameTargetLod()
         {
-            return parent.AreAllChildrenLeafs(leaf.TargetLODPower);
+            return parent.EntireHirachyHasAtLeastTargetLod(leaf.TargetLODPower);
         }
 
         public override bool RemoveLeafAtLocalPosition(int[] pos)

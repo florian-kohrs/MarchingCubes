@@ -101,9 +101,5 @@ namespace MarchingCubes
             return null;
         }
 
-        public bool AreAllChildrenLeafs(int targetLodPower)
-        {
-            return false;
-        }
     }
 }

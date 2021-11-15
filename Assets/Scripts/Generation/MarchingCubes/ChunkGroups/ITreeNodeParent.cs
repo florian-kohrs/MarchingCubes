@@ -9,8 +9,6 @@ namespace MarchingCubes
 
         T[] GetLeafs();
 
-        bool AreAllChildrenLeafs(int targetLodPower);
-
         int[] GroupRelativeAnchorPosition { get; }
 
         int[] GroupAnchorPosition { get; }

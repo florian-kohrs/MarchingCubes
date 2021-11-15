@@ -14,7 +14,11 @@ namespace MarchingCubes
         public override int Size => MarchingCubeChunkHandler.CHUNK_GROUP_SIZE;
 
         public override int SizePower => MarchingCubeChunkHandler.CHUNK_GROUP_SIZE_POWER;
-
+        
+        public void PrepareBranchDestruction(List<IMarchingCubeChunk> allLeafs)
+        {
+            throw new System.NotImplementedException();
+        }
 
         public override IChunkGroupOrganizer<IMarchingCubeChunk> GetLeaf(IMarchingCubeChunk leaf, int index, int[] anchor, int[] relAnchor, int sizePow)
         {
@@ -34,9 +38,11 @@ namespace MarchingCubes
             }
         }
 
-        public void SplitLeaf(int index)
+
+        public bool EntireHirachyHasAtLeastTargetLod(int targetLodPower)
         {
             throw new System.NotImplementedException();
         }
+
     }
 }

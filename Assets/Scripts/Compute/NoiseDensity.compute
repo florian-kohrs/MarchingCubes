@@ -214,7 +214,7 @@ void Density (int3 id : SV_DispatchThreadID)
 
     if (tryLoadData) 
     {
-        int savedPointsSpacing = (MIP_MAP_SIZE - 1) / (numPointsPerAxis - 1) ;
+        int savedPointsSpacing = (uint)(MIP_MAP_SIZE - 1) / (numPointsPerAxis - 1);
         int savedPointIndex = indexFromMipMap(savedPointsSpacing * id.x, savedPointsSpacing * id.y, savedPointsSpacing * id.z);
         float storedNoise = savedPoints[savedPointIndex];
         if (storedNoise > -9999)
