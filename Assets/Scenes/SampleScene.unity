@@ -985,16 +985,16 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  totalTriBuild: 0
   densityGenerator: {fileID: 1484889474}
   useTerrainNoise: 1
   deactivateAfterDistance: 400
   chunkMaterial: {fileID: 2100000, guid: 97d2f9aa8d16b8241a90494b8d616c04, type: 2}
   surfaceLevel: 0.511
   player: {fileID: 1779183453}
-  buildAroundDistance: 7000
+  buildAroundDistance: 4000
   worldUpdater: {fileID: 1125545290}
   colliderParent: {fileID: 1768635035}
-  totalTriBuild: 0
   minSteepness: 11
   maxSteepness: 45
   flatColor: {r: 0.46342114, g: 0.7735849, b: 0.46342114, a: 1}
@@ -1162,12 +1162,6 @@ MonoBehaviour:
     frequency: 2.05
     scale: 18.5
     heightOffset: 0
-  - amplitude: 50
-    lacunarity: 2
-    persistence: 0.518
-    frequency: 2.05
-    scale: 18.5
-    heightOffset: 600
   biomSize: 1000
   biomSpacing: 14
   radius: 65000
@@ -1669,7 +1663,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   c: {fileID: 2047378107}
-  speed: 1111
+  speed: 111
 --- !u!143 &2047378107
 CharacterController:
   m_ObjectHideFlags: 0

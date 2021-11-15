@@ -226,6 +226,8 @@ namespace MarchingCubes
 
         //TODO:GPU instancing from script generated meshes and add simple colliders as game objects
 
+        //TODO: Changing lods on rapid moving character not really working. also mesh vertices error thrown sometimes
+
         private void Start()
         {
             simpleChunkColliderPool = new SimpleChunkColliderPool(colliderParent);
@@ -252,7 +254,7 @@ namespace MarchingCubes
             startPos = player.position;
             IMarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
             maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
-            //BuildRelevantChunksParallelBlockingAround(chunk);
+            BuildRelevantChunksParallelBlockingAround(chunk);
         }
 
         protected Vector3 startPos;
