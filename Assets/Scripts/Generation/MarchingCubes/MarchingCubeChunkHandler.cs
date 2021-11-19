@@ -102,104 +102,12 @@ namespace MarchingCubes
         private ComputeBuffer triCountBuffer;
 
 
-        public void FreeCollider(ChunkLodCollider c)
-        {
-            simpleChunkColliderPool.ReturnItemToPool(c);
-        }
+        public WorldUpdater worldUpdater;
 
-        public void SetChunkColliderOf(IMarchingCubeChunk c)
-        {
-            simpleChunkColliderPool.GetItemFromPoolFor(c);
-        }
-
-        public MarchingCubeMeshDisplayer GetNextMeshDisplayer()
-        {
-            return displayerPool.GetItemFromPoolFor(null);
-        }
-
-        public MarchingCubeMeshDisplayer GetNextInteractableMeshDisplayer(IMarchingCubeInteractableChunk chunk)
-        {
-            return interactableDisplayerPool.GetItemFromPoolFor(chunk);
-        }
-
-        protected void SetDisplayerOfChunk(IMarchingCubeChunk c)
-        {
-            if (c is IMarchingCubeInteractableChunk interactableChunk)
-            {
-                interactableChunk.AddDisplayer(GetNextInteractableMeshDisplayer(interactableChunk));
-            }
-            else
-            {
-                c.AddDisplayer(GetNextMeshDisplayer());
-            }
-        }
-
-        public void TakeMeshDisplayerBack(MarchingCubeMeshDisplayer display)
-        {
-            if (display.HasCollider)
-            {
-                interactableDisplayerPool.ReturnItemToPool(display);
-            }
-            else
-            {
-                displayerPool.ReturnItemToPool(display);
-            }
-        }
-
-        public void FreeMeshDisplayer(MarchingCubeMeshDisplayer display)
-        {
-            TakeMeshDisplayerBack(display);
-        }
-
-        public void FreeAllDisplayers(List<MarchingCubeMeshDisplayer> displayers)
-        {
-            for (int i = 0; i < displayers.Count; ++i)
-            {
-                TakeMeshDisplayerBack(displayers[i]);
-            }
-        }
-
-        public int GetLodPower(float distance)
-        {
-            return (int)Mathf.Max(DEFAULT_MIN_CHUNK_LOD_POWER, lodPowerForDistances.Evaluate(distance));
-        }
-
-        public int GetLodPowerAt(Vector3 pos)
-        {
-            return GetLodPower((pos - startPos).magnitude);
-        }
-
-        public int GetSizePowerForDistance(float distance)
-        {
-            return (int)chunkSizePowerForDistances.Evaluate(distance);
-        }
+        public Transform colliderParent;
 
 
-        public int GetSizePowerForChunkAtPosition(Vector3 position)
-        {
-            return GetSizePowerForChunkAtDistance((position - startPos).magnitude);
-        }
 
-        public int GetSizePowerForChunkAtDistance(float distance)
-        {
-            return MIN_CHUNK_SIZE_POWER + GetSizePowerForDistance(distance);
-        }
-
-
-        public void GetSizeAndLodPowerForChunkPosition(Vector3 pos, out int sizePower, out int lodPower, out bool careForNeighbours)
-        {
-            float distance = (startPos - pos).magnitude;
-            lodPower = GetLodPower(distance);
-            sizePower = GetSizePowerForChunkAtDistance(distance);
-            careForNeighbours = GetLodPower(distance + sizePower) > lodPower;
-        }
-
-        protected int RoundToPowerOf2(float f)
-        {
-            int r = (int)Mathf.Pow(2, Mathf.RoundToInt(f));
-
-            return Mathf.Max(1, r);
-        }
 
         public BaseDensityGenerator densityGenerator;
 
@@ -223,8 +131,30 @@ namespace MarchingCubes
 
         public static object exchangeLocker = new object();
 
+        public int minSteepness = 15;
+        public int maxSteepness = 50;
+        public Color flatColor = new Color(0, 255 / 255f, 0, 1);
+        public Color steepColor = new Color(75 / 255f, 44 / 255f, 13 / 255f, 1);
+
+        private int steepR;
+        private int steepG;
+        private int steepB;
+
+        private int flatR;
+        private int flatG;
+        private int flatB;
+
+        protected Vector3 startPos;
+        protected float maxSqrChunkDistance;
+
+        protected BinaryHeap<float, Vector3Int> closestNeighbours = new BinaryHeap<float, Vector3Int>(float.MinValue, float.MaxValue, 200);
+
 
         //TODO:GPU instancing from script generated meshes and add simple colliders as game objects
+
+        //TODO: Changing lods on rapid moving character not really working. also mesh vertices error thrown sometimes
+
+        //TODO: Handle chunks spawn with too low lod outside of next level lod collider -> no call to reduce lod
 
         private void Start()
         {
@@ -254,12 +184,6 @@ namespace MarchingCubes
             maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
             BuildRelevantChunksParallelBlockingAround(chunk);
         }
-
-        protected Vector3 startPos;
-        protected float maxSqrChunkDistance;
-
-        protected BinaryHeap<float, Vector3Int> closestNeighbours = new BinaryHeap<float, Vector3Int>(float.MinValue, float.MaxValue, 200);
-
 
         public void BuildRelevantChunksParallelBlockingAround(IMarchingCubeChunk chunk)
         {
@@ -635,11 +559,6 @@ namespace MarchingCubes
             return false;
         }
 
-        public WorldUpdater worldUpdater;
-
-        public Transform colliderParent;
-
-
         protected IMarchingCubeChunk GetChunkObjectAt(IMarchingCubeChunk chunk, Vector3Int position, Vector3Int coord, int lodPower, int chunkSizePower, bool allowOverride)
         {
             ///Pot racecondition
@@ -746,7 +665,7 @@ namespace MarchingCubes
                 Mathf.FloorToInt(z / STORAGE_GROUP_SIZE));
         }
 
-   
+
         //public MarchingCubeChunkNeighbourLODs GetNeighbourLODSFrom(IMarchingCubeChunk chunk)
         //{
         //    MarchingCubeChunkNeighbourLODs result = new MarchingCubeChunkNeighbourLODs();
@@ -782,18 +701,6 @@ namespace MarchingCubes
             chunk.InitializeWithMeshDataParallel(ts, readyParallelChunks);
         }
 
-        public int minSteepness = 15;
-        public int maxSteepness = 50;
-        public Color flatColor = new Color(0, 255 / 255f, 0, 1);
-        public Color steepColor = new Color(75 / 255f, 44 / 255f, 13 / 255f, 1);
-
-        private int steepR;
-        private int steepG;
-        private int steepB;
-
-        private int flatR;
-        private int flatG;
-        private int flatB;
 
         public float[] RequestNoiseForChunk(IMarchingCubeChunk chunk)
         {
@@ -1187,7 +1094,104 @@ namespace MarchingCubes
                 }
             });
         }
+        public void FreeCollider(ChunkLodCollider c)
+        {
+            simpleChunkColliderPool.ReturnItemToPool(c);
+        }
 
+        public void SetChunkColliderOf(IMarchingCubeChunk c)
+        {
+            simpleChunkColliderPool.GetItemFromPoolFor(c);
+        }
+
+        public MarchingCubeMeshDisplayer GetNextMeshDisplayer()
+        {
+            return displayerPool.GetItemFromPoolFor(null);
+        }
+
+        public MarchingCubeMeshDisplayer GetNextInteractableMeshDisplayer(IMarchingCubeInteractableChunk chunk)
+        {
+            return interactableDisplayerPool.GetItemFromPoolFor(chunk);
+        }
+
+        protected void SetDisplayerOfChunk(IMarchingCubeChunk c)
+        {
+            if (c is IMarchingCubeInteractableChunk interactableChunk)
+            {
+                interactableChunk.AddDisplayer(GetNextInteractableMeshDisplayer(interactableChunk));
+            }
+            else
+            {
+                c.AddDisplayer(GetNextMeshDisplayer());
+            }
+        }
+
+        public void TakeMeshDisplayerBack(MarchingCubeMeshDisplayer display)
+        {
+            if (display.HasCollider)
+            {
+                interactableDisplayerPool.ReturnItemToPool(display);
+            }
+            else
+            {
+                displayerPool.ReturnItemToPool(display);
+            }
+        }
+
+        public void FreeMeshDisplayer(MarchingCubeMeshDisplayer display)
+        {
+            TakeMeshDisplayerBack(display);
+        }
+
+        public void FreeAllDisplayers(List<MarchingCubeMeshDisplayer> displayers)
+        {
+            for (int i = 0; i < displayers.Count; ++i)
+            {
+                TakeMeshDisplayerBack(displayers[i]);
+            }
+        }
+
+        public int GetLodPower(float distance)
+        {
+            return (int)Mathf.Max(DEFAULT_MIN_CHUNK_LOD_POWER, lodPowerForDistances.Evaluate(distance));
+        }
+
+        public int GetLodPowerAt(Vector3 pos)
+        {
+            return GetLodPower((pos - startPos).magnitude);
+        }
+
+        public int GetSizePowerForDistance(float distance)
+        {
+            return (int)chunkSizePowerForDistances.Evaluate(distance);
+        }
+
+
+        public int GetSizePowerForChunkAtPosition(Vector3 position)
+        {
+            return GetSizePowerForChunkAtDistance((position - startPos).magnitude);
+        }
+
+        public int GetSizePowerForChunkAtDistance(float distance)
+        {
+            return MIN_CHUNK_SIZE_POWER + GetSizePowerForDistance(distance);
+        }
+
+
+        public void GetSizeAndLodPowerForChunkPosition(Vector3 pos, out int sizePower, out int lodPower, out bool careForNeighbours)
+        {
+            float distance = (startPos - pos).magnitude;
+            lodPower = GetLodPower(distance);
+            sizePower = GetSizePowerForChunkAtDistance(distance);
+            careForNeighbours = GetLodPower(distance + sizePower) > lodPower;
+        }
+
+        protected int RoundToPowerOf2(float f)
+        {
+            int r = (int)Mathf.Pow(2, Mathf.RoundToInt(f));
+
+            return Mathf.Max(1, r);
+        }
 
         protected void CreateAllBuffersWithSizes(int numVoxelsPerAxis)
         {

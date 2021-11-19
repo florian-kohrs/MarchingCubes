@@ -149,6 +149,7 @@ Biom GetCubicInterpolatedBiomAt(int3 pos)
 
 int3 getBiomAnchor(int3 rest, int3 pos)
 {
+    //TODO: Probably not needed line
     int3 positiveRest = (rest + int3(biomSize, biomSize, biomSize)) % biomSize;
     return int3(pos.x - positiveRest.x, pos.y - positiveRest.y, pos.z - positiveRest.z);
 }
@@ -171,6 +172,7 @@ Biom GetInterpolatedBiomAt(int3 pos)
     //float xProg = (pos.x - biomPoint.x) / (float)biomSize;
     float xProg = interpolation.x;
     int3 xOffset = int3(biomSize, 0, 0);
+
     Biom frontBot = interpolate(getBiomAt(biomPoint),getBiomAt(biomPoint + xOffset), xProg);
 
     biomPoint.y += biomSize;
