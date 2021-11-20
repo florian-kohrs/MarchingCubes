@@ -1,0 +1,13 @@
+#pragma kernel ComputeTreePositions
+#include "/Includes/InstanceProperty.compute"
+
+AppendStructuredBuffer<InstanceProperty> Result;
+StructuredBuffer<float> noise;
+
+int3 anchorPosition;
+
+[numthreads(32,1,1)]
+void MarchAndBuildEnvirenment(uint3 id : SV_DispatchThreadID)
+{
+    
+}

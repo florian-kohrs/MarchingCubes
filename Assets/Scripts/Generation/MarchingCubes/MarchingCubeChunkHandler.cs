@@ -16,6 +16,9 @@ namespace MarchingCubes
 
         protected int rebuildKernelId;
 
+        /// <summary>
+        /// This should be the same value as in the compute shader "MarchingCubes"
+        /// </summary>
         protected const int threadGroupSize = 8;
 
         public const int MIN_CHUNK_SIZE = 8;

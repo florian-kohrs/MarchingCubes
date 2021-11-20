@@ -28,16 +28,11 @@ Shader "Custom/DrawInstancedIndirect"
                     float2 uv_MainTex : TEXCOORD0;
                     float3 ambient : TEXCOORD1;
                     float3 diffuse : TEXCOORD2;
+                    //TODO: Instead of having color for vertex use texture map as color lookup when having few colors
                     float3 color : TEXCOORD3;
                     SHADOW_COORDS(4)
                 };
 
-                void rotate2D(inout float2 v, float r)
-                {
-                    float s, c;
-                    sincos(r, s, c);
-                    v = float2(v.x * c - v.y * s, v.x * s + v.y * c);
-                }
 
                 struct MeshProperties {
                     float4x4 mat;

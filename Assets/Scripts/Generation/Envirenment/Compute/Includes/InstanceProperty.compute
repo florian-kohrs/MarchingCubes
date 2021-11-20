@@ -1,0 +1,4 @@
+﻿struct InstanceProperty
+{
+	float4x4 transform;
+};
