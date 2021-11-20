@@ -172,8 +172,6 @@ namespace MarchingCubes
             return (child == null && (child is Leaf || child.HasChunkAtLocalPosition(relativePosition)));
         }
 
-        public abstract bool AreAllChildrenLeafs(int targetLodPower);
-
         public abstract Leaf[] GetLeafs();
 
     }

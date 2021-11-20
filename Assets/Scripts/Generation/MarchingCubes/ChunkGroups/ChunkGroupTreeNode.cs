@@ -15,16 +15,40 @@ namespace MarchingCubes
         {
         }
 
-        public override bool AreAllChildrenLeafs(int targetLodPower)
+        public bool EntireHirachyHasAtLeastTargetLod(int targetLodPower)
         {
             bool result = true;
             for (int i = 0; i < 8 && result; i++)
             {
-                result = children[i] == null || ((children[i] is ChunkGroupTreeLeaf l) && l.leaf.IsReady && l.leaf.TargetLODPower == targetLodPower);
+                result = children[i] == null 
+                    || ((children[i] is ChunkGroupTreeLeaf l) 
+                    && l.leaf.IsReady 
+                    && l.leaf.TargetLODPower >= targetLodPower);
             }
             return result;
         }
 
+
+        public void PrepareBranchDestruction(List<IMarchingCubeChunk> allLeafs)
+        {
+            for (int i = 0; i < 8 ; i++)
+            {
+                IChunkGroupOrganizer<IMarchingCubeChunk> child = children[i];
+                if (child == null)
+                    continue;
+
+                if (child is ChunkGroupTreeLeaf l)
+                {
+                    l.leaf.PrepareDestruction();
+                    allLeafs.Add(l.leaf);
+                }
+                else
+                {
+                    ((IChunkGroupParent<ChunkGroupTreeLeaf>)child).PrepareBranchDestruction(allLeafs);
+                }
+                
+            }
+        }
 
         public void RemoveChildAtIndex(int index, IMarchingCubeChunk chunk)
         {
