@@ -1,11 +1,11 @@
-#pragma kernel BuildEnvirenment
+#pragma kernel GrassSpawner
 
 #include "/Includes/InstanceProperty.compute"
 #include "/Includes/Triangle.compute"
 
-AppendStructuredBuffer<InstanceProperty> Result;
+AppendStructuredBuffer<InstanceProperty> grassPositions;
 StructuredBuffer<Triangle> meshTriangles;
-StructuredBuffer<uint> length;
+uint length;
 
 int3 anchorPosition;
 
@@ -21,17 +21,17 @@ float4x4 GetMatrixFor(Triangle t)
 }
 
 [numthreads(32,1,1)]
-void BuildEnvirenment(uint3 id : SV_DispatchThreadID)
+void GrassSpawner(uint3 id : SV_DispatchThreadID)
 {
-    if (id.x >= length[0])
+    if (id.x >= length)
         return;
 
     Triangle t = meshTriangles[id.x];
     if (steepness(t) > 15)
         return;
 
-    InstanceProperty newInstance;
+    InstanceProperty grass;
     float4x4 instanceMatrix = GetMatrixFor(t);
-    newInstance.transform = instanceMatrix;
-    Result.Append(newInstance);
+    grass.transform = instanceMatrix;
+    grassPositions.Append(grass);
 }

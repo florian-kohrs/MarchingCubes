@@ -8,7 +8,6 @@ namespace MarchingCubes
 	[System.Serializable]
 	public struct Biom
 	{
-
 		public float amplitude;
 		public float lacunarity;
 		[Range(0, 1)]

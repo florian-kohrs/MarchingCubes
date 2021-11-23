@@ -1,8 +1,10 @@
-Shader "Custom/DrawInstancedIndirect"
+Shader "Custom/PerVertexColor"
 {
     Properties
     {
-        _MainTex("Albedo (RGB)", 2D) = "white" {}
+        [HideInInspector] [NoScaleOffset] unity_Lightmaps("unity_Lightmaps", 2DArray) = "" {}
+        [HideInInspector][NoScaleOffset]unity_LightmapsInd("unity_LightmapsInd", 2DArray) = "" {}
+        [HideInInspector][NoScaleOffset]unity_ShadowMasks("unity_ShadowMasks", 2DArray) = "" {}
     }
         SubShader
     {
@@ -11,6 +13,7 @@ Shader "Custom/DrawInstancedIndirect"
             "RenderPipeline" = "UniversalPipeline"
             "RenderType" = "Opaque"
             "UniversalMaterialType" = "Lit"
+            "Queue" = "AlphaTest"
         }
         Pass
         {
@@ -48,13 +51,11 @@ Shader "Custom/DrawInstancedIndirect"
                     float4x4 mat;
                 };
 
-                StructuredBuffer<MeshProperties> _Properties;
-
                 v2f vert(appdata_full v, uint instanceID : SV_InstanceID)
                 {
                     float3 localPosition = v.vertex.xyz;
                     float3 worldPosition = localPosition;
-                    float3 worldNormal = normalize(mul((_Properties[instanceID].mat), v.normal));
+                    float3 worldNormal = v.normal;
 
                     float3 ndotl = saturate(dot(worldNormal, _WorldSpaceLightPos0.xyz));
                     float3 ambient = ShadeSH9(float4(worldNormal, 1.0f));
@@ -62,9 +63,7 @@ Shader "Custom/DrawInstancedIndirect"
                     float3 color = v.color;
 
                     v2f o;
-                    float4 pos = mul(_Properties[instanceID].mat, v.vertex);
-                    o.pos = UnityObjectToClipPos(pos);
-                    o.uv_MainTex = v.texcoord;
+                    o.pos = UnityObjectToClipPos(v.vertex);
                     o.ambient = ambient;
                     o.diffuse = diffuse;
                     o.color = color;
@@ -75,9 +74,8 @@ Shader "Custom/DrawInstancedIndirect"
                 fixed4 frag(v2f i) : SV_Target
                 {
                     fixed shadow = SHADOW_ATTENUATION(i);
-                    fixed4 albedo = tex2D(_MainTex, i.uv_MainTex);
                     float3 lighting = i.diffuse * shadow + i.ambient;
-                    fixed4 output = fixed4(albedo.rgb * i.color * lighting, albedo.w);
+                    fixed4 output = fixed4(i.color * lighting,1);
                     UNITY_APPLY_FOG(i.fogCoord, output);
                     return output;
                 }

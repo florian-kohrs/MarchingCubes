@@ -1,5 +1,6 @@
-Shader "Custom/DrawInstancedIndirect"
-{
+// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+Shader "Instanced/ExampleCombinedShaderPerVert" {
     Properties
     {
         _MainTex("Albedo (RGB)", 2D) = "white" {}
@@ -32,21 +33,45 @@ Shader "Custom/DrawInstancedIndirect"
 
                 sampler2D _MainTex;
 
+            #if SHADER_TARGET >= 45
+                StructuredBuffer<float4> positionBuffer;
+            #endif
+
                 struct v2f
                 {
                     float4 pos : SV_POSITION;
                     float2 uv_MainTex : TEXCOORD0;
                     float3 ambient : TEXCOORD1;
                     float3 diffuse : TEXCOORD2;
-                    //TODO: Instead of having color for vertex use texture map as color lookup when having few colors
                     float3 color : TEXCOORD3;
                     SHADOW_COORDS(4)
                 };
 
+                void rotate2D(inout float2 v, float r)
+                {
+                    float s, c;
+                    sincos(r, s, c);
+                    v = float2(v.x * c - v.y * s, v.x * s + v.y * c);
+                }
 
                 struct MeshProperties {
                     float4x4 mat;
                 };
+
+                float3x3 To3x3(float4x4 mat)
+                {
+                    float3x3 result;
+
+                    for (int x = 0; x < 3; x++)
+                    {
+                        for (int y = 0; y < 3; y++)
+                        {
+                            result[x][y] = mat[x][y];
+                        }
+                    }
+
+                    return result;
+                }
 
                 StructuredBuffer<MeshProperties> _Properties;
 
@@ -54,6 +79,9 @@ Shader "Custom/DrawInstancedIndirect"
                 {
                     float3 localPosition = v.vertex.xyz;
                     float3 worldPosition = localPosition;
+                    //float3 worldNormal = v.normal;
+                    //float3 rotation = float3(_Properties[instanceID].mat[0][3], _Properties[instanceID].mat[1][3],)
+                    //float3 worldNormal = mul(_Properties[instanceID].mat, v.normal);
                     float3 worldNormal = normalize(mul((_Properties[instanceID].mat), v.normal));
 
                     float3 ndotl = saturate(dot(worldNormal, _WorldSpaceLightPos0.xyz));
@@ -78,7 +106,6 @@ Shader "Custom/DrawInstancedIndirect"
                     fixed4 albedo = tex2D(_MainTex, i.uv_MainTex);
                     float3 lighting = i.diffuse * shadow + i.ambient;
                     fixed4 output = fixed4(albedo.rgb * i.color * lighting, albedo.w);
-                    UNITY_APPLY_FOG(i.fogCoord, output);
                     return output;
                 }
 

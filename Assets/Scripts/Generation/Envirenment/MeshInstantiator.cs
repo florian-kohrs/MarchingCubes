@@ -4,10 +4,24 @@ using UnityEngine;
 
 namespace MeshGPUInstanciation
 {
+
     public class MeshInstantiator : MonoBehaviour
     {
 
         public List<InstanciableData> datas = new List<InstanciableData>();
+
+        public static MeshInstantiator meshInstantiator;
+
+        private void Awake()
+        {
+            meshInstantiator = this;   
+        }
+
+        private void OnDestroy()
+        {
+            meshInstantiator = null;
+            datas = null;
+        }
 
         public void AddData(InstanciableData data)
         {
