@@ -8,6 +8,8 @@ namespace MeshGPUInstanciation
     {
 
         protected static string NAME_OF_TRIANGLE_BUFFER = "meshTriangles";
+        protected static string NAME_OF_OFFSET = "offset";
+        protected static string NAME_OF_BOUNDS = "boundsHeight";
         protected static string NAME_OF_TRIANGLE_LENGTH = "length";
         protected static string NAME_OF_GRASS_BUFFER = "grassPositions";
 
@@ -35,8 +37,11 @@ namespace MeshGPUInstanciation
             int numThreadPerAxis = Mathf.CeilToInt(numTris / 32f);
             GrassProperties.SetCounterValue(0);
 
+            Vector3 offset = bounds.center;
 
             grassShader.SetInt(NAME_OF_TRIANGLE_LENGTH, numTris);
+            grassShader.SetVector(NAME_OF_OFFSET, offset);
+            grassShader.SetFloat(NAME_OF_BOUNDS, grassMesh.bounds.extents.y);
             grassShader.SetBuffer(0, NAME_OF_TRIANGLE_BUFFER, triangleData);
             grassShader.SetBuffer(0, NAME_OF_GRASS_BUFFER, GrassProperties);
 

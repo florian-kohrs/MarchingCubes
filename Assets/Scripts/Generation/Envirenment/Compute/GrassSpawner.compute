@@ -3,26 +3,55 @@
 #include "/Includes/InstanceProperty.compute"
 #include "/Includes/Triangle.compute"
 
+static const float grassScale = 0.2;
+
 
 AppendStructuredBuffer<InstanceProperty> grassPositions;
 StructuredBuffer<Triangle> meshTriangles;
 float3 offset;
+float boundsHeight;
 uint length;
 
 int3 anchorPosition;
+
+
+//float4x4 LookAtRotation(float3 from, float to)
+//{
+//    float3 dotDir = dot(x, n);
+//    float angle = acos(normalize(dotDir));
+//
+//    float normal = normalize(cross(x, n));
+//}
+
 
 uint steepness(Triangle t)
 {
     return t.colorAndSteepness >> 24;
 }
 
+//TODO: Set grass per area not per tri
+
 float4x4 GetMatrixFor(Triangle t)
 {
-    //float3 middle = (t.vertexC  + t.vertexB + t.vertexA) / 3;
+    float3 middle = (t.vertexC  + t.vertexB + t.vertexA) / 3;
+    middle -= offset;
+
+    float3 worldUp = float3(0, 1, 0);
+
+    float3 normal = normalize(cross(t.vertexC - t.vertexA, t.vertexB - t.vertexA));
+    float3 right = normalize(cross(worldUp, normal));
+    float3 up = normalize(cross(normal, right));
+
+    normal *= grassScale;
+    right *= grassScale;
+    up *= grassScale;
+
+    middle += normal * (boundsHeight);
+
     float4x4 m = float4x4(
-        1,0,0, 1 - offset.x,
-        0,1,0, 2 - offset.y,
-        0,0,1, 3 - offset.z,
+        up.x, normal.x, right.x,  middle.x,
+        up.y, normal.y, right.y,  middle.y,
+        up.z, normal.z, right.z,  middle.z,
         0,0,0, 1);
     return m;
 }

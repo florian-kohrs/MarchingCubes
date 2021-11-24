@@ -189,7 +189,7 @@ namespace MarchingCubes
             startPos = player.position;
             
             IMarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
-            grass.ComputeGrassFor(new Bounds(Vector3.one * 10, Vector3.one * 100000000), chunk.NumTris, triangleBuffer);
+            grass.ComputeGrassFor(new Bounds(chunk.CenterPos, Vector3.one * 1000000 * chunk.ChunkSize), chunk.NumTris, triangleBuffer);
             maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
             //BuildRelevantChunksParallelBlockingAround(chunk);
         }

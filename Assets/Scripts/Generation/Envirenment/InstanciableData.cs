@@ -23,7 +23,7 @@ namespace MeshGPUInstanciation
             args = new uint[]
             {
                 instanceMesh.GetIndexCount(0),
-                (uint)count,
+                0,
                 instanceMesh.GetIndexStart(0),
                 instanceMesh.GetBaseVertex(0),
                 0
@@ -37,9 +37,10 @@ namespace MeshGPUInstanciation
             //}
             //instanceMesh.colors = colors;
             argsBuffer = new ComputeBuffer(1, args.Length * sizeof(uint), ComputeBufferType.IndirectArguments);
+            meshPropertiesBuffer = argsBuffer;
             argsBuffer.SetData(args);
-            MeshInstancedProperties[] propss = new MeshInstancedProperties[count];
-            instanceTransformations.GetData(propss);
+            //MeshInstancedProperties[] propss = new MeshInstancedProperties[count];
+            //instanceTransformations.GetData(propss);
 
             //MeshInstancedProperties props = new MeshInstancedProperties();
             //Vector3 position = new Vector3(1, 2, 3);
@@ -64,8 +65,7 @@ namespace MeshGPUInstanciation
             material.SetBuffer(MATERIAL_PROPERTY_BUFFER_NAME, instanceTransformations);
 
             ComputeBuffer.CopyCount(instanceTransformations, argsBuffer, 4);
-            argsBuffer.GetData(args);
-            meshPropertiesBuffer = argsBuffer;
+
             MeshInstantiator.meshInstantiator.AddData(this);
         }
 
