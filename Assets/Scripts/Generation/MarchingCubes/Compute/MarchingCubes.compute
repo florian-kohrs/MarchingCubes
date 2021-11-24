@@ -62,10 +62,11 @@ float4 GetHeightDataFrom(int x, int y, int z)
 void March(int3 id : SV_DispatchThreadID)
 {
 	// Stop one point before the end because voxel includes neighbouring points
-	if (id.x >= numPointsPerAxis - 1 || id.y >= numPointsPerAxis - 1 || id.z >= numPointsPerAxis - 1)
-	{
-		return;
-	}
+	// Dont need to check this since threadgroup size is always dividor of chunk size
+	//if (id.x >= numPointsPerAxis - 1 || id.y >= numPointsPerAxis - 1 || id.z >= numPointsPerAxis - 1)
+	//{
+	//	return;
+	//}
 
 	float rad = 180 / PI;
 
