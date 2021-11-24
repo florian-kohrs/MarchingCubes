@@ -38,7 +38,6 @@ Shader "Custom/PerVertexColor"
                 struct v2f
                 {
                     float4 pos : SV_POSITION;
-                    float2 uv_MainTex : TEXCOORD0;
                     float3 ambient : TEXCOORD1;
                     float3 diffuse : TEXCOORD2;
                     //TODO: Instead of having color for vertex use texture map as color lookup when having few colors

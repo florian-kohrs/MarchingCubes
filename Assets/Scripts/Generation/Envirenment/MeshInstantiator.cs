@@ -20,6 +20,7 @@ namespace MeshGPUInstanciation
         private void OnDestroy()
         {
             meshInstantiator = null;
+            datas.ForEach(d => d.Dispose());
             datas = null;
         }
 

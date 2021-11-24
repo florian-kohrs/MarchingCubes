@@ -701,6 +701,49 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &857565835
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 857565837}
+  - component: {fileID: 857565836}
+  m_Layer: 0
+  m_Name: CreateMesh
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &857565836
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 857565835}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc1d9e9cbbf156469af3e7a47fc44a7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &857565837
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 857565835}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 201.86185, y: 62.943928, z: 132.73422}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 7
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &910780109
 GameObject:
   m_ObjectHideFlags: 0
@@ -999,6 +1042,7 @@ MonoBehaviour:
   maxSteepness: 45
   flatColor: {r: 0.46342114, g: 0.7735849, b: 0.46342114, a: 1}
   steepColor: {r: 0.20754719, g: 0.12678002, b: 0.04601282, a: 1}
+  grass: {fileID: 2124858347}
 --- !u!54 &1125545289
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -1138,7 +1182,7 @@ MonoBehaviour:
   instanceMesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
   instanceMaterial: {fileID: 2100000, guid: 71cf2817a82480d41a6db4c4979040dc, type: 2}
   subMeshIndex: 0
-  range: 666
+  range: 11
   t: {fileID: 10309, guid: 0000000000000000f000000000000000, type: 0}
 --- !u!4 &1300822655
 Transform:
@@ -1806,7 +1850,6 @@ GameObject:
   m_Component:
   - component: {fileID: 2124858348}
   - component: {fileID: 2124858347}
-  - component: {fileID: 2124858346}
   m_Layer: 0
   m_Name: TestMesh
   m_TagString: Untagged
@@ -1814,18 +1857,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &2124858346
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2124858345}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: efc1d9e9cbbf156469af3e7a47fc44a7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &2124858347
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1839,7 +1870,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   grassShader: {fileID: 7200000, guid: ad6f9c06a53a73e47902289d598e3168, type: 3}
-  mat: {fileID: 2100000, guid: 4fe26c1379a97fc4ab0634c21ab7bf82, type: 2}
+  mat: {fileID: 2100000, guid: 71cf2817a82480d41a6db4c4979040dc, type: 2}
   grassMesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!4 &2124858348
 Transform:

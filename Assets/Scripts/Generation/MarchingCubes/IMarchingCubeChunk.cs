@@ -10,6 +10,8 @@ namespace MarchingCubes
 
         bool IsReady { get; }
 
+        int NumTris { get; }
+
         bool UseCollider { get; }
 
         int ChunkSize { get; }

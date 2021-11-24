@@ -1,29 +1,19 @@
 // Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
 
 Shader "Instanced/ExampleCombinedShaderPerVert" {
-    Properties
-    {
+    Properties{
         _MainTex("Albedo (RGB)", 2D) = "white" {}
     }
-        SubShader
-    {
-        Tags
-        {
-            "RenderPipeline" = "UniversalPipeline"
-            "RenderType" = "Opaque"
-            "UniversalMaterialType" = "Lit"
-        }
-        Pass
-        {
-            Name "Universal Forward"
-            Tags
-            {
-                "LightMode" = "UniversalForward"
-            }
+        SubShader{
+
+            Pass {
+
+                Tags {}
+
                 CGPROGRAM
 
-                #pragma vertex vert
-                #pragma fragment frag
+                #pragma vertex vert addshadow
+                #pragma fragment frag addshadow
                 //#pragma multi_compile_fwdbase nolightmap nodirlightmap nodynlightmap novertexlight
                 #pragma target 4.5
 
@@ -44,7 +34,6 @@ Shader "Instanced/ExampleCombinedShaderPerVert" {
                     float3 ambient : TEXCOORD1;
                     float3 diffuse : TEXCOORD2;
                     float3 color : TEXCOORD3;
-                    SHADOW_COORDS(4)
                 };
 
                 void rotate2D(inout float2 v, float r)
@@ -96,15 +85,13 @@ Shader "Instanced/ExampleCombinedShaderPerVert" {
                     o.ambient = ambient;
                     o.diffuse = diffuse;
                     o.color = color;
-                    TRANSFER_SHADOW(o)
                     return o;
                 }
 
                 fixed4 frag(v2f i) : SV_Target
                 {
-                    fixed shadow = SHADOW_ATTENUATION(i);
                     fixed4 albedo = tex2D(_MainTex, i.uv_MainTex);
-                    float3 lighting = i.diffuse * shadow + i.ambient;
+                    float3 lighting = i.diffuse + i.ambient;
                     fixed4 output = fixed4(albedo.rgb * i.color * lighting, albedo.w);
                     return output;
                 }

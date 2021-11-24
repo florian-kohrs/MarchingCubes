@@ -61,8 +61,7 @@ namespace MarchingCubes
         protected int pointsPerAxis;
 
         protected int sqrPointsPerAxis;
-
-
+        
         protected MarchingCubeMeshDisplayer freeDisplayer;
 
 
@@ -86,13 +85,6 @@ namespace MarchingCubes
         protected int[] meshTriangles;
         protected Color[] colorData;
 
-        public bool IsEmpty => triCount == 0;
-
-        /// <summary>
-        /// chunk is completly air
-        /// </summary>
-        public bool IsCompletlyAir => isCompletlyAir;
-
         protected bool isCompletlyAir;
 
         private Vector3Int anchorPos;
@@ -107,6 +99,16 @@ namespace MarchingCubes
 
         protected List<MeshData> data = new List<MeshData>();
 
+        #endregion
+
+        #region properties
+
+        public bool IsEmpty => NumTris == 0;
+
+        public int NumTris { get; private set; }
+
+        public bool IsCompletlyAir => isCompletlyAir;
+
         public bool IsReady { get; set; }
 
         public bool HasStarted { get; protected set; }
@@ -118,10 +120,6 @@ namespace MarchingCubes
         public bool IsSpawner { get; set; }
 
         public bool IsInOtherThread { get; set; }
-
-        #endregion
-
-        #region properties
 
         public ChunkGroupTreeLeaf Leaf { get; set; }
 
@@ -350,6 +348,7 @@ namespace MarchingCubes
         public virtual void InitializeWithMeshData(TriangleChunkHeap tris)
         {
             HasStarted = true;
+            NumTris = tris.triCount;
             triCount = tris.triCount * 3;
 
             if (points != null)
@@ -373,6 +372,7 @@ namespace MarchingCubes
 
         public void ResetChunk()
         {
+            NumTris = 0;
             triCount = 0;
             points = null;
             meshTriangles = null;

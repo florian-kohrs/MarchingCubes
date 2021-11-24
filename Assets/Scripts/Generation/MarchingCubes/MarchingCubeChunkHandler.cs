@@ -159,6 +159,9 @@ namespace MarchingCubes
 
         //TODO: Handle chunks spawn with too low lod outside of next level lod collider -> no call to reduce lod
 
+        //Test
+        public MeshGPUInstanciation.SpawnGrassForMarchingCube grass;
+
         private void Start()
         {
             simpleChunkColliderPool = new SimpleChunkColliderPool(colliderParent);
@@ -183,9 +186,11 @@ namespace MarchingCubes
             watch.Start();
             buildAroundSqrDistance = (long)buildAroundDistance * buildAroundDistance;
             startPos = player.position;
+            
             IMarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
+            grass.ComputeGrassFor(new Bounds(Vector3.one * 10, Vector3.one * 100000000), chunk.NumTris, triangleBuffer);
             maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
-            BuildRelevantChunksParallelBlockingAround(chunk);
+            //BuildRelevantChunksParallelBlockingAround(chunk);
         }
 
         public void BuildRelevantChunksParallelBlockingAround(IMarchingCubeChunk chunk)
@@ -797,7 +802,7 @@ namespace MarchingCubes
             return result;
         }
 
-
+        int numTris;
         //TODO: Inform about Mesh subset and mesh set vertex buffer
         //Subset may be used to only change parts of the mesh -> dont need multiple mesh displayers with submeshes?
         protected TriangleChunkHeap DispatchAndGetShaderData(IMarchingCubeChunk chunk, bool careForNeighbours)
@@ -823,7 +828,7 @@ namespace MarchingCubes
 
             ///read data from gpu
 
-            int numTris = ReadCurrentTriangleData(out tris);
+            numTris = ReadCurrentTriangleData(out tris);
 
             if (numTris == 0)
             {
@@ -1216,10 +1221,11 @@ namespace MarchingCubes
         {
             if (triangleBuffer != null)
             {
-                triangleBuffer.Release();
-                pointsBuffer.Release();
-                savedPointBuffer.Release();
-                triCountBuffer.Release();
+                triangleBuffer.SetCounterValue(0);
+                triangleBuffer.Dispose();
+                pointsBuffer.Dispose();
+                savedPointBuffer.Dispose();
+                triCountBuffer.Dispose();
                 triangleBuffer = null;
             }
 

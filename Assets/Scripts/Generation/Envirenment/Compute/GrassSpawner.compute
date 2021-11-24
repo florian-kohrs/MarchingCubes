@@ -3,8 +3,10 @@
 #include "/Includes/InstanceProperty.compute"
 #include "/Includes/Triangle.compute"
 
+
 AppendStructuredBuffer<InstanceProperty> grassPositions;
 StructuredBuffer<Triangle> meshTriangles;
+float3 offset;
 uint length;
 
 int3 anchorPosition;
@@ -16,19 +18,24 @@ uint steepness(Triangle t)
 
 float4x4 GetMatrixFor(Triangle t)
 {
-    float4x4 m = float4x4(float4(1,0,0,0), float4(0,1,0,0), float4(0,0,1,0), float4(t.vertexA,1));
+    //float3 middle = (t.vertexC  + t.vertexB + t.vertexA) / 3;
+    float4x4 m = float4x4(
+        1,0,0, 1 - offset.x,
+        0,1,0, 2 - offset.y,
+        0,0,1, 3 - offset.z,
+        0,0,0, 1);
     return m;
 }
 
 [numthreads(32,1,1)]
 void GrassSpawner(uint3 id : SV_DispatchThreadID)
 {
-    if (id.x >= length)
+    if(id.x >= length)
         return;
 
     Triangle t = meshTriangles[id.x];
-    if (steepness(t) > 15)
-        return;
+    //if (steepness(t) > 15)
+    //    return;
 
     InstanceProperty grass;
     float4x4 instanceMatrix = GetMatrixFor(t);

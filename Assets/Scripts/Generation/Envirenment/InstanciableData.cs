@@ -14,7 +14,7 @@ namespace MeshGPUInstanciation
             Dispose();
         }
 
-        public InstanciableData(Mesh instanceMesh, ComputeBuffer instanceTransformations, Material material, Bounds bounds)
+        public InstanciableData(Mesh instanceMesh, int count, ComputeBuffer instanceTransformations, Material material, Bounds bounds)
         {
             this.material = material;
             this.instanceTransformations = instanceTransformations;
@@ -23,30 +23,48 @@ namespace MeshGPUInstanciation
             args = new uint[]
             {
                 instanceMesh.GetIndexCount(0),
-                1,
+                (uint)count,
                 instanceMesh.GetIndexStart(0),
                 instanceMesh.GetBaseVertex(0),
                 0
             };
-            Color[] colors = new Color[instanceMesh.vertexCount];
-            for (int i = 0; i < colors.Length; i++)
-            {
-                colors[i] = Color.green;
-            }
-            instanceMesh.colors = colors;
+
+
+            //Color[] colors = new Color[instanceMesh.vertexCount];
+            //for (int i = 0; i < colors.Length; i++)
+            //{
+            //    colors[i] = Color.red;
+            //}
+            //instanceMesh.colors = colors;
             argsBuffer = new ComputeBuffer(1, args.Length * sizeof(uint), ComputeBufferType.IndirectArguments);
             argsBuffer.SetData(args);
-            float range = 10;
-            MeshInstancedProperties props = new MeshInstancedProperties();
-            Vector3 position = new Vector3(Random.Range(-range, range), Random.Range(-range, range), Random.Range(-range, range));
-            Quaternion rotation = Quaternion.Euler(Random.Range(-180, 180), Random.Range(-180, 180), Random.Range(-180, 180));
-            Vector3 scale = Vector3.one * 5;
-            props.mat = Matrix4x4.TRS(position, rotation, scale);
-            instanceTransformations.SetData(new MeshInstancedProperties[] { props });
-            //this.material.SetBuffer(MATERIAL_PROPERTY_BUFFER_NAME, instanceTransformations);
+            MeshInstancedProperties[] propss = new MeshInstancedProperties[count];
+            instanceTransformations.GetData(propss);
 
-            //ComputeBuffer.CopyCount(instanceTransformations, argsBuffer, 4);
+            //MeshInstancedProperties props = new MeshInstancedProperties();
+            //Vector3 position = new Vector3(1, 2, 3);
+            //Quaternion rotation = Quaternion.identity;
+            //Vector3 scale = Vector3.one * 3;
+            //props.mat = Matrix4x4.TRS(position, rotation, scale);
 
+            //float[] vals = new float[16];
+            //for (int column = 0; column < 4; column++)
+            //{
+            //    for (int row = 0; row < 4; row++)
+            //    {
+            //        vals[column * 4 + row] = props.mat[1];
+            //    }
+            //}
+
+
+            //MeshInstancedProperties[] mesh = new MeshInstancedProperties[count];
+            //ExtensionArray.Fill(mesh, props);
+            //instanceTransformations.SetData(mesh);
+
+            material.SetBuffer(MATERIAL_PROPERTY_BUFFER_NAME, instanceTransformations);
+
+            ComputeBuffer.CopyCount(instanceTransformations, argsBuffer, 4);
+            argsBuffer.GetData(args);
             meshPropertiesBuffer = argsBuffer;
             MeshInstantiator.meshInstantiator.AddData(this);
         }
@@ -72,17 +90,17 @@ namespace MeshGPUInstanciation
 
         public void Dispose()
         {
-            if (meshPropertiesBuffer != null)
+            if (argsBuffer != null && argsBuffer.IsValid())
+            {
+                argsBuffer.Dispose();
+                argsBuffer = null;
+            }
+            if (meshPropertiesBuffer != null && meshPropertiesBuffer.IsValid())
             {
                 meshPropertiesBuffer.Dispose();
                 meshPropertiesBuffer = null;
             }
-            if (argsBuffer != null)
-            {
-                argsBuffer.Dispose();
-                argsBuffer = null;
-            } 
-            if (instanceTransformations != null)
+            if (instanceTransformations != null && instanceTransformations.IsValid())
             {
                 instanceTransformations.Dispose();
                 instanceTransformations = null;

@@ -1,3 +1,4 @@
+using MeshGPUInstanciation;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -38,22 +39,24 @@ public class ExampleCombinedPerVert : MonoBehaviour
         }
         instanceMesh.colors = c;
         UpdateBuffers();
+        var b = new Bounds(Vector3.zero, new Vector3(range, range, range));
+        new InstanciableData(instanceMesh,instanceCount, meshPropertiesBuffer, instanceMaterial, b);
     }
 
     void Update()
     {
         
         // Update starting position buffer
-        if (cachedInstanceCount != instanceCount || cachedSubMeshIndex != subMeshIndex)
-            UpdateBuffers();
+        //if (cachedInstanceCount != instanceCount || cachedSubMeshIndex != subMeshIndex)
+        //    UpdateBuffers();
 
-        // Pad input
-        if (Input.GetAxisRaw("Horizontal") != 0.0f)
-            instanceCount = (int)Mathf.Clamp(instanceCount + Input.GetAxis("Horizontal") * 40000, 1.0f, 5000000.0f);
-        float range = this.range * 8;
+        //// Pad input
+        //if (Input.GetAxisRaw("Horizontal") != 0.0f)
+        //    instanceCount = (int)Mathf.Clamp(instanceCount + Input.GetAxis("Horizontal") * 40000, 1.0f, 5000000.0f);
+        //float range = this.range * 8;
  
-        // Render
-        Graphics.DrawMeshInstancedIndirect(instanceMesh, subMeshIndex, instanceMaterial, new Bounds(Vector3.zero, new Vector3(range, range, range)), argsBuffer);
+        //// Render
+        //Graphics.DrawMeshInstancedIndirect(instanceMesh, subMeshIndex, instanceMaterial, new Bounds(Vector3.zero, new Vector3(range, range, range)), argsBuffer);
     }
 
     void OnGUI()
