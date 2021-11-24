@@ -16,6 +16,7 @@ namespace MarchingCubes
 
         protected int rebuildKernelId;
 
+        //TODO: compare speed to other values (4 in particular)
         /// <summary>
         /// This should be the same value as in the compute shader "MarchingCubes"
         /// </summary>
