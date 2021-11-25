@@ -632,6 +632,7 @@ namespace MarchingCubes
 
         protected void AddTriangleToMeshData(in TriangleBuilder t, ref int usedTriCount, ref int totalTriCount)
         {
+            //TODO: Replace color with color 32
             Color c = new Color(t.r / 255f, t.g / 255f, t.b / 255f, 1);
 
             meshTriangles[usedTriCount] = usedTriCount;
