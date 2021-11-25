@@ -1,24 +1,13 @@
 Shader "Custom/DrawInstancedIndirect"
 {
-    Properties
-    {
-        _MainTex("Albedo (RGB)", 2D) = "white" {}
+    Properties{
+       _MainTex("Albedo (RGB)", 2D) = "white" {}
     }
-        SubShader
-    {
-        Tags
-        {
-            "RenderPipeline" = "UniversalPipeline"
-            "RenderType" = "Opaque"
-            "UniversalMaterialType" = "Lit"
-        }
-        Pass
-        {
-            Name "Universal Forward"
-            Tags
-            {
-                "LightMode" = "UniversalForward"
-            }
+        SubShader{
+
+            Pass {
+
+                Tags { /*"LightMode" = "ShadowCaster"*/ }
                 CGPROGRAM
 
                 #pragma vertex vert

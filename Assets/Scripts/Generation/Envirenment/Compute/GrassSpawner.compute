@@ -3,14 +3,18 @@
 #include "/Includes/InstanceProperty.compute"
 #include "/Includes/Triangle.compute"
 
-static const float grassScale = 0.2;
+#define PI 3.14159265358979323846
+#define DegToRad 0.0174532924
 
+static const float grassScale = 0.4;
+static const float grassDensitiyPerSquareMeter = 3;
 
 AppendStructuredBuffer<InstanceProperty> grassPositions;
 StructuredBuffer<Triangle> meshTriangles;
 float3 offset;
 float boundsHeight;
 uint length;
+
 
 int3 anchorPosition;
 
@@ -29,31 +33,119 @@ uint steepness(Triangle t)
     return t.colorAndSteepness >> 24;
 }
 
-//TODO: Set grass per area not per tri
-
-float4x4 GetMatrixFor(Triangle t)
+float sizeOfTriangle(float3 n1, float3 n2, float3 n3)
 {
-    float3 middle = (t.vertexC  + t.vertexB + t.vertexA) / 3;
-    middle -= offset;
+    float res = pow(((n2.x * n1.y) - (n3.x * n1.y) - (n1.x * n2.y) + (n3.x * n2.y) + (n1.x * n3.y) - (n2.x * n3.y)), 2.);
+    res += pow(((n2.x * n1.z) - (n3.x * n1.z) - (n1.x * n2.z) + (n3.x * n2.z) + (n1.x * n3.z) - (n2.x * n3.z)), 2);
+    res += pow(((n2.y * n1.z) - (n3.y * n1.z) - (n1.y * n2.z) + (n3.y * n2.z) + (n1.y * n3.z) - (n2.y * n3.z)), 2);
+    return sqrt(res) * 0.5f;
+}
+
+float pseudoRandom0To1(Triangle t, float seed)
+{
+    float m = t.vertexA.x * (t.vertexB.y * seed) + t.vertexC.z;
+    return (m - (int)m);
+}
+
+int GetNumberOfGrass(Triangle t, float seed)
+{
+    float size = sizeOfTriangle(t.vertexA, t.vertexB, t.vertexC);
+    float expectedGrass = grassDensitiyPerSquareMeter * size;
+    int minGrass = expectedGrass;
+    if (pseudoRandom0To1(t, seed) <= expectedGrass - minGrass) minGrass += 1;
+    return minGrass;
+}
+
+float4 GetPositionOfGrass(Triangle t, int number, int seed, float3 offset)
+{
+    float a1 = pseudoRandom0To1(t, seed);
+    float rest = 1 - a1;
+    float a2 = pseudoRandom0To1(t, seed) * rest;
+    rest -= a2;
+    return float4((t.vertexA * a1 + t.vertexB * a2 + t.vertexC * rest) - offset, a2);
+}
+
+float3 RotateAround(float3 axis, float angle, float3 direction)
+{
+    float3 u = axis;
+    float3 u2 = u;
+    float theta = PI * DegToRad * angle;
+    float c = cos(theta);
+    float minusC = cos(theta);
+    float s = sin(theta);
+
+    float3x3 rotMatrix = float3x3(
+        float3(c + u2.x * minusC, u.x * u.y * minusC - u.z * s, u.x * u.z * minusC + u.y * s),
+        float3(u.y * u.x * minusC + u.z * s, c + u2.y * minusC, u.y * u.z * minusC - u.x * s),
+        float3(u.z * u.x * minusC - u.y * s, u.z * u.y * minusC + u.x * s, c + u2.z * minusC)
+        );
+
+    return mul(rotMatrix,direction);
+}
+
+//TODO: Set grass per area not per tri
+//TODO: randomize rotation about normal axis (see axis angle)
+
+float3 GetNormal(Triangle t)
+{
+    return normalize(cross(t.vertexC - t.vertexA, t.vertexB - t.vertexA));
+}
+
+
+float3 GetOffset(float3 normal, float grassScale)
+{
+    return offset - normal * grassScale * boundsHeight;
+}
+
+float GetGrassScale(Triangle t, float seed)
+{
+    float scale = pseudoRandom0To1(t, seed);
+    scale = sin(scale * PI);
+    return ((1 + scale) / 2) * grassScale;
+}
+
+float4x4 GetMatrixFor(Triangle t, float3 normal/*, float3 offset,*//* float grassScale*/)
+{
+   /* float3 middle = (t.vertexC  + t.vertexB + t.vertexA) / 3;
+    middle -= offset;*/
 
     float3 worldUp = float3(0, 1, 0);
+    float angle = pseudoRandom0To1(t,1) * 360;
 
-    float3 normal = normalize(cross(t.vertexC - t.vertexA, t.vertexB - t.vertexA));
-    float3 right = normalize(cross(worldUp, normal));
+    float3 rotatedUp = RotateAround(normal, angle, worldUp);
+
+    float3 right = normalize(cross(rotatedUp, normal));
     float3 up = normalize(cross(normal, right));
 
-    normal *= grassScale;
+  /*  normal *= grassScale;
     right *= grassScale;
-    up *= grassScale;
+    up *= grassScale;*/
 
-    middle += normal * (boundsHeight);
+    //middle += normal * (boundsHeight);
 
     float4x4 m = float4x4(
-        up.x, normal.x, right.x,  middle.x,
-        up.y, normal.y, right.y,  middle.y,
-        up.z, normal.z, right.z,  middle.z,
+        up.x, normal.x, right.x,  0/*middle.x*/,
+        up.y, normal.y, right.y,  0/*middle.y*/,
+        up.z, normal.z, right.z,  0/*middle.z*/,
         0,0,0, 1);
     return m;
+
+}
+
+float4x4 SetPosAndScaleInMatrix(float4x4 org, float3 pos, float scale)
+{
+    float4 c0= org[0];
+    c0 *= scale;
+    c0.w = pos.x;
+    float4 c1 = org[1];
+    c1 *= scale;
+    c1.w = pos.y;
+    float4 c2 = org[2];
+    c2 *= scale;
+    c2.w = pos.z;
+    return float4x4(
+        c0, c1, c2, org[3]
+        );
 }
 
 [numthreads(32,1,1)]
@@ -63,11 +155,23 @@ void GrassSpawner(uint3 id : SV_DispatchThreadID)
         return;
 
     Triangle t = meshTriangles[id.x];
-    //if (steepness(t) > 15)
-    //    return;
+    if (steepness(t) < 70)
+        return;
 
-    InstanceProperty grass;
-    float4x4 instanceMatrix = GetMatrixFor(t);
-    grass.transform = instanceMatrix;
-    grassPositions.Append(grass);
+    float seed = 2;
+    int amount = GetNumberOfGrass(t, seed);
+    float3 normal = GetNormal(t);
+    float4x4 instanceMatrix = GetMatrixFor(t, normal);
+
+    for (int i = 0; i < amount; i++)
+    {
+        InstanceProperty grass;
+        float scale = GetGrassScale(t, seed);
+        float3 offset = GetOffset(normal, scale);
+        float4 posAndSeed = GetPositionOfGrass(t, i, seed, offset);
+        seed = posAndSeed.w;
+        grass.transform = SetPosAndScaleInMatrix(instanceMatrix, (float3)posAndSeed, scale);
+        grassPositions.Append(grass); 
+    }
+
 }
