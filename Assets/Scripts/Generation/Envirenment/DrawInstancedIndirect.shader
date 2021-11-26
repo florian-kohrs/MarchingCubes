@@ -19,6 +19,8 @@ Shader "Custom/DrawInstancedIndirect"
                 #include "UnityLightingCommon.cginc"
                 #include "AutoLight.cginc"
 
+                #define PI 3.14159265358979323846
+
                 sampler2D _MainTex;
 
                 struct v2f
@@ -35,6 +37,7 @@ Shader "Custom/DrawInstancedIndirect"
 
                 struct MeshProperties {
                     float4x4 mat;
+                    float3 color;
                 };
 
                 StructuredBuffer<MeshProperties> _Properties;
@@ -48,7 +51,11 @@ Shader "Custom/DrawInstancedIndirect"
                     float3 ndotl = saturate(dot(worldNormal, _WorldSpaceLightPos0.xyz));
                     float3 ambient = ShadeSH9(float4(worldNormal, 1.0f));
                     float3 diffuse = (ndotl * _LightColor0.rgb);
-                    float3 color = v.color;
+
+                    float heightTransition = v.texcoord.y;
+                    //float heightTransition = 1 - cos(PI * v.texcoord.y / 2);
+
+                    float3 color = (1- heightTransition) * v.color + heightTransition * _Properties[instanceID].color;
 
                     v2f o;
                     float4 pos = mul(_Properties[instanceID].mat, v.vertex);

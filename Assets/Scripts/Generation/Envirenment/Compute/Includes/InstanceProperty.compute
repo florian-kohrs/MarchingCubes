@@ -1,4 +1,5 @@
 ﻿struct InstanceProperty
 {
 	float4x4 transform;
+	float3 color;
 };

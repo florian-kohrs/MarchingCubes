@@ -39,8 +39,7 @@ namespace MeshGPUInstanciation
             argsBuffer = new ComputeBuffer(1, args.Length * sizeof(uint), ComputeBufferType.IndirectArguments);
             meshPropertiesBuffer = argsBuffer;
             argsBuffer.SetData(args);
-            //MeshInstancedProperties[] propss = new MeshInstancedProperties[count];
-            //instanceTransformations.GetData(propss);
+
 
             //MeshInstancedProperties props = new MeshInstancedProperties();
             //Vector3 position = new Vector3(1, 2, 3);
@@ -65,6 +64,11 @@ namespace MeshGPUInstanciation
             material.SetBuffer(MATERIAL_PROPERTY_BUFFER_NAME, instanceTransformations);
 
             ComputeBuffer.CopyCount(instanceTransformations, argsBuffer, 4);
+
+            argsBuffer.GetData(args);
+            MeshInstancedProperties[] propss = new MeshInstancedProperties[args[1]];
+            instanceTransformations.GetData(propss);
+
 
             MeshInstantiator.meshInstantiator.AddData(this);
         }
