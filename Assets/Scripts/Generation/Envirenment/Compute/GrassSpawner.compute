@@ -1,15 +1,11 @@
 #pragma kernel GrassSpawner
 
+#include "/Includes/InstanceProperty.compute"
 #include "/Includes/Triangle.compute"
+#include "/Includes/Noise.compute"
 
 #define PI 3.14159265358979323846
 #define DegToRad 0.0174532924
-
-struct InstanceProperty
-{
-    float4x4 transform;
-    float3 color;
-};
 
 static const float grassScale = 0.4;
 static const float grassDensitiyPerSquareMeter = 3;
@@ -46,6 +42,7 @@ float sizeOfTriangle(float3 n1, float3 n2, float3 n3)
     return sqrt(res) * 0.5f;
 }
 
+
 float rand(Triangle t, float seed)
 {
     float m = t.vertexA.x * (t.vertexB.y * seed) + t.vertexC.z;
@@ -61,13 +58,19 @@ int GetNumberOfGrass(Triangle t, float seed)
     return minGrass;
 }
 
-float4 GetPositionOfGrass(Triangle t, int number, int seed, float3 offset)
+float4 GetPositionOfGrass(Triangle t, uint number, int seed, float3 offset)
 {
     float a1 = rand(t, seed);
     float rest = 1 - a1;
     float a2 = rand(t, seed) * rest;
     rest -= a2;
-    return float4((t.vertexA * a1 + t.vertexB * a2 + t.vertexC * rest) - offset, a2);
+    int mod = number % 3;
+    if(mod == 1)
+        return float4((t.vertexA * a1 + t.vertexB * a2 + t.vertexC * rest) - offset, a2);
+    else if(mod == 2)
+        return float4((t.vertexB * a1 + t.vertexC * a2 + t.vertexA * rest) - offset, a2);
+    else
+        return float4((t.vertexC * a1 + t.vertexA * a2 + t.vertexB * rest) - offset, a2);
 }
 
 float3 RotateAround(float3 axis, float angle, float3 direction)
@@ -170,7 +173,7 @@ void GrassSpawner(uint3 id : SV_DispatchThreadID)
     if (steepness(t) < 70)
         return;
 
-    float seed = 2;
+    float seed = 1 + id.y; //PI* id.x / (PI + id.y + id.z);
     int amount = GetNumberOfGrass(t, seed);
     float3 normal = GetNormal(t);
     float4x4 instanceMatrix = GetMatrixFor(t, normal);
