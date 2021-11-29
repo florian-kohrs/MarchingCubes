@@ -835,10 +835,10 @@ namespace MarchingCubes
                 chunk.FreeSimpleChunkCollider();
                 chunk.GiveUnusedDisplayerBack();
             }
-            else if(lod == 1)
-            {
-                grass.ComputeGrassFor(new Bounds(chunk.CenterPos, Vector3.one * chunk.ChunkSize), numTris, triangleBuffer);
-            }
+            //else if(lod == 1)
+            //{
+            //    grass.ComputeGrassFor(new Bounds(chunk.CenterPos, Vector3.one * chunk.ChunkSize), numTris, triangleBuffer);
+            //}
 
             if ((numTris == 0 && !hasFoundInitialChunk) || careForNeighbours)
             {

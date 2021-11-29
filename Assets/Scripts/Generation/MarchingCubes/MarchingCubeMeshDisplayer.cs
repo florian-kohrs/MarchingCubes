@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public class MarchingCubeMeshDisplayer : IHasInteractableMarchingCubeChunk
+    public class MarchingCubeMeshDisplayer
     {
 
         public Mesh mesh;
@@ -24,8 +24,6 @@ namespace MarchingCubes
         public bool HasChunk => hasCube != null && hasCube.chunk != null;
 
         public bool IsColliderActive => HasCollider && collider.sharedMesh != null;
-
-        public IMarchingCubeInteractableChunk GetChunk => throw new System.NotImplementedException();
 
         protected MarchingCubeMeshDisplayer(IMarchingCubeInteractableChunk chunk, GameObject g, Transform t) : this(g, g.AddComponent<MeshFilter>(), g.AddComponent<MeshRenderer>(), new Mesh(), g.AddComponent<MeshCollider>())
         {
@@ -117,7 +115,6 @@ namespace MarchingCubes
                 GetCollider().sharedMesh = mesh;
             }
         }
-
 
     }
 }

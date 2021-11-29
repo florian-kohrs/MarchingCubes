@@ -6,22 +6,11 @@ Shader "Custom/PerVertexColor"
         [HideInInspector][NoScaleOffset]unity_LightmapsInd("unity_LightmapsInd", 2DArray) = "" {}
         [HideInInspector][NoScaleOffset]unity_ShadowMasks("unity_ShadowMasks", 2DArray) = "" {}
     }
-        SubShader
-    {
-        Tags
-        {
-            "RenderPipeline" = "UniversalPipeline"
-            "RenderType" = "Opaque"
-            "UniversalMaterialType" = "Lit"
-            "Queue" = "AlphaTest"
-        }
-        Pass
-        {
-            Name "Universal Forward"
-            Tags
-            {
-                "LightMode" = "UniversalForward"
-            }
+        SubShader{
+
+          Pass {
+
+              Tags { /*"LightMode" = "ShadowCaster"*/ }
                 CGPROGRAM
 
                 #pragma vertex vert
@@ -33,8 +22,6 @@ Shader "Custom/PerVertexColor"
                 #include "UnityLightingCommon.cginc"
                 #include "AutoLight.cginc"
 
-                sampler2D _MainTex;
-
                 struct v2f
                 {
                     float4 pos : SV_POSITION;
@@ -45,10 +32,6 @@ Shader "Custom/PerVertexColor"
                     SHADOW_COORDS(4)
                 };
 
-
-                struct MeshProperties {
-                    float4x4 mat;
-                };
 
                 v2f vert(appdata_full v, uint instanceID : SV_InstanceID)
                 {

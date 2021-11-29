@@ -419,7 +419,7 @@ namespace MarchingCubes
         public PathTriangle GetTriangleFromRayHit(RaycastHit hit)
         {
             MarchingCubeEntity cube = GetClosestEntity(hit.point);
-            return cube.GetTriangleWithNormal(hit.normal);
+            return cube.GetTriangleWithNormalOrClosest(hit.normal, hit.point);
         }
 
         protected int LocalCornerIndexToGlobalDelta(int local)
@@ -590,5 +590,9 @@ namespace MarchingCubes
             return GetClosestEntity(hit.point);
         }
 
+        public Vector3 NormalFromRay(RaycastHit hit)
+        {
+            return GetTriangleFromRayHit(hit).Normal;
+        }
     }
 }

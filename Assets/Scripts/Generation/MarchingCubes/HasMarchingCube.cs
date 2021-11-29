@@ -10,5 +10,11 @@ namespace MarchingCubes
         public IMarchingCubeInteractableChunk chunk;
 
         public IMarchingCubeInteractableChunk GetChunk => chunk;
+
+        public Vector3 NormalFromRay(RaycastHit hit)
+        {
+            return chunk.NormalFromRay(hit);
+        }
+
     }
 }

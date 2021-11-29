@@ -14,13 +14,13 @@ namespace MeshGPUInstanciation
 
         private void Awake()
         {
-            meshInstantiator = this;   
+            meshInstantiator = this;
         }
 
         private void OnDestroy()
         {
             meshInstantiator = null;
-            datas.ForEach(d => d.Dispose()); 
+            datas.ForEach(d => d.Dispose());
             datas = null;
         }
 
@@ -29,6 +29,8 @@ namespace MeshGPUInstanciation
             datas.Add(data);
         }
 
+
+        //TODO: Use on OnRenderObject?
         private void Update()
         {
             int count = datas.Count;
