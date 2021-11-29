@@ -31,7 +31,6 @@ Shader "Custom/DrawInstancedIndirect"
                     float3 diffuse : TEXCOORD2;
                     //TODO: Instead of having color for vertex use texture map as color lookup when having few colors
                     float3 color : TEXCOORD3;
-                    SHADOW_COORDS(4)
                 };
 
 
@@ -64,17 +63,14 @@ Shader "Custom/DrawInstancedIndirect"
                     o.ambient = ambient;
                     o.diffuse = diffuse;
                     o.color = color;
-                    TRANSFER_SHADOW(o)
                     return o;
                 }
 
                 fixed4 frag(v2f i) : SV_Target
                 {
-                    fixed shadow = SHADOW_ATTENUATION(i);
                     fixed4 albedo = tex2D(_MainTex, i.uv_MainTex);
-                    float3 lighting = i.diffuse * shadow + i.ambient;
+                    float3 lighting = i.diffuse + i.ambient;
                     fixed4 output = fixed4(albedo.rgb * i.color * lighting, albedo.w);
-                    UNITY_APPLY_FOG(i.fogCoord, output);
                     return output;
                 }
 

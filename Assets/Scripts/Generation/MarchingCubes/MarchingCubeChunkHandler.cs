@@ -189,9 +189,8 @@ namespace MarchingCubes
             startPos = player.position;
             
             IMarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
-            grass.ComputeGrassFor(new Bounds(chunk.CenterPos, Vector3.one * 1000000 * chunk.ChunkSize), chunk.NumTris, triangleBuffer);
             maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
-            //BuildRelevantChunksParallelBlockingAround(chunk);
+            BuildRelevantChunksParallelBlockingAround(chunk);
         }
 
         public void BuildRelevantChunksParallelBlockingAround(IMarchingCubeChunk chunk)
@@ -835,6 +834,10 @@ namespace MarchingCubes
             {
                 chunk.FreeSimpleChunkCollider();
                 chunk.GiveUnusedDisplayerBack();
+            }
+            else if(lod == 1)
+            {
+                grass.ComputeGrassFor(new Bounds(chunk.CenterPos, Vector3.one * chunk.ChunkSize), numTris, triangleBuffer);
             }
 
             if ((numTris == 0 && !hasFoundInitialChunk) || careForNeighbours)

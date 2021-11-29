@@ -8,7 +8,7 @@
 #define DegToRad 0.0174532924
 
 static const float grassScale = 0.4;
-static const float grassDensitiyPerSquareMeter = 3;
+static const float grassDensitiyPerSquareMeter = 5;
 
 AppendStructuredBuffer<InstanceProperty> grassPositions;
 StructuredBuffer<Triangle> meshTriangles;
@@ -45,7 +45,7 @@ float sizeOfTriangle(float3 n1, float3 n2, float3 n3)
 
 float rand(Triangle t, float seed)
 {
-    float m = t.vertexA.x * (t.vertexB.y * seed) + t.vertexC.z;
+    float m = abs(t.vertexA.x) * (abs(t.vertexB.y) * seed) + abs(t.vertexC.z);
     return (m - (int)m);
 }
 
@@ -53,24 +53,26 @@ int GetNumberOfGrass(Triangle t, float seed)
 {
     float size = sizeOfTriangle(t.vertexA, t.vertexB, t.vertexC);
     float expectedGrass = grassDensitiyPerSquareMeter * size;
-    int minGrass = expectedGrass;
-    if (rand(t, seed) <= expectedGrass - minGrass) minGrass += 1;
-    return minGrass;
+    int grass = expectedGrass;
+    float extraGrass = rand(t, seed);
+    extraGrass = (extraGrass - 0.5) * 2;
+    return grass + extraGrass;
 }
 
-float4 GetPositionOfGrass(Triangle t, uint number, int seed, float3 offset)
+float4 GetPositionOfGrass(Triangle t, uint number, float seed, float3 offset)
 {
     float a1 = rand(t, seed);
     float rest = 1 - a1;
     float a2 = rand(t, seed) * rest;
     rest -= a2;
     int mod = number % 3;
+    float nextSeed = seed * (1+number) / (mod + 1);
     if(mod == 1)
-        return float4((t.vertexA * a1 + t.vertexB * a2 + t.vertexC * rest) - offset, a2);
+        return float4((t.vertexA * a1 + t.vertexB * a2 + t.vertexC * rest) - offset, nextSeed);
     else if(mod == 2)
-        return float4((t.vertexB * a1 + t.vertexC * a2 + t.vertexA * rest) - offset, a2);
+        return float4((t.vertexB * a1 + t.vertexC * a2 + t.vertexA * rest) - offset, nextSeed);
     else
-        return float4((t.vertexC * a1 + t.vertexA * a2 + t.vertexB * rest) - offset, a2);
+        return float4((t.vertexC * a1 + t.vertexA * a2 + t.vertexB * rest) - offset, nextSeed);
 }
 
 float3 RotateAround(float3 axis, float angle, float3 direction)
@@ -173,7 +175,7 @@ void GrassSpawner(uint3 id : SV_DispatchThreadID)
     if (steepness(t) < 70)
         return;
 
-    float seed = 1 + id.y; //PI* id.x / (PI + id.y + id.z);
+    float seed = PI; //PI* id.x / (PI + id.y + id.z);
     int amount = GetNumberOfGrass(t, seed);
     float3 normal = GetNormal(t);
     float4x4 instanceMatrix = GetMatrixFor(t, normal);

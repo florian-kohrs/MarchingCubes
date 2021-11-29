@@ -1037,10 +1037,10 @@ MonoBehaviour:
   chunkMaterial: {fileID: 2100000, guid: 97d2f9aa8d16b8241a90494b8d616c04, type: 2}
   surfaceLevel: 0.511
   player: {fileID: 1779183453}
-  buildAroundDistance: 4000
+  buildAroundDistance: 500
   minSteepness: 11
   maxSteepness: 45
-  flatColor: {r: 0.46342114, g: 0.7735849, b: 0.46342114, a: 1}
+  flatColor: {r: 0.30397826, g: 0.6509434, b: 0.3437052, a: 1}
   steepColor: {r: 0.20754719, g: 0.12678002, b: 0.04601282, a: 1}
   grass: {fileID: 2124858347}
 --- !u!54 &1125545289
@@ -1066,7 +1066,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1125545286}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 76e2bdfbd44892348a426b99b226067a, type: 3}
   m_Name: 
@@ -1243,7 +1243,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   densityShader: {fileID: 7200000, guid: 2dd2295c8799c9a4297e6c83b1fc4a4b, type: 3}
   bioms:
-  - amplitude: 5
+  - amplitude: 25
     lacunarity: 2
     persistence: 0.518
     frequency: 2.05
@@ -1870,7 +1870,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   grassShader: {fileID: 7200000, guid: ad6f9c06a53a73e47902289d598e3168, type: 3}
-  mat: {fileID: 2100000, guid: 71cf2817a82480d41a6db4c4979040dc, type: 2}
+  mat: {fileID: 2100000, guid: 4fe26c1379a97fc4ab0634c21ab7bf82, type: 2}
   grassMesh: {fileID: 5065503977446733706, guid: 888c947ef6315ba418388408d9b2060e,
     type: 3}
 --- !u!4 &2124858348
