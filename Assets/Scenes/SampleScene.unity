@@ -1243,7 +1243,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   densityShader: {fileID: 7200000, guid: 2dd2295c8799c9a4297e6c83b1fc4a4b, type: 3}
   bioms:
-  - amplitude: 200
+  - amplitude: 25
     lacunarity: 2
     persistence: 0.518
     frequency: 2.05
@@ -1633,7 +1633,7 @@ MonoBehaviour:
   planet: {fileID: 1125545287}
   maxSpeed: 211
   acceleration: 10
-  jumpPower: 10
+  jumpPower: 50
   airTime: 0
 --- !u!54 &2047378100
 Rigidbody:
@@ -1789,7 +1789,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hoveringBlock: {fileID: 11400000, guid: 84da99c469d89534f8630df1420b0fa3, type: 2}
+  planetCenter: {fileID: 2072808059}
   buildRange: 15
+  angleAroundNormal: 0
+  orientationMode: 1
 --- !u!1 &2071981537
 GameObject:
   m_ObjectHideFlags: 0

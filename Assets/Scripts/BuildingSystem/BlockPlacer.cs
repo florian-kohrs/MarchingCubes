@@ -15,13 +15,15 @@ public class BlockPlacer : MonoBehaviour
 
     public float angleAroundNormal;
 
+    public const int buildColliderLayer = 0;
+
     protected float buildSqrRange;
 
     protected float currentMeshHeightOffset;
 
-    protected OrientationMode orientationMode = OrientationMode.TriangleNormal;
+    public OrientationMode orientationMode = OrientationMode.TriangleNormal;
 
-    protected enum OrientationMode { TriangleNormal, WorldNormal};
+    public enum OrientationMode { TriangleNormal, WorldNormal};
 
     private void Start()
     {
@@ -37,7 +39,7 @@ public class BlockPlacer : MonoBehaviour
 
     public void BeginPlaceBlock(BaseBuildingBlock block)
     {
-        this.hoveringBlock = block;
+        hoveringBlock = block;
         objectToPlace = Instantiate(block.prefab).transform;
         currentMeshHeightOffset = block.prefab.GetComponent<MeshFilter>().sharedMesh.bounds.extents.y;
         enabled = true;
@@ -47,7 +49,7 @@ public class BlockPlacer : MonoBehaviour
     {
         RaycastHit hit;
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        if (Physics.Raycast(ray, out hit, 2000))
+        if (Physics.Raycast(ray, out hit, 2000, buildColliderLayer))
         {
             float sqrDist = (hit.point - transform.position).sqrMagnitude;
             bool canBuild = sqrDist <= buildSqrRange;
@@ -64,25 +66,33 @@ public class BlockPlacer : MonoBehaviour
                 Test();
             }
         }
+        if(Input.GetKey(KeyCode.Q))
+        {
+            angleAroundNormal += Time.deltaTime * 60;
+        }
     }
 
     protected bool CheckForBlockCombinerAndApply(RaycastHit hit)
     {
         IBlockCombiner combiner = hit.collider.GetComponent<IBlockCombiner>();
+        if (combiner == null)
+            return false;
 
         Vector3 normal;
         Vector3 forward;
         Vector3 dockPosition;
         combiner.GetDockOrientation(hit, out dockPosition, out normal, out forward);
-
-        return combiner != null;
+        return true;
     }
 
     protected bool CheckForBlockOrientatorAndApply(RaycastHit hit)
     {
         IBlockPlaceOrientator orientator = hit.collider.GetComponent<IBlockPlaceOrientator>();
+        if(orientator == null)
+            return false;
+
         AssignToOrientation(orientator, hit);
-        return orientator != null;
+        return true;
     }
 
     protected void AssignToOrientation(IBlockPlaceOrientator orientator, RaycastHit hit)
@@ -99,15 +109,15 @@ public class BlockPlacer : MonoBehaviour
             normal = orientator.NormalFromRay(hit);
         }
 
-        forward = (Quaternion.Euler(Vector3.forward) * Quaternion.AngleAxis(angleAroundNormal, normal)).eulerAngles;
-        
-        AlignToTriangle(normal, forward);
+        AlignToTriangle(normal, Vector3.forward);
+
+        objectToPlace.Rotate(new Vector3(0,angleAroundNormal,0),Space.Self);
     }
 
     protected void PositionAt(Vector3 hit)
     {
         objectToPlace.position = hit;
-        objectToPlace.Translate(objectToPlace.up * currentMeshHeightOffset);
+        objectToPlace.position += objectToPlace.up * currentMeshHeightOffset;
     }
 
     protected void AlignToTriangle(Vector3 normal, Vector3 forward)
