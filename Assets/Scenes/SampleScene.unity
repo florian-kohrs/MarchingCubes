@@ -1037,7 +1037,7 @@ MonoBehaviour:
   chunkMaterial: {fileID: 2100000, guid: 97d2f9aa8d16b8241a90494b8d616c04, type: 2}
   surfaceLevel: 0.511
   player: {fileID: 1779183453}
-  buildAroundDistance: 500
+  buildAroundDistance: 4000
   minSteepness: 11
   maxSteepness: 45
   flatColor: {r: 0.30397826, g: 0.6509434, b: 0.3437052, a: 1}
@@ -1066,7 +1066,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1125545286}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 76e2bdfbd44892348a426b99b226067a, type: 3}
   m_Name: 
@@ -1243,13 +1243,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   densityShader: {fileID: 7200000, guid: 2dd2295c8799c9a4297e6c83b1fc4a4b, type: 3}
   bioms:
-  - amplitude: 25
+  - amplitude: 200
     lacunarity: 2
     persistence: 0.518
     frequency: 2.05
     scale: 18.5
     heightOffset: 0
-  - amplitude: 100
+  - amplitude: 300
     lacunarity: 2
     persistence: 0.518
     frequency: 2.05
@@ -1610,6 +1610,7 @@ GameObject:
   - component: {fileID: 2047378105}
   - component: {fileID: 2047378107}
   - component: {fileID: 2047378106}
+  - component: {fileID: 2047378108}
   m_Layer: 0
   m_Name: Capsule
   m_TagString: Untagged
@@ -1624,7 +1625,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2047378098}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 143f073909c6af54ebe123afca8cad72, type: 3}
   m_Name: 
@@ -1646,7 +1647,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 1
+  m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
@@ -1737,7 +1738,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2047378098}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b8dc09eb4039aae499dd6675dbde6ca0, type: 3}
   m_Name: 
@@ -1750,7 +1751,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2047378098}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a9cdd6915c97c6c49b291689e4be8641, type: 3}
   m_Name: 
@@ -1766,7 +1767,7 @@ CharacterController:
   m_GameObject: {fileID: 2047378098}
   m_Material: {fileID: 0}
   m_IsTrigger: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_Height: 2
   m_Radius: 0.5
@@ -1775,6 +1776,20 @@ CharacterController:
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &2047378108
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2047378098}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7309ec954eee6149988245646827e39, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hoveringBlock: {fileID: 11400000, guid: 84da99c469d89534f8630df1420b0fa3, type: 2}
+  buildRange: 15
 --- !u!1 &2071981537
 GameObject:
   m_ObjectHideFlags: 0
