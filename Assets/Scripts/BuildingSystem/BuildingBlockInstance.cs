@@ -5,17 +5,15 @@ using UnityEngine;
 public class BuildingBlockInstance : MonoBehaviour, IBlockCombiner
 {
 
-    public const string BUILDING_BLOCK_LAYER_NAME = "BuildingBlock";
-    public const int BUILDING_BLOCK_LAYER_ID = 8;
 
     public Vector3 extends;
 
-    public void GetDockOrientation(RaycastHit hit, out Vector3 dockPosition, out Vector3 normal, out Vector3 forward)
+    public void GetDockOrientation(RaycastHit hit, out Vector3 dockPosition, out Vector3 normal, out Vector3 forward, out Vector3 localDockOrientation)
     {
         normal = transform.up;
         forward = transform.forward;
-        Vector3 localHitDirection = GetLocalHitDirection(hit);
-        dockPosition = transform.position + Vector3.Scale(localHitDirection, extends);
+        localDockOrientation = GetLocalHitDirection(hit);
+        dockPosition = transform.position + transform.TransformDirection(Vector3.Scale(localDockOrientation, extends));
     }
 
     protected Vector3 GetLocalHitDirection(RaycastHit hit)

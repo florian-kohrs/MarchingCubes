@@ -7,4 +7,6 @@ public class BaseBuildingBlock : ScriptableObject
 
     public GameObject prefab;
 
+    public Vector3 dockingBoxSize;
+
 }

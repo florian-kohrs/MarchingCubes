@@ -4,22 +4,42 @@ using UnityEngine;
 
 public class BlockPlacer : MonoBehaviour
 {
+    //TODO: function to combine a set of disconnected cubes 
+
+    public const string BUILDING_BLOCK_LAYER_NAME = "BuildingBlock";
+
+    protected static int BUILDING_BLOCK_LAYER_ID;
+    protected static int DEFAULT_AND_BUILDING_BLOCK_LAYER_ID;
 
     public BaseBuildingBlock hoveringBlock;
 
     public Transform planetCenter;
 
+    public Material couldPlaceMat;
+
+    public Material cantPlaceMat;
+
+    public bool usePlacementHelper;
+
+    private Material originalMat;
+
+    private IBlockCombiner dockedToBlock;
+
     private Transform objectToPlace;
+
+    private MeshRenderer toPlaceRenderer;
 
     public float buildRange = 15;
 
     public float angleAroundNormal;
 
-    public const int buildColliderLayer = 0;
+    public const int buildColliderLayer = 1 | 9;
+
+    public const int buildingBlockLayer = 1 | 9;
 
     protected float buildSqrRange;
 
-    protected float currentMeshHeightOffset;
+    protected Vector3 currentMeshExtend;
 
     public OrientationMode orientationMode = OrientationMode.TriangleNormal;
 
@@ -28,6 +48,8 @@ public class BlockPlacer : MonoBehaviour
     private void Start()
     {
         enabled = false;
+        BUILDING_BLOCK_LAYER_ID = LayerMask.GetMask(BUILDING_BLOCK_LAYER_NAME);
+        DEFAULT_AND_BUILDING_BLOCK_LAYER_ID = 1 | BUILDING_BLOCK_LAYER_ID;
         buildSqrRange = buildRange * buildRange;
         Test();
     }
@@ -40,30 +62,65 @@ public class BlockPlacer : MonoBehaviour
     public void BeginPlaceBlock(BaseBuildingBlock block)
     {
         hoveringBlock = block;
+        lastRay = default;
+        lastMousePos = default;
+        rayDidHit = false;
         objectToPlace = Instantiate(block.prefab).transform;
-        currentMeshHeightOffset = block.prefab.GetComponent<MeshFilter>().sharedMesh.bounds.extents.y;
+        currentMeshExtend = objectToPlace.GetComponent<MeshFilter>().sharedMesh.bounds.extents;
+        toPlaceRenderer = objectToPlace.GetComponent<MeshRenderer>();
+        originalMat = toPlaceRenderer.sharedMaterial;
         enabled = true;
+    }
+
+    protected Ray lastRay;
+    protected Vector3 lastMousePos;
+    protected bool rayDidHit;
+    protected RaycastHit hit;
+
+    protected const float DISTANCE_THRESHOLD_BEFORE_FIRE_NEW_RAY = 0.05f;
+    protected const float SQR_DISTANCE_THRESHOLD_BEFORE_FIRE_NEW_RAY = DISTANCE_THRESHOLD_BEFORE_FIRE_NEW_RAY * DISTANCE_THRESHOLD_BEFORE_FIRE_NEW_RAY;
+
+    protected bool RayChangedEnoughToReshoot(Ray newRay)
+    {
+        return Input.mousePosition != lastMousePos
+            || (lastRay.origin - newRay.origin).sqrMagnitude > SQR_DISTANCE_THRESHOLD_BEFORE_FIRE_NEW_RAY;
     }
 
     private void Update()
     {
-        RaycastHit hit;
+        Debug.Log(Input.mousePosition);
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        if (Physics.Raycast(ray, out hit, 2000, buildColliderLayer))
+
+        if(RayChangedEnoughToReshoot(ray))
+        {
+            lastRay = ray;
+            lastMousePos = Input.mousePosition;
+            rayDidHit = Physics.Raycast(ray, out hit, 2000, DEFAULT_AND_BUILDING_BLOCK_LAYER_ID);
+            Debug.Log("Ray changed by sqr origin dist: " + (lastRay.origin - ray.origin).sqrMagnitude);
+        }
+
+        if (rayDidHit)
         {
             float sqrDist = (hit.point - transform.position).sqrMagnitude;
             bool canBuild = sqrDist <= buildSqrRange;
-            if (!CheckForBlockCombinerAndApply(hit))
+            if (!CheckForBlockDockingAndApply(hit))
             {
                 canBuild = canBuild && CheckForBlockOrientatorAndApply(hit);
                 PositionAt(hit.point);
+                if (usePlacementHelper)
+                {
+                    IBlockCombiner c;
+                    SearchForCubeConnection();
+                }
             }
             
             if (canBuild && Input.GetMouseButtonDown(0))
             {
-                objectToPlace = null;
-                enabled = false;
-                Test();
+                PlaceCurrentBlock();
+            }
+            else
+            {
+                ApplyMaterialForUnplacedBlock(canBuild);
             }
         }
         if(Input.GetKey(KeyCode.Q))
@@ -72,7 +129,25 @@ public class BlockPlacer : MonoBehaviour
         }
     }
 
-    protected bool CheckForBlockCombinerAndApply(RaycastHit hit)
+    protected void ApplyMaterialForUnplacedBlock(bool canPlace)
+    {
+        if (canPlace)
+            toPlaceRenderer.material = couldPlaceMat;
+        else
+            toPlaceRenderer.material = cantPlaceMat;
+    }
+
+    protected void PlaceCurrentBlock()
+    {
+        objectToPlace.GetComponent<Collider>().enabled = true;
+        toPlaceRenderer.material = originalMat;
+        toPlaceRenderer = null;
+        objectToPlace = null;
+        enabled = false;
+        Test();
+    }
+
+    protected bool CheckForBlockDockingAndApply(RaycastHit hit)
     {
         IBlockCombiner combiner = hit.collider.GetComponent<IBlockCombiner>();
         if (combiner == null)
@@ -81,13 +156,17 @@ public class BlockPlacer : MonoBehaviour
         Vector3 normal;
         Vector3 forward;
         Vector3 dockPosition;
-        combiner.GetDockOrientation(hit, out dockPosition, out normal, out forward);
+        Vector3 localOrientation;
+        combiner.GetDockOrientation(hit, out dockPosition, out normal, out forward, out localOrientation);
+        objectToPlace.position = dockPosition;
+        objectToPlace.Translate(Vector3.Scale(currentMeshExtend, localOrientation));
+        AlignToTriangle(normal,forward);
         return true;
     }
 
     protected bool CheckForBlockOrientatorAndApply(RaycastHit hit)
     {
-        IBlockPlaceOrientator orientator = hit.collider.GetComponent<IBlockPlaceOrientator>();
+        IBlockPlaceOrientator orientator = hit.collider.gameObject.GetComponent<IBlockPlaceOrientator>();
         if(orientator == null)
             return false;
 
@@ -98,7 +177,6 @@ public class BlockPlacer : MonoBehaviour
     protected void AssignToOrientation(IBlockPlaceOrientator orientator, RaycastHit hit)
     {
         Vector3 normal;
-        Vector3 forward;
 
         if (orientationMode == OrientationMode.WorldNormal)
         {
@@ -117,7 +195,7 @@ public class BlockPlacer : MonoBehaviour
     protected void PositionAt(Vector3 hit)
     {
         objectToPlace.position = hit;
-        objectToPlace.position += objectToPlace.up * currentMeshHeightOffset;
+        objectToPlace.position += objectToPlace.up * currentMeshExtend.y;
     }
 
     protected void AlignToTriangle(Vector3 normal, Vector3 forward)
@@ -125,5 +203,31 @@ public class BlockPlacer : MonoBehaviour
         objectToPlace.rotation = Quaternion.LookRotation(normal, -forward);
         objectToPlace.Rotate(new Vector3(90, 0, 0), Space.Self);
     }
+
+    protected int activeColliderDocking = 0;
+
+    protected void SearchForCubeConnection()
+    {
+        Vector3 pos = objectToPlace.position;
+        Collider[] results = Physics.OverlapBox(pos, currentMeshExtend, objectToPlace.rotation, BUILDING_BLOCK_LAYER_ID);
+        //RaycastHit[] hit;
+        //Physics.BoxCastAll()
+        if(results != null && results.Length > 0)
+        {
+            activeColliderDocking = activeColliderDocking % results.Length;
+            Collider activeCollider = results[activeColliderDocking];
+            RaycastHit hit;
+            Vector3 direction = (activeCollider.transform.position - pos).normalized;
+            if (direction != Vector3.zero)
+            {
+                Ray ray = new Ray(pos - direction, direction);
+                if (activeCollider.Raycast(ray, out hit, buildRange))
+                {
+                    CheckForBlockDockingAndApply(hit);
+                }
+            }
+        }
+    }
+
 
 }
