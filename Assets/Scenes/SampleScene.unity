@@ -1790,6 +1790,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   hoveringBlock: {fileID: 11400000, guid: 84da99c469d89534f8630df1420b0fa3, type: 2}
   planetCenter: {fileID: 2072808059}
+  couldPlaceMat: {fileID: 2100000, guid: 7aa923b40fc487040a385ed1cca7dcb8, type: 2}
+  cantPlaceMat: {fileID: 2100000, guid: 954e10c706141b242943721ac840627b, type: 2}
+  usePlacementHelper: 1
   buildRange: 15
   angleAroundNormal: 0
   orientationMode: 1

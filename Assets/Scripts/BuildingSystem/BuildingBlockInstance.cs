@@ -5,7 +5,6 @@ using UnityEngine;
 public class BuildingBlockInstance : MonoBehaviour, IBlockCombiner
 {
 
-
     public Vector3 extends;
 
     public void GetDockOrientation(RaycastHit hit, out Vector3 dockPosition, out Vector3 normal, out Vector3 forward, out Vector3 localDockOrientation)
@@ -13,7 +12,7 @@ public class BuildingBlockInstance : MonoBehaviour, IBlockCombiner
         normal = transform.up;
         forward = transform.forward;
         localDockOrientation = GetLocalHitDirection(hit);
-        dockPosition = transform.position + transform.TransformDirection(Vector3.Scale(localDockOrientation, extends));
+        dockPosition = transform.position + Vector3.Scale(transform.TransformDirection(localDockOrientation), extends);
     }
 
     protected Vector3 GetLocalHitDirection(RaycastHit hit)
