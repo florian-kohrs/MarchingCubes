@@ -88,7 +88,6 @@ public class BlockPlacer : MonoBehaviour
 
     private void Update()
     {
-        Debug.Log(Input.mousePosition);
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
         if(RayChangedEnoughToReshoot(ray))
@@ -96,7 +95,6 @@ public class BlockPlacer : MonoBehaviour
             lastRay = ray;
             lastMousePos = Input.mousePosition;
             rayDidHit = Physics.Raycast(ray, out hit, 2000, DEFAULT_AND_BUILDING_BLOCK_LAYER_ID);
-            Debug.Log("Ray changed by sqr origin dist: " + (lastRay.origin - ray.origin).sqrMagnitude);
         }
 
         if (rayDidHit)

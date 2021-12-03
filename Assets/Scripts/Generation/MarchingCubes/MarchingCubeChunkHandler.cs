@@ -168,7 +168,7 @@ namespace MarchingCubes
             simpleChunkColliderPool = new SimpleChunkColliderPool(colliderParent);
             displayerPool = new MeshDisplayerPool(transform);
             interactableDisplayerPool = new InteractableMeshDisplayPool(transform);
-            CreateAllBuffersWithSizes(65);
+            CreateAllBuffersWithSizes(32);
 
             TriangulationTableStaticData.BuildLookUpTables();
 
