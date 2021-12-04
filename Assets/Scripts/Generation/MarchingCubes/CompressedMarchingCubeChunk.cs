@@ -44,7 +44,8 @@ namespace MarchingCubes
 
         protected int targetLodPower = -1;
 
-        protected float[] points;
+        //TODO: Only store in marching cubes maybe
+        protected PointData[] points;
 
         protected int triCount;
 
@@ -191,7 +192,7 @@ namespace MarchingCubes
             }
         }
 
-        public float[] Points
+        public PointData[] Points
         {
             get
             {
@@ -353,7 +354,7 @@ namespace MarchingCubes
 
             if (points != null)
             {
-                isCompletlyAir = IsEmpty && points[0] < surfaceLevel;
+                isCompletlyAir = IsEmpty && points[0].surfaceValue < surfaceLevel;
             }
 
             //neighbourLODs = chunkHandler.GetNeighbourLODSFrom(this);
@@ -485,17 +486,17 @@ namespace MarchingCubes
         #region March
         public virtual MarchingCubeEntity MarchAt(int x, int y, int z, ICubeNeighbourFinder chunk, int lod)
         {
-            float[] noisePoints = GetNoiseInCornersForPoint(x, y, z, lod);
+            PointData[] noisePoints = GetNoiseInCornersForPoint(x, y, z, lod);
 
             int cubeIndex = 0;
-            if (noisePoints[0] > surfaceLevel) cubeIndex |= 1;
-            if (noisePoints[1] > surfaceLevel) cubeIndex |= 2;
-            if (noisePoints[2] > surfaceLevel) cubeIndex |= 4;
-            if (noisePoints[3] > surfaceLevel) cubeIndex |= 8;
-            if (noisePoints[4] > surfaceLevel) cubeIndex |= 16;
-            if (noisePoints[5] > surfaceLevel) cubeIndex |= 32;
-            if (noisePoints[6] > surfaceLevel) cubeIndex |= 64;
-            if (noisePoints[7] > surfaceLevel) cubeIndex |= 128;
+            if (noisePoints[0].surfaceValue > surfaceLevel) cubeIndex |= 1;
+            if (noisePoints[1].surfaceValue > surfaceLevel) cubeIndex |= 2;
+            if (noisePoints[2].surfaceValue > surfaceLevel) cubeIndex |= 4;
+            if (noisePoints[3].surfaceValue > surfaceLevel) cubeIndex |= 8;
+            if (noisePoints[4].surfaceValue > surfaceLevel) cubeIndex |= 16;
+            if (noisePoints[5].surfaceValue > surfaceLevel) cubeIndex |= 32;
+            if (noisePoints[6].surfaceValue > surfaceLevel) cubeIndex |= 64;
+            if (noisePoints[7].surfaceValue > surfaceLevel) cubeIndex |= 128;
 
             if (cubeIndex > 0 && cubeIndex < 255)
             {
@@ -545,11 +546,11 @@ namespace MarchingCubes
             return MarchAt(x, y, z, finder, 1);
         }
 
-        protected Vector3 InterpolateVerts(int[] cubeCorners, float[] points, int startIndex1, int startIndex2)
+        protected Vector3 InterpolateVerts(int[] cubeCorners, PointData[] points, int startIndex1, int startIndex2)
         {
             int index1 = startIndex1 * 3;
             int index2 = startIndex2 * 3;
-            float t = (surfaceLevel - points[startIndex1]) / (points[startIndex2] - points[startIndex1]);
+            float t = (surfaceLevel - points[startIndex1].surfaceValue) / (points[startIndex2].surfaceValue - points[startIndex1].surfaceValue);
             return new Vector3(
                 cubeCorners[index1] + t * (cubeCorners[index2] - cubeCorners[index1]),
                 cubeCorners[index1 + 1] + t * (cubeCorners[index2 + 1] - cubeCorners[index1 + 1]),
@@ -580,12 +581,12 @@ namespace MarchingCubes
             };
         }
 
-         protected float[] GetNoiseInCornersForPoint(int x, int y, int z, int lod)
+         protected PointData[] GetNoiseInCornersForPoint(int x, int y, int z, int lod)
         {
             int pointsLod = pointsPerAxis * lod;
             int sqrPointsLod = sqrPointsPerAxis * lod;
             int pointIndex = PointIndexFromCoord(x, y, z);
-            return new float[]
+            return new PointData[]
             {
                 points[pointIndex],
                 points[pointIndex + lod],

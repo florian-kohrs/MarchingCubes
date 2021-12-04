@@ -10,7 +10,7 @@ namespace MarchingCubes
     public class StorageTreeNode : GenericTreeNode<StoredChunkEdits, IStorageGroupOrganizer<StoredChunkEdits>, IStorageGroupOrganizer<StoredChunkEdits>>, IStorageGroupOrganizer<StoredChunkEdits>
     {
 
-        public static int NON_SET_NOISE_VALUE = -9999;
+        public static PointData NON_SET_NOISE_VALUE = new PointData() { surfaceValue = -9999, pointType = -1 };
 
         protected static int POINTS_PER_AXIS = 33;
 
@@ -34,7 +34,7 @@ namespace MarchingCubes
         protected bool isMipMapComplete;
 
 
-        protected static float[] mipmapTemplate = new float[MIPMAP_SIZE].Fill(NON_SET_NOISE_VALUE);
+        protected static PointData[] mipmapTemplate = new PointData[MIPMAP_SIZE].Fill(NON_SET_NOISE_VALUE);
 
         protected StoredChunkEdits Mipmap
         {
@@ -48,7 +48,7 @@ namespace MarchingCubes
             }
         }
 
-        public float[] NoiseMap => Mipmap.vals;
+        public PointData[] NoiseMap => Mipmap.vals;
 
         protected int LOD => (int)Mathf.Pow(2, sizePower - 5);
 
@@ -88,7 +88,7 @@ namespace MarchingCubes
             if(mipmap == null)
             {
                 mipmap = new StoredChunkEdits();
-                mipmap.vals = new float[MIPMAP_SIZE];
+                mipmap.vals = new PointData[MIPMAP_SIZE];
                 System.Array.Copy(mipmapTemplate, mipmap.vals, MIPMAP_SIZE);
             }
             for (int i = 0; i < 8; i++)
@@ -119,7 +119,7 @@ namespace MarchingCubes
             //}
         }
 
-        public bool TryGetMipMapOfChunkSizePower(int[] relativePosition, int sizePow, out float[] storedNoise, out bool isMipMapComplete)
+        public bool TryGetMipMapOfChunkSizePower(int[] relativePosition, int sizePow, out PointData[] storedNoise, out bool isMipMapComplete)
         {
             if(sizePower == sizePow)
             {
@@ -146,7 +146,7 @@ namespace MarchingCubes
             return storedNoise != null;
         }
 
-        protected void CombinePointsInto(int[] startIndex, float[] originalPoints, float[] writeInHere, int pointsPerAxis, int pointsPerAxisSqr, int shrinkFactor, int toLod)
+        protected void CombinePointsInto(int[] startIndex, PointData[] originalPoints, PointData[] writeInHere, int pointsPerAxis, int pointsPerAxisSqr, int shrinkFactor, int toLod)
         {
             int halfSize = pointsPerAxis / 2;
             int halfSizeCeil = halfSize;
@@ -164,7 +164,7 @@ namespace MarchingCubes
                     readIndex = zPoint + yPoint;
                     for (int x = 0; x < pointsPerAxis; x += shrinkFactor)
                     {
-                        float val = originalPoints[readIndex + x];
+                        PointData val = originalPoints[readIndex + x];
                         writeInHere[writeIndex] = val;
                         writeIndex++;
                     }

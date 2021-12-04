@@ -246,9 +246,9 @@ namespace MarchingCubes
                             float dis = Mathf.Sqrt(sqrDistance);
                             float factor = 1 - (dis / factorMaxDistance);
                             float diff = factor * delta;
-                            float value;
                             int index = PointIndexFromCoord(x, y, z);
-                            value = Points[index];
+                            PointData point = Points[index];
+                            float value = point.surfaceValue;
 
                             if (factor > 0 && ((value != -MAX_NOISE_VALUE || diff >= 0)
                                 && (value != MAX_NOISE_VALUE || diff < 0)))
@@ -256,7 +256,8 @@ namespace MarchingCubes
                                 editedNoiseCount++;
                                 value += diff;
                                 value = Mathf.Clamp(value, -MAX_NOISE_VALUE, MAX_NOISE_VALUE);
-                                points[index] = value;
+                                point.surfaceValue = value;
+                                points[index] = point;
                             }
                         }
                         distanceZ++;

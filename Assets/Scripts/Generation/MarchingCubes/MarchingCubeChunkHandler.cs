@@ -53,7 +53,7 @@ namespace MarchingCubes
         [Save]
         public Dictionary<Serializable3DIntVector, StorageTreeRoot> storageGroups = new Dictionary<Serializable3DIntVector, StorageTreeRoot>();
 
-        protected float[] storedNoiseData;
+        protected PointData[] storedNoiseData;
 
         [Range(1, 253)]
         public int blockAroundPlayer = 16;
@@ -98,7 +98,7 @@ namespace MarchingCubes
         public int totalTriBuild;
 
         TriangleBuilder[] tris;// = new TriangleBuilder[CHUNK_VOLUME * 5];
-        float[] pointsArray;
+        PointData[] pointsArray;
 
         private ComputeBuffer triangleBuffer;
         private ComputeBuffer pointsBuffer;
@@ -480,7 +480,7 @@ namespace MarchingCubes
             return chunkGroup;
         }
 
-        public bool TryGetMipMapAt(Vector3Int pos, int sizePower, out float[] storedNoise, out bool isMipMapComplete)
+        public bool TryGetMipMapAt(Vector3Int pos, int sizePower, out PointData[] storedNoise, out bool isMipMapComplete)
         {
             StorageTreeRoot chunkGroup;
             if (storageGroups.TryGetValue(PositionToStorageGroupCoord(pos), out chunkGroup))
@@ -710,16 +710,16 @@ namespace MarchingCubes
         }
 
 
-        public float[] RequestNoiseForChunk(IMarchingCubeChunk chunk)
+        public PointData[] RequestNoiseForChunk(IMarchingCubeChunk chunk)
         {
             return RequestNoiseFor(chunk.ChunkSizePower, chunk.PointsPerAxis, chunk.LOD, chunk.AnchorPos);
         }
 
-        public float[] RequestNoiseFor(int sizePow, int pointsPerAxis, int LOD, Vector3Int anchor)
+        public PointData[] RequestNoiseFor(int sizePow, int pointsPerAxis, int LOD, Vector3Int anchor)
         {
-            float[] result;
+            PointData[] result;
             GenerateNoise(sizePow, pointsPerAxis, LOD, anchor);
-            result = new float[pointsPerAxis * pointsPerAxis * pointsPerAxis];
+            result = new PointData[pointsPerAxis * pointsPerAxis * pointsPerAxis];
             pointsBuffer.GetData(result, 0, 0, result.Length);
             return result;
         }
@@ -844,11 +844,11 @@ namespace MarchingCubes
             {
                 if (careForNeighbours)
                 {
-                    pointsArray = new float[pointsVolume];
+                    pointsArray = new PointData[pointsVolume];
                 }
                 else
                 {
-                    pointsArray = new float[1];
+                    pointsArray = new PointData[1];
                 }
                 pointsBuffer.GetData(pointsArray, 0, 0, pointsArray.Length);
                 chunk.Points = pointsArray;
@@ -1200,8 +1200,8 @@ namespace MarchingCubes
             int maxTriangleCount = numVoxels * 2;
             maxTriangleCount *= MAX_CHUNKS_PER_ITERATION;
 
-            pointsBuffer = new ComputeBuffer(numPoints, sizeof(float) * 1);
-            savedPointBuffer = new ComputeBuffer(numPoints, sizeof(float) * 1);
+            pointsBuffer = new ComputeBuffer(numPoints, PointData.Size);
+            savedPointBuffer = new ComputeBuffer(numPoints, PointData.Size);
             triangleBuffer = new ComputeBuffer(maxTriangleCount, TriangleBuilder.SIZE_OF_TRI_BUILD, ComputeBufferType.Append);
             triCountBuffer = new ComputeBuffer(MAX_CHUNKS_PER_ITERATION, sizeof(int), ComputeBufferType.Raw);
         }
@@ -1243,7 +1243,7 @@ namespace MarchingCubes
             }
         }
 
-        public void Store(Vector3Int anchorPos, float[] noise)
+        public void Store(Vector3Int anchorPos, PointData[] noise)
         {
             StoredChunkEdits edits;
             if (!TryGetStoredEditsAt(anchorPos, out edits))

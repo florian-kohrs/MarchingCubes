@@ -1,5 +1,7 @@
 ﻿#pragma kernel March
 #include "/Includes/MarchTables.compute"
+#include "/Includes/PointData.compute"
+
 #define PI 3.14159265358979323846
 
 static const int numThreads = 8;
@@ -13,9 +15,14 @@ struct Triangle
 	uint colorAndSteepness;
 };
 
+struct PosAndPointData
+{
+	float4 heightData;
+	int pointType;
+};
 
 AppendStructuredBuffer<Triangle> triangles;
-RWStructuredBuffer<float> points;
+RWStructuredBuffer<PointData> points;
 
 int3 flatColor;
 int3 steepColor;
@@ -50,11 +57,15 @@ int zipData(int x, int y, int z, int w) {
 //    return acos(dot(a, b)) * 180 / PI
 //}
 
-float4 GetHeightDataFrom(int x, int y, int z) 
+PosAndPointData GetHeightDataFrom(int x, int y, int z)
 {
 	float3 f3 = float3(x, y, z);
 	float3 pos = anchor + f3 * spacing;
-	return float4(pos.x,pos.y,pos.z, points[indexFromCoord(x, y, z)]);
+	PosAndPointData result;
+	PointData data = points[indexFromCoord(x, y, z)];
+	result.heightData = float4(pos.x, pos.y, pos.z, data.surfaceValue);
+	result.pointType = data.pointType;
+	return result;
 }
 
 //check for speed when having 5 times as many threads on z axis one for each triangle
@@ -71,7 +82,7 @@ void March(int3 id : SV_DispatchThreadID)
 	float rad = 180 / PI;
 
 	// 8 corners of the current cube
-	float4 cubeCorners[8] =
+	PosAndPointData cubeCorners[8] =
 	{
 		GetHeightDataFrom(id.x, id.y, id.z),
 		GetHeightDataFrom(id.x + 1, id.y, id.z),
@@ -89,14 +100,14 @@ void March(int3 id : SV_DispatchThreadID)
 	// The value is used to look up the edge table, which indicates which edges of the cube are cut by the isosurface.
 	int cubeIndex = 0;
 	
-	if (cubeCorners[0].w < surfaceLevel) cubeIndex |= 1;
-	if (cubeCorners[1].w < surfaceLevel) cubeIndex |= 2;
-	if (cubeCorners[2].w < surfaceLevel) cubeIndex |= 4;
-	if (cubeCorners[3].w < surfaceLevel) cubeIndex |= 8;
-	if (cubeCorners[4].w < surfaceLevel) cubeIndex |= 16;
-	if (cubeCorners[5].w < surfaceLevel) cubeIndex |= 32;
-	if (cubeCorners[6].w < surfaceLevel) cubeIndex |= 64;
-	if (cubeCorners[7].w < surfaceLevel) cubeIndex |= 128;
+	if (cubeCorners[0].heightData.w < surfaceLevel) cubeIndex |= 1;
+	if (cubeCorners[1].heightData.w < surfaceLevel) cubeIndex |= 2;
+	if (cubeCorners[2].heightData.w < surfaceLevel) cubeIndex |= 4;
+	if (cubeCorners[3].heightData.w < surfaceLevel) cubeIndex |= 8;
+	if (cubeCorners[4].heightData.w < surfaceLevel) cubeIndex |= 16;
+	if (cubeCorners[5].heightData.w < surfaceLevel) cubeIndex |= 32;
+	if (cubeCorners[6].heightData.w < surfaceLevel) cubeIndex |= 64;
+	if (cubeCorners[7].heightData.w < surfaceLevel) cubeIndex |= 128;
 
 	int zipedCubeData = zipData(id.x, id.y, id.z, cubeIndex);
 
@@ -116,9 +127,9 @@ void March(int3 id : SV_DispatchThreadID)
 
 		Triangle tri;
 		tri.cubeData = zipedCubeData;
-		tri.vertexA = interpolateVerts(cubeCorners[a0], cubeCorners[b0]);
-		tri.vertexB = interpolateVerts(cubeCorners[a1], cubeCorners[b1]);
-		tri.vertexC = interpolateVerts(cubeCorners[a2], cubeCorners[b2]);
+		tri.vertexA = interpolateVerts(cubeCorners[a0].heightData, cubeCorners[b0].heightData);
+		tri.vertexB = interpolateVerts(cubeCorners[a1].heightData, cubeCorners[b1].heightData);
+		tri.vertexC = interpolateVerts(cubeCorners[a2].heightData, cubeCorners[b2].heightData);
 
 		float3 normal = normalize(cross(tri.vertexB - tri.vertexA, tri.vertexC - tri.vertexA));
 		float3 middlePoint = (tri.vertexA + tri.vertexB + tri.vertexC) / 3;

@@ -1,5 +1,8 @@
 ﻿#pragma kernel Density
+
 #include "/Includes/Noise.compute"
+#include "/Includes/PointData.compute"
+
 #define MIP_MAP_SIZE 33
 #define MIP_MAP_SIZE_SQR 33 * 33
 
@@ -15,14 +18,15 @@ struct Biom
     float heightOffset;
 };
 
+
 //Noise settings
 StructuredBuffer<float3> octaveOffsets;
 int octaves;
 float radius;
 
 //Envirenment settings
-RWStructuredBuffer<float> points;
-RWStructuredBuffer<float> savedPoints;
+RWStructuredBuffer<PointData> points;
+RWStructuredBuffer<PointData> savedPoints;
 bool tryLoadData;
 int numPointsPerAxis;
 float3 anchor;
@@ -218,8 +222,8 @@ void Density (int3 id : SV_DispatchThreadID)
     {
         int savedPointsSpacing = (uint)(MIP_MAP_SIZE - 1) / (numPointsPerAxis - 1);
         int savedPointIndex = indexFromMipMap(savedPointsSpacing * id.x, savedPointsSpacing * id.y, savedPointsSpacing * id.z);
-        float storedNoise = savedPoints[savedPointIndex];
-        if (storedNoise > -9999)
+        PointData storedNoise = savedPoints[savedPointIndex];
+        if (storedNoise.surfaceValue > -9999)
         {
             points[index] = storedNoise;
             return;
@@ -272,7 +276,10 @@ void Density (int3 id : SV_DispatchThreadID)
     else if (noise > 100)
         noise = 100;
 
+    PointData p;
+    p.surfaceValue = noise;
+    p.pointType = 0;
 
-    points[index] = noise;
+    points[index] = p;
     
 }

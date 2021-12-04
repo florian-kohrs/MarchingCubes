@@ -9,9 +9,9 @@ namespace MarchingCubes
 
         bool TryGetNodeWithSizePower(int[] relativePosition, int sizePow, out IStorageGroupOrganizer<StoredChunkEdits> child);
 
-        bool TryGetMipMapOfChunkSizePower(int[] relativePosition, int sizePow, out float[] storedNoise, out bool isMipMapComplete);
+        bool TryGetMipMapOfChunkSizePower(int[] relativePosition, int sizePow, out PointData[] storedNoise, out bool isMipMapComplete);
 
-        float[] NoiseMap { get; }
+        PointData[] NoiseMap { get; }
 
         bool HasNoiseMapReady { get; }
 

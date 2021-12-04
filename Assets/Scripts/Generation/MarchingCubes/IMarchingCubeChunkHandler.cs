@@ -31,13 +31,13 @@ namespace MarchingCubes
 
         void DecreaseChunkLod(IMarchingCubeChunk chunk, int toLodPower);
 
-        float[] RequestNoiseForChunk(IMarchingCubeChunk chunk);
+        PointData[] RequestNoiseForChunk(IMarchingCubeChunk chunk);
 
         TriangleBuilder[] GenerateCubesFromNoise(IMarchingCubeChunk chunk, int triCount, float[] noise);
 
         int[] GetColor(PathTriangle t, int steepness);
 
-        void Store(Vector3Int anchorPos, float[] noise);
+        void Store(Vector3Int anchorPos, PointData[] noise);
 
         void TakeMeshDisplayerBack(MarchingCubeMeshDisplayer freeDisplayer);
 
