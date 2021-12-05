@@ -6,7 +6,7 @@
 #define MIP_MAP_SIZE 33
 #define MIP_MAP_SIZE_SQR 33 * 33
 
-static const int numThreads = 8;
+static const int numThreads = 4;
 
 struct Biom
 {
