@@ -7,7 +7,7 @@ namespace MarchingCubes
     public class BaseDensityGenerator : MonoBehaviour
     {
 
-        protected const int threadGroupSize = 8;
+        protected const int threadGroupSize = 4;
 
         public ComputeShader densityShader;
 
