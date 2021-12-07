@@ -102,6 +102,7 @@ namespace MarchingCubes
 
         private ComputeBuffer triangleBuffer;
         private ComputeBuffer pointsBuffer;
+        private ComputeBuffer pointColorBuffer;
         private ComputeBuffer savedPointBuffer;
         private ComputeBuffer triCountBuffer;
 
@@ -163,6 +164,11 @@ namespace MarchingCubes
         //Test
         public MeshGPUInstanciation.SpawnGrassForMarchingCube grass;
 
+        protected void ReadCOlor()
+        {
+            var f = AutomatedScriptTransfer.getFieldsFromType(typeof(Color), typeof(object));
+        }
+
         private void Start()
         {
             simpleChunkColliderPool = new SimpleChunkColliderPool(colliderParent);
@@ -180,7 +186,7 @@ namespace MarchingCubes
             steepG = (int)(steepColor.g * 255);
             steepB = (int)(steepColor.b * 255);
 
-            densityGenerator.SetBuffer(pointsBuffer, savedPointBuffer);
+            densityGenerator.SetBuffer(pointsBuffer, savedPointBuffer, pointColorBuffer);
             ApplyShaderProperties(marshShader);
             ApplyShaderProperties(rebuildShader);
 
@@ -359,7 +365,8 @@ namespace MarchingCubes
             bool isEmpty = true;
             Vector3Int chunkIndex;
             IMarchingCubeChunk chunk = null;
-            while (isEmpty)
+            int tryCount = 0;
+            while (isEmpty && tryCount++ < 100)
             {
                 chunkIndex = PositionToChunkGroupCoord(pos);
                 chunk = CreateChunkAt(pos, chunkIndex);
@@ -1194,14 +1201,16 @@ namespace MarchingCubes
 
         protected void CreateAllBuffersWithSizes(int numVoxelsPerAxis)
         {
+            
             int points = numVoxelsPerAxis + 1;
             int numPoints = points * points * points;
             int numVoxels = numVoxelsPerAxis * numVoxelsPerAxis * numVoxelsPerAxis;
             int maxTriangleCount = numVoxels * 2;
             maxTriangleCount *= MAX_CHUNKS_PER_ITERATION;
 
-            pointsBuffer = new ComputeBuffer(numPoints, PointData.Size);
-            savedPointBuffer = new ComputeBuffer(numPoints, PointData.Size);
+            pointColorBuffer = new ComputeBuffer(numPoints, PointColor.SIZE);
+            pointsBuffer = new ComputeBuffer(numPoints, PointData.SIZE);
+            savedPointBuffer = new ComputeBuffer(numPoints, PointData.SIZE);
             triangleBuffer = new ComputeBuffer(maxTriangleCount, TriangleBuilder.SIZE_OF_TRI_BUILD, ComputeBufferType.Append);
             triCountBuffer = new ComputeBuffer(MAX_CHUNKS_PER_ITERATION, sizeof(int), ComputeBufferType.Raw);
         }
@@ -1211,6 +1220,7 @@ namespace MarchingCubes
         protected void ApplyShaderProperties(ComputeShader s)
         {
             s.SetBuffer(0, "points", pointsBuffer);
+            s.SetBuffer(0, "pointColors", pointColorBuffer);
             s.SetBuffer(0, "savedPoints", savedPointBuffer);
             s.SetBuffer(0, "triangles", triangleBuffer);
 
@@ -1225,6 +1235,7 @@ namespace MarchingCubes
         {
             if (triangleBuffer != null)
             {
+                pointColorBuffer.Dispose();
                 triangleBuffer.SetCounterValue(0);
                 triangleBuffer.Dispose();
                 pointsBuffer.Dispose();

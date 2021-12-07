@@ -16,6 +16,7 @@ struct Biom
     float noiseScale;
     float scale;
     float heightOffset;
+    uint colorIndex;
 };
 
 
@@ -27,6 +28,8 @@ float radius;
 //Envirenment settings
 RWStructuredBuffer<PointData> points;
 RWStructuredBuffer<PointData> savedPoints;
+RWStructuredBuffer<PointColorData> pointColorIndex;
+
 bool tryLoadData;
 int numPointsPerAxis;
 float3 anchor;
@@ -54,6 +57,12 @@ Biom interpolate(Biom b1, Biom b2, float t)
     b.amplitude = reversedT * b1.amplitude + t * b2.amplitude;
     b.scale = reversedT * b1.scale + t * b2.scale;
     b.heightOffset = reversedT * b1.heightOffset + t * b2.heightOffset;
+
+    if (reversedT >= 0.5)
+        b.colorIndex = b1.colorIndex;
+    else 
+        b.colorIndex = b2.colorIndex;
+
     return b;
 }
 
@@ -218,6 +227,16 @@ void Density (int3 id : SV_DispatchThreadID)
 
     int index = indexFromCoord(id.x, id.y, id.z);
 
+    float3 pos = anchor + id * spacing;
+
+    //Interpolate biom for position
+    //TODO: When loading point only read color at closest biom dont interpolate all values
+    Biom b = GetInterpolatedBiomAt((int3)pos);
+
+    PointColorData pointColor;
+    pointColor.colorIndex = b.colorIndex;
+    pointColorIndex[index] = pointColor;
+
     if (tryLoadData) 
     {
         int savedPointsSpacing = (uint)(MIP_MAP_SIZE - 1) / (numPointsPerAxis - 1);
@@ -230,10 +249,8 @@ void Density (int3 id : SV_DispatchThreadID)
         }
     }
 
-    float3 pos = anchor + id * spacing;
+    PointData p;
 
-    Biom b = GetInterpolatedBiomAt((int3)pos);
-   
     float noise = b.heightOffset + radius - length(pos);
 
     float frequency = b.noiseScale / 100;
@@ -276,7 +293,7 @@ void Density (int3 id : SV_DispatchThreadID)
     else if (noise > 100)
         noise = 100;
 
-    PointData p;
+    
     p.surfaceValue = noise;
     p.pointType = 0;
 

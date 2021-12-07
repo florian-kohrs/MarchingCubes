@@ -10,6 +10,6 @@ public struct PointData
     public int pointType;
 
 
-    public const int Size = sizeof(int) + sizeof(float);
+    public const int SIZE = sizeof(int) + sizeof(float);
 
 }

@@ -675,12 +675,26 @@ MonoBehaviour:
     frequency: 2.05
     scale: 18.5
     heightOffset: 0
+    pointColor:
+      rFlat: 0
+      gFlat: 0
+      bFlat: 0
+      rSteep: 0
+      gSteep: 0
+      bSteep: 0
   - amplitude: 100
     lacunarity: 2
     persistence: 0.518
     frequency: 2.05
     scale: 18.5
     heightOffset: 0
+    pointColor:
+      rFlat: 0
+      gFlat: 0
+      bFlat: 0
+      rSteep: 0
+      gSteep: 0
+      bSteep: 0
   biomSize: 64
   biomSpacing: 14
   radius: 1000
@@ -1249,12 +1263,26 @@ MonoBehaviour:
     frequency: 2.05
     scale: 18.5
     heightOffset: 0
+    pointColor:
+      rFlat: 0
+      gFlat: 0
+      bFlat: 0
+      rSteep: 1
+      gSteep: 1
+      bSteep: 1
   - amplitude: 300
     lacunarity: 2
     persistence: 0.518
     frequency: 2.05
     scale: 18.5
     heightOffset: 0
+    pointColor:
+      rFlat: 0
+      gFlat: 0
+      bFlat: 0
+      rSteep: 1
+      gSteep: 1
+      bSteep: 1
   biomSize: 1000
   biomSpacing: 14
   radius: 65000

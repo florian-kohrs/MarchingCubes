@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using MarchingCubes;
 using UnityEditor;
 using UnityEngine;
 
@@ -14,5 +15,11 @@ public class AssetMenue : MonoBehaviour
         AssetCreator.CreateAsset<BaseBuildingBlock>(BASE_FOLDER_NAME + "Building");
     }
 
-    
+
+    [MenuItem("Assets/Create/Custom/MarchingCubes/Biom")]
+    public static void NewBiom()
+    {
+        AssetCreator.CreateAsset<BiomScriptableObject>(BASE_FOLDER_NAME + "Biom");
+    }
+
 }

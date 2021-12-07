@@ -17,7 +17,19 @@ namespace MarchingCubes
 		public float scale;
 		public float heightOffset;
 
-		public const int SIZE = sizeof(float) * 6;
+		public int colorIndex;
+
+		//public byte rFlat;
+		//public byte gFlat;
+		//public byte bFlat;
+		//public byte aFlat;
+
+		//public byte rSteep;
+		//public byte gSteep;
+		//public byte bSteep;
+		//public byte aSteep;
+
+		public const int SIZE = sizeof(float) * 6 + sizeof(int) * 1;
 
 	}
 }

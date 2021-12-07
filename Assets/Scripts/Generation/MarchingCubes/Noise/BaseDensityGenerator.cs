@@ -37,10 +37,11 @@ namespace MarchingCubes
 
         }
 
-        public void SetBuffer(ComputeBuffer pointsBuffer, ComputeBuffer savedPointBuffer)
+        public void SetBuffer(ComputeBuffer pointsBuffer, ComputeBuffer savedPointBuffer, ComputeBuffer pointColorBuffer)
         {
             densityShader.SetBuffer(0, "points", pointsBuffer);
             densityShader.SetBuffer(0, "savedPoints", savedPointBuffer);
+            densityShader.SetBuffer(0, "pointColorIndex", pointColorBuffer);
         }
 
         private void Awake()

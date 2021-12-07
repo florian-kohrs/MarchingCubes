@@ -78,7 +78,7 @@ public static class AutomatedScriptTransfer
         }
     }
 
-    private static FieldInfo[] getFieldsFromType(Type target, Type last, bool lastInclusive = true)
+    public static FieldInfo[] getFieldsFromType(Type target, Type last, bool lastInclusive = true)
     {
         List<FieldInfo> fields = new List<FieldInfo>();
 
