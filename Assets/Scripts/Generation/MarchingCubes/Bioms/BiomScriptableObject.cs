@@ -7,7 +7,11 @@ namespace MarchingCubes
     public class BiomScriptableObject : ScriptableObject
     {
 
-        public Biom biom;
+        public string biomName;
+
+        public BiomNoiseData biom;
+
+        public BiomVisualizationData visualizationData;
 
     }
 }

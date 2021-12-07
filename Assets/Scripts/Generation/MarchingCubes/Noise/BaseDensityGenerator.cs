@@ -13,7 +13,7 @@ namespace MarchingCubes
 
         protected List<ComputeBuffer> buffersToRelease = new List<ComputeBuffer>();
 
-        public Biom[] bioms;
+        protected BiomNoiseData[] bioms;
 
         public int biomSize = 500;
 
@@ -27,6 +27,12 @@ namespace MarchingCubes
 
         public int seed;
 
+        public void SetBioms(BiomNoiseData[] bioms)
+        {
+            this.bioms = bioms;
+            SetBiomData();
+        }
+
         public virtual void Generate(int numPointsPerAxis, Vector3 anchor, float spacing, bool tryLoad = false)
         {
             ApplyShaderProperties(numPointsPerAxis, anchor, spacing, tryLoad);
@@ -37,17 +43,16 @@ namespace MarchingCubes
 
         }
 
-        public void SetBuffer(ComputeBuffer pointsBuffer, ComputeBuffer savedPointBuffer, ComputeBuffer pointColorBuffer)
+        public void SetBuffer(ComputeBuffer pointsBuffer, ComputeBuffer savedPointBuffer, ComputeBuffer pointClosestBiomBuffer)
         {
             densityShader.SetBuffer(0, "points", pointsBuffer);
             densityShader.SetBuffer(0, "savedPoints", savedPointBuffer);
-            densityShader.SetBuffer(0, "pointColorIndex", pointColorBuffer);
+            densityShader.SetBuffer(0, "pointBiomIndex", pointClosestBiomBuffer);
         }
 
         private void Awake()
         {
             GetOctaveOffsetsBuffer();
-            SetBiomData();
             densityShader.SetInt("octaves", Mathf.Max(1, octaves));
             densityShader.SetFloat("radius", radius);
             densityShader.SetBuffer(0, "octaveOffsets", octaveOffsetsBuffer);
@@ -78,7 +83,7 @@ namespace MarchingCubes
             if (biomsBuffer != null)
                 return;
 
-            biomsBuffer = new ComputeBuffer(bioms.Length, Biom.SIZE);
+            biomsBuffer = new ComputeBuffer(bioms.Length, BiomNoiseData.SIZE);
             biomsBuffer.SetData(bioms);
             densityShader.SetBuffer(0, "bioms", biomsBuffer);
             densityShader.SetInt("biomSize", biomSize);

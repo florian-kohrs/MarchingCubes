@@ -69,6 +69,8 @@ namespace MarchingCubes
         //public float boundsSize = 8;
         public Vector3 noiseOffset = Vector3.zero;
 
+        public BiomScriptableObject[] bioms;
+
         //[Range(2, 100)]
         //public int numPointsPerAxis = 30;
 
@@ -102,7 +104,8 @@ namespace MarchingCubes
 
         private ComputeBuffer triangleBuffer;
         private ComputeBuffer pointsBuffer;
-        private ComputeBuffer pointColorBuffer;
+        private ComputeBuffer pointBiomIndex;
+        private ComputeBuffer biomBuffer;
         private ComputeBuffer savedPointBuffer;
         private ComputeBuffer triCountBuffer;
 
@@ -138,8 +141,6 @@ namespace MarchingCubes
 
         public int minSteepness = 15;
         public int maxSteepness = 50;
-        public Color flatColor = new Color(0, 255 / 255f, 0, 1);
-        public Color steepColor = new Color(75 / 255f, 44 / 255f, 13 / 255f, 1);
 
         private int steepR;
         private int steepG;
@@ -164,13 +165,9 @@ namespace MarchingCubes
         //Test
         public MeshGPUInstanciation.SpawnGrassForMarchingCube grass;
 
-        protected void ReadCOlor()
-        {
-            var f = AutomatedScriptTransfer.getFieldsFromType(typeof(Color), typeof(object));
-        }
-
         private void Start()
         {
+            //Debug.Log(System.Runtime.InteropServices.Marshal.SizeOf(typeof(Color32)));
             simpleChunkColliderPool = new SimpleChunkColliderPool(colliderParent);
             displayerPool = new MeshDisplayerPool(transform);
             interactableDisplayerPool = new InteractableMeshDisplayPool(transform);
@@ -178,17 +175,9 @@ namespace MarchingCubes
 
             TriangulationTableStaticData.BuildLookUpTables();
 
-            flatR = (int)(flatColor.r * 255);
-            flatG = (int)(flatColor.g * 255);
-            flatB = (int)(flatColor.b * 255);
+            InitializeDensityGenerator();
 
-            steepR = (int)(steepColor.r * 255);
-            steepG = (int)(steepColor.g * 255);
-            steepB = (int)(steepColor.b * 255);
-
-            densityGenerator.SetBuffer(pointsBuffer, savedPointBuffer, pointColorBuffer);
             ApplyShaderProperties(marshShader);
-            ApplyShaderProperties(rebuildShader);
 
             watch.Start();
             buildAroundSqrDistance = (long)buildAroundDistance * buildAroundDistance;
@@ -197,6 +186,12 @@ namespace MarchingCubes
             IMarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
             maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
             BuildRelevantChunksParallelBlockingAround(chunk);
+        }
+
+        protected void InitializeDensityGenerator()
+        {
+            densityGenerator.SetBioms(bioms.Select(b => b.biom).ToArray());
+            densityGenerator.SetBuffer(pointsBuffer, savedPointBuffer, pointBiomIndex);
         }
 
         public void BuildRelevantChunksParallelBlockingAround(IMarchingCubeChunk chunk)
@@ -1201,14 +1196,16 @@ namespace MarchingCubes
 
         protected void CreateAllBuffersWithSizes(int numVoxelsPerAxis)
         {
-            
             int points = numVoxelsPerAxis + 1;
             int numPoints = points * points * points;
             int numVoxels = numVoxelsPerAxis * numVoxelsPerAxis * numVoxelsPerAxis;
             int maxTriangleCount = numVoxels * 2;
             maxTriangleCount *= MAX_CHUNKS_PER_ITERATION;
 
-            pointColorBuffer = new ComputeBuffer(numPoints, PointColor.SIZE);
+            biomBuffer = new ComputeBuffer(bioms.Length, BiomVisualizationData.SIZE);
+            biomBuffer.SetData(bioms.Select(b => b.visualizationData.ScaleTo255()).ToArray());
+
+            pointBiomIndex = new ComputeBuffer(numPoints, sizeof(uint));
             pointsBuffer = new ComputeBuffer(numPoints, PointData.SIZE);
             savedPointBuffer = new ComputeBuffer(numPoints, PointData.SIZE);
             triangleBuffer = new ComputeBuffer(maxTriangleCount, TriangleBuilder.SIZE_OF_TRI_BUILD, ComputeBufferType.Append);
@@ -1220,14 +1217,13 @@ namespace MarchingCubes
         protected void ApplyShaderProperties(ComputeShader s)
         {
             s.SetBuffer(0, "points", pointsBuffer);
-            s.SetBuffer(0, "pointColors", pointColorBuffer);
+            s.SetBuffer(0, "pointBiomIndex", pointBiomIndex);
             s.SetBuffer(0, "savedPoints", savedPointBuffer);
             s.SetBuffer(0, "triangles", triangleBuffer);
+            s.SetBuffer(0, "bioms", biomBuffer);
 
             s.SetInt("minSteepness", minSteepness);
             s.SetInt("maxSteepness", maxSteepness);
-            s.SetInts("flatColor", Mathf.RoundToInt(flatColor.r * 255), Mathf.RoundToInt(flatColor.g * 255), Mathf.RoundToInt(flatColor.b * 255));
-            s.SetInts("steepColor", Mathf.RoundToInt(steepColor.r * 255), Mathf.RoundToInt(steepColor.g * 255), Mathf.RoundToInt(steepColor.b * 255));
             s.SetFloat("surfaceLevel", surfaceLevel);
         }
 
@@ -1235,7 +1231,8 @@ namespace MarchingCubes
         {
             if (triangleBuffer != null)
             {
-                pointColorBuffer.Dispose();
+                biomBuffer.Dispose();
+                pointBiomIndex.Dispose();
                 triangleBuffer.SetCounterValue(0);
                 triangleBuffer.Dispose();
                 pointsBuffer.Dispose();

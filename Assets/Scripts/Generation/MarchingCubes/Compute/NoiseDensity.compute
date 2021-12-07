@@ -16,7 +16,7 @@ struct Biom
     float noiseScale;
     float scale;
     float heightOffset;
-    uint colorIndex;
+    uint biomIndex;
 };
 
 
@@ -28,7 +28,7 @@ float radius;
 //Envirenment settings
 RWStructuredBuffer<PointData> points;
 RWStructuredBuffer<PointData> savedPoints;
-RWStructuredBuffer<PointColorData> pointColorIndex;
+RWStructuredBuffer<uint> pointBiomIndex;
 
 bool tryLoadData;
 int numPointsPerAxis;
@@ -57,11 +57,6 @@ Biom interpolate(Biom b1, Biom b2, float t)
     b.amplitude = reversedT * b1.amplitude + t * b2.amplitude;
     b.scale = reversedT * b1.scale + t * b2.scale;
     b.heightOffset = reversedT * b1.heightOffset + t * b2.heightOffset;
-
-    if (reversedT >= 0.5)
-        b.colorIndex = b1.colorIndex;
-    else 
-        b.colorIndex = b2.colorIndex;
 
     return b;
 }
@@ -162,7 +157,7 @@ Biom GetCubicInterpolatedBiomAt(int3 pos)
 
 int3 getBiomAnchor(int3 rest, int3 pos)
 {
-    //TODO: Probably not needed line
+    //TODO: Probably not needed line (only posiitve values anyway)
     int3 positiveRest = (rest + int3(biomSize, biomSize, biomSize)) % biomSize;
     return int3(pos.x - positiveRest.x, pos.y - positiveRest.y, pos.z - positiveRest.z);
 }
@@ -207,6 +202,31 @@ Biom GetInterpolatedBiomAt(int3 pos)
     return result;
 } 
 
+uint GetClosestBiomIndex(int3 pos)
+{
+    pos += int3(100000, 100000, 100000);
+    int3 rest = pos % biomSize;
+    int3 missing = int3(biomSize, biomSize, biomSize) - rest;
+    float3 interpolation = getInterpolation(rest);
+
+    if (interpolation.x > 0.5)
+    {
+        pos.x += missing.x;
+        rest.x = 0;
+    }
+    if (interpolation.y > 0.5)
+    {
+        pos.y += missing.y;
+        rest.y = 0;
+    }
+    if (interpolation.z > 0.5)
+    {
+        pos.z += missing.z;
+        rest.z = 0;
+    }
+
+    return getBiomAt(getBiomAnchor(rest,pos)).biomIndex;
+}
 
 int indexFromCoord(uint x, uint y, uint z) {
     return z * numPointsPerAxis * numPointsPerAxis + y * numPointsPerAxis + x;
@@ -223,19 +243,13 @@ void Density (int3 id : SV_DispatchThreadID)
         return;
     }
 
-    //32 is saved array size
-
     int index = indexFromCoord(id.x, id.y, id.z);
+
+    //TODO: Maybe do normalize and scale to radius for biom selection
 
     float3 pos = anchor + id * spacing;
 
-    //Interpolate biom for position
-    //TODO: When loading point only read color at closest biom dont interpolate all values
-    Biom b = GetInterpolatedBiomAt((int3)pos);
-
-    PointColorData pointColor;
-    pointColor.colorIndex = b.colorIndex;
-    pointColorIndex[index] = pointColor;
+    pointBiomIndex[index] = GetClosestBiomIndex(pos);
 
     if (tryLoadData) 
     {
@@ -250,6 +264,9 @@ void Density (int3 id : SV_DispatchThreadID)
     }
 
     PointData p;
+
+    //Interpolate biom for position
+    Biom b = GetInterpolatedBiomAt((int3)pos);
 
     float noise = b.heightOffset + radius - length(pos);
 

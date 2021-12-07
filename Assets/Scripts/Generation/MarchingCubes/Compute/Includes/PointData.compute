@@ -1,6 +1,4 @@
-﻿#include "/PointColorData.compute"
-
-struct PointData
+﻿struct PointData
 {
     float surfaceValue;
     int pointType;

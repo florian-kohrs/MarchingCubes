@@ -1,6 +1,7 @@
 ﻿#pragma kernel March
 #include "/Includes/MarchTables.compute"
 #include "/Includes/PointData.compute"
+#include "/Includes/BiomVisualizationData.compute"
 
 #define PI 3.14159265358979323846
 
@@ -18,6 +19,7 @@ struct Triangle
 struct PosAndPointData
 {
 	float3 pos;
+	int biomIndex;
 	PointData pointData;
 };
 
@@ -29,10 +31,9 @@ struct Vertex
 
 AppendStructuredBuffer<Triangle> triangles;
 RWStructuredBuffer<PointData> points;
-RWStructuredBuffer<PointColorData> pointColors;
+RWStructuredBuffer<uint> pointBiomIndex;
+RWStructuredBuffer<BiomVisualizationData> bioms;
 
-int3 flatColor;
-int3 steepColor;
 int minSteepness;
 int maxSteepness;
 
@@ -71,7 +72,9 @@ PosAndPointData GetHeightDataFrom(int x, int y, int z)
 
 	PosAndPointData result; 
 	result.pos = anchor + f3 * spacing;
-	result.pointData = points[indexFromCoord(x, y, z)];
+	int index = indexFromCoord(x, y, z);
+	result.pointData = points[index];
+	result.biomIndex = pointBiomIndex[index];
 	return result;
 }
 
@@ -143,10 +146,16 @@ void March(int3 id : SV_DispatchThreadID)
 		float angleFromCenter = 180 - (acos(dot(normal, normalize(middlePoint))) * rad);
 
 		float invLerp = (angleFromCenter - minSteepness) / (maxSteepness - minSteepness);
-		if(invLerp < 0)
+		if (invLerp < 0)
 			invLerp = 0;
-		else if(invLerp > 1)
+		else if (invLerp > 1)
 			invLerp = 1;
+
+		BiomVisualizationData biom = bioms[cubeCorners[0].biomIndex];
+		
+		int3 flatColor = biom.flatRGBA.xyz;
+		int3 steepColor = biom.steepRGBA.xyz;
+
 		int colorR = (invLerp * steepColor.x + (1 - invLerp) * flatColor.x);
 		int colorG = (invLerp * steepColor.y + (1 - invLerp) * flatColor.y);
 		int colorB = (invLerp * steepColor.z + (1 - invLerp) * flatColor.z);

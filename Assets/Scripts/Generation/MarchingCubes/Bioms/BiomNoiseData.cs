@@ -6,7 +6,7 @@ namespace MarchingCubes
 {
 
 	[System.Serializable]
-	public struct Biom
+	public struct BiomNoiseData
 	{
 		public float amplitude;
 		public float lacunarity;
@@ -17,19 +17,9 @@ namespace MarchingCubes
 		public float scale;
 		public float heightOffset;
 
-		public int colorIndex;
+		public uint biomIndex;
 
-		//public byte rFlat;
-		//public byte gFlat;
-		//public byte bFlat;
-		//public byte aFlat;
-
-		//public byte rSteep;
-		//public byte gSteep;
-		//public byte bSteep;
-		//public byte aSteep;
-
-		public const int SIZE = sizeof(float) * 6 + sizeof(int) * 1;
+		public const int SIZE = sizeof(float) * 6 + sizeof(uint) * 1;
 
 	}
 }

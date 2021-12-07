@@ -668,33 +668,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   densityShader: {fileID: 7200000, guid: 2dd2295c8799c9a4297e6c83b1fc4a4b, type: 3}
-  bioms:
-  - amplitude: 25
-    lacunarity: 2
-    persistence: 0.518
-    frequency: 2.05
-    scale: 18.5
-    heightOffset: 0
-    pointColor:
-      rFlat: 0
-      gFlat: 0
-      bFlat: 0
-      rSteep: 0
-      gSteep: 0
-      bSteep: 0
-  - amplitude: 100
-    lacunarity: 2
-    persistence: 0.518
-    frequency: 2.05
-    scale: 18.5
-    heightOffset: 0
-    pointColor:
-      rFlat: 0
-      gFlat: 0
-      bFlat: 0
-      rSteep: 0
-      gSteep: 0
-      bSteep: 0
   biomSize: 64
   biomSpacing: 14
   radius: 1000
@@ -922,6 +895,9 @@ MonoBehaviour:
   marshShader: {fileID: 7200000, guid: 85821faa1826fb64b8a447b36cf4fae9, type: 3}
   rebuildShader: {fileID: 7200000, guid: b1411f2c4106df340b56fc9e4c44c25e, type: 3}
   noiseOffset: {x: 0, y: 0, z: 0}
+  bioms:
+  - {fileID: 11400000, guid: e570a0f1c7e1b584484b270a87f291ed, type: 2}
+  - {fileID: 11400000, guid: 9c80e1a169bfef64c982baea7f819166, type: 2}
   lodPowerForDistances:
     serializedVersion: 2
     m_Curve:
@@ -1256,33 +1232,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   densityShader: {fileID: 7200000, guid: 2dd2295c8799c9a4297e6c83b1fc4a4b, type: 3}
-  bioms:
-  - amplitude: 25
-    lacunarity: 2
-    persistence: 0.518
-    frequency: 2.05
-    scale: 18.5
-    heightOffset: 0
-    pointColor:
-      rFlat: 0
-      gFlat: 0
-      bFlat: 0
-      rSteep: 1
-      gSteep: 1
-      bSteep: 1
-  - amplitude: 300
-    lacunarity: 2
-    persistence: 0.518
-    frequency: 2.05
-    scale: 18.5
-    heightOffset: 0
-    pointColor:
-      rFlat: 0
-      gFlat: 0
-      bFlat: 0
-      rSteep: 1
-      gSteep: 1
-      bSteep: 1
   biomSize: 1000
   biomSpacing: 14
   radius: 65000

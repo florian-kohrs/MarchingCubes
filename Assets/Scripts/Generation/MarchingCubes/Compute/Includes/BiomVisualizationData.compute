@@ -1,0 +1,7 @@
+﻿struct BiomVisualizationData
+{
+    uint4 steepRGBA; 
+
+    uint4 flatRGBA;
+
+};
