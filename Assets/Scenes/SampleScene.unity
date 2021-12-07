@@ -1027,11 +1027,9 @@ MonoBehaviour:
   chunkMaterial: {fileID: 2100000, guid: 97d2f9aa8d16b8241a90494b8d616c04, type: 2}
   surfaceLevel: 0.511
   player: {fileID: 1779183453}
-  buildAroundDistance: 4000
+  buildAroundDistance: 400
   minSteepness: 11
   maxSteepness: 45
-  flatColor: {r: 0.30397826, g: 0.6509434, b: 0.3437052, a: 1}
-  steepColor: {r: 0.20754719, g: 0.12678002, b: 0.04601282, a: 1}
   grass: {fileID: 2124858347}
 --- !u!54 &1125545289
 Rigidbody:
@@ -1232,7 +1230,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   densityShader: {fileID: 7200000, guid: 2dd2295c8799c9a4297e6c83b1fc4a4b, type: 3}
-  biomSize: 1000
+  biomSize: 20
   biomSpacing: 14
   radius: 65000
   octaves: 9

@@ -20,6 +20,7 @@ MonoBehaviour:
     frequency: 2.05
     scale: 18.5
     heightOffset: 0
-    colorIndex: 0
-  steepBiomColor: {r: 0.30588236, g: 0.6509804, b: 0.34509805, a: 1}
-  flatBiomColor: {r: 0.20784315, g: 0.1254902, b: 0.04705883, a: 1}
+    biomIndex: 0
+  visualizationData:
+    steepBiomColor: {r: 0.30980393, g: 0.19607845, b: 0.14117648, a: 1}
+    flatBiomColor: {r: 0.15440746, g: 0.5283019, b: 0.14702742, a: 1}

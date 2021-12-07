@@ -171,7 +171,6 @@ float3 getInterpolation(int3 rest)
 //TODO:Write biompoints in array or interpolation
 Biom GetInterpolatedBiomAt(int3 pos)
 {
-    pos += int3(100000, 100000, 100000);
     int3 rest = pos % biomSize;
 
     int3 biomPoint = getBiomAnchor(rest, pos);
@@ -204,7 +203,6 @@ Biom GetInterpolatedBiomAt(int3 pos)
 
 uint GetClosestBiomIndex(int3 pos)
 {
-    pos += int3(100000, 100000, 100000);
     int3 rest = pos % biomSize;
     int3 missing = int3(biomSize, biomSize, biomSize) - rest;
     float3 interpolation = getInterpolation(rest);
@@ -236,6 +234,16 @@ int indexFromMipMap(uint x, uint y, uint z) {
     return z * MIP_MAP_SIZE_SQR + y * MIP_MAP_SIZE + x;
 }
 
+float3 GetBiomEvalationPosition(float3 pos)
+{
+    //TODO:maybe have different bioms for different length (if length < 500 length= 500,...1000
+    pos = normalize(pos) * radius;
+    //offset position to be positive, since noise function doesnt seems to
+    //perform well with negative inputs
+    pos += int3(100000, 100000, 100000);
+    return pos;
+}
+
 [numthreads(numThreads,numThreads,numThreads)]
 void Density (int3 id : SV_DispatchThreadID)
 {
@@ -246,10 +254,11 @@ void Density (int3 id : SV_DispatchThreadID)
     int index = indexFromCoord(id.x, id.y, id.z);
 
     //TODO: Maybe do normalize and scale to radius for biom selection
-
+     
     float3 pos = anchor + id * spacing;
+    int3 biomEvaluationPos = GetBiomEvalationPosition(pos);
 
-    pointBiomIndex[index] = GetClosestBiomIndex(pos);
+    pointBiomIndex[index] = GetClosestBiomIndex(biomEvaluationPos);
 
     if (tryLoadData) 
     {
@@ -266,7 +275,7 @@ void Density (int3 id : SV_DispatchThreadID)
     PointData p;
 
     //Interpolate biom for position
-    Biom b = GetInterpolatedBiomAt((int3)pos);
+    Biom b = GetInterpolatedBiomAt(biomEvaluationPos);
 
     float noise = b.heightOffset + radius - length(pos);
 
