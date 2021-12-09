@@ -128,9 +128,9 @@ namespace MarchingCubes
             }
             else
             {
-                relativePosition[0] -= GroupRelativeAnchorPosition[0];
-                relativePosition[1] -= GroupRelativeAnchorPosition[1];
-                relativePosition[2] -= GroupRelativeAnchorPosition[2];
+                relativePosition[0] -= groupRelativeAnchorPosition[0];
+                relativePosition[1] -= groupRelativeAnchorPosition[1];
+                relativePosition[2] -= groupRelativeAnchorPosition[2];
                 int childIndex = GetIndexForLocalPosition(relativePosition);
 
                 if (children[childIndex] == null)
@@ -197,9 +197,9 @@ namespace MarchingCubes
             }
             else
             {
-                relativePosition[0] -= GroupRelativeAnchorPosition[0];
-                relativePosition[1] -= GroupRelativeAnchorPosition[1];
-                relativePosition[2] -= GroupRelativeAnchorPosition[2];
+                relativePosition[0] -= groupRelativeAnchorPosition[0];
+                relativePosition[1] -= groupRelativeAnchorPosition[1];
+                relativePosition[2] -= groupRelativeAnchorPosition[2];
                 int childIndex = GetIndexForLocalPosition(relativePosition);
 
                 if (children[childIndex] == null)
