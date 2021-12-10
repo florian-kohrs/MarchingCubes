@@ -1,7 +1,7 @@
-﻿struct BiomVisualizationData
+﻿struct BiomVisualizationData 
 {
-    uint4 steepRGBA; 
+    uint3 steepRGB; 
 
-    uint4 flatRGBA;
+    uint3 flatRGB; 
 
-};
+}; 

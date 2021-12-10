@@ -16,10 +16,12 @@ namespace MarchingCubes
         public readonly byte y;
         public readonly byte x;
 
-        public readonly byte steepness;
-        public readonly byte b;
-        public readonly byte g;
+        //public readonly Color32 color32;
+
         public readonly byte r;
+        public readonly byte g;
+        public readonly byte b;
+        public readonly byte steepness;
 
         public const int SIZE_OF_TRI_BUILD = Triangle.SIZE_OF_TRI + sizeof(int) * 2;
 
@@ -34,9 +36,10 @@ namespace MarchingCubes
             this.y = y;
             this.x = x;
             this.steepness = steepness;
-            this.b = b;
-            this.g = g;
             this.r = r;
+            this.g = g;
+            this.b = b;
+            //color32 = new Color32(r, g, b, steepness);
         }
     }
 }
