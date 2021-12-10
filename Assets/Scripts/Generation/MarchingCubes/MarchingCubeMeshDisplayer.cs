@@ -103,10 +103,10 @@ namespace MarchingCubes
             }
         }
 
-        public void ApplyMesh(Color[] colorData, Vector3[] vertices, int[] meshTriangles, Material mat, bool useCollider = true)
+        public void ApplyMesh(Color32[] colorData, Vector3[] vertices, int[] meshTriangles, Material mat, bool useCollider = true)
         {
             mesh.vertices = vertices;
-            mesh.colors = colorData;
+            mesh.colors32 = colorData;
             mesh.triangles = meshTriangles;
             renderer.material = mat;
             mesh.RecalculateNormals();

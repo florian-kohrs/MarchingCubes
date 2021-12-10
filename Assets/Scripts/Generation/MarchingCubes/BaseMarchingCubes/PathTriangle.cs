@@ -13,21 +13,16 @@ namespace MarchingCubes
         {
             this.e = e;
             tri = t;
-            steepness = (byte)(Mathf.Acos(Vector3.Dot(Normal, MiddlePoint.normalized)) * 180 / Mathf.PI);
+            int steepness = (int)(Mathf.Acos(Vector3.Dot(Normal, MiddlePoint.normalized)) * 180 / Mathf.PI);
             int[] c = f(this, steepness);
-            r = (byte)c[0];
-            g = (byte)c[1];
-            b = (byte)c[2];
+            colorAndSteepness = new Color32((byte)c[0], (byte)c[1], (byte)c[2], (byte)steepness);
         }
 
-        public PathTriangle(ICubeEntity e, in Triangle t, byte r, byte g, byte b, byte steepness)
+        public PathTriangle(ICubeEntity e, in Triangle t, Color32 colorAndSteepness)
         {
             this.e = e;
-            this.steepness = steepness;
             tri = t;
-            this.r = r;
-            this.g = g;
-            this.b = b;
+            this.colorAndSteepness = colorAndSteepness;
         }
 
 
@@ -43,9 +38,6 @@ namespace MarchingCubes
         }
 
         protected ICubeEntity e;
-
-        public int Steepness => steepness;
-
 
         public const int TRIANGLE_NEIGHBOUR_COUNT = 3;
 
@@ -82,22 +74,14 @@ namespace MarchingCubes
             }
         }
 
-        public byte steepness;
-        public byte b;
-        public byte g;
-        public byte r;
+        /// <summary>
+        /// Steepness is alpha value of color
+        /// </summary>
+        public Color32 colorAndSteepness;
 
 
         private const int step = 1 << 8;
 
-        public Color GetColor()
-        {
-            Color c = new Color(
-                r / 255f,
-                g / 255f,
-                b / 255f, 1);
-            return c;
-        }
 
         /// <summary>
         /// maybe stop storing? but couldnt recalculate normal.
@@ -184,7 +168,7 @@ namespace MarchingCubes
             activeInBackwardsPathIteration = iteration;
         }
 
-        public float Slope => steepness;
+        public int Slope => colorAndSteepness.a;
 
         public Vector3 EstimatedMiddlePoint => tri.a;
 

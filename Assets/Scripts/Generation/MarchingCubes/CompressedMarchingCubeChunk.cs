@@ -84,7 +84,7 @@ namespace MarchingCubes
         //protected List<BaseMeshChild> children = new List<BaseMeshChild>();
         protected Vector3[] vertices;
         protected int[] meshTriangles;
-        protected Color[] colorData;
+        protected Color32[] colorData;
 
         protected bool isCompletlyAir;
 
@@ -605,7 +605,7 @@ namespace MarchingCubes
 
         #region build mesh from triangles
 
-        protected void AddTriangleToMeshData(PathTriangle tri, Color c, ref int usedTriCount, ref int totalTriCount)
+        protected void AddTriangleToMeshData(PathTriangle tri, ref int usedTriCount, ref int totalTriCount)
         {
             Triangle t = tri.tri;
 
@@ -613,9 +613,9 @@ namespace MarchingCubes
             meshTriangles[usedTriCount + 1] = usedTriCount + 1;
             meshTriangles[usedTriCount + 2] = usedTriCount + 2;
 
-            colorData[usedTriCount] = c;
-            colorData[usedTriCount + 1] = c;
-            colorData[usedTriCount + 2] = c;
+            colorData[usedTriCount] = tri.colorAndSteepness;
+            colorData[usedTriCount + 1] = tri.colorAndSteepness;
+            colorData[usedTriCount + 2] = tri.colorAndSteepness;
 
             vertices[usedTriCount] = t.a;
             vertices[usedTriCount + 1] = t.b;
@@ -633,8 +633,7 @@ namespace MarchingCubes
 
         protected void AddTriangleToMeshData(in TriangleBuilder t, ref int usedTriCount, ref int totalTriCount)
         {
-            //TODO: Replace color with color 32
-            Color c = new Color(t.r / 255f, t.g / 255f, t.b / 255f, 1);
+            Color32 c = t.color32;
 
             meshTriangles[usedTriCount] = usedTriCount;
             meshTriangles[usedTriCount + 1] = usedTriCount + 1;
@@ -755,7 +754,7 @@ namespace MarchingCubes
             int size = Mathf.Min(trisLeft, MAX_TRIANGLES_PER_MESH + 1);
             meshTriangles = new int[size];
             vertices = new Vector3[size];
-            colorData = new Color[size];
+            colorData = new Color32[size];
         }
 
         #region chunk queries
