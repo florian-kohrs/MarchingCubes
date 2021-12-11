@@ -756,7 +756,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 910780109}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 65008.48, z: 0}
+  m_LocalPosition: {x: 0, y: 10009, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 2047378104}
@@ -1055,7 +1055,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1125545286}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 76e2bdfbd44892348a426b99b226067a, type: 3}
   m_Name: 
@@ -1233,7 +1233,7 @@ MonoBehaviour:
   densityShader: {fileID: 7200000, guid: 2dd2295c8799c9a4297e6c83b1fc4a4b, type: 3}
   biomSize: 500
   biomSpacing: 14
-  radius: 65000
+  radius: 10000
   octaves: 9
   offset: {x: 0, y: 0, z: 0}
   seed: 4
