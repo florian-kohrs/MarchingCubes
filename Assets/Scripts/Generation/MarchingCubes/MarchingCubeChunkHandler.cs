@@ -9,6 +9,8 @@ using IChunkGroupRoot = MarchingCubes.IChunkGroupRoot<MarchingCubes.IMarchingCub
 
 namespace MarchingCubes
 {
+    //TODO: Check to use unity mathematics int2, int3 instead of vector for better performance?
+
 
     [System.Serializable]
     public class MarchingCubeChunkHandler : SaveableMonoBehaviour, IMarchingCubeChunkHandler
