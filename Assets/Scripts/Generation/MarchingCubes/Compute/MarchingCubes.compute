@@ -1,7 +1,7 @@
 ﻿#pragma kernel March
 #include "/Includes/MarchTables.compute"
 #include "/Includes/PointData.compute"
-//#include "/Includes/BiomVisualizationData.compute"
+#include "/Includes/BiomVisualizationData.compute"
 
 #define PI 3.14159265358979323846
 
@@ -29,14 +29,6 @@ struct Vertex
 	uint colorAndSteepness;
 };
 
-
-struct BiomVisualizationData
-{
-	uint3 steepRGB;
-
-	uint3 flatRGB;
-
-};
 
 AppendStructuredBuffer<Triangle> triangles;
 RWStructuredBuffer<PointData> points;

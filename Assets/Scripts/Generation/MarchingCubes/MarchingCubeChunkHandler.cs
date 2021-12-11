@@ -142,7 +142,7 @@ namespace MarchingCubes
         public int minSteepness = 15;
         public int maxSteepness = 50;
 
-        protected Vector3 startPos;
+        protected Vector3 startPos; 
         protected float maxSqrChunkDistance;
 
         protected BinaryHeap<float, Vector3Int> closestNeighbours = new BinaryHeap<float, Vector3Int>(float.MinValue, float.MaxValue, 200);
@@ -157,15 +157,8 @@ namespace MarchingCubes
         //Test
         public MeshGPUInstanciation.SpawnGrassForMarchingCube grass;
 
-        protected void ReadColor()
-        {
-           var a =  AutomatedScriptTransfer.getFieldsFromType(typeof(Color), typeof(object), true);
-        }
-
         private void Start()
         {
-            Debug.Log(System.Runtime.InteropServices.Marshal.SizeOf(typeof(Color)));
-            ReadColor();
             simpleChunkColliderPool = new SimpleChunkColliderPool(colliderParent);
             displayerPool = new MeshDisplayerPool(transform);
             interactableDisplayerPool = new InteractableMeshDisplayPool(transform);
