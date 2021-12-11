@@ -11,5 +11,5 @@ namespace MarchingCubes
 
         int GetLodPowerForChunkPosition(Vector3Int chunkOrigin);
 
-    }
+    } 
 }

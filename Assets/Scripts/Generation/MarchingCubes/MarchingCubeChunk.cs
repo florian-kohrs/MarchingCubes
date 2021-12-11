@@ -148,7 +148,7 @@ namespace MarchingCubes
                     cube = CreateAndAddEntityAt(x, y, z, ts[i].triIndex);
                     SetNeighbourAt(x, y, z);
                 }
-                PathTriangle pathTri = new PathTriangle(cube, in ts[i].tri, ts[i].r, ts[i].g, ts[i].b, ts[i].steepness);
+                PathTriangle pathTri = new PathTriangle(cube, in ts[i].tri, ts[i].color32);
                 cube.AddTriangle(pathTri);
                 AddTriangleToMeshData(in ts[i], ref usedTriCount, ref totalTreeCount);
             }
@@ -170,7 +170,7 @@ namespace MarchingCubes
                     cube = CreateAndAddEntityAt(x, y, z, ts[i].triIndex);
                     SetNeighbourAt(x, y, z);
                 }
-                PathTriangle pathTri = new PathTriangle(cube, in ts[i].tri, ts[i].r, ts[i].g, ts[i].b, ts[i].steepness);
+                PathTriangle pathTri = new PathTriangle(cube, in ts[i].tri, ts[i].color32);
                 cube.AddTriangle(pathTri);
             }
         }
@@ -196,7 +196,7 @@ namespace MarchingCubes
                 count = e.triangles.Length;
                 for (int i = 0; i < count; ++i)
                 {
-                    AddTriangleToMeshData(e.triangles[i], e.triangles[i].GetColor(), ref usedTriCount, ref totalTreeCount);
+                    AddTriangleToMeshData(e.triangles[i], ref usedTriCount, ref totalTreeCount);
                 }
             }
 

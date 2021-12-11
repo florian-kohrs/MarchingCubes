@@ -29,6 +29,7 @@ struct Vertex
 	uint colorAndSteepness;
 };
 
+
 AppendStructuredBuffer<Triangle> triangles;
 RWStructuredBuffer<PointData> points;
 RWStructuredBuffer<uint> pointBiomIndex;
@@ -77,6 +78,7 @@ PosAndPointData GetHeightDataFrom(int x, int y, int z)
 	result.biomIndex = pointBiomIndex[index];
 	return result;
 }
+
 
 //check for speed when having 5 times as many threads on z axis one for each triangle
 [numthreads(numThreads, numThreads, numThreads)]
@@ -149,18 +151,18 @@ void March(int3 id : SV_DispatchThreadID)
 		if (invLerp < 0)
 			invLerp = 0;
 		else if (invLerp > 1)
-			invLerp = 1;
+			invLerp = 1; 
 
 		BiomVisualizationData biom = bioms[cubeCorners[0].biomIndex];
 		
-		int3 flatColor = biom.flatRGBA.xyz;
-		int3 steepColor = biom.steepRGBA.xyz;
-
+		uint3 flatColor = biom.flatRGB;
+		uint3 steepColor = biom.steepRGB;
+		
 		int colorR = (invLerp * steepColor.x + (1 - invLerp) * flatColor.x);
 		int colorG = (invLerp * steepColor.y + (1 - invLerp) * flatColor.y);
 		int colorB = (invLerp * steepColor.z + (1 - invLerp) * flatColor.z);
 		
-		tri.colorAndSteepness = zipData(colorR, colorG, colorB, (int)angleFromCenter);
+		tri.colorAndSteepness = zipData((int)angleFromCenter, colorB, colorG, colorR);
 		//tri.colorAndSteepness = 0;
 		triangles.Append(tri);
 	}

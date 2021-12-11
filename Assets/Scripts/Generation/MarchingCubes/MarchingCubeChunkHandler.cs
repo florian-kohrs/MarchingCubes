@@ -142,15 +142,7 @@ namespace MarchingCubes
         public int minSteepness = 15;
         public int maxSteepness = 50;
 
-        private int steepR;
-        private int steepG;
-        private int steepB;
-
-        private int flatR;
-        private int flatG;
-        private int flatB;
-
-        protected Vector3 startPos;
+        protected Vector3 startPos; 
         protected float maxSqrChunkDistance;
 
         protected BinaryHeap<float, Vector3Int> closestNeighbours = new BinaryHeap<float, Vector3Int>(float.MinValue, float.MaxValue, 200);
@@ -167,7 +159,6 @@ namespace MarchingCubes
 
         private void Start()
         {
-            //Debug.Log(System.Runtime.InteropServices.Marshal.SizeOf(typeof(Color32)));
             simpleChunkColliderPool = new SimpleChunkColliderPool(colliderParent);
             displayerPool = new MeshDisplayerPool(transform);
             interactableDisplayerPool = new InteractableMeshDisplayPool(transform);
@@ -932,10 +923,7 @@ namespace MarchingCubes
             else if (invLerp > 1)
                 invLerp = 1;
 
-            return new int[] {
-                (int)(invLerp * steepR + (1 - invLerp) * flatR),
-                (int)(invLerp * steepG + (1 - invLerp) * flatG),
-                (int)(invLerp * steepB  + (1 - invLerp) * flatB)};
+            return new int[] {1,1,1};   
         }
 
         public int GetFeasibleReducedLodForChunk(IMarchingCubeChunk c, int toLodPower)
@@ -1203,8 +1191,9 @@ namespace MarchingCubes
             int maxTriangleCount = numVoxels * 2;
             maxTriangleCount *= MAX_CHUNKS_PER_ITERATION;
 
-            biomBuffer = new ComputeBuffer(bioms.Length, BiomVisualizationData.SIZE);
-            biomBuffer.SetData(bioms.Select(b => b.visualizationData.ScaleTo255()).ToArray());
+            biomBuffer = new ComputeBuffer(bioms.Length, BiomColor.SIZE);
+            var b = bioms.Select(b => new BiomColor(b.visualizationData)).ToArray();
+            biomBuffer.SetData(b);
 
             pointBiomIndex = new ComputeBuffer(numPoints, sizeof(uint));
             pointsBuffer = new ComputeBuffer(numPoints, PointData.SIZE);
