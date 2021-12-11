@@ -409,7 +409,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 358158685}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.58, z: 0}
+  m_LocalPosition: {x: 0, y: 0.58, z: 0.84}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 1146147228}
@@ -637,7 +637,7 @@ MonoBehaviour:
   maxCameraScrollAnchor: {fileID: 1900520891}
   minCameraScrollAnchor: {fileID: 358158686}
   scrollSpeed: 10
-  scrollZoomValue: 0
+  scrollZoomValue: 1
 --- !u!1 &840254376
 GameObject:
   m_ObjectHideFlags: 0

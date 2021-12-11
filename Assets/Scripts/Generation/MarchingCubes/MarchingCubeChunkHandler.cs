@@ -361,6 +361,7 @@ namespace MarchingCubes
             Vector3Int chunkIndex;
             IMarchingCubeChunk chunk = null;
             int tryCount = 0;
+            //TODO:Remove trycount later
             while (isEmpty && tryCount++ < 100)
             {
                 chunkIndex = PositionToChunkGroupCoord(pos);
