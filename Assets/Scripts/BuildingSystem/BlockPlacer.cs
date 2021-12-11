@@ -41,6 +41,8 @@ public class BlockPlacer : MonoBehaviour
 
     protected Vector3 currentMeshExtend;
 
+    public BuildingReferenceSystem system;
+
     public OrientationMode orientationMode = OrientationMode.TriangleNormal;
 
     public enum OrientationMode { TriangleNormal, WorldNormal};
@@ -85,7 +87,7 @@ public class BlockPlacer : MonoBehaviour
         return Input.mousePosition != lastMousePos
             || (lastRay.origin - newRay.origin).sqrMagnitude > SQR_DISTANCE_THRESHOLD_BEFORE_FIRE_NEW_RAY;
     }
-
+      
     private void Update()
     {
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -105,7 +107,11 @@ public class BlockPlacer : MonoBehaviour
             {
                 canBuild = canBuild && CheckForBlockOrientatorAndApply(hit);
                 PositionAt(hit.point);
-                if (usePlacementHelper)
+                if(system != null)
+                {
+                    system.AssignToBuildingReference(objectToPlace, hit.point);
+                }
+                else if (usePlacementHelper)
                 {
                     IBlockCombiner c;
                     SearchForCubeConnection();
@@ -138,6 +144,7 @@ public class BlockPlacer : MonoBehaviour
     protected void PlaceCurrentBlock()
     {
         objectToPlace.GetComponent<Collider>().enabled = true;
+        system = new BuildingReferenceSystem(objectToPlace);
         toPlaceRenderer.material = originalMat;
         toPlaceRenderer = null;
         objectToPlace = null;
