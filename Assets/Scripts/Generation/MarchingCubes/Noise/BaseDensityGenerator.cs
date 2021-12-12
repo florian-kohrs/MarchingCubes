@@ -27,10 +27,10 @@ namespace MarchingCubes
 
         public int seed;
 
-        public void SetBioms(BiomNoiseData[] bioms)
+        public void SetBioms(BiomNoiseData[] bioms, ComputeShader march)
         {
             this.bioms = bioms;
-            SetBiomData();
+            SetBiomData(march);
         }
 
         public virtual void Generate(int numPointsPerAxis, Vector3 anchor, float spacing, bool tryLoad = false)
@@ -54,7 +54,6 @@ namespace MarchingCubes
         {
             GetOctaveOffsetsBuffer();
             densityShader.SetInt("octaves", Mathf.Max(1, octaves));
-            densityShader.SetFloat("radius", radius);
             densityShader.SetBuffer(0, "octaveOffsets", octaveOffsetsBuffer);
             densityShader.SetVector("offset", new Vector4(offset.x, offset.y, offset.z));
         }
@@ -78,17 +77,25 @@ namespace MarchingCubes
 
         protected ComputeBuffer biomsBuffer;
 
-        protected void SetBiomData()
+        protected void SetBiomData(ComputeShader march)
         {
             if (biomsBuffer != null)
                 return;
 
             biomsBuffer = new ComputeBuffer(bioms.Length, BiomNoiseData.SIZE);
             biomsBuffer.SetData(bioms);
-            densityShader.SetBuffer(0, "bioms", biomsBuffer);
-            densityShader.SetInt("biomSize", biomSize);
-            densityShader.SetInt("biomSpacing", biomSpacing);
-            densityShader.SetInt("biomsCount", bioms.Length);
+            SetShaderBiomProperties(densityShader);
+            SetShaderBiomProperties(march);
+        }
+
+        protected void SetShaderBiomProperties(ComputeShader s)
+        {
+            s.SetBuffer(0, "bioms", biomsBuffer);
+            s.SetInt("biomSize", biomSize);
+            s.SetInt("biomSpacing", biomSpacing);
+            s.SetInt("biomsCount", bioms.Length);
+
+            s.SetFloat("radius", radius);
         }
 
         protected ComputeBuffer GetOctaveOffsetsBuffer()

@@ -17,7 +17,7 @@ namespace MarchingCubes
 
         //TODO: Maybe store for each chunk num of tris -> dont have to read from gpu
 
-        public PointData[] NoiseMap => leaf.vals;
+        public float[] NoiseMap => leaf.vals;
 
         public int ChildrenWithMipMapReady => throw new System.NotImplementedException();
 
@@ -44,7 +44,7 @@ namespace MarchingCubes
         }
 
 
-        public bool TryGetMipMapOfChunkSizePower(int[] relativePosition, int sizePow, out PointData[] storedNoise, out bool isMipMapComplete)
+        public bool TryGetMipMapOfChunkSizePower(int[] relativePosition, int sizePow, out float[] storedNoise, out bool isMipMapComplete)
 
         {
             storedNoise = NoiseMap;

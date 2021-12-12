@@ -1,7 +1,7 @@
 ﻿#pragma kernel March
 #include "/Includes/MarchTables.compute"
-#include "/Includes/PointData.compute"
 #include "/Includes/BiomVisualizationData.compute"
+#include "/Includes/Bioms.compute"
 
 #define PI 3.14159265358979323846
 
@@ -16,13 +16,6 @@ struct Triangle
 	uint colorAndSteepness;
 };
 
-struct PosAndPointData
-{
-	float3 pos;
-	int biomIndex;
-	PointData pointData;
-};
-
 struct Vertex
 {
 	float3 pos;
@@ -31,24 +24,23 @@ struct Vertex
 
 
 AppendStructuredBuffer<Triangle> triangles;
-RWStructuredBuffer<PointData> points;
-RWStructuredBuffer<uint> pointBiomIndex;
-RWStructuredBuffer<BiomVisualizationData> bioms;
+RWStructuredBuffer<float> points;
+RWStructuredBuffer<BiomVisualizationData> biomsViz;
 
 int minSteepness;
 int maxSteepness;
-
+ 
 float3 anchor;
 float spacing;
 int numPointsPerAxis;
 float surfaceLevel;
 
 
-float3 interpolateVerts(PosAndPointData v1, PosAndPointData v2)
+float3 interpolateVerts(float4 v1, float4 v2)
 {
 	//return v1.xyz + 0.5 * (v2.xyz - v1.xyz);
-	float t = (surfaceLevel - v1.pointData.surfaceValue) / (v2.pointData.surfaceValue - v1.pointData.surfaceValue);
-	return v1.pos + (t) * (v2.pos - v1.pos);
+	float t = (surfaceLevel - v1.w) / (v2.w - v1.w);
+	return v1.xyz + t * (v2.xyz - v1.xyz);
 }
 
 //TODO:Compare speed replacing all ints with uints
@@ -67,16 +59,12 @@ int zipData(int x, int y, int z, int w) {
 //    return acos(dot(a, b)) * 180 / PI
 //}
 
-PosAndPointData GetHeightDataFrom(int x, int y, int z)
+float4 GetHeightDataFrom(int x, int y, int z)
 {
 	float3 f3 = float3(x, y, z);
-
-	PosAndPointData result; 
-	result.pos = anchor + f3 * spacing;
 	int index = indexFromCoord(x, y, z);
-	result.pointData = points[index];
-	result.biomIndex = pointBiomIndex[index];
-	return result;
+
+	return float4(anchor + f3 * spacing, points[index]);
 }
 
 
@@ -94,7 +82,7 @@ void March(int3 id : SV_DispatchThreadID)
 	float rad = 180 / PI;
 
 	// 8 corners of the current cube
-	PosAndPointData cubeCorners[8] =
+	float4 cubeCorners[8] =
 	{
 		GetHeightDataFrom(id.x, id.y, id.z),
 		GetHeightDataFrom(id.x + 1, id.y, id.z),
@@ -112,16 +100,22 @@ void March(int3 id : SV_DispatchThreadID)
 	// The value is used to look up the edge table, which indicates which edges of the cube are cut by the isosurface.
 	int cubeIndex = 0;
 	
-	if (cubeCorners[0].pointData.surfaceValue < surfaceLevel) cubeIndex |= 1;
-	if (cubeCorners[1].pointData.surfaceValue < surfaceLevel) cubeIndex |= 2;
-	if (cubeCorners[2].pointData.surfaceValue < surfaceLevel) cubeIndex |= 4;
-	if (cubeCorners[3].pointData.surfaceValue < surfaceLevel) cubeIndex |= 8;
-	if (cubeCorners[4].pointData.surfaceValue < surfaceLevel) cubeIndex |= 16;
-	if (cubeCorners[5].pointData.surfaceValue < surfaceLevel) cubeIndex |= 32;
-	if (cubeCorners[6].pointData.surfaceValue < surfaceLevel) cubeIndex |= 64;
-	if (cubeCorners[7].pointData.surfaceValue < surfaceLevel) cubeIndex |= 128;
+	if (cubeCorners[0].w < surfaceLevel) cubeIndex |= 1;
+	if (cubeCorners[1].w < surfaceLevel) cubeIndex |= 2;
+	if (cubeCorners[2].w < surfaceLevel) cubeIndex |= 4;
+	if (cubeCorners[3].w < surfaceLevel) cubeIndex |= 8;
+	if (cubeCorners[4].w < surfaceLevel) cubeIndex |= 16;
+	if (cubeCorners[5].w < surfaceLevel) cubeIndex |= 32;
+	if (cubeCorners[6].w < surfaceLevel) cubeIndex |= 64;
+	if (cubeCorners[7].w < surfaceLevel) cubeIndex |= 128;
 
 	int zipedCubeData = zipData(id.x, id.y, id.z, cubeIndex);
+
+	float3 pos = anchor + id * spacing;
+	int3 biomEvaluationPos = GetBiomEvaluationPosition(pos);
+	uint biomIndex = GetClosestBiomIndex(biomEvaluationPos);
+
+	BiomVisualizationData biom = biomsViz[biomIndex];
 
 	// Create triangles for current cube configuration
 	for (int i = 0; triangulation[cubeIndex][i] != -1; i += 3)
@@ -153,7 +147,7 @@ void March(int3 id : SV_DispatchThreadID)
 		else if (invLerp > 1)
 			invLerp = 1; 
 
-		BiomVisualizationData biom = bioms[cubeCorners[0].biomIndex];
+		
 		
 		uint3 flatColor = biom.flatRGB;
 		uint3 steepColor = biom.steepRGB;

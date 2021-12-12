@@ -1,5 +1,0 @@
-﻿struct PointData
-{
-    float surfaceValue;
-    int pointType;
-};

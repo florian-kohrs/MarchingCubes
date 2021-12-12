@@ -7,7 +7,7 @@
 // of the original shader, please see the following description from the
 // original source code.
 //
-
+ 
 //
 // Description : Array and textureless GLSL 2D/3D/4D simplex
 //               noise functions.

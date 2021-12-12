@@ -15,7 +15,7 @@ namespace MarchingCubes
         //public Dictionary<int, float> editedPoints = new Dictionary<int, float>();
 
 
-        public PointData[] vals;
+        public float[] vals;
         
         int ISizeManager.ChunkSizePower { get => 5; set => throw new System.NotImplementedException(); }
     }

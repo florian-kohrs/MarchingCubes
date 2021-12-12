@@ -54,7 +54,7 @@ namespace MarchingCubes
         [Save]
         public Dictionary<Serializable3DIntVector, StorageTreeRoot> storageGroups = new Dictionary<Serializable3DIntVector, StorageTreeRoot>();
 
-        protected PointData[] storedNoiseData;
+        protected float[] storedNoiseData;
 
         [Range(1, 253)]
         public int blockAroundPlayer = 16;
@@ -101,7 +101,7 @@ namespace MarchingCubes
         public int totalTriBuild;
 
         TriangleBuilder[] tris;// = new TriangleBuilder[CHUNK_VOLUME * 5];
-        PointData[] pointsArray;
+        float[] pointsArray;
 
         private ComputeBuffer triangleBuffer;
         private ComputeBuffer pointsBuffer;
@@ -183,7 +183,7 @@ namespace MarchingCubes
 
         protected void InitializeDensityGenerator()
         {
-            densityGenerator.SetBioms(bioms.Select(b => b.biom).ToArray());
+            densityGenerator.SetBioms(bioms.Select(b => b.biom).ToArray(), marshShader);
             densityGenerator.SetBuffer(pointsBuffer, savedPointBuffer, pointBiomIndex);
         }
 
@@ -476,7 +476,7 @@ namespace MarchingCubes
             return chunkGroup;
         }
 
-        public bool TryGetMipMapAt(Vector3Int pos, int sizePower, out PointData[] storedNoise, out bool isMipMapComplete)
+        public bool TryGetMipMapAt(Vector3Int pos, int sizePower, out float[] storedNoise, out bool isMipMapComplete)
         {
             StorageTreeRoot chunkGroup;
             if (storageGroups.TryGetValue(PositionToStorageGroupCoord(pos), out chunkGroup))
@@ -706,16 +706,16 @@ namespace MarchingCubes
         }
 
 
-        public PointData[] RequestNoiseForChunk(IMarchingCubeChunk chunk)
+        public float[] RequestNoiseForChunk(IMarchingCubeChunk chunk)
         {
             return RequestNoiseFor(chunk.ChunkSizePower, chunk.PointsPerAxis, chunk.LOD, chunk.AnchorPos);
         }
 
-        public PointData[] RequestNoiseFor(int sizePow, int pointsPerAxis, int LOD, Vector3Int anchor)
+        public float[] RequestNoiseFor(int sizePow, int pointsPerAxis, int LOD, Vector3Int anchor)
         {
-            PointData[] result;
+            float[] result;
             GenerateNoise(sizePow, pointsPerAxis, LOD, anchor);
-            result = new PointData[pointsPerAxis * pointsPerAxis * pointsPerAxis];
+            result = new float[pointsPerAxis * pointsPerAxis * pointsPerAxis];
             pointsBuffer.GetData(result, 0, 0, result.Length);
             return result;
         }
@@ -840,11 +840,11 @@ namespace MarchingCubes
             {
                 if (careForNeighbours)
                 {
-                    pointsArray = new PointData[pointsVolume];
+                    pointsArray = new float[pointsVolume];
                 }
                 else
                 {
-                    pointsArray = new PointData[1];
+                    pointsArray = new float[1];
                 }
                 pointsBuffer.GetData(pointsArray, 0, 0, pointsArray.Length);
                 chunk.Points = pointsArray;
@@ -1198,8 +1198,8 @@ namespace MarchingCubes
             biomBuffer.SetData(b);
 
             pointBiomIndex = new ComputeBuffer(numPoints, sizeof(uint));
-            pointsBuffer = new ComputeBuffer(numPoints, PointData.SIZE);
-            savedPointBuffer = new ComputeBuffer(numPoints, PointData.SIZE);
+            pointsBuffer = new ComputeBuffer(numPoints, sizeof(float));
+            savedPointBuffer = new ComputeBuffer(numPoints, sizeof(float));
             triangleBuffer = new ComputeBuffer(maxTriangleCount, TriangleBuilder.SIZE_OF_TRI_BUILD, ComputeBufferType.Append);
             triCountBuffer = new ComputeBuffer(MAX_CHUNKS_PER_ITERATION, sizeof(int), ComputeBufferType.Raw);
         }
@@ -1212,7 +1212,7 @@ namespace MarchingCubes
             s.SetBuffer(0, "pointBiomIndex", pointBiomIndex);
             s.SetBuffer(0, "savedPoints", savedPointBuffer);
             s.SetBuffer(0, "triangles", triangleBuffer);
-            s.SetBuffer(0, "bioms", biomBuffer);
+            s.SetBuffer(0, "biomsViz", biomBuffer);
 
             s.SetInt("minSteepness", minSteepness);
             s.SetInt("maxSteepness", maxSteepness);
@@ -1244,7 +1244,7 @@ namespace MarchingCubes
         }
 
         //TODO: Dont store when chunk knows he stored before 
-        public void Store(Vector3Int anchorPos, PointData[] noise)
+        public void Store(Vector3Int anchorPos, float[] noise)
         {
             StoredChunkEdits edits;
             if (!TryGetStoredEditsAt(anchorPos, out edits))
