@@ -35,7 +35,7 @@ namespace MarchingCubes
 
         TriangleBuilder[] GenerateCubesFromNoise(IMarchingCubeChunk chunk, int triCount, float[] noise);
 
-        int[] GetColor(PathTriangle t, int steepness);
+        Color32 GetColor(PathTriangle t, int steepness);
 
         void Store(Vector3Int anchorPos, PointData[] noise);
 

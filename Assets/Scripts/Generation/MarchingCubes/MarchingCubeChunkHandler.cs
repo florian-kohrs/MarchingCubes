@@ -10,7 +10,7 @@ using IChunkGroupRoot = MarchingCubes.IChunkGroupRoot<MarchingCubes.IMarchingCub
 namespace MarchingCubes
 {
     //TODO: Check to use unity mathematics int2, int3 instead of vector for better performance?
-
+    //TODO: When creating a chunk while editing, call getnoise with click changes to only generate noise once
 
     [System.Serializable]
     public class MarchingCubeChunkHandler : SaveableMonoBehaviour, IMarchingCubeChunkHandler
@@ -177,6 +177,7 @@ namespace MarchingCubes
             
             IMarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
             maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
+
             BuildRelevantChunksParallelBlockingAround(chunk);
         }
 
@@ -916,7 +917,7 @@ namespace MarchingCubes
             marshShader.Dispatch(0, numThreadsPerAxis, numThreadsPerAxis, numThreadsPerAxis);
         }
 
-        public int[] GetColor(PathTriangle t, int steepness)
+        public Color32 GetColor(PathTriangle t, int steepness)
         {
             float invLerp = (steepness - minSteepness) / ((float)maxSteepness - minSteepness);
             if (invLerp < 0)
@@ -924,7 +925,7 @@ namespace MarchingCubes
             else if (invLerp > 1)
                 invLerp = 1;
 
-            return new int[] {1,1,1};   
+            return new Color32(15,150,15,(byte)steepness);   
         }
 
         public int GetFeasibleReducedLodForChunk(IMarchingCubeChunk c, int toLodPower)

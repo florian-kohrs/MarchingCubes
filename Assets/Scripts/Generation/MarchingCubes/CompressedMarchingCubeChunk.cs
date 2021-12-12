@@ -47,7 +47,7 @@ namespace MarchingCubes
         //TODO: Only store in marching cubes maybe
         protected PointData[] points;
 
-        protected int triCount;
+        protected int TriCount =>  NumTris * 3;
 
         protected int trisLeft;
 
@@ -106,7 +106,7 @@ namespace MarchingCubes
 
         public bool IsEmpty => NumTris == 0;
 
-        public int NumTris { get; private set; }
+        public int NumTris { get; protected set; }
 
         public bool IsCompletlyAir => isCompletlyAir;
 
@@ -350,7 +350,6 @@ namespace MarchingCubes
         {
             HasStarted = true;
             NumTris = tris.triCount;
-            triCount = tris.triCount * 3;
 
             if (points != null)
             {
@@ -374,7 +373,6 @@ namespace MarchingCubes
         public void ResetChunk()
         {
             NumTris = 0;
-            triCount = 0;
             points = null;
             meshTriangles = null;
             lodPower = MarchingCubeChunkHandler.DEACTIVATE_CHUNK_LOD;
@@ -466,7 +464,7 @@ namespace MarchingCubes
 
         protected virtual void RebuildFromTriangleArray(TriangleChunkHeap heap)
         {
-            trisLeft = triCount;
+            trisLeft = TriCount;
 
             ResetArrayData();
 
@@ -525,7 +523,7 @@ namespace MarchingCubes
                         InterpolateVerts(cubeCorners, noisePoints, a2, b2));
 
                     e.AddTriangle(new PathTriangle(e, in tri, ChunkHandler.GetColor));
-                    triCount += 3;
+                    NumTris++;
                 }
 
                 return e;

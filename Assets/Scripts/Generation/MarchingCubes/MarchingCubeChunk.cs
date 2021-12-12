@@ -112,7 +112,7 @@ namespace MarchingCubes
         {
             FreeAllMeshes();
             cubeEntities = null;
-            triCount = 0;
+            NumTris = 0;
         }
 
         protected MarchingCubeEntity CreateAndAddEntityAt(int x, int y, int z, int triangulationIndex)
@@ -126,7 +126,7 @@ namespace MarchingCubes
 
         protected override void RebuildFromTriangleArray(TriangleChunkHeap heap)
         {
-            trisLeft = triCount;
+            trisLeft = TriCount;
             ResetArrayData();
 
             int totalTreeCount = 0;
@@ -180,7 +180,7 @@ namespace MarchingCubes
             if (IsEmpty)
                 return;
 
-            trisLeft = triCount;
+            trisLeft = TriCount;
 
             ResetArrayData();
 
@@ -337,8 +337,7 @@ namespace MarchingCubes
             cubeEntities = new MarchingCubeEntity[chunkSize, chunkSize, chunkSize];
 
             TriangleBuilder[] ts;
-            int numTris = ChunkHandler.ReadCurrentTriangleData(out ts);
-            triCount = numTris;
+            NumTris = ChunkHandler.ReadCurrentTriangleData(out ts);
 
             AddFromTriangleArray(ts);
 
@@ -382,7 +381,7 @@ namespace MarchingCubes
                             MarchingCubeEntity cube;
                             if (TryGetEntityAt(x, y, z, out cube))
                             {
-                                triCount -= cube.triangles.Length * 3;
+                                NumTris -= cube.triangles.Length;
                                 RemoveEntityAt(x, y, z, cube);
                             }
                             cube = MarchAt(x, y, z, this);
@@ -562,7 +561,7 @@ namespace MarchingCubes
                     }
                     else
                     {
-                        Debug.LogWarning("Ediiting of compressed marchingcube chunks is not supported!");
+                        Debug.LogWarning("Editing of compressed marchingcube chunks is not supported!");
                     }
                 }
             }

@@ -158,13 +158,13 @@ Biom GetCubicInterpolatedBiomAt(int3 pos)
 int3 getBiomAnchor(int3 rest, int3 pos)
 {
     //TODO: Probably not needed line (only posiitve values anyway)
-    int3 positiveRest = (rest + int3(biomSize, biomSize, biomSize)) % biomSize;
-    return int3(pos.x - positiveRest.x, pos.y - positiveRest.y, pos.z - positiveRest.z);
+    //int3 positiveRest = (rest + int3(biomSize, biomSize, biomSize)) % biomSize;
+    return int3(pos.x - rest.x, pos.y - rest.y, pos.z - rest.z);
 }
 
 float3 getInterpolation(int3 rest)
 {
-    rest = (rest + int3(biomSize, biomSize, biomSize)) % biomSize;
+    //rest = (rest + int3(biomSize, biomSize, biomSize)) % biomSize;
     return rest / (float)biomSize;
 }
 

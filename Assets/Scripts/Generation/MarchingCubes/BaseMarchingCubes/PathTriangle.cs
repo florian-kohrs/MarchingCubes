@@ -9,13 +9,12 @@ namespace MarchingCubes
     {
 
 
-        public PathTriangle(ICubeEntity e, in Triangle t, Func<PathTriangle, int, int[]> f)
+        public PathTriangle(ICubeEntity e, in Triangle t, Func<PathTriangle, int, Color32> f)
         {
             this.e = e;
             tri = t;
             int steepness = (int)(Mathf.Acos(Vector3.Dot(Normal, MiddlePoint.normalized)) * 180 / Mathf.PI);
-            int[] c = f(this, steepness);
-            colorAndSteepness = new Color32((byte)c[0], (byte)c[1], (byte)c[2], (byte)steepness);
+            colorAndSteepness = f(this, steepness);
         }
 
         public PathTriangle(ICubeEntity e, in Triangle t, Color32 colorAndSteepness)
