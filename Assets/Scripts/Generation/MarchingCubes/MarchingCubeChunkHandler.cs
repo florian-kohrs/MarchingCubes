@@ -1243,6 +1243,7 @@ namespace MarchingCubes
             }
         }
 
+        //TODO: Dont store when chunk knows he stored before 
         public void Store(Vector3Int anchorPos, PointData[] noise)
         {
             StoredChunkEdits edits;
