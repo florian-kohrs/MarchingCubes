@@ -476,6 +476,7 @@ namespace MarchingCubes
             return chunkGroup;
         }
 
+        //TODO: Has to mark mipmaps dirty if any child changes!
         public bool TryGetMipMapAt(Vector3Int pos, int sizePower, out float[] storedNoise, out bool isMipMapComplete)
         {
             StorageTreeRoot chunkGroup;

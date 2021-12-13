@@ -29,6 +29,11 @@ public class BuildingReferenceSystem
 
     public Vector3 origin;
 
+    //TODO: Replace with tree like structure like in chunkhandler
+    protected Dictionary<Vector3Int, int> blocksAtLocalIndex;
+
+
+
     public void AssignToBuildingReference(Transform t, Vector3 newPosition)
     {
         RotateToReferenceSystem(t);
@@ -62,5 +67,7 @@ public class BuildingReferenceSystem
         t.rotation = Quaternion.LookRotation(up, -front);
         t.Rotate(new Vector3(90, 0, 0), Space.Self);
     }
+
+    
 
 }
