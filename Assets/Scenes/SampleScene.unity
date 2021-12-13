@@ -1028,7 +1028,7 @@ MonoBehaviour:
   chunkMaterial: {fileID: 2100000, guid: 97d2f9aa8d16b8241a90494b8d616c04, type: 2}
   surfaceLevel: 0.511
   player: {fileID: 1779183453}
-  buildAroundDistance: 5
+  buildAroundDistance: 4000
   minSteepness: 11
   maxSteepness: 45
   grass: {fileID: 2124858347}
