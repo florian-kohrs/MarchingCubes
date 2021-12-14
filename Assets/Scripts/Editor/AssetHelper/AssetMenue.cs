@@ -22,4 +22,9 @@ public class AssetMenue : MonoBehaviour
         AssetCreator.CreateAsset<BiomScriptableObject>(BASE_FOLDER_NAME + "Biom");
     }
 
+    [MenuItem("Assets/Create/Custom/Inventory/Item")]
+    public static void NewItem()
+    {
+        AssetCreator.CreateAsset<InventoryItem>(BASE_FOLDER_NAME + "Item");
+    }
 }
