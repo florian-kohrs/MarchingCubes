@@ -479,8 +479,7 @@ namespace MarchingCubes
         //TODO: Has to mark mipmaps dirty if any child changes!
         public bool TryGetMipMapAt(Vector3Int pos, int sizePower, out float[] storedNoise, out bool isMipMapComplete)
         {
-            StorageTreeRoot chunkGroup;
-            if (storageGroups.TryGetValue(PositionToStorageGroupCoord(pos), out chunkGroup))
+            if (storageGroups.TryGetValue(PositionToStorageGroupCoord(pos), out StorageTreeRoot chunkGroup))
             {
                 return chunkGroup.TryGetMipMapOfChunkSizePower(new int[] { pos.x, pos.y, pos.z }, sizePower, out storedNoise, out isMipMapComplete);
             }
@@ -492,8 +491,7 @@ namespace MarchingCubes
         public bool TryGetStoredEditsAt(Vector3Int pos, out StoredChunkEdits edits)
         {
             Vector3Int coord = PositionToStorageGroupCoord(pos);
-            StorageTreeRoot chunkGroup;
-            if (storageGroups.TryGetValue(coord, out chunkGroup))
+            if (storageGroups.TryGetValue(coord, out StorageTreeRoot chunkGroup))
             {
                 if (chunkGroup.HasChild)
                 {
@@ -556,8 +554,7 @@ namespace MarchingCubes
 
         public bool HasChunkStartedAt(Vector3Int p)
         {
-            IMarchingCubeChunk chunk;
-            if (TryGetChunkAtPosition(p, out chunk))
+            if (TryGetChunkAtPosition(p, out IMarchingCubeChunk chunk))
             {
                 return chunk.HasStarted;
             }
@@ -584,9 +581,7 @@ namespace MarchingCubes
         public void BuildEmptyChunkAt(Vector3Int pos)
         {
             IChunkGroupRoot chunkGroup = GetOrCreateChunkGroupAtCoordinate(PositionToChunkGroupCoord(pos));
-            IMarchingCubeChunk chunk;
-
-            if (!chunkGroup.TryGetLeafAtGlobalPosition(pos, out chunk))
+            if (!chunkGroup.TryGetLeafAtGlobalPosition(pos, out IMarchingCubeChunk chunk))
             {
                 chunk = new CompressedMarchingCubeChunk();
 
