@@ -170,6 +170,7 @@ namespace MarchingCubes
             InitializeDensityGenerator();
 
             ApplyShaderProperties(marshShader);
+            ApplyShaderProperties(rebuildShader);
 
             watch.Start();
             buildAroundSqrDistance = (long)buildAroundDistance * buildAroundDistance;

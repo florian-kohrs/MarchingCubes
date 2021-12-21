@@ -274,27 +274,31 @@ namespace MarchingCubes
             }
         }
 
-        protected void RebuildFromNoiseAroundOnGPU(int radius, int posX, int posY, int posZ, int startX, int startY, int startZ, int endX, int endY, int endZ)
+        protected void RebuildFromNoiseAroundOnGPU(int radius, int posX, int posY, int posZ, int startX, int startY, int startZ)
         {
+
             float marchDistance = Vector3.one.magnitude + radius + 1;
-            int marchDistCeil = Mathf.CeilToInt(marchDistance + radius);
             float marchSquare = marchDistance * marchDistance;
+            int ceilMarchDistance = Mathf.CeilToInt(marchDistance);
+
+            Vector3 positionOffset = AnchorPos - new Vector3Int(startX, startY, startZ);
 
             radius += 1;
             Vector3Int start = new Vector3Int(posX - radius, posY - radius, posZ - radius);
             int voxelMinus = chunkSize - 1;
-            endX = Mathf.Min(voxelMinus, endX + 1);
-            endY = Mathf.Min(voxelMinus, endY + 1);
-            endZ = Mathf.Min(voxelMinus, endZ + 1);
+            Vector3 end = new Vector3(
+                Mathf.Min(voxelMinus, start.x + ceilMarchDistance),
+                Mathf.Min(voxelMinus, start.y + ceilMarchDistance),
+                Mathf.Min(voxelMinus, start.z + ceilMarchDistance));
 
             rebuildShader.SetVector("pos", new Vector4(posX, posY, posZ, 0));
             rebuildShader.SetVector("start", new Vector4(start.x,start.y,start.z,0));
-            rebuildShader.SetVector("end", new Vector4(endX, endY, endZ, 0));
+            rebuildShader.SetVector("end", end);
             rebuildShader.SetVector("anchor", new Vector4(AnchorPos.x, AnchorPos.y, AnchorPos.z, 0));
             rebuildShader.SetInt("numPointsPerAxis", pointsPerAxis);
             rebuildShader.SetInt("spacing", 1);
             rebuildNoiseBuffer.SetData(Points);
-            rebuildShader.SetFloat("sqrRadius", marchSquare);
+            rebuildShader.SetFloat("sqrRebuildRadius", marchSquare);
             rebuildTriResult.SetCounterValue(0);
 
             rebuildShader.Dispatch(0, pointsPerAxis, pointsPerAxis, pointsPerAxis);
