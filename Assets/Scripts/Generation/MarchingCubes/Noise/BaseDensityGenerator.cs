@@ -27,10 +27,10 @@ namespace MarchingCubes
 
         public int seed;
 
-        public void SetBioms(BiomNoiseData[] bioms, ComputeShader march)
+        public void SetBioms(BiomNoiseData[] bioms, params ComputeShader[] shaders)
         {
             this.bioms = bioms;
-            SetBiomData(march);
+            SetBiomData(shaders);
         }
 
         public virtual void Generate(int numPointsPerAxis, Vector3 anchor, float spacing, bool tryLoad = false)
@@ -77,7 +77,7 @@ namespace MarchingCubes
 
         protected ComputeBuffer biomsBuffer;
 
-        protected void SetBiomData(ComputeShader march)
+        protected void SetBiomData(params ComputeShader[] shaders)
         {
             if (biomsBuffer != null)
                 return;
@@ -85,7 +85,11 @@ namespace MarchingCubes
             biomsBuffer = new ComputeBuffer(bioms.Length, BiomNoiseData.SIZE);
             biomsBuffer.SetData(bioms);
             SetShaderBiomProperties(densityShader);
-            SetShaderBiomProperties(march);
+
+            for (int i = 0; i < shaders.Length; i++)
+            {
+                SetShaderBiomProperties(shaders[i]);
+            }
         }
 
         protected void SetShaderBiomProperties(ComputeShader s)

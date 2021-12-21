@@ -16,7 +16,6 @@ namespace MarchingCubes
     public class MarchingCubeChunkHandler : SaveableMonoBehaviour, IMarchingCubeChunkHandler
     {
 
-        protected int rebuildKernelId;
 
         /// <summary>
         /// This should be the same value as in the compute shader "MarchingCubes"
@@ -184,7 +183,7 @@ namespace MarchingCubes
 
         protected void InitializeDensityGenerator()
         {
-            densityGenerator.SetBioms(bioms.Select(b => b.biom).ToArray(), marshShader);
+            densityGenerator.SetBioms(bioms.Select(b => b.biom).ToArray(), marshShader, rebuildShader);
             densityGenerator.SetBuffer(pointsBuffer, savedPointBuffer, pointBiomIndex);
         }
 

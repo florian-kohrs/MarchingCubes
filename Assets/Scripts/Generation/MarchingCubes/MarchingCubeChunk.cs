@@ -13,7 +13,7 @@ namespace MarchingCubes
     public class MarchingCubeChunk : CompressedMarchingCubeChunk, IMarchingCubeInteractableChunk, IHasInteractableMarchingCubeChunk, ICubeNeighbourFinder
     {
 
-        public const int REBUILD_SHADER_THREAD_GROUP_SIZE = 4;
+        public const float REBUILD_SHADER_THREAD_GROUP_SIZE = 4;
 
         public const int MAX_NOISE_VALUE  = 100;
 
@@ -272,7 +272,7 @@ namespace MarchingCubes
             if (editedNoiseCount > 0)
             {
                 StoreNoiseArray();
-                RebuildFromNoiseAround(radius, posX, posY, posZ, startX, startY,startZ, endX, endY, endZ);
+                RebuildFromNoiseAroundOnGPU(radius, posX, posY, posZ, startX, startY,startZ);
             }
         }
 
