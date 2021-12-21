@@ -36,6 +36,7 @@ int numPointsPerAxis;
 float surfaceLevel;
 
 float3 start;
+float3 editPoint;
 float3 end;
 float sqrRebuildRadius;
 
@@ -75,16 +76,16 @@ float4 GetHeightDataFrom(int x, int y, int z)
 [numthreads(numThreads, numThreads, numThreads)]
 void CubeRebuilder(int3 id : SV_DispatchThreadID)
 {
-	int3 localRebuildPos = id + start; 
+	float3 localRebuildPos = id + start; 
 	// Stop one point before the end because voxel includes neighbouring points
-	if (localRebuildPos.x < 0 || localRebuildPos.x >= end 
-		|| localRebuildPos.y < 0 || localRebuildPos.y >= end 
-		||  localRebuildPos.z < 0 || localRebuildPos.z >= end)
+	if (localRebuildPos.x < 0 || localRebuildPos.x >= end.x
+		|| localRebuildPos.y < 0 || localRebuildPos.y >= end.y 
+		||  localRebuildPos.z < 0 || localRebuildPos.z >= end.z)
 	{
 		return;
 	}
-
-	float sqrLength = localRebuildPos.x * localRebuildPos.x + localRebuildPos.y * localRebuildPos.y + localRebuildPos.z * localRebuildPos.z;
+	float3 dist = localRebuildPos - editPoint;
+	float sqrLength = dist.x * dist.x + dist.y * dist.y + dist.z * dist.z;
 	if(sqrLength > sqrRebuildRadius)
 	{
 		return;

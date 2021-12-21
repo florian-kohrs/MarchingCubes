@@ -12,7 +12,8 @@ namespace MarchingCubes
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
     public class MarchingCubeChunk : CompressedMarchingCubeChunk, IMarchingCubeInteractableChunk, IHasInteractableMarchingCubeChunk, ICubeNeighbourFinder
     {
-         
+
+        public const int REBUILD_SHADER_THREAD_GROUP_SIZE = 4;
 
         public const int MAX_NOISE_VALUE  = 100;
 
@@ -223,6 +224,7 @@ namespace MarchingCubes
             int startX = Mathf.Max(0, posX - radius);
             int startY = Mathf.Max(0, posY - radius);
             int startZ = Mathf.Max(0, posZ - radius);
+            //TODO: Check if +1 is needed
             int endX = Mathf.Min(ppMinus, posX + radius + 1);
             int endY = Mathf.Min(ppMinus, posY + radius + 1);
             int endZ = Mathf.Min(ppMinus, posZ + radius + 1);
@@ -291,6 +293,10 @@ namespace MarchingCubes
                 Mathf.Min(voxelMinus, start.y + ceilMarchDistance),
                 Mathf.Min(voxelMinus, start.z + ceilMarchDistance));
 
+            int endX = (int)end.x;
+            int endY = (int)end.y;
+            int endZ = (int)end.z;
+
             rebuildShader.SetVector("pos", new Vector4(posX, posY, posZ, 0));
             rebuildShader.SetVector("start", new Vector4(start.x,start.y,start.z,0));
             rebuildShader.SetVector("end", end);
@@ -301,42 +307,44 @@ namespace MarchingCubes
             rebuildShader.SetFloat("sqrRebuildRadius", marchSquare);
             rebuildTriResult.SetCounterValue(0);
 
-            rebuildShader.Dispatch(0, pointsPerAxis, pointsPerAxis, pointsPerAxis);
+            Vector3Int threadsPerAxis = new Vector3Int(
+                Mathf.CeilToInt((endX - startX) / REBUILD_SHADER_THREAD_GROUP_SIZE),
+                Mathf.CeilToInt((endY - startY) / REBUILD_SHADER_THREAD_GROUP_SIZE),
+                Mathf.CeilToInt((endZ - startZ) / REBUILD_SHADER_THREAD_GROUP_SIZE)
+                );
 
-            startX = Mathf.Max(0, startX - 4);
-            startY = Mathf.Max(0, startY - 4);
-            startZ = Mathf.Max(0, startZ - 4);
+            rebuildShader.Dispatch(0, threadsPerAxis.x, threadsPerAxis.y, threadsPerAxis.z);
 
 
-            //float distanceX = startX - posX;
-            //for (int x = startX; x <= endX; x++)
-            //{
-            //    int distanceY = startY - posY;
-            //    float xx = distanceX * distanceX;
-            //    for (int y = startY; y <= endY; y++)
-            //    {
-            //        int distanceZ = startZ - posZ;
-            //        int yy = distanceY * distanceY;
-            //        for (int z = startZ; z <= endZ; z++)
-            //        {
-            //            int zz = distanceZ * distanceZ;
-            //            float sqrDis = xx + yy + zz;
-            //            if (sqrDis <= marchSquare)
-            //            {
-            //                MarchingCubeEntity cube;
-            //                if (TryGetEntityAt(x, y, z, out cube))
-            //                {
-            //                    triCount -= cube.triangles.Length * 3;
-            //                    RemoveEntityAt(x, y, z, cube);
-            //                }
-            //            }
+            float distanceX = startX - posX;
+            for (int x = startX; x <= endX; x++)
+            {
+                int distanceY = startY - posY;
+                float xx = distanceX * distanceX;
+                for (int y = startY; y <= endY; y++)
+                {
+                    int distanceZ = startZ - posZ;
+                    int yy = distanceY * distanceY;
+                    for (int z = startZ; z <= endZ; z++)
+                    {
+                        int zz = distanceZ * distanceZ;
+                        float sqrDis = xx + yy + zz;
+                        if (sqrDis <= marchSquare)
+                        {
+                            MarchingCubeEntity cube;
+                            if (TryGetEntityAt(x, y, z, out cube))
+                            {
+                                NumTris -= cube.triangles.Length;
+                                RemoveEntityAt(x, y, z, cube);
+                            }
+                        }
 
-            //            distanceZ++;
-            //        }
-            //        distanceY++;
-            //    }
-            //    distanceX++;
-            //}
+                        distanceZ++;
+                    }
+                    distanceY++;
+                }
+                distanceX++;
+            }
 
             TriangleBuilder[] ts;
             NumTris = ChunkHandler.ReadCurrentTriangleData(out ts);
