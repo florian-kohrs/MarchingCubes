@@ -337,8 +337,6 @@ namespace MarchingCubes
             //    }
             //    distanceX++;
             //}
-            entities = new HashSet<MarchingCubeEntity>();
-            cubeEntities = new MarchingCubeEntity[chunkSize, chunkSize, chunkSize];
 
             TriangleBuilder[] ts;
             NumTris = ChunkHandler.ReadCurrentTriangleData(out ts);
@@ -556,6 +554,7 @@ namespace MarchingCubes
                 Vector3Int offset = ChunkSize * neighbourDirs[i];
                 Vector3Int newChunkPos = AnchorPos + offset;
                 //TODO: Get empty chunk first, only request actual noise when noise values change
+                //!TODO: When requesting a nonexisting chunk instead of create -> edit request modified noise and only build that
                 if (ChunkHandler.TryGetOrCreateChunkAt(newChunkPos, out chunk))
                 {
                     if (chunk is IMarchingCubeInteractableChunk threadedChunk)

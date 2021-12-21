@@ -341,7 +341,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_UsePipelineSettings: 0
 --- !u!1 &341300147
 GameObject:
   m_ObjectHideFlags: 0
@@ -593,27 +592,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_RenderShadows: 1
-  m_RequiresDepthTextureOption: 2
-  m_RequiresOpaqueTextureOption: 2
-  m_CameraType: 0
-  m_Cameras: []
-  m_RendererIndex: -1
-  m_VolumeLayerMask:
-    serializedVersion: 2
-    m_Bits: 1
-  m_VolumeTrigger: {fileID: 0}
-  m_VolumeFrameworkUpdateModeOption: 2
-  m_RenderPostProcessing: 0
-  m_Antialiasing: 0
-  m_AntialiasingQuality: 2
-  m_StopNaN: 0
-  m_Dithering: 0
-  m_ClearDepth: 1
-  m_AllowXRRendering: 1
-  m_RequiresDepthTexture: 0
-  m_RequiresColorTexture: 0
-  m_Version: 2
 --- !u!114 &807077759
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -895,7 +873,7 @@ MonoBehaviour:
   dontSaveScriptValues: 0
   blockAroundPlayer: 40
   marshShader: {fileID: 7200000, guid: 85821faa1826fb64b8a447b36cf4fae9, type: 3}
-  rebuildShader: {fileID: 7200000, guid: b1411f2c4106df340b56fc9e4c44c25e, type: 3}
+  rebuildShader: {fileID: 7200000, guid: 80bf3eea68e1c5245ad28526c9610cb6, type: 3}
   noiseOffset: {x: 0, y: 0, z: 0}
   bioms:
   - {fileID: 11400000, guid: e570a0f1c7e1b584484b270a87f291ed, type: 2}
@@ -1029,7 +1007,7 @@ MonoBehaviour:
   chunkMaterial: {fileID: 2100000, guid: 97d2f9aa8d16b8241a90494b8d616c04, type: 2}
   surfaceLevel: 0.511
   player: {fileID: 1779183453}
-  buildAroundDistance: 4000
+  buildAroundDistance: 400
   minSteepness: 11
   maxSteepness: 45
   grass: {fileID: 2124858347}
@@ -1056,7 +1034,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1125545286}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 76e2bdfbd44892348a426b99b226067a, type: 3}
   m_Name: 
