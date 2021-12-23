@@ -272,24 +272,27 @@ namespace MarchingCubes
             if (editedNoiseCount > 0)
             {
                 StoreNoiseArray();
-                RebuildFromNoiseAroundOnGPU(radius, posX, posY, posZ, startX, startY,startZ);
+                RebuildFromNoiseAroundOnGPU(radius, new Vector3(offsetX,offsetY,offsetZ), posX, posY, posZ, startX, startY,startZ);
             }
         }
 
-        protected void RebuildFromNoiseAroundOnGPU(int radius, int posX, int posY, int posZ, int startX, int startY, int startZ)
+        protected void RebuildFromNoiseAroundOnGPU(int radius, Vector3 offset, int posX, int posY, int posZ, int startX, int startY, int startZ)
         {
 
             float marchDistance = Vector3.one.magnitude + radius + 1;
             float marchSquare = marchDistance * marchDistance;
             int ceilMarchDistance = Mathf.CeilToInt(marchDistance);
 
-            Vector3 positionOffset = AnchorPos - new Vector3Int(startX, startY, startZ);
+            Vector3 editPoint = offset + new Vector3(posX, posY, posZ);
 
             radius += 1;
-            Vector3Int start = new Vector3Int(posX - radius, posY - radius, posZ - radius);
+            Vector3 start = new Vector3(
+                Mathf.Max(0,posX - radius), 
+                Mathf.Max(0,posY - radius),
+                Mathf.Max(0,posZ - radius));
             int voxelMinus = chunkSize - 1;
             Vector3 end = new Vector3(
-                Mathf.Min(voxelMinus, start.x + ceilMarchDistance),
+                Mathf.Min(voxelMinus, start.x + ceilMarchDistance /*-1*/),
                 Mathf.Min(voxelMinus, start.y + ceilMarchDistance),
                 Mathf.Min(voxelMinus, start.z + ceilMarchDistance));
 
@@ -297,26 +300,33 @@ namespace MarchingCubes
             int endY = (int)end.y;
             int endZ = (int)end.z;
 
-            rebuildShader.SetVector("pos", new Vector4(posX, posY, posZ, 0));
-            rebuildShader.SetVector("start", new Vector4(start.x,start.y,start.z,0));
+            Vector3Int threadsPerAxis = new Vector3Int(
+               Mathf.CeilToInt((endX - startX) / REBUILD_SHADER_THREAD_GROUP_SIZE),
+               Mathf.CeilToInt((endY - startY) / REBUILD_SHADER_THREAD_GROUP_SIZE),
+               Mathf.CeilToInt((endZ - startZ) / REBUILD_SHADER_THREAD_GROUP_SIZE)
+               );
+
+            if (threadsPerAxis.x <= 0 && threadsPerAxis.y <= 0 && threadsPerAxis.z <= 0)
+            {
+                return;
+            }
+
+
+            rebuildShader.SetVector("editPoint", editPoint);
+            rebuildShader.SetVector("start", start);
             rebuildShader.SetVector("end", end);
             rebuildShader.SetVector("anchor", new Vector4(AnchorPos.x, AnchorPos.y, AnchorPos.z, 0));
             rebuildShader.SetInt("numPointsPerAxis", pointsPerAxis);
-            rebuildShader.SetInt("spacing", 1);
+            rebuildShader.SetFloat("spacing", 1);
             rebuildNoiseBuffer.SetData(Points);
             rebuildShader.SetFloat("sqrRebuildRadius", marchSquare);
             rebuildTriResult.SetCounterValue(0);
 
-            Vector3Int threadsPerAxis = new Vector3Int(
-                Mathf.CeilToInt((endX - startX) / REBUILD_SHADER_THREAD_GROUP_SIZE),
-                Mathf.CeilToInt((endY - startY) / REBUILD_SHADER_THREAD_GROUP_SIZE),
-                Mathf.CeilToInt((endZ - startZ) / REBUILD_SHADER_THREAD_GROUP_SIZE)
-                );
-
+           
             rebuildShader.Dispatch(0, threadsPerAxis.x, threadsPerAxis.y, threadsPerAxis.z);
 
 
-            float distanceX = startX - posX;
+            float distanceX = startX - posX + offset.x;
             for (int x = startX; x <= endX; x++)
             {
                 int distanceY = startY - posY;
@@ -347,7 +357,7 @@ namespace MarchingCubes
             }
 
             TriangleBuilder[] ts;
-            NumTris = ChunkHandler.ReadCurrentTriangleData(out ts);
+            NumTris += ChunkHandler.ReadCurrentTriangleData(out ts);
 
             AddFromTriangleArray(ts);
 

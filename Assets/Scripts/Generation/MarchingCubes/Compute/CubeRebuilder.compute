@@ -76,15 +76,15 @@ float4 GetHeightDataFrom(int x, int y, int z)
 [numthreads(numThreads, numThreads, numThreads)]
 void CubeRebuilder(int3 id : SV_DispatchThreadID)
 {
-	float3 localRebuildPos = id + start; 
+	id = id + (int3)start; 
 	// Stop one point before the end because voxel includes neighbouring points
-	if (localRebuildPos.x < 0 || localRebuildPos.x >= end.x
-		|| localRebuildPos.y < 0 || localRebuildPos.y >= end.y 
-		||  localRebuildPos.z < 0 || localRebuildPos.z >= end.z)
+	if (id.x < 0 || id.x >= end.x
+		|| id.y < 0 || id.y >= end.y 
+		||  id.z < 0 || id.z >= end.z)
 	{
 		return;
 	}
-	float3 dist = localRebuildPos - editPoint;
+	float3 dist = id - editPoint;
 	float sqrLength = dist.x * dist.x + dist.y * dist.y + dist.z * dist.z;
 	if(sqrLength > sqrRebuildRadius)
 	{
@@ -169,7 +169,7 @@ void CubeRebuilder(int3 id : SV_DispatchThreadID)
 		int colorB = (invLerp * steepColor.z + (1 - invLerp) * flatColor.z);
 		
 		tri.colorAndSteepness = zipData((int)angleFromCenter, colorB, colorG, colorR);
-		//tri.colorAndSteepness = 0;
+		//tri.colorAndSteepness = zipData(0,0,0, spacing);
 		triangles.Append(tri);
 	}
 
