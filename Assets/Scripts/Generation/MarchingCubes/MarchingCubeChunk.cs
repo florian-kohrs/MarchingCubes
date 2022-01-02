@@ -155,7 +155,7 @@ namespace MarchingCubes
             }
         }
 
-        protected void AddFromTriangleArray(TriangleBuilder[] ts)
+        protected void AddFromTriangleArray(TriangleBuilder[] ts, Vector3 origin, float distance)
         {
             int count = ts.Length;
             int x, y, z;
@@ -171,6 +171,11 @@ namespace MarchingCubes
                     cube = CreateAndAddEntityAt(x, y, z, ts[i].triIndex);
                     SetNeighbourAt(x, y, z);
                 }
+                //else
+                //{
+                //    Debug.Log($"didint remove {x} {y} {z} with distance {(new Vector3(x,y,z)-origin).magnitude} with allowed distance {distance}." +
+                //        $"triangle has {TriangulationTable.triangulationSizes[ts[i].triIndex]}");
+                //}
                 PathTriangle pathTri = new PathTriangle(cube, in ts[i].tri, ts[i].color32);
                 cube.AddTriangle(pathTri);
             }
@@ -272,11 +277,12 @@ namespace MarchingCubes
             if (editedNoiseCount > 0)
             {
                 StoreNoiseArray();
-                RebuildFromNoiseAroundOnGPU(radius, new Vector3(offsetX,offsetY,offsetZ), posX, posY, posZ, startX, startY,startZ);
+                //RebuildFromNoiseAround(radius, posX, posY, posZ, startX, startY, startZ, endX, endY, endZ);
+                RebuildFromNoiseAroundOnGPU(radius, new Vector3(offsetX,offsetY,offsetZ), posX, posY, posZ);
             }
         }
 
-        protected void RebuildFromNoiseAroundOnGPU(int radius, Vector3 offset, int posX, int posY, int posZ, int startX, int startY, int startZ)
+        protected void RebuildFromNoiseAroundOnGPU(int radius, Vector3 offset, int posX, int posY, int posZ)
         {
 
             float marchDistance = Vector3.one.magnitude + radius + 1;
@@ -296,19 +302,22 @@ namespace MarchingCubes
                 Mathf.Min(voxelMinus, start.y + ceilMarchDistance),
                 Mathf.Min(voxelMinus, start.z + ceilMarchDistance));
 
+            int startX = (int)start.x;
+            int startY = (int)start.y;
+            int startZ = (int)start.z;
             int endX = (int)end.x;
             int endY = (int)end.y;
             int endZ = (int)end.z;
 
             Vector3Int threadsPerAxis = new Vector3Int(
-               Mathf.CeilToInt((endX - startX) / REBUILD_SHADER_THREAD_GROUP_SIZE),
-               Mathf.CeilToInt((endY - startY) / REBUILD_SHADER_THREAD_GROUP_SIZE),
-               Mathf.CeilToInt((endZ - startZ) / REBUILD_SHADER_THREAD_GROUP_SIZE)
+               Mathf.CeilToInt((endX - start.x) / REBUILD_SHADER_THREAD_GROUP_SIZE),
+               Mathf.CeilToInt((endY - start.y) / REBUILD_SHADER_THREAD_GROUP_SIZE),
+               Mathf.CeilToInt((endZ - start.z) / REBUILD_SHADER_THREAD_GROUP_SIZE)
                );
 
-            if (threadsPerAxis.x <= 0 && threadsPerAxis.y <= 0 && threadsPerAxis.z <= 0)
+            if (threadsPerAxis.x <= 0 || threadsPerAxis.y <= 0 || threadsPerAxis.z <= 0)
             {
-                return;
+                throw new Exception("Shouldnt have entered method");
             }
 
 
@@ -326,18 +335,18 @@ namespace MarchingCubes
             rebuildShader.Dispatch(0, threadsPerAxis.x, threadsPerAxis.y, threadsPerAxis.z);
 
 
-            float distanceX = startX - posX + offset.x;
+            float distanceX = startX - editPoint.x;
+            float xx = distanceX * distanceX;
             for (int x = startX; x <= endX; x++)
             {
-                int distanceY = startY - posY;
-                float xx = distanceX * distanceX;
+                float distanceY = startY - editPoint.y;
+                float yy = distanceY * distanceY;
                 for (int y = startY; y <= endY; y++)
                 {
-                    int distanceZ = startZ - posZ;
-                    int yy = distanceY * distanceY;
+                    float distanceZ = startZ - editPoint.z;
+                    float zz = distanceZ * distanceZ;
                     for (int z = startZ; z <= endZ; z++)
                     {
-                        int zz = distanceZ * distanceZ;
                         float sqrDis = xx + yy + zz;
                         if (sqrDis <= marchSquare)
                         {
@@ -348,18 +357,20 @@ namespace MarchingCubes
                                 RemoveEntityAt(x, y, z, cube);
                             }
                         }
-
                         distanceZ++;
+                        zz = distanceZ * distanceZ;
                     }
                     distanceY++;
+                    yy = distanceY * distanceY;
                 }
                 distanceX++;
+                xx = distanceX * distanceX;
             }
 
             TriangleBuilder[] ts;
             NumTris += ChunkHandler.ReadCurrentTriangleData(out ts);
 
-            AddFromTriangleArray(ts);
+            AddFromTriangleArray(ts, editPoint, marchDistance);
 
             if (!IsEmpty)
             {

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace MarchingCubes
@@ -11,6 +12,12 @@ namespace MarchingCubes
 
         // Values from http://paulbourke.net/geometry/polygonise/
 
+        static TriangulationTable()
+        {
+            triangulationSizes = triangulation.Select(xs => xs.Length / 3).ToArray();
+        }
+
+        public static readonly int[] triangulationSizes;
 
         public static readonly int[][] triangulation = new List<int[]>(255)
         {

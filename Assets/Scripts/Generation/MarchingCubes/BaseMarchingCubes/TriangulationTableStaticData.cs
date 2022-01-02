@@ -629,15 +629,6 @@ public class TriangulationTableStaticData : MonoBehaviour
         }
     }
 
-    public static int ActiveTrianglesAt(int i)
-    {
-        int result = 0;
-        for (; result < 15 && TriangulationTable.triangulation[i][result] >= 0; result += 3)
-        {
-        }
-        return result;
-    }
-
 
     protected static void AddInternNeighbour(int first, int snd, Vector2Int firstEdge, Vector2Int sndEdge, List<IndexNeighbourPair> addHere)
     {
