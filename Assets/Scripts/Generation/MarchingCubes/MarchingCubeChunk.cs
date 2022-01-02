@@ -276,9 +276,13 @@ namespace MarchingCubes
 
             if (editedNoiseCount > 0)
             {
+                System.Diagnostics.Stopwatch w = new System.Diagnostics.Stopwatch();
+                w.Start();
                 StoreNoiseArray();
+                RebuildFromNoiseAroundOnGPU(radius, new Vector3(offsetX, offsetY, offsetZ), posX, posY, posZ);
                 //RebuildFromNoiseAround(radius, posX, posY, posZ, startX, startY, startZ, endX, endY, endZ);
-                RebuildFromNoiseAroundOnGPU(radius, new Vector3(offsetX,offsetY,offsetZ), posX, posY, posZ);
+                w.Stop();
+                Debug.Log("Time for rebuild: " + w.Elapsed.TotalMilliseconds);
             }
         }
 

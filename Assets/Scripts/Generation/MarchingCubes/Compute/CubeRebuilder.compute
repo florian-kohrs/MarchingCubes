@@ -78,9 +78,9 @@ void CubeRebuilder(int3 id : SV_DispatchThreadID)
 {
 	id = id + (int3)start; 
 	// Stop one point before the end because voxel includes neighbouring points
-	if (id.x < 0 || id.x >= end.x
-		|| id.y < 0 || id.y >= end.y 
-		||  id.z < 0 || id.z >= end.z)
+	if (id.x < 0 || id.x > end.x
+		|| id.y < 0 || id.y > end.y 
+		||  id.z < 0 || id.z > end.z)
 	{
 		return;
 	}
