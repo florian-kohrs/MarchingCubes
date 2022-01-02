@@ -12,7 +12,7 @@ namespace MarchingCubes
         {
             this.cubeFinder = cubeFinder;
             this.triangulationIndex = triangulationIndex;
-            int size = TriangulationTable.triangulation[triangulationIndex].Length / 3;
+            int size = TriangulationTable.triangulationSizes[triangulationIndex];
             triangles = new PathTriangle[size];
         }
 
