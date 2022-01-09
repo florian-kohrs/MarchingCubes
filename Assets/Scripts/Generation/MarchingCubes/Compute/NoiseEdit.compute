@@ -1,0 +1,46 @@
+﻿#pragma kernel NoiseEdit
+
+#define NUM_POINTS_PER_AXIS 33
+
+static const int numThreads = 4;
+
+//Envirenment settings
+RWStructuredBuffer<float> points;
+
+float3 clickPoint;
+int3 start;
+int3 end;
+float delta;
+float maxDistance;
+
+
+int indexFromCoord(uint x, uint y, uint z) {
+    return z * NUM_POINTS_PER_AXIS * NUM_POINTS_PER_AXIS + y * NUM_POINTS_PER_AXIS + x;
+}
+
+[numthreads(numThreads,numThreads,numThreads)]
+void NoiseEdit (int3 id : SV_DispatchThreadID)
+{
+    id += start;
+    if (id.x > end.x || id.y > end.y || id.z > end.z) {
+        return;
+    }
+    float3 dir = clickPoint - id;
+    float sqrDist = dir.x * dir.x + dir.y * dir.y + dir.z * dir.z;
+    //TODO: Check if removing brachning is faster
+    if(sqrDist >= maxDistance * maxDistance) {
+        return;
+    }
+    float factor = 1 - (sqrt(sqrDist) / maxDistance);
+    float diff = delta * factor;
+    int index = indexFromCoord(id.x, id.y, id.z);
+    float newNoise = points[index] + diff;
+
+    if (newNoise < -100)
+        newNoise = -100;
+    else if (newNoise > 100)
+        newNoise = 100;
+
+    points[index] = newNoise;
+
+}

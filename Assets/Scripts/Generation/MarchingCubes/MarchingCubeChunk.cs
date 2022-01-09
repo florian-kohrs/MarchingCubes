@@ -248,7 +248,7 @@ namespace MarchingCubes
                     {
                         float sqrDistance = distanceX * distanceX + distanceY * distanceY + distanceZ * distanceZ;
 
-                        if (sqrDistance <= sqrEdit)
+                        if (sqrDistance < sqrEdit)
                         {
                             float dis = Mathf.Sqrt(sqrDistance);
                             float factor = 1 - (dis / factorMaxDistance);
