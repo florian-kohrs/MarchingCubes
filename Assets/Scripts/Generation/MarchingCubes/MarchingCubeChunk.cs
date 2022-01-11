@@ -254,13 +254,13 @@ namespace MarchingCubes
                 {
                     cubeEntities = new MarchingCubeEntity[ChunkSize, ChunkSize, ChunkSize];
                 }
-                System.Diagnostics.Stopwatch w = new System.Diagnostics.Stopwatch();
-                w.Start();
+                //System.Diagnostics.Stopwatch w = new System.Diagnostics.Stopwatch();
+                //w.Start();
                 StoreNoiseArray();
-                //RebuildFromNoiseAroundOnGPU(radius, offset, clickedIndex);
+                //RebuildFromNoiseAroundOnGPU(start, end, clickedIndex, radius);
                 RebuildFromNoiseAround(start, end, clickedIndex, radius);
-                w.Stop();
-                Debug.Log("Time for rebuild only: " + w.Elapsed.TotalMilliseconds);
+                //w.Stop();
+                //Debug.Log("Time for rebuild only: " + w.Elapsed.TotalMilliseconds);
             }
         }
 
@@ -367,7 +367,6 @@ namespace MarchingCubes
             int startY = Mathf.Max(0, start.y - 1);
             int startZ = Mathf.Max(0, start.z - 1);
 
-            int editPointX = clickedIndex.x;
             int editPointY = clickedIndex.y;
             int editPointZ = clickedIndex.z;
 
@@ -375,7 +374,7 @@ namespace MarchingCubes
             int endY = Mathf.Min(voxelMinus, end.y + 1);
             int endZ = Mathf.Min(voxelMinus, end.z + 1);
 
-            float distanceX = startX - editPointX;
+            float distanceX = startX - clickedIndex.x;
             float xx = distanceX * distanceX;
             for (int x = startX; x <= endX; x++)
             {
