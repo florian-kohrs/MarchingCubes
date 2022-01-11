@@ -20,7 +20,7 @@ namespace MarchingCubes
         /// <summary>
         /// This should be the same value as in the compute shader "MarchingCubes"
         /// </summary>
-        protected const int threadGroupSize = 4;
+        protected const float threadGroupSize = 4;
 
         public const int MIN_CHUNK_SIZE = 8;
 
@@ -63,6 +63,8 @@ namespace MarchingCubes
         public ComputeShader marshShader;
 
         public ComputeShader rebuildShader;
+
+        public ComputeShader noiseEditShader;
 
 
         [Header("Voxel Settings")]
@@ -142,7 +144,7 @@ namespace MarchingCubes
         public int minSteepness = 15;
         public int maxSteepness = 50;
 
-        protected Vector3 startPos; 
+        protected Vector3 startPos;
         protected float maxSqrChunkDistance;
 
         protected BinaryHeap<float, Vector3Int> closestNeighbours = new BinaryHeap<float, Vector3Int>(float.MinValue, float.MaxValue, 200);
@@ -170,11 +172,12 @@ namespace MarchingCubes
 
             ApplyShaderProperties(marshShader);
             ApplyShaderProperties(rebuildShader);
+            noiseEditShader.SetBuffer(0, "points", pointsBuffer);
 
             watch.Start();
             buildAroundSqrDistance = (long)buildAroundDistance * buildAroundDistance;
             startPos = player.position;
-            
+
             IMarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
             maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
 
@@ -318,7 +321,7 @@ namespace MarchingCubes
             channeledChunks--;
 
             chunk.SetChunkOnMainThread();
-            if(chunk.IsEmpty)
+            if (chunk.IsEmpty)
             {
                 chunk.DestroyChunk();
             }
@@ -406,6 +409,37 @@ namespace MarchingCubes
             return chunk != null;
         }
 
+        /// <summary>
+        /// returns true if the chunk was created
+        /// </summary>
+        /// <param name="p"></param>
+        /// <param name="editPoint"></param>
+        /// <param name="start"></param>
+        /// <param name="end"></param>
+        /// <param name="delta"></param>
+        /// <param name="maxDistance"></param>
+        /// <param name="chunk"></param>
+        /// <returns></returns>
+        public bool CreateChunkWithNoiseEdit(Vector3Int p, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance, out IMarchingCubeChunk chunk)
+        {
+            bool createdChunk = false;
+            bool hasChunkAtPosition = TryGetChunkAtPosition(p, out chunk);
+
+            if(!hasChunkAtPosition || !chunk.HasStarted)
+            {
+                if(chunk != null)
+                {
+                    chunk.DestroyChunk();
+                }
+                chunk = CreateChunkWithProperties(p, PositionToChunkGroupCoord(p), 0, DEFAULT_CHUNK_SIZE_POWER, false, false, 
+                    ()=> { 
+                        ApplyNoiseEditing(33, editPoint, start, end, delta, maxDistance); 
+                    });
+                createdChunk = true;
+            }
+            return createdChunk;
+        }
+
         protected IMarchingCubeChunk CreateChunkAt(Vector3Int p, bool allowOverride = false)
         {
             return CreateChunkAt(p, PositionToChunkGroupCoord(p), allowOverride);
@@ -423,10 +457,10 @@ namespace MarchingCubes
             return CreateChunkWithProperties(VectorExtension.ToVector3Int(pos), coord, lodPower, chunkSizePower, careForNeighbours, allowOverride);
         }
 
-        protected IMarchingCubeChunk CreateChunkWithProperties(Vector3Int pos, Vector3Int coord, int lodPower, int chunkSizePower, bool careForNeighbours, bool allowOverride)
+        protected IMarchingCubeChunk CreateChunkWithProperties(Vector3Int pos, Vector3Int coord, int lodPower, int chunkSizePower, bool careForNeighbours, bool allowOverride, Action WorkOnNoise = null)
         {
             IMarchingCubeChunk chunk = GetThreadedChunkObjectAt(pos, coord, lodPower, chunkSizePower, allowOverride);
-            BuildChunk(chunk, careForNeighbours);
+            BuildChunk(chunk, careForNeighbours, WorkOnNoise);
             return chunk;
         }
 
@@ -686,9 +720,9 @@ namespace MarchingCubes
         //}
 
         //TODO:Remove keep points
-        protected void BuildChunk(IMarchingCubeChunk chunk, bool careForNeighbours)
+        protected void BuildChunk(IMarchingCubeChunk chunk, bool careForNeighbours, Action WorkOnNoise = null)
         {
-            TriangleChunkHeap ts = DispatchAndGetShaderData(chunk, careForNeighbours);
+            TriangleChunkHeap ts = DispatchAndGetShaderData(chunk, careForNeighbours, WorkOnNoise);
             chunk.InitializeWithMeshData(ts);
         }
 
@@ -705,6 +739,33 @@ namespace MarchingCubes
         public float[] RequestNoiseForChunk(IMarchingCubeChunk chunk)
         {
             return RequestNoiseFor(chunk.ChunkSizePower, chunk.PointsPerAxis, chunk.LOD, chunk.AnchorPos);
+        }
+
+        public float[] RequestNoiseAndEditAtPosition(IMarchingCubeChunk chunk, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance)
+        {
+            int pointsPerAxis = chunk.PointsPerAxis;
+            float[] result = new float[pointsPerAxis * pointsPerAxis * pointsPerAxis];
+            GenerateNoise(chunk.ChunkSizePower, pointsPerAxis, chunk.LOD, chunk.AnchorPos);
+            ApplyNoiseEditing(pointsPerAxis, editPoint, start, end, delta, maxDistance);
+            pointsBuffer.GetData(result, 0, 0, result.Length);
+            Store(chunk.AnchorPos, result);
+            return result;
+        }
+
+        private void ApplyNoiseEditing(int pointsPerAxis, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance)
+        {
+            SetNoiseEditProperties(editPoint, start, end, delta, maxDistance);
+            int threadsPerAxis = Mathf.CeilToInt(pointsPerAxis / threadGroupSize);
+            noiseEditShader.Dispatch(0, threadsPerAxis, threadsPerAxis, threadsPerAxis);
+        }
+
+        private void SetNoiseEditProperties(Vector3 editPoint, Vector3 start, Vector3 end, float delta, float maxDistance)
+        {
+            noiseEditShader.SetVector("clickPoint", editPoint);
+            noiseEditShader.SetVector("start", start);
+            noiseEditShader.SetVector("end", end);
+            noiseEditShader.SetFloat("delta", delta);
+            noiseEditShader.SetFloat("maxDistance", maxDistance);
         }
 
         public float[] RequestNoiseFor(int sizePow, int pointsPerAxis, int LOD, Vector3Int anchor)
@@ -797,7 +858,7 @@ namespace MarchingCubes
         int numTris;
         //TODO: Inform about Mesh subset and mesh set vertex buffer
         //Subset may be used to only change parts of the mesh -> dont need multiple mesh displayers with submeshes?
-        protected TriangleChunkHeap DispatchAndGetShaderData(IMarchingCubeChunk chunk, bool careForNeighbours)
+        protected TriangleChunkHeap DispatchAndGetShaderData(IMarchingCubeChunk chunk, bool careForNeighbours, Action WorkOnNoise = null)
         {
             int lod = chunk.LOD;
             int chunkSize = chunk.ChunkSize;
@@ -810,6 +871,13 @@ namespace MarchingCubes
             int pointsVolume = pointsPerAxis * pointsPerAxis * pointsPerAxis;
 
             GenerateNoise(chunk.ChunkSizePower, pointsPerAxis, lod, chunk.AnchorPos);
+
+            bool storeNoise = false;
+            if (WorkOnNoise != null)
+            {
+                WorkOnNoise?.Invoke();
+                storeNoise = true;
+            }
 
             ComputeCubesFromNoise(chunk.ChunkSize, chunk.AnchorPos, lod);
 
@@ -832,9 +900,9 @@ namespace MarchingCubes
             //    grass.ComputeGrassFor(new Bounds(chunk.CenterPos, Vector3.one * chunk.ChunkSize), numTris, triangleBuffer);
             //}
 
-            if ((numTris == 0 && !hasFoundInitialChunk) || careForNeighbours)
+            if (storeNoise || (numTris == 0 && !hasFoundInitialChunk) || careForNeighbours)
             {
-                if (careForNeighbours)
+                if (careForNeighbours || storeNoise)
                 {
                     pointsArray = new float[pointsVolume];
                 }
@@ -844,6 +912,10 @@ namespace MarchingCubes
                 }
                 pointsBuffer.GetData(pointsArray, 0, 0, pointsArray.Length);
                 chunk.Points = pointsArray;
+                if(storeNoise)
+                {
+                    Store(chunk.AnchorPos, pointsArray);
+                }
             }
             return new TriangleChunkHeap(tris, 0, numTris);
         }
@@ -921,7 +993,7 @@ namespace MarchingCubes
             else if (invLerp > 1)
                 invLerp = 1;
 
-            return new Color32(15,150,15,(byte)steepness);   
+            return new Color32(15, 150, 15, (byte)steepness);
         }
 
         public int GetFeasibleReducedLodForChunk(IMarchingCubeChunk c, int toLodPower)
@@ -1045,7 +1117,7 @@ namespace MarchingCubes
             {
                 chunk.DestroyChunk();
             }
-            else if(toLodPower == DEACTIVATE_CHUNK_LOD)
+            else if (toLodPower == DEACTIVATE_CHUNK_LOD)
             {
                 chunk.ResetChunk();
             }
@@ -1171,6 +1243,7 @@ namespace MarchingCubes
             float distance = (startPos - pos).magnitude;
             lodPower = GetLodPower(distance);
             sizePower = GetSizePowerForChunkAtDistance(distance);
+            //TODO: check this
             careForNeighbours = GetLodPower(distance + sizePower) > lodPower;
         }
 
@@ -1252,5 +1325,6 @@ namespace MarchingCubes
             edits.vals = noise;
         }
 
+      
     }
 }

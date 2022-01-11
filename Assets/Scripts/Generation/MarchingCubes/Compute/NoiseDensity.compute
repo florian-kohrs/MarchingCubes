@@ -1,4 +1,4 @@
-﻿#pragma kernel Density
+﻿#pragma kernel NoiseEdit
 
 #include "/Includes/Bioms.compute"
 
@@ -35,8 +35,9 @@ int indexFromMipMap(uint x, uint y, uint z) {
 }
 
 
+//TODO: Compare speed to only have a single shader to do density and edit afterwards instead of pipeping
 [numthreads(numThreads,numThreads,numThreads)]
-void Density (int3 id : SV_DispatchThreadID)
+void NoiseEdit(int3 id : SV_DispatchThreadID)
 {
     if (id.x >= numPointsPerAxis || id.y >= numPointsPerAxis || id.z >= numPointsPerAxis) {
         return;

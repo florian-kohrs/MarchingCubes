@@ -48,6 +48,8 @@ namespace MarchingCubes
 
         Material Material { set; }
 
+        bool HasPoints { get; }
+
         float[] Points { get; set; }
 
         int PointsPerAxis { get; }

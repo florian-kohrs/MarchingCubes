@@ -18,7 +18,7 @@ namespace MarchingCubes
 
         MarchingCubeEntity GetEntityAt(int x, int y, int z);
 
-        void RebuildAround(float offsetX, float offsetY, float offsetZ, int radius, int posX, int posY, int posZ, float delta);
+        void RebuildAround(Vector3 offset, int radius, Vector3Int clickedIndex, float delta);
 
 
     }

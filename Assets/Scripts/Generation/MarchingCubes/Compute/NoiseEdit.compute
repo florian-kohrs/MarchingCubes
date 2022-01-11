@@ -8,8 +8,8 @@ static const int numThreads = 4;
 RWStructuredBuffer<float> points;
 
 float3 clickPoint;
-int3 start;
-int3 end;
+float3 start;
+float3 end;
 float delta;
 float maxDistance;
 
@@ -42,5 +42,16 @@ void NoiseEdit (int3 id : SV_DispatchThreadID)
         newNoise = 100;
 
     points[index] = newNoise;
-
+    //points[0] = clickPoint.x;
+    //points[0] = 0;
+    //points[1] = clickPoint.y;
+    //points[2] = clickPoint.z;
+    //points[3] = start.z;
+    //points[4] = start.z;
+    //points[5] = start.z;
+    //points[6] = end.z;
+    //points[7] = end.z;
+    //points[8] = end.z;
+    //points[9] = delta;
+    //points[10] = maxDistance;
 }

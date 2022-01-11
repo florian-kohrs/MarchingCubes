@@ -250,6 +250,8 @@ namespace MarchingCubes
 
         public virtual bool UseCollider => false;
 
+        public bool HasPoints => points != null;
+
 
         #endregion properties
 
@@ -343,9 +345,6 @@ namespace MarchingCubes
         #endregion async chunk building
 
 
-
-
-
         public virtual void InitializeWithMeshData(TriangleChunkHeap tris)
         {
             HasStarted = true;
@@ -362,6 +361,7 @@ namespace MarchingCubes
             {
                 RebuildFromTriangleArray(tris);
 
+                //TODO: Set always to null?
                 points = null;
             }
 
