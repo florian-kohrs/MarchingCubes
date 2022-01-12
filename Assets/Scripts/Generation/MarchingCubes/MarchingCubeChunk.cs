@@ -213,7 +213,7 @@ namespace MarchingCubes
         protected static object rebuildListLock = new object();
 
 
-        protected void GetNoiseEditData(Vector3 offset, int radius, Vector3Int clickedIndex, float delta, out Vector3Int start, out Vector3Int end)
+        protected void GetNoiseEditData(Vector3 offset, int radius, Vector3Int clickedIndex, out Vector3Int start, out Vector3Int end)
         {
             int ppMinus = pointsPerAxis - 1;
 
@@ -236,7 +236,7 @@ namespace MarchingCubes
             ///define loop ranges
             Vector3Int start;
             Vector3Int end;
-            GetNoiseEditData(offset, radius, VectorExtension.ToVector3Int(clickedIndex - offset), delta, out start, out end);
+            GetNoiseEditData(offset, radius, VectorExtension.ToVector3Int(clickedIndex - offset), out start, out end);
 
             bool rebuildChunk;
 
@@ -341,15 +341,10 @@ namespace MarchingCubes
                 Mathf.Min(voxelMinus, end.z + 1));
 
             Vector3Int threadsPerAxis = new Vector3Int(
-               Mathf.CeilToInt((endVec.x - startVec.x) / REBUILD_SHADER_THREAD_GROUP_SIZE),
-               Mathf.CeilToInt((endVec.y - startVec.y) / REBUILD_SHADER_THREAD_GROUP_SIZE),
-               Mathf.CeilToInt((endVec.z - startVec.z) / REBUILD_SHADER_THREAD_GROUP_SIZE)
+               Mathf.CeilToInt((1 + (endVec.x - startVec.x)) / REBUILD_SHADER_THREAD_GROUP_SIZE),
+               Mathf.CeilToInt((1 + (endVec.y - startVec.y)) / REBUILD_SHADER_THREAD_GROUP_SIZE),
+               Mathf.CeilToInt((1 + (endVec.z - startVec.z)) / REBUILD_SHADER_THREAD_GROUP_SIZE)
                );
-
-            if (threadsPerAxis.x <= 0 || threadsPerAxis.y <= 0 || threadsPerAxis.z <= 0)
-            {
-                throw new Exception("Shouldnt have entered method");
-            }
 
             rebuildShader.SetVector("editPoint", new Vector4(clickedIndex.x, clickedIndex.y, clickedIndex.z,0));
             rebuildShader.SetVector("start", startVec);
@@ -363,16 +358,16 @@ namespace MarchingCubes
 
             rebuildShader.Dispatch(0, threadsPerAxis.x, threadsPerAxis.y, threadsPerAxis.z);
 
-            int startX = Mathf.Max(0, start.x - 1);
-            int startY = Mathf.Max(0, start.y - 1);
-            int startZ = Mathf.Max(0, start.z - 1);
+            int startX = (int)startVec.x;
+            int startY = (int)startVec.y;
+            int startZ = (int)startVec.z;
 
             int editPointY = clickedIndex.y;
             int editPointZ = clickedIndex.z;
 
-            int endX = Mathf.Min(voxelMinus, end.x + 1);
-            int endY = Mathf.Min(voxelMinus, end.y + 1);
-            int endZ = Mathf.Min(voxelMinus, end.z + 1);
+            int endX = (int)endVec.x;
+            int endY = (int)endVec.y;
+            int endZ = (int)endVec.z;
 
             float distanceX = startX - clickedIndex.x;
             float xx = distanceX * distanceX;
@@ -640,7 +635,7 @@ namespace MarchingCubes
                 {
                     Vector3Int start;
                     Vector3Int end;
-                    GetNoiseEditData(offset, editDistance, origin - offset, delta, out start, out end);
+                    GetNoiseEditData(offset, editDistance, origin - offset, out start, out end);
                     chunkHandler.CreateChunkWithNoiseEdit(newChunkPos, hit.point - newChunkPos, start,end, delta, editDistance, out IMarchingCubeChunk _);
                 }
             }
