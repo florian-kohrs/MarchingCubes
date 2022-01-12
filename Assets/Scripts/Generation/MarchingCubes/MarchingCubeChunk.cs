@@ -29,6 +29,8 @@ namespace MarchingCubes
         public ComputeBuffer rebuildTriResult;
         public ComputeBuffer rebuildTriCounter;
 
+        //TODO: Add for each cube entitiy index in mesh and increase next index by entitiy cube count and try to use this when rebuilding mesh
+        //TODO: Build from consume buffer
 
         public override bool UseCollider => true;
 
@@ -257,8 +259,8 @@ namespace MarchingCubes
                 //System.Diagnostics.Stopwatch w = new System.Diagnostics.Stopwatch();
                 //w.Start();
                 StoreNoiseArray();
-                //RebuildFromNoiseAroundOnGPU(start, end, clickedIndex, radius);
-                RebuildFromNoiseAround(start, end, clickedIndex, radius);
+                RebuildFromNoiseAroundOnGPU(start, end, clickedIndex, radius);
+                //RebuildFromNoiseAround(start, end, clickedIndex, radius);
                 //w.Stop();
                 //Debug.Log("Time for rebuild only: " + w.Elapsed.TotalMilliseconds);
             }
@@ -359,9 +361,7 @@ namespace MarchingCubes
             rebuildShader.SetFloat("sqrRebuildRadius", marchSquare);
             rebuildTriResult.SetCounterValue(0);
 
-           
             rebuildShader.Dispatch(0, threadsPerAxis.x, threadsPerAxis.y, threadsPerAxis.z);
-
 
             int startX = Mathf.Max(0, start.x - 1);
             int startY = Mathf.Max(0, start.y - 1);

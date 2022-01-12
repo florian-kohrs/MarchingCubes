@@ -896,6 +896,7 @@ MonoBehaviour:
   blockAroundPlayer: 40
   marshShader: {fileID: 7200000, guid: 85821faa1826fb64b8a447b36cf4fae9, type: 3}
   rebuildShader: {fileID: 7200000, guid: 80bf3eea68e1c5245ad28526c9610cb6, type: 3}
+  noiseEditShader: {fileID: 7200000, guid: d542438b314919740a681546e49cb644, type: 3}
   noiseOffset: {x: 0, y: 0, z: 0}
   bioms:
   - {fileID: 11400000, guid: e570a0f1c7e1b584484b270a87f291ed, type: 2}
@@ -1029,7 +1030,7 @@ MonoBehaviour:
   chunkMaterial: {fileID: 2100000, guid: 97d2f9aa8d16b8241a90494b8d616c04, type: 2}
   surfaceLevel: 0.511
   player: {fileID: 1779183453}
-  buildAroundDistance: 400
+  buildAroundDistance: 4000
   minSteepness: 11
   maxSteepness: 45
   grass: {fileID: 2124858347}
