@@ -100,14 +100,24 @@ void March(int3 id : SV_DispatchThreadID)
 	// The value is used to look up the edge table, which indicates which edges of the cube are cut by the isosurface.
 	int cubeIndex = 0;
 	
-	if (cubeCorners[0].w < surfaceLevel) cubeIndex |= 1;
+	cubeIndex |= (cubeCorners[0].w < surfaceLevel) * 1;
+	cubeIndex |= (cubeCorners[1].w < surfaceLevel) * 2;
+	cubeIndex |= (cubeCorners[2].w < surfaceLevel) * 4;
+	cubeIndex |= (cubeCorners[3].w < surfaceLevel) * 8;
+	cubeIndex |= (cubeCorners[4].w < surfaceLevel) * 16;
+	cubeIndex |= (cubeCorners[5].w < surfaceLevel) * 32;
+	cubeIndex |= (cubeCorners[6].w < surfaceLevel) * 64;
+	cubeIndex |= (cubeCorners[7].w < surfaceLevel) * 128;
+
+
+	/*if (cubeCorners[0].w < surfaceLevel) cubeIndex |= 1;
 	if (cubeCorners[1].w < surfaceLevel) cubeIndex |= 2;
 	if (cubeCorners[2].w < surfaceLevel) cubeIndex |= 4;
 	if (cubeCorners[3].w < surfaceLevel) cubeIndex |= 8;
 	if (cubeCorners[4].w < surfaceLevel) cubeIndex |= 16;
 	if (cubeCorners[5].w < surfaceLevel) cubeIndex |= 32;
 	if (cubeCorners[6].w < surfaceLevel) cubeIndex |= 64;
-	if (cubeCorners[7].w < surfaceLevel) cubeIndex |= 128;
+	if (cubeCorners[7].w < surfaceLevel) cubeIndex |= 128;*/
 
 	int zipedCubeData = zipData(id.x, id.y, id.z, cubeIndex);
 
