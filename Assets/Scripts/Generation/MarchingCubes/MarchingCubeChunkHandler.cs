@@ -1266,6 +1266,8 @@ namespace MarchingCubes
             var b = bioms.Select(b => new BiomColor(b.visualizationData)).ToArray();
             biomBuffer.SetData(b);
 
+            var envirenmentBioms = bioms.Select(b => b.envirenmentData).ToArray();
+
             pointBiomIndex = new ComputeBuffer(numPoints, sizeof(uint));
             pointsBuffer = new ComputeBuffer(numPoints, sizeof(float));
             savedPointBuffer = new ComputeBuffer(numPoints, sizeof(float));

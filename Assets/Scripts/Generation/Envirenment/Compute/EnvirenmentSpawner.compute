@@ -1,5 +1,6 @@
 #pragma kernel EnvirenmentSpawner
 
+#include "/Includes/BiomEnvirenment.compute"
 #include "/Includes/InstanceProperty.compute"
 #include "/Includes/Triangle.compute"
 #include "/Includes/Noise.compute"
@@ -13,7 +14,10 @@ static const float grassScale = 0.4;
 static const float grassDensitiyPerSquareMeter = 5;
 
 AppendStructuredBuffer<InstanceProperty> grassPositions;
+
 StructuredBuffer<float> points;
+RWStructuredBuffer<float> savedPoints;
+
 float3 offset;
 float boundsHeight;
 uint length;
@@ -21,6 +25,7 @@ uint length;
 
 int3 anchorPosition;
 
+//spawn trees and mark entites that can have grass then use triangles to plant grass on those
 
 /// <summary>
 /// entry above 0 means that a tree is planned. value 1-4 gives width of tree
@@ -39,9 +44,9 @@ float rand(Triangle t, float seed)
 [numthreads(threadGroupSizeX, 1, 1)]
 void EnvirenmentSpawner(uint3 id : SV_DispatchThreadID, uint groupIndex : SV_GroupIndex)
 {
-	uint3 coord = uint3(id.x % 16 % 4, id.x % 16 / 4, id.x / 16);
+	int3 coord = int3(id.x % 16 % 4, id.x % 16 / 4, id.x / 16);
 
-	//determine what to place on this cubeentity
+	int index = snoise(coord);
 
 	GroupMemoryBarrierWithGroupSync();
 

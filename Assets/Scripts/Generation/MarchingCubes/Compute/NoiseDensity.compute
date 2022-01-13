@@ -16,7 +16,7 @@ int octaves;
 
 //Envirenment settings
 RWStructuredBuffer<float> points;
-RWStructuredBuffer<float> savedPoints;
+StructuredBuffer<float> savedPoints;
 
 bool tryLoadData;
 int numPointsPerAxis;
