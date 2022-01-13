@@ -7,6 +7,8 @@
 
 static const int numThreads = 4;
 
+static const float rad = 180 / PI;
+
 struct Triangle
 {
 	float3 vertexC;
@@ -68,18 +70,10 @@ float4 GetHeightDataFrom(int x, int y, int z)
 }
 
 
-//check for speed when having 5 times as many threads on z axis one for each triangle
+//check for speed when having 5 times as many threads on z axis one for each triangle -> not better
 [numthreads(numThreads, numThreads, numThreads)]
-void March(int3 id : SV_DispatchThreadID)
+void March(uint3 id : SV_DispatchThreadID)
 {
-	// Stop one point before the end because voxel includes neighbouring points
-	// Dont need to check this since threadgroup size is always dividor of chunk size
-	//if (id.x >= numPointsPerAxis - 1 || id.y >= numPointsPerAxis - 1 || id.z >= numPointsPerAxis - 1)
-	//{
-	//	return;
-	//}
-
-	float rad = 180 / PI;
 
 	// 8 corners of the current cube
 	float4 cubeCorners[8] =
@@ -100,14 +94,25 @@ void March(int3 id : SV_DispatchThreadID)
 	// The value is used to look up the edge table, which indicates which edges of the cube are cut by the isosurface.
 	int cubeIndex = 0;
 	
-	if (cubeCorners[0].w < surfaceLevel) cubeIndex |= 1;
+	cubeIndex |= (cubeCorners[0].w < surfaceLevel) * 1;
+	cubeIndex |= (cubeCorners[1].w < surfaceLevel) * 2;
+	cubeIndex |= (cubeCorners[2].w < surfaceLevel) * 4;
+	cubeIndex |= (cubeCorners[3].w < surfaceLevel) * 8;
+	cubeIndex |= (cubeCorners[4].w < surfaceLevel) * 16;
+	cubeIndex |= (cubeCorners[5].w < surfaceLevel) * 32;
+	cubeIndex |= (cubeCorners[6].w < surfaceLevel) * 64;
+	cubeIndex |= (cubeCorners[7].w < surfaceLevel) * 128;
+
+
+	/*if (cubeCorners[0].w < surfaceLevel) cubeIndex |= 1;
 	if (cubeCorners[1].w < surfaceLevel) cubeIndex |= 2;
 	if (cubeCorners[2].w < surfaceLevel) cubeIndex |= 4;
 	if (cubeCorners[3].w < surfaceLevel) cubeIndex |= 8;
 	if (cubeCorners[4].w < surfaceLevel) cubeIndex |= 16;
 	if (cubeCorners[5].w < surfaceLevel) cubeIndex |= 32;
 	if (cubeCorners[6].w < surfaceLevel) cubeIndex |= 64;
-	if (cubeCorners[7].w < surfaceLevel) cubeIndex |= 128;
+	if (cubeCorners[7].w < surfaceLevel) cubeIndex |= 128;*/
+
 
 	int zipedCubeData = zipData(id.x, id.y, id.z, cubeIndex);
 
@@ -117,9 +122,11 @@ void March(int3 id : SV_DispatchThreadID)
 
 	BiomVisualizationData biom = biomsViz[biomIndex];
 
+
 	// Create triangles for current cube configuration
 	for (int i = 0; triangulation[cubeIndex][i] != -1; i += 3)
 	{
+
 		// Get indices of corner points A and B for each of the three edges
 		// of the cube that need to be joined to form the triangle.
 		int a0 = cornerIndexAFromEdge[triangulation[cubeIndex][i]];
