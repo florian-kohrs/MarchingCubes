@@ -40,5 +40,8 @@ float rand(Triangle t, float seed)
 void EnvirenmentSpawner(uint3 id : SV_DispatchThreadID)
 {
     
+    //determine what to place on this cubeentity
+
+    GroupMemoryBarrierWithGroupSync();
 
 }
