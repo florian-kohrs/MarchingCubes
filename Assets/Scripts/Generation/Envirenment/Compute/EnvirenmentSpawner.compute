@@ -30,18 +30,19 @@ groupshared uint data[threadGroupSizeX];
 
 float rand(Triangle t, float seed)
 {
-    float m = abs(t.vertexA.x) * (abs(t.vertexB.y) * seed) + abs(t.vertexC.z);
-    return (m - (int)m);
+	float m = abs(t.vertexA.x) * (abs(t.vertexB.y) * seed) + abs(t.vertexC.z);
+	return (m - (int)m);
 }
 
 
 ///have each thread work on a chunk of the chunk
 [numthreads(threadGroupSizeX, 1, 1)]
-void EnvirenmentSpawner(uint3 id : SV_DispatchThreadID)
+void EnvirenmentSpawner(uint3 id : SV_DispatchThreadID, uint groupIndex : SV_GroupIndex)
 {
-    
-    //determine what to place on this cubeentity
+	uint3 coord = uint3(id.x % 16 % 4, id.x % 16 / 4, id.x / 16);
 
-    GroupMemoryBarrierWithGroupSync();
+	//determine what to place on this cubeentity
+
+	GroupMemoryBarrierWithGroupSync();
 
 }
