@@ -111,7 +111,7 @@ namespace MarchingCubes
         private ComputeBuffer savedPointBuffer;
         private ComputeBuffer triCountBuffer;
 
-        private ComputeBuffer plantableCubesBuffer;
+        private ComputeBuffer minDegreesAtCoordBuffer;
 
 
         public WorldUpdater worldUpdater;
@@ -173,6 +173,9 @@ namespace MarchingCubes
             InitializeDensityGenerator();
 
             ApplyShaderProperties(marshShader);
+            marshShader.SetBool("storeMinDegrees", false);
+            marshShader.SetBuffer(0, "minDegreeAtCoord", minDegreesAtCoordBuffer);
+
             ApplyShaderProperties(rebuildShader);
             noiseEditShader.SetBuffer(0, "points", pointsBuffer);
 
@@ -899,7 +902,7 @@ namespace MarchingCubes
             }
             else if (lod == 1)
             {
-                grass.ComputeGrassFor(new Bounds(chunk.CenterPos, Vector3.one * chunk.ChunkSize), numTris, triangleBuffer);
+                //grass.ComputeGrassFor(new Bounds(chunk.CenterPos, Vector3.one * chunk.ChunkSize), numTris, triangleBuffer);
             }
 
             if (storeNoise || (numTris == 0 && !hasFoundInitialChunk) || careForNeighbours)
@@ -1270,6 +1273,7 @@ namespace MarchingCubes
 
             var envirenmentBioms = bioms.Select(b => b.envirenmentData).ToArray();
 
+            minDegreesAtCoordBuffer = new ComputeBuffer(numVoxels, sizeof(float));
             pointBiomIndex = new ComputeBuffer(numPoints, sizeof(uint));
             pointsBuffer = new ComputeBuffer(numPoints, sizeof(float));
             savedPointBuffer = new ComputeBuffer(numPoints, sizeof(float));
@@ -1302,6 +1306,7 @@ namespace MarchingCubes
                 triangleBuffer.Dispose();
                 pointsBuffer.Dispose();
                 savedPointBuffer.Dispose();
+                minDegreesAtCoordBuffer.Dispose();
                 triCountBuffer.Dispose();
                 triangleBuffer = null;
             }

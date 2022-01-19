@@ -165,8 +165,6 @@ void March(uint3 id : SV_DispatchThreadID)
 		else if (invLerp > 1)
 			invLerp = 1; 
 
-		
-		
 		uint3 flatColor = biom.flatRGB;
 		uint3 steepColor = biom.steepRGB;
 		
