@@ -12,7 +12,7 @@ namespace MarchingCubes
     //TODO: Check to use unity mathematics int2, int3 instead of vector for better performance?
     //TODO: When creating a chunk while editing, call getnoise with click changes to only generate noise once
 
-    [System.Serializable]
+    [Serializable]
     public class MarchingCubeChunkHandler : SaveableMonoBehaviour, IMarchingCubeChunkHandler
     {
 
@@ -110,6 +110,8 @@ namespace MarchingCubes
         private ComputeBuffer biomBuffer;
         private ComputeBuffer savedPointBuffer;
         private ComputeBuffer triCountBuffer;
+
+        private ComputeBuffer plantableCubesBuffer;
 
 
         public WorldUpdater worldUpdater;
@@ -1317,14 +1319,15 @@ namespace MarchingCubes
         //TODO: Dont store when chunk knows he stored before 
         public void Store(Vector3Int anchorPos, float[] noise)
         {
-            StoredChunkEdits edits;
-            if (!TryGetStoredEditsAt(anchorPos, out edits))
+            if (!TryGetStoredEditsAt(anchorPos, out StoredChunkEdits edits))
             {
                 edits = new StoredChunkEdits();
                 StorageTreeRoot r = GetOrCreateStorageGroupAtCoordinate(PositionToStorageGroupCoord(anchorPos));
                 r.SetLeafAtPosition(anchorPos, edits, true);
+                edits.noise = noise;
+                //call all instantiableData from chunk that need to be stored
+                //(everything not depending on triangles only, e.g trees )
             }
-            edits.vals = noise;
         }
 
       

@@ -15,8 +15,10 @@ namespace MarchingCubes
         //public Dictionary<int, float> editedPoints = new Dictionary<int, float>();
 
 
-        public float[] vals;
-        
+        public float[] noise;
+
+        //Save tree positions
+  
         int ISizeManager.ChunkSizePower { get => 5; set => throw new System.NotImplementedException(); }
     }
 }

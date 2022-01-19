@@ -15,7 +15,7 @@ static const float grassDensitiyPerSquareMeter = 5;
 
 AppendStructuredBuffer<InstanceProperty> grassPositions;
 
-StructuredBuffer<float> points;
+StructuredBuffer<float> minAngleAtCubeIndex;
 RWStructuredBuffer<float> savedPoints;
 
 float3 offset;
@@ -39,6 +39,11 @@ float rand(Triangle t, float seed)
 	return (m - (int)m);
 }
 
+float Noise(int3 coord)
+{
+	float noise = snoise(coord);
+	return noise - (int)noise;
+}
 
 ///have each thread work on a chunk of the chunk
 [numthreads(threadGroupSizeX, 1, 1)]
@@ -46,8 +51,10 @@ void EnvirenmentSpawner(uint3 id : SV_DispatchThreadID, uint groupIndex : SV_Gro
 {
 	int3 coord = int3(id.x % 16 % 4, id.x % 16 / 4, id.x / 16);
 
-	int index = snoise(coord);
+	float treeWidth = Noise(coord);
 
 	GroupMemoryBarrierWithGroupSync();
+
+
 
 }
