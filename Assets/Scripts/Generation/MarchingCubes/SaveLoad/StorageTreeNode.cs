@@ -48,7 +48,7 @@ namespace MarchingCubes
             }
         }
 
-        public float[] NoiseMap => Mipmap.vals;
+        public float[] NoiseMap => Mipmap.noise;
 
         protected int LOD => (int)Mathf.Pow(2, sizePower - 5);
 
@@ -88,15 +88,15 @@ namespace MarchingCubes
             if(mipmap == null)
             {
                 mipmap = new StoredChunkEdits();
-                mipmap.vals = new float[MIPMAP_SIZE];
-                System.Array.Copy(mipmapTemplate, mipmap.vals, MIPMAP_SIZE);
+                mipmap.noise = new float[MIPMAP_SIZE];
+                System.Array.Copy(mipmapTemplate, mipmap.noise, MIPMAP_SIZE);
             }
             for (int i = 0; i < 8; i++)
             {
                 var c = children[i];
                 if (c != null)
                 {
-                    CombinePointsInto(c.GroupRelativeAnchorPosition, c.NoiseMap, mipmap.vals, POINTS_PER_AXIS, POINTS_PER_AXIS_SQR, 2, LOD);
+                    CombinePointsInto(c.GroupRelativeAnchorPosition, c.NoiseMap, mipmap.noise, POINTS_PER_AXIS, POINTS_PER_AXIS_SQR, 2, LOD);
                 }
             }
 

@@ -13,5 +13,7 @@ namespace MarchingCubes
 
         public BiomVisualizationData visualizationData;
 
+        public BiomEnvirenmentData envirenmentData;
+
     }
 }

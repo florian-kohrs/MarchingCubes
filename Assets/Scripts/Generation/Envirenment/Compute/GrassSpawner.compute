@@ -19,6 +19,8 @@ uint length;
 
 int3 anchorPosition;
 
+//TODO: For cheap and acceptable random solition have a noise 3d texture and read value from coordinate
+
 
 //float4x4 LookAtRotation(float3 from, float to)
 //{
@@ -172,7 +174,7 @@ void GrassSpawner(uint3 id : SV_DispatchThreadID)
         return;
 
     Triangle t = meshTriangles[id.x];
-    if (steepness(t) < 70)
+    if (steepness(t) > 45)
         return;
 
     float seed = PI; //PI* id.x / (PI + id.y + id.z);

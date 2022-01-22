@@ -1,0 +1,203 @@
+﻿#include "/Includes/Noise.compute"
+
+struct BiomEnvirenments
+{
+    float treeDensity;
+    uint biomIndex;
+};
+
+///Planet radius
+float radius;
+
+//BiomEnvirenments settings
+//TODO:Let height play a role in choosen biom
+StructuredBuffer<BiomEnvirenments> bioms;
+uint biomSize;
+uint biomsCount;
+uint biomSpacing;
+
+BiomEnvirenments interpolate(BiomEnvirenments b1, BiomEnvirenments b2, float t)
+{
+    float reversedT = 1 - t;
+
+    BiomEnvirenments b;
+    b.treeDensity = reversedT * b1.treeDensity + t * b2.treeDensity;
+
+    return b;
+}
+
+
+
+BiomEnvirenments getBiomAt(int3 pos)
+{
+    float3 noisePos = pos * biomSpacing / biomSize;
+    uint noise = (uint)(snoise(noisePos) * 100);
+    uint index = noise % biomsCount;
+    return bioms[index];
+}
+
+float3 GetBiomEvaluationPosition(float3 pos)
+{
+    //TODO:maybe have different bioms for different length (if length < 500 length= 500,...1000
+    pos = normalize(pos) * radius;
+    //offset position to be positive, since noise function doesnt seems to
+    //perform well with negative inputs
+    pos += int3(100000, 100000, 100000);
+    return pos;
+}
+
+
+BiomEnvirenments GetCubicInterpolatedBiomAt(int3 pos)
+{
+    int3 biomPoint = (pos / biomSize) * biomSize;
+    //float xProg = (pos.x - biomPoint.x) / (float)biomSize;
+    float xProg = pos.x % biomSize / (float)biomSize;
+    int3 xOffset = int3(biomSize, 0, 0);
+    int3 xdoubleOffset = int3(biomSize * 2, 0, 0);
+    BiomEnvirenments frontBot = interpolate(
+        interpolate(getBiomAt(biomPoint), getBiomAt(biomPoint + xOffset), xProg),
+        interpolate(getBiomAt(biomPoint + xOffset), getBiomAt(biomPoint + xdoubleOffset), xProg),
+        xProg);
+
+    biomPoint.y += biomSize;
+    BiomEnvirenments frontCenter = interpolate(
+        interpolate(getBiomAt(biomPoint), getBiomAt(biomPoint + xOffset), xProg),
+        interpolate(getBiomAt(biomPoint + xOffset), getBiomAt(biomPoint + xdoubleOffset), xProg), xProg);
+
+    biomPoint.y += biomSize;
+    BiomEnvirenments frontTop = interpolate(
+        interpolate(getBiomAt(biomPoint), getBiomAt(biomPoint + xOffset), xProg),
+        interpolate(getBiomAt(biomPoint + xOffset), getBiomAt(biomPoint + xdoubleOffset), xProg),
+        xProg);
+
+    biomPoint.z += biomSize;
+    BiomEnvirenments centerTop = interpolate(
+        interpolate(getBiomAt(biomPoint), getBiomAt(biomPoint + xOffset), xProg),
+        interpolate(getBiomAt(biomPoint + xOffset), getBiomAt(biomPoint + xdoubleOffset), xProg),
+        xProg);
+    biomPoint.y -= biomSize;
+    BiomEnvirenments centerCenter = interpolate(
+        interpolate(getBiomAt(biomPoint), getBiomAt(biomPoint + xOffset), xProg),
+        interpolate(getBiomAt(biomPoint + xOffset), getBiomAt(biomPoint + xdoubleOffset), xProg),
+        xProg);
+
+    biomPoint.y -= biomSize;
+    BiomEnvirenments centerBot = interpolate(
+        interpolate(getBiomAt(biomPoint), getBiomAt(biomPoint + xOffset), xProg),
+        interpolate(getBiomAt(biomPoint + xOffset), getBiomAt(biomPoint + xdoubleOffset), xProg),
+        xProg);
+
+    biomPoint.z += biomSize;
+    BiomEnvirenments backBot = interpolate(
+        interpolate(getBiomAt(biomPoint), getBiomAt(biomPoint + xOffset), xProg),
+        interpolate(getBiomAt(biomPoint + xOffset), getBiomAt(biomPoint + xdoubleOffset), xProg),
+        xProg);
+
+    biomPoint.y += biomSize;
+    BiomEnvirenments backCenter = interpolate(
+        interpolate(getBiomAt(biomPoint), getBiomAt(biomPoint + xOffset), xProg),
+        interpolate(getBiomAt(biomPoint + xOffset), getBiomAt(biomPoint + xdoubleOffset), xProg),
+        xProg);
+
+    biomPoint.y += biomSize;
+    BiomEnvirenments backTop = interpolate(
+        interpolate(getBiomAt(biomPoint), getBiomAt(biomPoint + xOffset), xProg),
+        interpolate(getBiomAt(biomPoint + xOffset), getBiomAt(biomPoint + xdoubleOffset), xProg),
+        xProg);
+
+    float yProg = (pos.y % biomSize) / (float)biomSize;
+    BiomEnvirenments front = interpolate(
+        interpolate(frontBot, frontCenter, yProg),
+        interpolate(frontCenter, frontTop, yProg),
+        yProg);
+
+    BiomEnvirenments center = interpolate(
+        interpolate(centerBot, centerCenter, yProg),
+        interpolate(centerCenter, centerTop, yProg),
+        yProg);
+
+    BiomEnvirenments back = interpolate(
+        interpolate(backBot, backCenter, yProg),
+        interpolate(backCenter, backTop, yProg),
+        yProg);
+
+    float zProg = (pos.z % biomSize) / (float)biomSize;
+
+    BiomEnvirenments result = interpolate(
+        interpolate(front, center, zProg),
+        interpolate(center, back, zProg),
+        zProg);
+
+    return result;
+}
+
+int3 getBiomAnchor(int3 rest, int3 pos)
+{
+    //TODO: Probably not needed line (only posiitve values anyway)
+    //int3 positiveRest = (rest + int3(biomSize, biomSize, biomSize)) % biomSize;
+    return int3(pos.x - rest.x, pos.y - rest.y, pos.z - rest.z);
+}
+
+float3 getInterpolation(int3 rest)
+{
+    //rest = (rest + int3(biomSize, biomSize, biomSize)) % biomSize;
+    return rest / (float)biomSize;
+}
+
+//TODO:Write biompoints in array or interpolation
+BiomEnvirenments GetInterpolatedBiomAt(int3 pos)
+{
+    int3 rest = pos % biomSize;
+
+    int3 biomPoint = getBiomAnchor(rest, pos);
+    float3 interpolation = getInterpolation(rest);
+
+    //float xProg = (pos.x - biomPoint.x) / (float)biomSize;
+    float xProg = interpolation.x;
+    int3 xOffset = int3(biomSize, 0, 0);
+
+    BiomEnvirenments frontBot = interpolate(getBiomAt(biomPoint), getBiomAt(biomPoint + xOffset), xProg);
+
+    biomPoint.y += biomSize;
+    BiomEnvirenments frontTop = interpolate(getBiomAt(biomPoint), getBiomAt(biomPoint + xOffset), xProg);
+
+    biomPoint.z += biomSize;
+    BiomEnvirenments backTop = interpolate(getBiomAt(biomPoint), getBiomAt(biomPoint + xOffset), xProg);
+
+    biomPoint.y -= biomSize;
+    BiomEnvirenments backBot = interpolate(getBiomAt(biomPoint), getBiomAt(biomPoint + xOffset), xProg);
+
+    float yProg = interpolation.y;
+    BiomEnvirenments front = interpolate(frontBot, frontTop, yProg);
+    BiomEnvirenments back = interpolate(backBot, backTop, yProg);
+
+    float zProg = interpolation.z;
+    BiomEnvirenments result = interpolate(front, back, zProg);
+
+    return result;
+}
+
+uint GetClosestBiomIndex(int3 pos)
+{
+    int3 rest = pos % biomSize;
+    int3 missing = int3(biomSize, biomSize, biomSize) - rest;
+    float3 interpolation = getInterpolation(rest);
+
+    if (interpolation.x > 0.5)
+    {
+        pos.x += missing.x;
+        rest.x = 0;
+    }
+    if (interpolation.y > 0.5)
+    {
+        pos.y += missing.y;
+        rest.y = 0;
+    }
+    if (interpolation.z > 0.5)
+    {
+        pos.z += missing.z;
+        rest.z = 0;
+    }
+
+    return getBiomAt(getBiomAnchor(rest, pos)).biomIndex;
+}

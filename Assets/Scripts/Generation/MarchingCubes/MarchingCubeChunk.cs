@@ -606,11 +606,6 @@ namespace MarchingCubes
         protected bool SmallerThanSurface(float f) => f < surfaceLevel;
         protected bool LargerThanSurface(float f) => f >= surfaceLevel;
 
-        protected void EditPointsAroundRayHitOnGPU()
-        {
-
-        }
-
         public void EditPointsAroundRayHit(float delta, RaycastHit hit, int editDistance)
         {
             System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
