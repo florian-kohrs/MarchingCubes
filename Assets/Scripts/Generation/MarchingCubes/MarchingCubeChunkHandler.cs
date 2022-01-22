@@ -12,7 +12,7 @@ namespace MarchingCubes
     //TODO: Check to use unity mathematics int2, int3 instead of vector for better performance?
     //TODO: When creating a chunk while editing, call getnoise with click changes to only generate noise once
 
-    [System.Serializable]
+    [Serializable]
     public class MarchingCubeChunkHandler : SaveableMonoBehaviour, IMarchingCubeChunkHandler
     {
 
@@ -111,6 +111,8 @@ namespace MarchingCubes
         private ComputeBuffer savedPointBuffer;
         private ComputeBuffer triCountBuffer;
 
+        private ComputeBuffer minDegreesAtCoordBuffer;
+
 
         public WorldUpdater worldUpdater;
 
@@ -171,6 +173,9 @@ namespace MarchingCubes
             InitializeDensityGenerator();
 
             ApplyShaderProperties(marshShader);
+            marshShader.SetBool("storeMinDegrees", false);
+            marshShader.SetBuffer(0, "minDegreeAtCoord", minDegreesAtCoordBuffer);
+
             ApplyShaderProperties(rebuildShader);
             noiseEditShader.SetBuffer(0, "points", pointsBuffer);
 
@@ -897,7 +902,7 @@ namespace MarchingCubes
             }
             else if (lod == 1)
             {
-                grass.ComputeGrassFor(new Bounds(chunk.CenterPos, Vector3.one * chunk.ChunkSize), numTris, triangleBuffer);
+                //grass.ComputeGrassFor(new Bounds(chunk.CenterPos, Vector3.one * chunk.ChunkSize), numTris, triangleBuffer);
             }
 
             if (storeNoise || (numTris == 0 && !hasFoundInitialChunk) || careForNeighbours)
@@ -1266,6 +1271,9 @@ namespace MarchingCubes
             var b = bioms.Select(b => new BiomColor(b.visualizationData)).ToArray();
             biomBuffer.SetData(b);
 
+            var envirenmentBioms = bioms.Select(b => b.envirenmentData).ToArray();
+
+            minDegreesAtCoordBuffer = new ComputeBuffer(numVoxels, sizeof(float));
             pointBiomIndex = new ComputeBuffer(numPoints, sizeof(uint));
             pointsBuffer = new ComputeBuffer(numPoints, sizeof(float));
             savedPointBuffer = new ComputeBuffer(numPoints, sizeof(float));
@@ -1298,6 +1306,7 @@ namespace MarchingCubes
                 triangleBuffer.Dispose();
                 pointsBuffer.Dispose();
                 savedPointBuffer.Dispose();
+                minDegreesAtCoordBuffer.Dispose();
                 triCountBuffer.Dispose();
                 triangleBuffer = null;
             }
@@ -1312,17 +1321,18 @@ namespace MarchingCubes
             }
         }
 
-        //TODO: Dont store when chunk knows he stored before
+        //TODO: Dont store when chunk knows he stored before 
         public void Store(Vector3Int anchorPos, float[] noise)
         {
-            StoredChunkEdits edits;
-            if (!TryGetStoredEditsAt(anchorPos, out edits))
+            if (!TryGetStoredEditsAt(anchorPos, out StoredChunkEdits edits))
             {
                 edits = new StoredChunkEdits();
                 StorageTreeRoot r = GetOrCreateStorageGroupAtCoordinate(PositionToStorageGroupCoord(anchorPos));
                 r.SetLeafAtPosition(anchorPos, edits, true);
+                edits.vals = noise;
+                //call all instantiableData from chunk that need to be stored
+                //(everything not depending on triangles only, e.g trees )
             }
-            edits.vals = noise;
         }
 
 
