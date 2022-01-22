@@ -366,7 +366,6 @@ namespace MarchingCubes
             }
 
             IsReady = true;
-
         }
 
 
@@ -388,7 +387,7 @@ namespace MarchingCubes
         }
 
   
-        public void PrepareDestruction()
+        public virtual void PrepareDestruction()
         {
             chunkUpdater.RemoveLowerLodChunk(this);
             if (Leaf != null)

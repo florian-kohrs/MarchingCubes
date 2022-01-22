@@ -39,7 +39,7 @@ public class ExampleCombinedPerVert : MonoBehaviour
         }
         instanceMesh.colors = c;
         UpdateBuffers();
-        var b = new Bounds(Vector3.zero, new Vector3(range, range, range));
+        Bounds b = new Bounds(Vector3.zero, new Vector3(range, range, range));
         new InstanciableData(instanceMesh,instanceCount, meshPropertiesBuffer, instanceMaterial, b);
     }
 

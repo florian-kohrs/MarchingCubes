@@ -31,7 +31,7 @@ RWStructuredBuffer<BiomVisualizationData> biomsViz;
 
 int minSteepness;
 int maxSteepness;
- 
+
 float3 anchor;
 float spacing;
 int numPointsPerAxis;
@@ -56,7 +56,7 @@ int zipData(int x, int y, int z, int w) {
 	return (x << 24) + (y << 16) + (z << 8) + w;
 }
 
-//int angle(int3 a, int3 b) 
+//int angle(int3 a, int3 b)
 //{
 //    return acos(dot(a, b)) * 180 / PI
 //}
@@ -93,7 +93,7 @@ void March(uint3 id : SV_DispatchThreadID)
 	// A value of 0 means cube is entirely inside surface; 255 entirely outside.
 	// The value is used to look up the edge table, which indicates which edges of the cube are cut by the isosurface.
 	int cubeIndex = 0;
-	
+
 	cubeIndex |= (cubeCorners[0].w < surfaceLevel) * 1;
 	cubeIndex |= (cubeCorners[1].w < surfaceLevel) * 2;
 	cubeIndex |= (cubeCorners[2].w < surfaceLevel) * 4;
@@ -152,17 +152,17 @@ void March(uint3 id : SV_DispatchThreadID)
 		if (invLerp < 0)
 			invLerp = 0;
 		else if (invLerp > 1)
-			invLerp = 1; 
+			invLerp = 1;
 
-		
-		
+
+
 		uint3 flatColor = biom.flatRGB;
 		uint3 steepColor = biom.steepRGB;
-		
+
 		int colorR = (invLerp * steepColor.x + (1 - invLerp) * flatColor.x);
 		int colorG = (invLerp * steepColor.y + (1 - invLerp) * flatColor.y);
 		int colorB = (invLerp * steepColor.z + (1 - invLerp) * flatColor.z);
-		
+
 		tri.colorAndSteepness = zipData((int)angleFromCenter, colorB, colorG, colorR);
 		//tri.colorAndSteepness = 0;
 		triangles.Append(tri);

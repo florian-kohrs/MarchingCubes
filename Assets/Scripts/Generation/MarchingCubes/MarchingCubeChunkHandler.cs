@@ -425,15 +425,15 @@ namespace MarchingCubes
             bool createdChunk = false;
             bool hasChunkAtPosition = TryGetChunkAtPosition(p, out chunk);
 
-            if(!hasChunkAtPosition || !chunk.HasStarted)
+            if (!hasChunkAtPosition || !chunk.HasStarted)
             {
-                if(chunk != null)
+                if (chunk != null)
                 {
                     chunk.DestroyChunk();
                 }
-                chunk = CreateChunkWithProperties(p, PositionToChunkGroupCoord(p), 0, DEFAULT_CHUNK_SIZE_POWER, false, false, 
-                    ()=> { 
-                        ApplyNoiseEditing(33, editPoint, start, end, delta, maxDistance); 
+                chunk = CreateChunkWithProperties(p, PositionToChunkGroupCoord(p), 0, DEFAULT_CHUNK_SIZE_POWER, false, false,
+                    () => {
+                        ApplyNoiseEditing(33, editPoint, start, end, delta, maxDistance);
                     });
                 createdChunk = true;
             }
@@ -895,10 +895,10 @@ namespace MarchingCubes
                 chunk.FreeSimpleChunkCollider();
                 chunk.GiveUnusedDisplayerBack();
             }
-            //else if(lod == 1)
-            //{
-            //    grass.ComputeGrassFor(new Bounds(chunk.CenterPos, Vector3.one * chunk.ChunkSize), numTris, triangleBuffer);
-            //}
+            else if (lod == 1)
+            {
+                grass.ComputeGrassFor(new Bounds(chunk.CenterPos, Vector3.one * chunk.ChunkSize), numTris, triangleBuffer);
+            }
 
             if (storeNoise || (numTris == 0 && !hasFoundInitialChunk) || careForNeighbours)
             {
@@ -912,7 +912,7 @@ namespace MarchingCubes
                 }
                 pointsBuffer.GetData(pointsArray, 0, 0, pointsArray.Length);
                 chunk.Points = pointsArray;
-                if(storeNoise)
+                if (storeNoise)
                 {
                     Store(chunk.AnchorPos, pointsArray);
                 }
@@ -1312,7 +1312,7 @@ namespace MarchingCubes
             }
         }
 
-        //TODO: Dont store when chunk knows he stored before 
+        //TODO: Dont store when chunk knows he stored before
         public void Store(Vector3Int anchorPos, float[] noise)
         {
             StoredChunkEdits edits;
@@ -1325,6 +1325,6 @@ namespace MarchingCubes
             edits.vals = noise;
         }
 
-      
+
     }
 }

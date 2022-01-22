@@ -29,6 +29,10 @@ namespace MarchingCubes
         public ComputeBuffer rebuildTriResult;
         public ComputeBuffer rebuildTriCounter;
 
+        public Maybe<Bounds> meshBounds;
+
+        public bool IsBoundsActive => IsReady;
+
         //TODO: Add for each cube entitiy index in mesh and increase next index by entitiy cube count and try to use this when rebuilding mesh
         //TODO: Build from consume buffer
 
@@ -118,6 +122,12 @@ namespace MarchingCubes
             NumTris = 0;
         }
 
+        public override void PrepareDestruction()
+        {
+            base.PrepareDestruction();
+            meshBounds = default;
+        }
+
         protected MarchingCubeEntity CreateAndAddEntityAt(int x, int y, int z, int triangulationIndex)
         {
             MarchingCubeEntity e = new MarchingCubeEntity(this, triangulationIndex);
@@ -154,6 +164,16 @@ namespace MarchingCubes
                 PathTriangle pathTri = new PathTriangle(cube, in ts[i].tri, ts[i].color32);
                 cube.AddTriangle(pathTri);
                 AddTriangleToMeshData(in ts[i], ref usedTriCount, ref totalTreeCount);
+            }
+            SetBoundsOfChunk();
+        }
+
+        protected void SetBoundsOfChunk()
+        {
+            meshBounds.Value = activeDisplayers[0].mesh.bounds;
+            for (int i = 1; i < activeDisplayers.Count; i++)
+            {
+                meshBounds.Value.Encapsulate(activeDisplayers[i].mesh.bounds);
             }
         }
 
