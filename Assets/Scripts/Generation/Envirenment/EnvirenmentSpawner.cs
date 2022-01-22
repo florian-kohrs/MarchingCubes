@@ -4,18 +4,18 @@ using UnityEngine;
 using MarchingCubes;
 using UnityEngine.Rendering;
 using System;
+using Unity.Collections;
 
 public class EnvirenmentSpawner : MonoBehaviour
 {
 
     public Shader EnvironmentPlacer;
 
+    public Shader TreePlacer;
+
     public Shader GrassSpawner;
 
     protected ComputeBuffer treePositions;
-
-    protected ComputeBuffer emptyCubePositions;
-
 
     protected ComputeBuffer minDegreeCubes;
 
@@ -31,7 +31,13 @@ public class EnvirenmentSpawner : MonoBehaviour
 
     protected void OnTreesRecieved(AsyncGPUReadbackRequest result)
     {
-        //SetCollidersToPositions;
+        NativeArray<Matrix4x4> x = result.GetData<Matrix4x4>();
+        int length = x.Length;
+        for (int i = 0; i < length; i++)
+        {
+            Matrix4x4 transform = x[i];
+            //place collider there
+        }
     }
 
 }

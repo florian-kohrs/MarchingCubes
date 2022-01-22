@@ -8,53 +8,63 @@
 #define PI 3.14159265358979323846
 #define DegToRad 0.0174532924
 
-static const int threadGroupSizeX = 64;
+static const int numThreads = 4;
 
 static const float grassScale = 0.4;
+static const float numPointsPerAxis = 33;
 static const float grassDensitiyPerSquareMeter = 5;
 
-AppendStructuredBuffer<InstanceProperty> grassPositions;
-
 StructuredBuffer<float> minAngleAtCubeIndex;
-RWStructuredBuffer<float> savedPoints;
-
-float3 offset;
-float boundsHeight;
-uint length;
-
+RWStructuredBuffer<int3> treesAtCubes;
 
 int3 anchorPosition;
+
+int indexFromCoord(int x, int y, int z)
+{
+	return z * numPointsPerAxis * numPointsPerAxis + y * numPointsPerAxis + x;
+}
+
 
 //spawn trees and mark entites that can have grass then use triangles to plant grass on those
 
 /// <summary>
 /// entry above 0 means that a tree is planned. value 1-4 gives width of tree
 /// </summary>
-groupshared uint data[threadGroupSizeX];
+//groupshared uint data[threadGroupSizeX];
 
-
-float rand(Triangle t, float seed)
-{
-	float m = abs(t.vertexA.x) * (abs(t.vertexB.y) * seed) + abs(t.vertexC.z);
-	return (m - (int)m);
-}
 
 float Noise(int3 coord)
 {
-	float noise = snoise(coord);
-	return noise - (int)noise;
+	return frac(abs(snoise(coord)));
 }
 
 ///have each thread work on a chunk of the chunk
-[numthreads(threadGroupSizeX, 1, 1)]
-void EnvirenmentSpawner(uint3 id : SV_DispatchThreadID, uint groupIndex : SV_GroupIndex)
+[numthreads(numThreads, numThreads, numThreads)]
+void EnvirenmentSpawner(uint3 id : SV_DispatchThreadID/*, uint groupIndex : SV_GroupIndex*/)
 {
-	int3 coord = int3(id.x % 16 % 4, id.x % 16 / 4, id.x / 16);
+	int index = indexFromCoord(id);
+	if (minAngleAtCubeIndex[index] <= 0 || minAngleAtCubeIndex[index] > MAX_ANGLES_FOR_TREES)
+		return;
 
-	float treeWidth = Noise(coord);
+	//TODO: spawn trees for lod of 2
 
-	GroupMemoryBarrierWithGroupSync();
+	float averageTreesPerSqrMeter = 0.2f;
+	float maxHeight = MAX_TREE_RADIUS / averageTreesPerSqrMeter;
+	float treeChance = Noise(id);
 
+	int treeResult = (int)(100 * (treeChance < averageTreesPerSqrMeter) * (MIN_TREE_RADIUS + treeChance * maxHeight));
+	data[index] = treeResult;
 
-
+	/*GroupMemoryBarrierWithGroupSync();
+	for (size_t x = -MIN_TREE_DISTANCE; x <= MIN_TREE_DISTANCE; x++)
+	{
+		for (size_t y = -MIN_TREE_DISTANCE; y <= MIN_TREE_DISTANCE; y++)
+		{
+			for (size_t z = -MIN_TREE_DISTANCE; z <= MIN_TREE_DISTANCE; z++)
+			{
+				int3 newCoord = coord + int3(x, y, z);
+				if(newCoord != coord && data[newCoord])
+			}
+		}
+	}*/
 }
