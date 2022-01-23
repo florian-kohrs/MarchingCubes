@@ -59,7 +59,7 @@ Shader "Custom/DrawInstancedIndirect"
                     v2f o;
                     float4 pos = mul(_Properties[instanceID].mat, v.vertex);
                     o.pos = UnityObjectToClipPos(pos);
-                    o.uv_MainTex = v.texcoord;
+                    //o.uv_MainTex = v.texcoord;
                     o.ambient = ambient;
                     o.diffuse = diffuse;
                     o.color = color;
@@ -68,9 +68,9 @@ Shader "Custom/DrawInstancedIndirect"
 
                 fixed4 frag(v2f i) : SV_Target
                 {
-                    fixed4 albedo = tex2D(_MainTex, i.uv_MainTex);
+                    //fixed4 albedo = tex2D(_MainTex, i.uv_MainTex);
                     float3 lighting = i.diffuse + i.ambient;
-                    fixed4 output = fixed4(albedo.rgb * i.color * lighting, albedo.w);
+                    fixed4 output = fixed4(/*albedo.rgb * */i.color * lighting, 1/*albedo.w*/);
                     return output;
                 }
 

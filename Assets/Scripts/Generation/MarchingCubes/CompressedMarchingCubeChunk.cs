@@ -333,7 +333,7 @@ namespace MarchingCubes
             displayer.ApplyMesh(d.colorData, d.vertices, d.triangles, Material, d.useCollider);
         }
 
-        public void SetChunkOnMainThread()
+        public virtual void SetChunkOnMainThread()
         {
             IsInOtherThread = false;
             if (!IsEmpty)
@@ -366,7 +366,6 @@ namespace MarchingCubes
             }
 
             IsReady = true;
-
         }
 
 
@@ -388,7 +387,7 @@ namespace MarchingCubes
         }
 
   
-        public void PrepareDestruction()
+        public virtual void PrepareDestruction()
         {
             chunkUpdater.RemoveLowerLodChunk(this);
             if (Leaf != null)

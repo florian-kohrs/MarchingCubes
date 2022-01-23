@@ -37,7 +37,16 @@ namespace MeshGPUInstanciation
             for (int i = 0; i < count; i++)
             {
                 InstanciableData data = datas[i];
-                Graphics.DrawMeshInstancedIndirect(data.instanceMesh, 0, data.material, data.bounds, data.argsBuffer);
+                if (data.ShouldRemoveInstanceData)
+                {
+                    datas.RemoveAt(i);
+                    count--;
+                    i--;
+                }
+                else
+                {
+                    Graphics.DrawMeshInstancedIndirect(data.instanceMesh, 0, data.material, data.bounds.Value, data.argsBuffer);
+                }
             }
         }
 

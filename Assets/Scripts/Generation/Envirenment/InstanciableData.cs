@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -14,7 +15,9 @@ namespace MeshGPUInstanciation
             Dispose();
         }
 
-        public InstanciableData(Mesh instanceMesh, int count, ComputeBuffer instanceTransformations, Material material, Bounds bounds)
+        public bool ShouldRemoveInstanceData => !bounds.HasValue;
+
+        public InstanciableData(Mesh instanceMesh, int count, ComputeBuffer instanceTransformations, Material material, Maybe<Bounds> bounds)
         {
             this.material = material;
             this.instanceTransformations = instanceTransformations;
@@ -89,7 +92,7 @@ namespace MeshGPUInstanciation
         public ComputeBuffer argsBuffer;
 
         public Material material;
-        public Bounds bounds;
+        public Maybe<Bounds> bounds;
         public bool changed;
 
         public void Dispose()
