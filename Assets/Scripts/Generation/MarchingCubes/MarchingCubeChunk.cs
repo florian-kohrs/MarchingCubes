@@ -33,43 +33,27 @@ namespace MarchingCubes
         public Maybe<Bounds> meshBounds = new Maybe<Bounds>();
 
 
+
         //TODO: Add for each cube entitiy index in mesh and increase next index by entitiy cube count and try to use this when rebuilding mesh
         //TODO: Build from consume buffer
 
         public override bool UseCollider => true;
 
-        protected TriangleChunkHeap triangleHeap;
-
-        public override void InitializeWithMeshData(TriangleChunkHeap tris)
+        protected override void BuildDetailEnvironment()
         {
-            base.InitializeWithMeshData(tris);
-            if(IsInOtherThread)
-            {
-                triangleHeap = tris;
-            }
-            else
-            {
-                BuildGrassOnChunk(tris);
-            }
+            BuildGrassOnChunk();
         }
 
-        protected void BuildGrassOnChunk(TriangleChunkHeap tris)
+        protected void BuildGrassOnChunk()
         {
             if (!IsEmpty)
             {
                 SetBoundsOfChunk();
-                chunkHandler.ComputeGrassFor(meshBounds, tris);
+                chunkHandler.ComputeGrassFor(meshBounds, triangleHeap);
             }
         }
 
-        public override void SetChunkOnMainThread()
-        {
-            base.SetChunkOnMainThread();
-            BuildGrassOnChunk(triangleHeap);
-            triangleHeap = null;
-        }
-
-        protected void StoreNoiseArray()
+        protected void StoreChunkState()
         {
             chunkHandler.Store(AnchorPos, this);
         }
@@ -308,7 +292,7 @@ namespace MarchingCubes
                 }
                 //System.Diagnostics.Stopwatch w = new System.Diagnostics.Stopwatch();
                 //w.Start();
-                StoreChunkBeforeInitialChanges();
+                StoreChunkState();
                 RebuildFromNoiseAroundOnGPU(start, end, clickedIndex, radius);
                 //RebuildFromNoiseAround(start, end, clickedIndex, radius);
                 //w.Stop();

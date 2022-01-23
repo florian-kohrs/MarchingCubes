@@ -134,6 +134,15 @@ namespace MarchingCubes
 
         public WorldUpdater ChunkUpdater { set { chunkUpdater = value; } }
 
+
+        public ComputeBuffer minDegreeBuffer;
+
+        public ComputeBuffer SetMinDegreeBuffer { set { minDegreeBuffer = value; } }
+
+        protected bool ShouldBuildEnvironment => minDegreeBuffer != null;
+
+        protected TriangleChunkHeap triangleHeap;
+
         public int LOD
         {
             get
@@ -340,6 +349,12 @@ namespace MarchingCubes
             {
                 BuildAllMeshes();
             }
+
+            if (ShouldBuildEnvironment)
+            {
+                BuildCoreEnvirenment(triangleHeap);
+            }
+            CleanUpOnMainThread();
         }
 
         #endregion async chunk building
@@ -364,10 +379,48 @@ namespace MarchingCubes
                 //TODO: Set always to null?
                 points = null;
             }
-
             IsReady = true;
+
+            if (ShouldBuildEnvironment)
+            {
+                BuildCoreEnvirenment(tris);
+                if(!IsInOtherThread)
+                {
+                    CleanUpOnMainThread();
+                }
+            }
         }
 
+        protected void CleanUpOnMainThread()
+        {
+            triangleHeap = null;
+            if (ShouldBuildEnvironment)
+            {
+                chunkHandler.ReturnMinDegreeBuffer(minDegreeBuffer);
+            }
+        }
+
+        protected void BuildCoreEnvirenment(TriangleChunkHeap tris)
+        {
+            if (IsEmpty)
+                return;
+
+            triangleHeap = tris;
+            if (!IsInOtherThread)
+            {
+                BuildTrees();
+                BuildDetailEnvironment();
+                triangleHeap = null;
+            }
+        }
+
+        protected virtual void BuildDetailEnvironment() { }
+
+
+        protected void BuildTrees()
+        {
+
+        }
 
         public void ResetChunk()
         {

@@ -104,6 +104,8 @@ namespace MarchingCubes
 
         public int stopIncreasingChunkLodsAtMillisecond = 16;
 
+
+        //TODO: Use Request Async maybe for new chunks
         private void LateUpdate()
         {
             while (readyExchangeChunks.Count > 0 && FrameTimer.HasTimeLeftInFrame)

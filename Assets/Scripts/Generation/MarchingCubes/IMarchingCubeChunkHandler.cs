@@ -60,7 +60,7 @@ namespace MarchingCubes
 
         //IMarchingCubeChunk CreateChunkFromNoiseAt(ChunkGroupTreeLeaf leaf, float[] noise);
         void ComputeGrassFor(Maybe<Bounds> bounds, TriangleChunkHeap triangleData);
-    
+        void ReturnMinDegreeBuffer(ComputeBuffer minDegreeBuffer);
     }
 
 }
