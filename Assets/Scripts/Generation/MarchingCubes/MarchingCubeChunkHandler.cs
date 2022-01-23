@@ -746,15 +746,15 @@ namespace MarchingCubes
             return RequestNoiseFor(chunk.ChunkSizePower, chunk.PointsPerAxis, chunk.LOD, chunk.AnchorPos);
         }
 
-        public float[] RequestNoiseAndEditAtPosition(IMarchingCubeChunk chunk, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance)
+        public void SetEditedNoiseAtPosition(IMarchingCubeInteractableChunk chunk, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance)
         {
             int pointsPerAxis = chunk.PointsPerAxis;
             float[] result = new float[pointsPerAxis * pointsPerAxis * pointsPerAxis];
             GenerateNoise(chunk.ChunkSizePower, pointsPerAxis, chunk.LOD, chunk.AnchorPos);
             ApplyNoiseEditing(pointsPerAxis, editPoint, start, end, delta, maxDistance);
             pointsBuffer.GetData(result, 0, 0, result.Length);
-            Store(chunk.AnchorPos, result);
-            return result;
+            chunk.Points = result;
+            Store(chunk.AnchorPos, chunk);
         }
 
         private void ApplyNoiseEditing(int pointsPerAxis, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance)
@@ -879,7 +879,11 @@ namespace MarchingCubes
 
             bool storeNoise = false;
             if (WorkOnNoise != null)
-            {
+            { 
+                if(!(chunk is IStoreableMarchingCube))
+                {
+                    throw new ArgumentException("Chunk has to be storeable to be able to store requested noise!");
+                }
                 WorkOnNoise?.Invoke();
                 storeNoise = true;
             }
@@ -919,7 +923,7 @@ namespace MarchingCubes
                 chunk.Points = pointsArray;
                 if(storeNoise)
                 {
-                    Store(chunk.AnchorPos, pointsArray);
+                    Store(chunk.AnchorPos, chunk as IStoreableMarchingCube);
                 }
             }
             return new TriangleChunkHeap(tris, 0, numTris);
@@ -1322,14 +1326,16 @@ namespace MarchingCubes
         }
 
         //TODO: Dont store when chunk knows he stored before 
-        public void Store(Vector3Int anchorPos, float[] noise)
+        public void Store(Vector3Int anchorPos, IStoreableMarchingCube chunk)
         {
             if (!TryGetStoredEditsAt(anchorPos, out StoredChunkEdits edits))
             {
                 edits = new StoredChunkEdits();
                 StorageTreeRoot r = GetOrCreateStorageGroupAtCoordinate(PositionToStorageGroupCoord(anchorPos));
+
+                chunk.StoreChunk(edits);
+               
                 r.SetLeafAtPosition(anchorPos, edits, true);
-                edits.noise = noise;
                 //call all instantiableData from chunk that need to be stored
                 //(everything not depending on triangles only, e.g trees )
             }

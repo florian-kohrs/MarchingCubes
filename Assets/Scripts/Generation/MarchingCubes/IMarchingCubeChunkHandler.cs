@@ -46,13 +46,13 @@ namespace MarchingCubes
 
         float[] RequestNoiseForChunk(IMarchingCubeChunk chunk);
 
-        float[] RequestNoiseAndEditAtPosition(IMarchingCubeChunk chunk, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance);
+        void SetEditedNoiseAtPosition(IMarchingCubeInteractableChunk chunk, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance);
 
         TriangleBuilder[] GenerateCubesFromNoise(IMarchingCubeChunk chunk, int triCount, float[] noise);
 
         Color32 GetColor(PathTriangle t, int steepness);
 
-        void Store(Vector3Int anchorPos, float[] noise);
+        void Store(Vector3Int anchorPos, IStoreableMarchingCube chunk);
 
         void TakeMeshDisplayerBack(MarchingCubeMeshDisplayer freeDisplayer);
 

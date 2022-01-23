@@ -10,7 +10,8 @@ namespace MarchingCubes
 
     //TODO: Dont use as Interactablechunk when destruction begun
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
-    public class MarchingCubeChunk : CompressedMarchingCubeChunk, IMarchingCubeInteractableChunk, IHasInteractableMarchingCubeChunk, ICubeNeighbourFinder
+    public class MarchingCubeChunk : CompressedMarchingCubeChunk, 
+        IMarchingCubeInteractableChunk, IHasInteractableMarchingCubeChunk, ICubeNeighbourFinder, IStoreableMarchingCube
     {
 
         public const float REBUILD_SHADER_THREAD_GROUP_SIZE = 4;
@@ -34,9 +35,9 @@ namespace MarchingCubes
 
         public override bool UseCollider => true;
 
-        protected void StoreNoiseArray()
+        protected void StoreChunkBeforeInitialChanges()
         {
-            chunkHandler.Store(AnchorPos, Points);
+            chunkHandler.Store(AnchorPos, this);
         }
 
         public MarchingCubeEntity GetEntityAt(Vector3Int v3)
@@ -247,7 +248,7 @@ namespace MarchingCubes
             else
             {
                 rebuildChunk = true;
-                points = ChunkHandler.RequestNoiseAndEditAtPosition(this, clickedIndex + offset, start,end,delta,radius);
+                ChunkHandler.SetEditedNoiseAtPosition(this, clickedIndex + offset, start,end,delta,radius);
             }
 
             if (rebuildChunk)
@@ -258,7 +259,7 @@ namespace MarchingCubes
                 }
                 //System.Diagnostics.Stopwatch w = new System.Diagnostics.Stopwatch();
                 //w.Start();
-                StoreNoiseArray();
+                StoreChunkBeforeInitialChanges();
                 RebuildFromNoiseAroundOnGPU(start, end, clickedIndex, radius);
                 //RebuildFromNoiseAround(start, end, clickedIndex, radius);
                 //w.Stop();
@@ -664,5 +665,26 @@ namespace MarchingCubes
         {
             return GetTriangleFromRayHit(hit).Normal;
         }
+
+        public void StoreChunk(StoredChunkEdits storage)
+        {
+            storage.noise = Points;
+            storage.originalCubePositions = GetCurrentCubePositions();
+        }
+
+        protected Vector3Int[] GetCurrentCubePositions()
+        {
+            int length = entities.Count;
+            Vector3Int[] result = new Vector3Int[length];
+            int index = 0;
+            IEnumerator<MarchingCubeEntity> enumerator = entities.GetEnumerator();
+            while (enumerator.MoveNext())
+            {
+                result[index] = enumerator.Current.origin;
+                index++;
+            }
+            return result;
+        }
+
     }
 }
