@@ -40,6 +40,7 @@ namespace MeshGPUInstanciation
                 if (data.ShouldRemoveInstanceData)
                 {
                     datas.RemoveAt(i);
+                    count--;
                     i--;
                 }
                 else

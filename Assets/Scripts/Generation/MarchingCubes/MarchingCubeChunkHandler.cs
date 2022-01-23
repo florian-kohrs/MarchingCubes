@@ -900,10 +900,6 @@ namespace MarchingCubes
                 chunk.FreeSimpleChunkCollider();
                 chunk.GiveUnusedDisplayerBack();
             }
-            else if (lod == 1)
-            {
-                //grass.ComputeGrassFor(new Bounds(chunk.CenterPos, Vector3.one * chunk.ChunkSize), numTris, triangleBuffer);
-            }
 
             if (storeNoise || (numTris == 0 && !hasFoundInitialChunk) || careForNeighbours)
             {
@@ -1329,12 +1325,16 @@ namespace MarchingCubes
                 edits = new StoredChunkEdits();
                 StorageTreeRoot r = GetOrCreateStorageGroupAtCoordinate(PositionToStorageGroupCoord(anchorPos));
                 r.SetLeafAtPosition(anchorPos, edits, true);
-                edits.vals = noise;
+                edits.noise = noise;
                 //call all instantiableData from chunk that need to be stored
                 //(everything not depending on triangles only, e.g trees )
             }
         }
 
+        public void ComputeGrassFor(Maybe<Bounds> bounds, TriangleChunkHeap triangleData)
+        {
+            grass.ComputeGrassFor(bounds, triangleData);
+        }
 
     }
 }

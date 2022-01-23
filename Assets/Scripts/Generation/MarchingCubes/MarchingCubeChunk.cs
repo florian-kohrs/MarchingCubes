@@ -29,14 +29,44 @@ namespace MarchingCubes
         public ComputeBuffer rebuildTriResult;
         public ComputeBuffer rebuildTriCounter;
 
-        public Maybe<Bounds> meshBounds;
+        public Maybe<Bounds> meshBounds = new Maybe<Bounds>();
 
-        public bool IsBoundsActive => IsReady;
 
         //TODO: Add for each cube entitiy index in mesh and increase next index by entitiy cube count and try to use this when rebuilding mesh
         //TODO: Build from consume buffer
 
         public override bool UseCollider => true;
+
+        protected TriangleChunkHeap triangleHeap;
+
+        public override void InitializeWithMeshData(TriangleChunkHeap tris)
+        {
+            base.InitializeWithMeshData(tris);
+            if(IsInOtherThread)
+            {
+                triangleHeap = tris;
+            }
+            else
+            {
+                BuildGrassOnChunk(tris);
+            }
+        }
+
+        protected void BuildGrassOnChunk(TriangleChunkHeap tris)
+        {
+            if (!IsEmpty)
+            {
+                SetBoundsOfChunk();
+                chunkHandler.ComputeGrassFor(meshBounds, tris);
+            }
+        }
+
+        public override void SetChunkOnMainThread()
+        {
+            base.SetChunkOnMainThread();
+            BuildGrassOnChunk(triangleHeap);
+            triangleHeap = null;
+        }
 
         protected void StoreNoiseArray()
         {
@@ -165,7 +195,6 @@ namespace MarchingCubes
                 cube.AddTriangle(pathTri);
                 AddTriangleToMeshData(in ts[i], ref usedTriCount, ref totalTreeCount);
             }
-            SetBoundsOfChunk();
         }
 
         protected void SetBoundsOfChunk()
