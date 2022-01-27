@@ -73,7 +73,7 @@ float4 GetHeightDataFrom(int x, int y, int z)
 
 
 //check for speed when having 5 times as many threads on z axis one for each triangle (prob. dumb idea)
-[numthreads(numThreads, numThreads, numThreads / 2)]
+[numthreads(numThreads, numThreads, numThreads)]
 void CubeRebuilder(int3 id : SV_DispatchThreadID)
 {
 	id = id + (int3)start; 
