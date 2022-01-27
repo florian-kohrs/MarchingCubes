@@ -761,7 +761,7 @@ namespace MarchingCubes
         {
             SetNoiseEditProperties(editPoint, start, end, delta, maxDistance);
             int threadsPerAxis = Mathf.CeilToInt(pointsPerAxis / threadGroupSize);
-            noiseEditShader.Dispatch(0, threadsPerAxis, threadsPerAxis, threadsPerAxis);
+            noiseEditShader.Dispatch(0, threadsPerAxis, threadsPerAxis, threadsPerAxis * 2);
         }
 
         private void SetNoiseEditProperties(Vector3 editPoint, Vector3 start, Vector3 end, float delta, float maxDistance)
@@ -983,7 +983,7 @@ namespace MarchingCubes
             marshShader.SetFloat("spacing", spacing);
             marshShader.SetVector("anchor", new Vector4(anchor.x, anchor.y, anchor.z));
 
-            marshShader.Dispatch(0, numThreadsPerAxis, numThreadsPerAxis, numThreadsPerAxis);
+            marshShader.Dispatch(0, numThreadsPerAxis, numThreadsPerAxis, numThreadsPerAxis * 2);
         }
 
         public Color32 GetColor(PathTriangle t, int steepness)

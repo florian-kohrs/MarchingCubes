@@ -74,7 +74,7 @@ float4 GetHeightDataFrom(int x, int y, int z)
 
 
 //check for speed when having 5 times as many threads on z axis one for each triangle -> not better
-[numthreads(numThreads, numThreads, numThreads)]
+[numthreads(numThreads, numThreads, numThreads / 2)]
 void March(uint3 id : SV_DispatchThreadID)
 {
 
