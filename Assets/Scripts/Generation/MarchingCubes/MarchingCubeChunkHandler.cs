@@ -724,14 +724,15 @@ namespace MarchingCubes
         //    return result;
         //}
 
-        protected void CheckChunkToStoreMinDegrees(IMarchingCubeChunk chunk)
+        protected void PrepareChunkToStoreMinDegreesIfNeeded(IMarchingCubeChunk chunk)
         {
-            bool storeMinDegree = chunk.LOD == 1 && !chunk.IsReady;
+            bool storeMinDegree = chunk.LOD <= 2 && !chunk.IsReady;
             marshShader.SetBool("storeMinDegrees", storeMinDegree);
             if (storeMinDegree)
             {
                 ComputeBuffer minDegreeBuffer = minDegreesAtCoordBufferPool.GetItemFromPool();
-                chunk.SetMinDegreeBuffer = minDegreeBuffer;
+                marshShader.SetBuffer(0, "minDegreeAtCoord", minDegreeBuffer);
+                chunk.MinDegreeBuffer = minDegreeBuffer;
             }
         }
 
@@ -990,7 +991,7 @@ namespace MarchingCubes
             int chunkSize = chunk.ChunkSize;
             Vector3Int anchor = chunk.AnchorPos;
 
-            CheckChunkToStoreMinDegrees(chunk);
+            PrepareChunkToStoreMinDegreesIfNeeded(chunk);
 
             int numVoxelsPerAxis = chunkSize / lod;
             int pointsPerAxis = numVoxelsPerAxis + 1;

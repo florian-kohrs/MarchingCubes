@@ -30,7 +30,7 @@ namespace MarchingCubes
 
         ChunkLodCollider ChunkSimpleCollider { set; }
 
-        ComputeBuffer SetMinDegreeBuffer { set; }
+        ComputeBuffer MinDegreeBuffer { get; set; }
 
         void FreeSimpleChunkCollider();
 

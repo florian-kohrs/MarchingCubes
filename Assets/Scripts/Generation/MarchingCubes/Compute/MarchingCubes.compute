@@ -156,7 +156,7 @@ void March(uint3 id : SV_DispatchThreadID)
 
 		if (storeMinDegrees && angleFromCenter < minDegree)
 		{
-			minDegreeAtCoord[index] = angleFromCenter;
+			//minDegreeAtCoord[index] = angleFromCenter;
 		}
 
 		float invLerp = (angleFromCenter - minSteepness) / (maxSteepness - minSteepness);

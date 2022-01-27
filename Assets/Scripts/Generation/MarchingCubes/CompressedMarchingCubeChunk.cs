@@ -45,6 +45,7 @@ namespace MarchingCubes
         protected int targetLodPower = -1;
 
         //TODO: Only store in marching cubes maybe
+        //TODO: Also pool theese arrays
         protected float[] points;
 
         protected int TriCount =>  NumTris * 3;
@@ -137,7 +138,7 @@ namespace MarchingCubes
 
         public ComputeBuffer minDegreeBuffer;
 
-        public ComputeBuffer SetMinDegreeBuffer { set { minDegreeBuffer = value; } }
+        public ComputeBuffer MinDegreeBuffer { set { minDegreeBuffer = value; } }
 
         protected bool ShouldBuildEnvironment => minDegreeBuffer != null;
 

@@ -1,0 +1,25 @@
+#pragma kernel WriteInArray
+
+static const int THREADS_PER_GROUP = 64;
+
+static const int NUM_VOXELS_PER_AXIS = 32;
+
+StructuredBuffer<int3> copyFrom;
+RWStructuredBuffer<float> copyHere;
+int length;
+
+int indexFromCoord(int x, int y, int z)
+{
+    return z * NUM_VOXELS_PER_AXIS * NUM_VOXELS_PER_AXIS + y * NUM_VOXELS_PER_AXIS + x;
+}
+
+[numthreads(THREADS_PER_GROUP,1,1)]
+void WriteInArray(uint3 id : SV_DispatchThreadID)
+{
+    if(id.x >= length)
+        return;
+
+    int3 coord = copyFrom[id.x];
+    int index = indexFromCoord(coord.x, coord.y, coord.z);
+    copyHere[index] = 1;
+}

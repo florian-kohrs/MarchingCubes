@@ -10,32 +10,35 @@
 
 static const int numThreads = 4;
 
-static const int NUM_VOXELS_PER_AXIS = 32;
+static const float grassScale = 0.4;
+static const float numPointsPerAxis = 33;
+static const float grassDensitiyPerSquareMeter = 5;
 
 StructuredBuffer<float> minAngleAtCubeIndex;
-AppendStructuredBuffer<int> treesAtCubes;
+RWStructuredBuffer<int3> treesAtCubes;
 
 int3 anchorPosition;
 
-int zipInFront(int newFront, int oldInt)
-{
-	return (newFront << 24) + oldInt;
-}
-
-StructuredBuffer<int3> copyFrom;
-RWStructuredBuffer<float> copyHere;
-int length;
-
 int indexFromCoord(int x, int y, int z)
 {
-	return z * NUM_VOXELS_PER_AXIS * NUM_VOXELS_PER_AXIS + y * NUM_VOXELS_PER_AXIS + x;
+	return z * numPointsPerAxis * numPointsPerAxis + y * numPointsPerAxis + x;
 }
+
+
+//spawn trees and mark entites that can have grass then use triangles to plant grass on those
+
+/// <summary>
+/// entry above 0 means that a tree is planned. value 1-4 gives width of tree
+/// </summary>
+//groupshared uint data[threadGroupSizeX];
+
 
 float Noise(int3 coord)
 {
 	return frac(abs(snoise(coord)));
 }
 
+///have each thread work on a chunk of the chunk
 [numthreads(numThreads, numThreads, numThreads)]
 void EnvirenmentSpawner(uint3 id : SV_DispatchThreadID/*, uint groupIndex : SV_GroupIndex*/)
 {
@@ -49,15 +52,8 @@ void EnvirenmentSpawner(uint3 id : SV_DispatchThreadID/*, uint groupIndex : SV_G
 	float maxHeight = MAX_TREE_RADIUS / averageTreesPerSqrMeter;
 	float treeChance = Noise(id);
 
-	int entityType = 0;
-	int entityData = zipInFront(entityType, index);
-
-	if (treeChance < averageTreesPerSqrMeter) 
-	{
-		entitiesAtCube.Append(entityData);
-		minAngleAtCubeIndex[index] = 0;
-	}
-
+	int treeResult = (int)(100 * (treeChance < averageTreesPerSqrMeter) * (MIN_TREE_RADIUS + treeChance * maxHeight));
+	data[index] = treeResult;
 
 	/*GroupMemoryBarrierWithGroupSync();
 	for (size_t x = -MIN_TREE_DISTANCE; x <= MIN_TREE_DISTANCE; x++)

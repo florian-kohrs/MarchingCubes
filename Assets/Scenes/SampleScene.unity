@@ -1900,7 +1900,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   grassShader: {fileID: 7200000, guid: ad6f9c06a53a73e47902289d598e3168, type: 3}
   mat: {fileID: 2100000, guid: 4fe26c1379a97fc4ab0634c21ab7bf82, type: 2}
-  grassMesh: {fileID: 5065503977446733706, guid: 7a9478b8d0e789c49a38045bab5782d1,
+  grassMesh: {fileID: 5065503977446733706, guid: 888c947ef6315ba418388408d9b2060e,
     type: 3}
 --- !u!4 &2124858348
 Transform:

@@ -46,11 +46,8 @@ namespace MarchingCubes
 
         protected void BuildGrassOnChunk()
         {
-            if (!IsEmpty)
-            {
-                SetBoundsOfChunk();
-                chunkHandler.ComputeGrassFor(meshBounds, triangleHeap);
-            }
+            SetBoundsOfChunk();
+            chunkHandler.ComputeGrassFor(meshBounds, triangleHeap);
         }
 
         protected void StoreChunkState()
