@@ -2,7 +2,8 @@
 
 #include "/Includes/InstanceProperty.compute"
 #include "/Includes/Triangle.compute"
-#include "/Includes/Noise.compute"
+#include "Assets/Scripts/ComputeIncludes/NoiseFiles/Noise.compute"
+#include "Assets/Scripts/ComputeIncludes/ZipData.compute"
 
 #define PI 3.14159265358979323846
 #define DegToRad 0.0174532924
@@ -39,12 +40,7 @@ int indexFromCoord(int x, int y, int z)
     return z * NUM_VOXELS_PER_AXIS * NUM_VOXELS_PER_AXIS + y * NUM_VOXELS_PER_AXIS + x;
 }
 
-int3 unzipData(int3 data) 
-{
-    return int3(data >> 24,
-        (data >> 8) << 24,
-        (data >> 16) << 24);
-}
+
 
 uint steepness(Triangle t)
 {
@@ -190,9 +186,9 @@ void GrassSpawner(uint3 id : SV_DispatchThreadID)
 
     id.x += startIndex;
     Triangle t = meshTriangles[id.x];
-    int3 cubeIndex = unzipData(t.cubeData);
+    int3 cubeIndex = unzipData3(t.cubeData);
     int index = indexFromCoord(cubeIndex.x, cubeIndex.y, cubeIndex.z);
-    if (steepness(t) > 45 || canHaveGrassAtCoord == 0)
+    if (steepness(t) > 45 || canHaveGrassAtCoord[index] == 0)
         return;
 
     float seed = PI; //PI* id.x / (PI + id.y + id.z);

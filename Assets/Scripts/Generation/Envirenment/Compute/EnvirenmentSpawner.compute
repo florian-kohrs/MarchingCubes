@@ -3,58 +3,44 @@
 #include "/Includes/BiomEnvirenment.compute"
 #include "/Includes/InstanceProperty.compute"
 #include "/Includes/Triangle.compute"
-#include "/Includes/Noise.compute"
+
 
 #define PI 3.14159265358979323846
 #define DegToRad 0.0174532924
 
 static const int numThreads = 4;
-
+static const int MAX_ANGLES_FOR_TREES = 35;
 static const int NUM_VOXELS_PER_AXIS = 32;
 
-StructuredBuffer<float> minAngleAtCubeIndex;
-AppendStructuredBuffer<int> treesAtCubes;
+RWStructuredBuffer<float> minAngleAtCubeIndex;
+AppendStructuredBuffer<int> entitiesAtCube;
 
 int3 anchorPosition;
-
-int zipInFront(int newFront, int oldInt)
-{
-	return (newFront << 24) + oldInt;
-}
-
-StructuredBuffer<int3> copyFrom;
-RWStructuredBuffer<float> copyHere;
-int length;
 
 int indexFromCoord(int x, int y, int z)
 {
 	return z * NUM_VOXELS_PER_AXIS * NUM_VOXELS_PER_AXIS + y * NUM_VOXELS_PER_AXIS + x;
 }
 
-float Noise(int3 coord)
-{
-	return frac(abs(snoise(coord)));
-}
 
 [numthreads(numThreads, numThreads, numThreads)]
 void EnvirenmentSpawner(uint3 id : SV_DispatchThreadID/*, uint groupIndex : SV_GroupIndex*/)
-{
-	int index = indexFromCoord(id);
+{ 
+	int index = indexFromCoord(id.x, id.y, id.z);
 	if (minAngleAtCubeIndex[index] <= 0 || minAngleAtCubeIndex[index] > MAX_ANGLES_FOR_TREES)
 		return;
 
 	//TODO: spawn trees for lod of 2
 
-	float averageTreesPerSqrMeter = 0.2f;
-	float maxHeight = MAX_TREE_RADIUS / averageTreesPerSqrMeter;
-	float treeChance = Noise(id);
-
-	int entityType = 0;
-	int entityData = zipInFront(entityType, index);
+	float averageTreesPerSqrMeter = 0.1f;
+	float treeChance = Noise01(id);
 
 	if (treeChance < averageTreesPerSqrMeter) 
 	{
-		entitiesAtCube.Append(entityData);
+		int entityType = 0;
+		int entityData = zipInFront(entityType, index);
+
+		entitiesAtCube.Append(0);
 		minAngleAtCubeIndex[index] = 0;
 	}
 

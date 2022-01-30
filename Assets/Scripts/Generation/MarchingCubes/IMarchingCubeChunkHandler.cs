@@ -59,8 +59,10 @@ namespace MarchingCubes
         int ReadCurrentTriangleData(out TriangleBuilder[] ts, int triCount = -1);
 
         //IMarchingCubeChunk CreateChunkFromNoiseAt(ChunkGroupTreeLeaf leaf, float[] noise);
-        void ComputeGrassFor(Maybe<Bounds> bounds, TriangleChunkHeap triangleData);
+
         void ReturnMinDegreeBuffer(ComputeBuffer minDegreeBuffer);
+
+        void StartEnvironmentPipelineForChunk(IEnvironmentSurface environmentChunk);
     }
 
 }

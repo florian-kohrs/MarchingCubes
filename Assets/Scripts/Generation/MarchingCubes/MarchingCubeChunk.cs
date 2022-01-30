@@ -30,25 +30,11 @@ namespace MarchingCubes
         public ComputeBuffer rebuildTriResult;
         public ComputeBuffer rebuildTriCounter;
 
-        public Maybe<Bounds> meshBounds = new Maybe<Bounds>();
-
-
 
         //TODO: Add for each cube entitiy index in mesh and increase next index by entitiy cube count and try to use this when rebuilding mesh
         //TODO: Build from consume buffer
 
         public override bool UseCollider => true;
-
-        protected override void BuildDetailEnvironment()
-        {
-            BuildGrassOnChunk();
-        }
-
-        protected void BuildGrassOnChunk()
-        {
-            SetBoundsOfChunk();
-            chunkHandler.ComputeGrassFor(meshBounds, triangleHeap);
-        }
 
         protected void StoreChunkState()
         {
@@ -134,12 +120,6 @@ namespace MarchingCubes
             NumTris = 0;
         }
 
-        public override void PrepareDestruction()
-        {
-            base.PrepareDestruction();
-            meshBounds = default;
-        }
-
         protected MarchingCubeEntity CreateAndAddEntityAt(int x, int y, int z, int triangulationIndex)
         {
             MarchingCubeEntity e = new MarchingCubeEntity(this, triangulationIndex);
@@ -176,15 +156,6 @@ namespace MarchingCubes
                 PathTriangle pathTri = new PathTriangle(cube, in ts[i].tri, ts[i].color32);
                 cube.AddTriangle(pathTri);
                 AddTriangleToMeshData(in ts[i], ref usedTriCount, ref totalTreeCount);
-            }
-        }
-
-        protected void SetBoundsOfChunk()
-        {
-            meshBounds.Value = activeDisplayers[0].mesh.bounds;
-            for (int i = 1; i < activeDisplayers.Count; i++)
-            {
-                meshBounds.Value.Encapsulate(activeDisplayers[i].mesh.bounds);
             }
         }
 

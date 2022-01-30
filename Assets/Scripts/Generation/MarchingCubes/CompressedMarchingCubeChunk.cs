@@ -101,6 +101,9 @@ namespace MarchingCubes
 
         protected List<MeshData> data = new List<MeshData>();
 
+        public Maybe<Bounds> MeshBounds { get; protected set; } = new Maybe<Bounds>();
+
+
         #endregion
 
         #region properties
@@ -138,7 +141,7 @@ namespace MarchingCubes
 
         public ComputeBuffer minDegreeBuffer;
 
-        public ComputeBuffer MinDegreeBuffer { set { minDegreeBuffer = value; } }
+        public ComputeBuffer MinDegreeBuffer { get { return minDegreeBuffer; } set { minDegreeBuffer = value; } }
 
         protected bool ShouldBuildEnvironment => minDegreeBuffer != null;
 
@@ -262,6 +265,8 @@ namespace MarchingCubes
 
         public bool HasPoints => points != null;
 
+        public bool BuildDetailedEnvironment => LOD == 1;
+
 
         #endregion properties
 
@@ -353,7 +358,7 @@ namespace MarchingCubes
 
             if (ShouldBuildEnvironment)
             {
-                BuildCoreEnvirenment(triangleHeap);
+                StartEnvironmentPipeline(triangleHeap);
             }
             CleanUpOnMainThread();
         }
@@ -384,10 +389,14 @@ namespace MarchingCubes
 
             if (ShouldBuildEnvironment)
             {
-                BuildCoreEnvirenment(tris);
-                if(!IsInOtherThread)
+                if (!IsInOtherThread)
                 {
+                    StartEnvironmentPipeline(tris);
                     CleanUpOnMainThread();
+                }
+                else
+                {
+                    triangleHeap = tris;
                 }
             }
         }
@@ -401,19 +410,33 @@ namespace MarchingCubes
             }
         }
 
-        protected void BuildCoreEnvirenment(TriangleChunkHeap tris)
+        protected void StartEnvironmentPipeline(TriangleChunkHeap tris)
         {
             if (IsEmpty)
                 return;
 
+            SetBoundsOfChunk();
             triangleHeap = tris;
             if (!IsInOtherThread)
             {
+                ChunkHandler.StartEnvironmentPipelineForChunk(this);
                 BuildTrees();
                 BuildDetailEnvironment();
                 triangleHeap = null;
             }
         }
+
+
+        protected void SetBoundsOfChunk()
+        {
+            MeshBounds.Value = activeDisplayers[0].mesh.bounds;
+            for (int i = 1; i < activeDisplayers.Count; i++)
+            {
+                MeshBounds.Value.Encapsulate(activeDisplayers[i].mesh.bounds);
+            }
+        } 
+
+
 
         protected virtual void BuildDetailEnvironment() { }
 
@@ -451,6 +474,7 @@ namespace MarchingCubes
             }
             IsReady = false;
             HasStarted = false;
+            MeshBounds.LazyRemoveValue();
             FreeSimpleChunkCollider();
         }
 

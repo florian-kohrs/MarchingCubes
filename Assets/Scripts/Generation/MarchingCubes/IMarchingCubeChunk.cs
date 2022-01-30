@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public interface IMarchingCubeChunk : ISizeManager
+    public interface IMarchingCubeChunk : ISizeManager, IEnvironmentSurface
     {
 
         bool IsReady { get; }
@@ -18,8 +18,6 @@ namespace MarchingCubes
 
         WorldUpdater ChunkUpdater { set; }
 
-        Vector3Int AnchorPos { get; set; }
-
         Vector3Int CenterPos { get; }
 
         bool HasStarted { get; }
@@ -29,8 +27,6 @@ namespace MarchingCubes
         IMarchingCubeChunkHandler ChunkHandler { set; }
 
         ChunkLodCollider ChunkSimpleCollider { set; }
-
-        ComputeBuffer MinDegreeBuffer { get; set; }
 
         void FreeSimpleChunkCollider();
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MeshGPUInstanciation;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -161,7 +162,9 @@ namespace MarchingCubes
         //TODO: Handle chunks spawn with too low lod outside of next level lod collider -> no call to reduce lod
 
         //Test
-        public MeshGPUInstanciation.SpawnGrassForMarchingCube grass;
+        public SpawnGrassForMarchingCube grass;
+
+        public EnvirenmentSpawner environmentSpawner;
 
         private void Start()
         {
@@ -1374,6 +1377,11 @@ namespace MarchingCubes
         public void ReturnMinDegreeBuffer(ComputeBuffer minDegreeBuffer)
         {
             minDegreesAtCoordBufferPool.ReturnItemToPool(minDegreeBuffer);
+        }
+
+        public void StartEnvironmentPipelineForChunk(IEnvironmentSurface environmentChunk)
+        {
+            environmentSpawner.AddEnvironmentForOriginalChunk(environmentChunk);
         }
     }
 }
