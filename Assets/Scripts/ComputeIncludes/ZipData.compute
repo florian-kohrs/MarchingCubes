@@ -3,7 +3,6 @@
 	return (newFront << 24) + oldInt;
 }
 
-
 int zipData(int x, int y, int z, int w) {
 	return (x << 24) + (y << 16) + (z << 8) + w;
 }

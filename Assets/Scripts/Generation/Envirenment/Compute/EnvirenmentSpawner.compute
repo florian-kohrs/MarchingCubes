@@ -3,7 +3,7 @@
 #include "/Includes/BiomEnvirenment.compute"
 #include "/Includes/InstanceProperty.compute"
 #include "/Includes/Triangle.compute"
-
+#include "Assets/Scripts/ComputeIncludes/ZipData.compute"
 
 #define PI 3.14159265358979323846
 #define DegToRad 0.0174532924
@@ -40,7 +40,7 @@ void EnvirenmentSpawner(uint3 id : SV_DispatchThreadID/*, uint groupIndex : SV_G
 		int entityType = 0;
 		int entityData = zipInFront(entityType, index);
 
-		entitiesAtCube.Append(0);
+		entitiesAtCube.Append(entityData);
 		minAngleAtCubeIndex[index] = 0;
 	}
 

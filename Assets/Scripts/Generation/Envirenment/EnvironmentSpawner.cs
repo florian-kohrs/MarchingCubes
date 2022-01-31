@@ -9,7 +9,7 @@ using System.Linq;
 
 namespace MeshGPUInstanciation
 {
-    public class EnvirenmentSpawner : MonoBehaviour
+    public class EnvironmentSpawner : MonoBehaviour
     {
 
         protected const int BUFFER_CHUNK_SIZE =
@@ -21,8 +21,11 @@ namespace MeshGPUInstanciation
         protected const int THREADS_PER_AXIS = MarchingCubeChunkHandler.DEFAULT_CHUNK_SIZE / NUM_THREADS_PER_AXIS;
         protected const int MAX_ENVIRONMENT_ENTITIES = MarchingCubeChunkHandler.DEFAULT_CHUNK_SIZE * MarchingCubeChunkHandler.DEFAULT_CHUNK_SIZE * 3;
 
-        public ComputeShader EnvironmentPlacer;
+        public ComputeShader environmentSpawner;
 
+        public ComputeShader environmentPlacer;
+
+        public const float ENVIRONMENT_PLAYER_THREAD_SIZE = 32;
 
         public ComputeShader GrassSpawner;
 
@@ -30,6 +33,11 @@ namespace MeshGPUInstanciation
         /// at which chunk coord is which environment entity (trees, etc.) located
         /// </summary>
         protected ComputeBuffer environmentEntities;
+
+        /// <summary>
+        /// buffer where all transforms are stored in
+        /// </summary>
+        protected ComputeBuffer entityTransforms;
 
         protected ComputeBuffer bufferCount;
 
@@ -61,14 +69,15 @@ namespace MeshGPUInstanciation
             bufferCount = new ComputeBuffer(1, sizeof(int), ComputeBufferType.Raw);
             isTreeAtCube = new ComputeBuffer(BUFFER_CHUNK_SIZE, sizeof(int));
             environmentEntities = new ComputeBuffer(MAX_ENVIRONMENT_ENTITIES, sizeof(int), ComputeBufferType.Append);
-            EnvironmentPlacer.SetBuffer(0, "entitiesAtCube", environmentEntities);
+            environmentSpawner.SetBuffer(0, "entitiesAtCube", environmentEntities);
+            environmentPlacer.SetBuffer(0, "entitiesAtCube", environmentEntities);
         }
 
         protected void PrepareEnvironmentForChunk(IEnvironmentSurface chunk)
         {
             environmentEntities.SetCounterValue(0);
-            EnvironmentPlacer.SetBuffer(0, "minAngleAtCubeIndex", chunk.MinDegreeBuffer);
-            EnvironmentPlacer.SetVector("anchorPosition", VectorExtension.RaiseVector3Int(chunk.AnchorPos));
+            environmentSpawner.SetBuffer(0, "minAngleAtCubeIndex", chunk.MinDegreeBuffer);
+            environmentSpawner.SetVector("anchorPosition", VectorExtension.RaiseVector3Int(chunk.AnchorPos));
             if (chunk.BuildDetailedEnvironment)
             {
 
@@ -82,7 +91,15 @@ namespace MeshGPUInstanciation
             float[] nonNullDegs = mindegs.Where(f => f > 0).ToArray();
 
             PrepareEnvironmentForChunk(chunk);
-            EnvironmentPlacer.Dispatch(0, THREADS_PER_AXIS, THREADS_PER_AXIS, THREADS_PER_AXIS);
+            environmentSpawner.Dispatch(0, THREADS_PER_AXIS, THREADS_PER_AXIS, THREADS_PER_AXIS);
+            int entityCount = GetLengthOfAppendBuffer(environmentEntities);
+            entityTransforms = new ComputeBuffer(entityCount, sizeof(float) * 16);
+            environmentPlacer.SetBuffer(0, "entityTransform", entityTransforms);
+            environmentPlacer.SetInt("length", entityCount);
+            int threadsOnXAxis = Mathf.CeilToInt(entityCount / ENVIRONMENT_PLAYER_THREAD_SIZE);
+            environmentPlacer.Dispatch(0, threadsOnXAxis, 1, 1);
+            Matrix4x4[] test = new Matrix4x4[entityCount];
+            entityTransforms.GetData(test);
             int[] results = ReadAppendBuffer<int>(environmentEntities);
             int i = 0;
             //AsyncGPUReadback.Request(environmentEntities, OnTreePositionsRecieved);
@@ -102,9 +119,9 @@ namespace MeshGPUInstanciation
 
         public void AddEnvirenmentForEditedChunk(IMarchingCubeChunk chunk, bool buildDetailEnvironment)
         {
-            EnvironmentPlacer.SetBuffer(0, "minAngleAtCubeIndex", chunk.MinDegreeBuffer);
-            EnvironmentPlacer.SetVector("anchorPosition", VectorExtension.RaiseVector3Int(chunk.AnchorPos));
-            EnvironmentPlacer.Dispatch(0, THREADS_PER_AXIS, THREADS_PER_AXIS, THREADS_PER_AXIS);
+            environmentSpawner.SetBuffer(0, "minAngleAtCubeIndex", chunk.MinDegreeBuffer);
+            environmentSpawner.SetVector("anchorPosition", VectorExtension.RaiseVector3Int(chunk.AnchorPos));
+            environmentSpawner.Dispatch(0, THREADS_PER_AXIS, THREADS_PER_AXIS, THREADS_PER_AXIS);
             int[] results = ReadAppendBuffer<int>(environmentEntities);
 
             //AsyncGPUReadback.Request(environmentEntities, OnTreePositionsRecieved);
@@ -117,15 +134,22 @@ namespace MeshGPUInstanciation
 
         protected T[] ReadAppendBuffer<T>(ComputeBuffer buffer)
         {
-            T[] result;
-            ComputeBuffer.CopyCount(buffer, bufferCount, 0);
-            int[] length = new int[1];
-            bufferCount.GetData(length);
-            result = new T[length[0]];
+            return ReadAppendBuffer<T>(buffer, GetLengthOfAppendBuffer(buffer));
+        }
+        protected T[] ReadAppendBuffer<T>(ComputeBuffer buffer, int length)
+        {
+            T[] result = new T[length];
             buffer.GetData(result);
             return result;
         }
 
+        protected int GetLengthOfAppendBuffer(ComputeBuffer buffer)
+        {
+            ComputeBuffer.CopyCount(buffer, bufferCount, 0);
+            int[] length = new int[1];
+            bufferCount.GetData(length);
+            return length[0];
+        }
 
         protected T[] ReadBuffer<T>(ComputeBuffer buffer)
         {

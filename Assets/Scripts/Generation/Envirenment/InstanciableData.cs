@@ -40,7 +40,6 @@ namespace MeshGPUInstanciation
             //}
             //instanceMesh.colors = colors;
             argsBuffer = new ComputeBuffer(1, args.Length * sizeof(uint), ComputeBufferType.IndirectArguments);
-            meshPropertiesBuffer = argsBuffer;
             argsBuffer.SetData(args);
 
 
@@ -87,7 +86,6 @@ namespace MeshGPUInstanciation
 
         private uint[] args;
 
-        public ComputeBuffer meshPropertiesBuffer;
         public ComputeBuffer instanceTransformations;
         public ComputeBuffer argsBuffer;
 
@@ -101,11 +99,6 @@ namespace MeshGPUInstanciation
             {
                 argsBuffer.Dispose();
                 argsBuffer = null;
-            }
-            if (meshPropertiesBuffer != null && meshPropertiesBuffer.IsValid())
-            {
-                meshPropertiesBuffer.Dispose();
-                meshPropertiesBuffer = null;
             }
             if (instanceTransformations != null && instanceTransformations.IsValid())
             {

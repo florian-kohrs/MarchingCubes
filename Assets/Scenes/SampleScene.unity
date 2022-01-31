@@ -183,7 +183,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 321ace169f84f7948a2b571732bd42a6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  shader: {fileID: 7200000, guid: f7eb270303d01344d913be6003741904, type: 3}
 --- !u!4 &91128733
 Transform:
   m_ObjectHideFlags: 0
@@ -583,7 +582,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4945b295f14d73648966b06b18aabbf7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  EnvironmentPlacer: {fileID: 7200000, guid: b6c8b33a86644e044ad8826f523e70a0, type: 3}
+  environmentSpawner: {fileID: 7200000, guid: b6c8b33a86644e044ad8826f523e70a0, type: 3}
+  environmentPlacer: {fileID: 7200000, guid: 8a2563dfe4a1d9f4cbeb5c4591433ee2, type: 3}
   GrassSpawner: {fileID: 7200000, guid: ad6f9c06a53a73e47902289d598e3168, type: 3}
 --- !u!1 &807077754
 GameObject:

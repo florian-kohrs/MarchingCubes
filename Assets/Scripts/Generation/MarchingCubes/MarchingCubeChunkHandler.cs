@@ -164,7 +164,7 @@ namespace MarchingCubes
         //Test
         public SpawnGrassForMarchingCube grass;
 
-        public EnvirenmentSpawner environmentSpawner;
+        public EnvironmentSpawner environmentSpawner;
 
         private void Start()
         {

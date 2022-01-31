@@ -1,6 +1,7 @@
 #pragma kernel EnvironmentPlacer
 #include "Assets/Scripts/ComputeIncludes/NoiseFiles/Noise.compute"
 #include "Assets/Scripts/ComputeIncludes/ZipData.compute"
+#include "Assets/Scripts/ComputeIncludes/TransformBuilder.compute"
 
 #define PI 3.14159265358979323846
 #define DegToRad 0.0174532924
@@ -11,18 +12,15 @@ static const int THREAD_GROUP_SIZE = 32;
 struct Transform
 {
 	float4x4 transform;
-
 };
+
 
 StructuredBuffer<int> entitiesAtCube;
 RWStructuredBuffer<Transform> entityTransform;
+int length;
 //EntityIndexPropertyLookUp
 
-
-
 int3 anchorPosition;
-int length;
-
 
 
 
@@ -32,33 +30,14 @@ void EnvironmentPlacer(uint3 id : SV_DispatchThreadID/*, uint groupIndex : SV_Gr
 	if (id.x >= length)
 		return;
 
-	int4 entitiy = unzipData(entitiesAtCube[id.x]);
+	int4 entity = unzipData(entitiesAtCube[id.x]);
+	int3 cubeIndex = int3(entity.y, entity.z, entity.w);
 
-	//TODO: spawn trees for lod of 2
-
-	float averageTreesPerSqrMeter = 0.1f;
-	float treeChance = Noise01(id);
-
-	if (treeChance < averageTreesPerSqrMeter) 
-	{
-		int entityType = 0;
-		int entityData = zipInFront(entityType, index);
-
-		entitiesAtCube.Append(0);
-		minAngleAtCubeIndex[index] = 0;
-	}
-
-
-	/*GroupMemoryBarrierWithGroupSync();
-	for (size_t x = -MIN_TREE_DISTANCE; x <= MIN_TREE_DISTANCE; x++)
-	{
-		for (size_t y = -MIN_TREE_DISTANCE; y <= MIN_TREE_DISTANCE; y++)
-		{
-			for (size_t z = -MIN_TREE_DISTANCE; z <= MIN_TREE_DISTANCE; z++)
-			{
-				int3 newCoord = coord + int3(x, y, z);
-				if(newCoord != coord && data[newCoord])
-			}
-		}
-	}*/
+	float3 normal = anchorPosition + cubeIndex;
+	float3 position = normal - normalize(normal);
+	float angle = Noise01(normal) * 360;
+	float scale = 0.75 + Noise01(normal + anchorPosition);
+	Transform t;
+	t.transform = GetMatrixFor(angle, normal, position, scale);
+	entityTransform[id.x] = t;
 }
