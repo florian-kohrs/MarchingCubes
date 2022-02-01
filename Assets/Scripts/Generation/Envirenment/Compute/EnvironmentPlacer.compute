@@ -34,10 +34,11 @@ void EnvironmentPlacer(uint3 id : SV_DispatchThreadID/*, uint groupIndex : SV_Gr
 	int3 cubeIndex = int3(entity.y, entity.z, entity.w);
 
 	float3 normal = anchorPosition + cubeIndex;
-	float3 position = normal - normalize(normal);
+	float3 normalizedNormal = normalize(normal);
+	float3 position = normal - normalizedNormal;
 	float angle = Noise01(normal) * 360;
-	float scale = 0.75 + Noise01(normal + anchorPosition);
+	float scale = 0.75;// +Noise01(normal + anchorPosition);
 	Transform t;
-	t.transform = GetMatrixFor(angle, normal, position, scale);
+	t.transform = GetMatrixFor(angle, normalizedNormal, position, scale);
 	entityTransform[id.x] = t;
 }
