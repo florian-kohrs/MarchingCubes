@@ -8,6 +8,7 @@ namespace MarchingCubes
     public class PathTriangle : INavField
     {
 
+        //TOOD: Rebuild path finding and thus this class
 
         public PathTriangle(ICubeEntity e, in Triangle t, Func<PathTriangle, int, Color32> f)
         {
