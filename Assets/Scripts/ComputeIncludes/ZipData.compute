@@ -1,23 +1,23 @@
-﻿int zipInFront(int newFront, int oldInt)
+﻿uint zipInFront(uint newFront, uint oldInt)
 {
 	return (newFront << 24) + oldInt;
 }
 
-int zipData(int x, int y, int z, int w) {
+uint zipData(uint x, uint y, uint z, uint w) {
 	return (x << 24) + (y << 16) + (z << 8) + w;
 }
 
-int3 unzipData3(int data)
+int3 unzipData3(uint data)
 {
 	return int3(data >> 24,
-		(data >> 8) << 24,
-		(data >> 16) << 24);
+		(data << 8) >> 24,
+		(data << 16) >> 24);
 }
 
-int4 unzipData(int data)
+int4 unzipData(uint data)
 {
 	return int4(data >> 24,
-		(data >> 8) << 24,
-		(data >> 16) << 24,
-		(data >> 24) << 24);
+		(data << 8) >> 24,
+		(data << 16) >> 24,
+		(data << 24) >> 24);
 }

@@ -21,11 +21,22 @@ namespace MeshGPUInstanciation
         protected const int THREADS_PER_AXIS = MarchingCubeChunkHandler.DEFAULT_CHUNK_SIZE / NUM_THREADS_PER_AXIS;
         protected const int MAX_ENVIRONMENT_ENTITIES = MarchingCubeChunkHandler.DEFAULT_CHUNK_SIZE * MarchingCubeChunkHandler.DEFAULT_CHUNK_SIZE * 3;
 
+
+        protected const string BOUNDS_CENTER_NAME = "boundsCenter";
+        protected const string MESH_HEIGHT_EXTENSION_NAME = "meshHeightExtends";
+
+
+        public Mesh mesh;
+
+        public Material mat;
+
+
+
         public ComputeShader environmentSpawner;
 
         public ComputeShader environmentPlacer;
 
-        public const float ENVIRONMENT_PLAYER_THREAD_SIZE = 32;
+        public const float ENVIRONMENT_THREAD_SIZE = 32;
 
         public ComputeShader GrassSpawner;
 
@@ -71,24 +82,28 @@ namespace MeshGPUInstanciation
             environmentEntities = new ComputeBuffer(MAX_ENVIRONMENT_ENTITIES, sizeof(int), ComputeBufferType.Append);
             environmentSpawner.SetBuffer(0, "entitiesAtCube", environmentEntities);
             environmentPlacer.SetBuffer(0, "entitiesAtCube", environmentEntities);
+            environmentPlacer.SetFloat(MESH_HEIGHT_EXTENSION_NAME, mesh.bounds.extents.y);
         }
 
         protected void PrepareEnvironmentForChunk(IEnvironmentSurface chunk)
         {
             environmentEntities.SetCounterValue(0);
             environmentSpawner.SetBuffer(0, "minAngleAtCubeIndex", chunk.MinDegreeBuffer);
-            environmentSpawner.SetVector("anchorPosition", VectorExtension.RaiseVector3Int(chunk.AnchorPos));
+            Vector4 v4 = VectorExtension.RaiseVector3Int(chunk.AnchorPos);
+            environmentSpawner.SetVector("anchorPosition", v4);
+            environmentPlacer.SetVector("anchorPosition", v4);
+            environmentPlacer.SetVector(BOUNDS_CENTER_NAME, chunk.MeshBounds.Value.center);
             if (chunk.BuildDetailedEnvironment)
             {
 
             }
-        }
+        } 
 
         public void AddEnvironmentForOriginalChunk(IEnvironmentSurface chunk)
         {
-            float[] mindegs = ReadBuffer<float>(chunk.MinDegreeBuffer);
+            //float[] mindegs = ReadBuffer<float>(chunk.MinDegreeBuffer);
 
-            float[] nonNullDegs = mindegs.Where(f => f > 0).ToArray();
+            //float[] nonNullDegs = mindegs.Where(f => f > 0).ToArray();
 
             PrepareEnvironmentForChunk(chunk);
             environmentSpawner.Dispatch(0, THREADS_PER_AXIS, THREADS_PER_AXIS, THREADS_PER_AXIS);
@@ -96,12 +111,15 @@ namespace MeshGPUInstanciation
             entityTransforms = new ComputeBuffer(entityCount, sizeof(float) * 16);
             environmentPlacer.SetBuffer(0, "entityTransform", entityTransforms);
             environmentPlacer.SetInt("length", entityCount);
-            int threadsOnXAxis = Mathf.CeilToInt(entityCount / ENVIRONMENT_PLAYER_THREAD_SIZE);
+            int threadsOnXAxis = Mathf.CeilToInt(entityCount / ENVIRONMENT_THREAD_SIZE);
             environmentPlacer.Dispatch(0, threadsOnXAxis, 1, 1);
+            MeshInstantiator.meshInstantiator.AddData(new InstantiatableData(mesh, entityTransforms, mat, chunk.MeshBounds, entityCount));
             Matrix4x4[] test = new Matrix4x4[entityCount];
             entityTransforms.GetData(test);
             int[] results = ReadAppendBuffer<int>(environmentEntities);
             int i = 0;
+
+
             //AsyncGPUReadback.Request(environmentEntities, OnTreePositionsRecieved);
 
             //recieve tree positions
@@ -110,6 +128,8 @@ namespace MeshGPUInstanciation
             //when editing chunk store tree positions and rotations and original cubes
 
         }
+
+
 
         protected void ComputeGrassForChunk(IMarchingCubeChunk chunk)
         {

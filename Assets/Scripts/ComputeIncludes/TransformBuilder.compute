@@ -29,9 +29,12 @@ float4x4 GetEulerMatrixFor(float angle, float3 normal/*, float3 offset,*//* floa
      middle -= offset;*/
 
     float3 rotatedUp = RotateAround(normal, angle, WORLD_UP);
-
-    float3 right = normalize(cross(rotatedUp, normal));
-    float3 up = normalize(cross(normal, right));
+    
+    float3 forward = normalize(cross(rotatedUp, normal));
+  /*  if (!(right.x < 0 || right.x > 0 || right.x == 0)) {
+        right = float3(1, 0, 0);
+    }*/
+    float3 right = normalize(cross(normal, forward));
 
     /*  normal *= grassScale;
       right *= grassScale;
@@ -40,10 +43,11 @@ float4x4 GetEulerMatrixFor(float angle, float3 normal/*, float3 offset,*//* floa
       //middle += normal * (boundsHeight);
 
     float4x4 m = float4x4(
-        up.x, normal.x, right.x, 0/*middle.x*/,
-        up.y, normal.y, right.y, 0/*middle.y*/,
-        up.z, normal.z, right.z, 0/*middle.z*/,
+        right.x, normal.x, forward.x, 0/*middle.x*/,
+        right.y, normal.y, forward.y, 0/*middle.y*/,
+        right.z, normal.z, forward.z, 0/*middle.z*/,
         0, 0, 0, 1);
+
     return m;
 
 }
@@ -65,7 +69,7 @@ float4x4 SetPosAndScaleInMatrix(float4x4 org, float3 pos, float scale)
         );
 }
 
-float4x4 GetMatrixFor(float angle, float3 normal, float3 pos, float3 scale/*, float3 offset,*//* float grassScale*/)
+float4x4 GetMatrixFor(float angle, float3 normal, float3 pos, float scale/*, float3 offset,*//* float grassScale*/)
 {
     return SetPosAndScaleInMatrix(GetEulerMatrixFor(angle, normal), pos, scale);
 }

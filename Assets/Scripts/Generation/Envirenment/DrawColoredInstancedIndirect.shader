@@ -1,4 +1,4 @@
-Shader "Custom/DrawInstancedIndirect"
+Shader "Custom/DrawColoredInstancedIndirect"
 {
     Properties{
        _MainTex("Albedo (RGB)", 2D) = "white" {}
@@ -36,6 +36,7 @@ Shader "Custom/DrawInstancedIndirect"
 
                 struct MeshProperties {
                     float4x4 mat;
+                    float3 color;
                 };
 
                 StructuredBuffer<MeshProperties> _Properties;
@@ -50,10 +51,10 @@ Shader "Custom/DrawInstancedIndirect"
                     float3 ambient = ShadeSH9(float4(worldNormal, 1.0f));
                     float3 diffuse = (ndotl * _LightColor0.rgb);
 
-                    //float heightTransition = v.texcoord.y;
+                    float heightTransition = v.texcoord.y;
                     //float heightTransition = 1 - cos(PI * v.texcoord.y / 2);
 
-                    //float3 color = (1- heightTransition) * v.color + heightTransition * _Properties[instanceID].color;
+                    float3 color = (1- heightTransition) * v.color + heightTransition * _Properties[instanceID].color;
 
                     v2f o;
                     float4 pos = mul(_Properties[instanceID].mat, v.vertex);
@@ -61,7 +62,7 @@ Shader "Custom/DrawInstancedIndirect"
                     //o.uv_MainTex = v.texcoord;
                     o.ambient = ambient;
                     o.diffuse = diffuse;
-                    o.color = v.color;
+                    o.color = color;
                     return o;
                 }
 

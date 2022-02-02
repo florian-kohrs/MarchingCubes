@@ -37,8 +37,9 @@ namespace MeshGPUInstanciation
 
         public const int GRASS_PER_COMPUTE = 32 * 32 * 5 * 4;
 
-        public void ComputeGrassFor(Maybe<Bounds> bounds, TriangleChunkHeap tris)
+        public void ComputeGrassFor(IEnvironmentSurface chunk)
         {
+            TriangleChunkHeap tris = chunk.ChunkHeap;
             int numTris = tris.triCount;
             triangleBuffer.SetData(tris.tris);
 
@@ -46,7 +47,8 @@ namespace MeshGPUInstanciation
             grassProperties = new ComputeBuffer(GRASS_PER_COMPUTE, MeshInstancedProperties.Size(), ComputeBufferType.Append);
             grassProperties.SetCounterValue(0);
             Material mat = new Material(this.mat);
-            Vector3 offset = bounds.Value.center;
+            Maybe<Bounds> mBounds = chunk.MeshBounds;
+            Vector3 offset = mBounds.Value.center;
 
             grassShader.SetInt(NAME_OF_TRIANGLE_LENGTH, numTris);
             grassShader.SetInt(NAME_OF_START_INDEX, tris.startIndex);
@@ -55,9 +57,9 @@ namespace MeshGPUInstanciation
             grassShader.SetBuffer(0, NAME_OF_TRIANGLE_BUFFER, triangleBuffer);
             grassShader.SetBuffer(0, NAME_OF_GRASS_BUFFER, grassProperties);
 
-            grassShader.Dispatch(0, numThreadPerAxis, 1,1);
+            grassShader.Dispatch(0, numThreadPerAxis, 1, 1);
 
-            new InstanciableData(grassMesh, numTris, grassProperties, mat, bounds);
+            new InstantiatableData(grassMesh, grassProperties, mat, mBounds);
             grassProperties = null;
         }
 

@@ -1369,9 +1369,9 @@ namespace MarchingCubes
             }
         }
 
-        public void ComputeGrassFor(Maybe<Bounds> bounds, TriangleChunkHeap triangleData)
+        public void ComputeGrassFor(IEnvironmentSurface environmentChunk)
         {
-            grass.ComputeGrassFor(bounds, triangleData);
+            grass.ComputeGrassFor(environmentChunk);
         }
 
         public void ReturnMinDegreeBuffer(ComputeBuffer minDegreeBuffer)
@@ -1381,6 +1381,7 @@ namespace MarchingCubes
 
         public void StartEnvironmentPipelineForChunk(IEnvironmentSurface environmentChunk)
         {
+            //grass.ComputeGrassFor(environmentChunk);
             environmentSpawner.AddEnvironmentForOriginalChunk(environmentChunk);
         }
     }

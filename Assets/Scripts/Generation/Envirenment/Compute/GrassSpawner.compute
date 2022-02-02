@@ -16,7 +16,7 @@ static const int NUM_VOXELS_PER_AXIS = 32;
 
 AppendStructuredBuffer<InstanceProperty> grassPositions;
 StructuredBuffer<Triangle> meshTriangles;
-StructuredBuffer<float> canHaveGrassAtCoord;
+//StructuredBuffer<float> canHaveGrassAtCoord;
 float3 offset;
 float boundsHeight;
 uint length;
@@ -127,7 +127,7 @@ void GrassSpawner(uint3 id : SV_DispatchThreadID)
     Triangle t = meshTriangles[id.x];
     int3 cubeIndex = unzipData3(t.cubeData);
     int index = indexFromCoord(cubeIndex.x, cubeIndex.y, cubeIndex.z);
-    if (steepness(t) > 45 || canHaveGrassAtCoord[index] == 0)
+    if (steepness(t) > 45/* || canHaveGrassAtCoord[index] == 0*/)
         return;
 
     float seed = PI; //PI* id.x / (PI + id.y + id.z);

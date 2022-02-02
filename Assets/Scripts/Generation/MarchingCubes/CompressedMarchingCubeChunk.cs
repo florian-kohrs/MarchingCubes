@@ -267,6 +267,8 @@ namespace MarchingCubes
 
         public bool BuildDetailedEnvironment => LOD == 1;
 
+        public TriangleChunkHeap ChunkHeap => triangleHeap;
+
 
         #endregion properties
 
@@ -420,8 +422,6 @@ namespace MarchingCubes
             if (!IsInOtherThread)
             {
                 ChunkHandler.StartEnvironmentPipelineForChunk(this);
-                BuildTrees();
-                BuildDetailEnvironment();
                 triangleHeap = null;
             }
         }
@@ -435,16 +435,6 @@ namespace MarchingCubes
                 MeshBounds.Value.Encapsulate(activeDisplayers[i].mesh.bounds);
             }
         } 
-
-
-
-        protected virtual void BuildDetailEnvironment() { }
-
-
-        protected void BuildTrees()
-        {
-
-        }
 
         public void ResetChunk()
         {

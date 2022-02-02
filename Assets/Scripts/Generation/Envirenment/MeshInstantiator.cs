@@ -8,7 +8,7 @@ namespace MeshGPUInstanciation
     public class MeshInstantiator : MonoBehaviour
     {
 
-        public List<InstanciableData> datas = new List<InstanciableData>();
+        public List<InstantiatableData> datas = new List<InstantiatableData>();
 
         public static MeshInstantiator meshInstantiator;
 
@@ -24,7 +24,7 @@ namespace MeshGPUInstanciation
             datas = null;
         }
 
-        public void AddData(InstanciableData data)
+        public void AddData(InstantiatableData data)
         {
             datas.Add(data);
         }
@@ -36,7 +36,7 @@ namespace MeshGPUInstanciation
             int count = datas.Count;
             for (int i = 0; i < count; i++)
             {
-                InstanciableData data = datas[i];
+                InstantiatableData data = datas[i];
                 if (data.ShouldRemoveInstanceData)
                 {
                     datas.RemoveAt(i);

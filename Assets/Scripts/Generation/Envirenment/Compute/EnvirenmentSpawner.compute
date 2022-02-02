@@ -13,7 +13,7 @@ static const int MAX_ANGLES_FOR_TREES = 35;
 static const int NUM_VOXELS_PER_AXIS = 32;
 
 RWStructuredBuffer<float> minAngleAtCubeIndex;
-AppendStructuredBuffer<int> entitiesAtCube;
+AppendStructuredBuffer<uint> entitiesAtCube;
 
 int3 anchorPosition;
 
@@ -38,7 +38,7 @@ void EnvirenmentSpawner(uint3 id : SV_DispatchThreadID/*, uint groupIndex : SV_G
 	if (treeChance < averageTreesPerSqrMeter) 
 	{
 		int entityType = 0;
-		int entityData = zipInFront(entityType, index);
+		uint entityData = zipData(id.x, id.y, id.z, entityType);
 
 		entitiesAtCube.Append(entityData);
 		minAngleAtCubeIndex[index] = 0;

@@ -20,8 +20,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: DrawInstanceMat
-  m_Shader: {fileID: 4800000, guid: d05ab8be057b83a42aa4de529c4b8dbd, type: 3}
+  m_Name: DrawColoredInstanceMat
+  m_Shader: {fileID: 4800000, guid: cc359865fdd2f7d449f3b52de38da26f, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
