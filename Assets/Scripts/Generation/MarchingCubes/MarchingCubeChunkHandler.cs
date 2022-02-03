@@ -746,6 +746,11 @@ namespace MarchingCubes
             return RequestNoiseFor(chunk.ChunkSizePower, chunk.PointsPerAxis, chunk.LOD, chunk.AnchorPos);
         }
 
+        public bool TryLoadPoints(IMarchingCubeChunk chunk, out float[] loadedPoints)
+        {
+            return TryGetMipMapAt(chunk.AnchorPos, chunk.ChunkSizePower, out loadedPoints, out bool complete) && complete;
+        }
+
         public float[] RequestNoiseAndEditAtPosition(IMarchingCubeChunk chunk, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance)
         {
             int pointsPerAxis = chunk.PointsPerAxis;
@@ -915,7 +920,7 @@ namespace MarchingCubes
                 chunk.Points = pointsArray;
                 if (storeNoise)
                 {
-                    Store(chunk.AnchorPos, pointsArray);
+                    Store(chunk.AnchorPos, pointsArray, true);
                 }
             }
             return new TriangleChunkHeap(tris, 0, numTris);
@@ -1318,9 +1323,9 @@ namespace MarchingCubes
         }
 
         //TODO: Dont store when chunk knows he stored before 
-        public void Store(Vector3Int anchorPos, float[] noise)
+        public void Store(Vector3Int anchorPos, float[] noise, bool overrideNoise = false)
         {
-            if (!TryGetStoredEditsAt(anchorPos, out StoredChunkEdits edits))
+            if (!TryGetStoredEditsAt(anchorPos, out StoredChunkEdits edits) || overrideNoise)
             {
                 edits = new StoredChunkEdits();
                 StorageTreeRoot r = GetOrCreateStorageGroupAtCoordinate(PositionToStorageGroupCoord(anchorPos));
@@ -1329,12 +1334,17 @@ namespace MarchingCubes
                 //call all instantiableData from chunk that need to be stored
                 //(everything not depending on triangles only, e.g trees )
             }
+            else if(edits.noise != noise)
+            {
+                throw new Exception();
+            }
         }
 
         public void ComputeGrassFor(Maybe<Bounds> bounds, TriangleChunkHeap triangleData)
         {
-            grass.ComputeGrassFor(bounds, triangleData);
+            //grass.ComputeGrassFor(bounds, triangleData);
         }
 
+      
     }
 }

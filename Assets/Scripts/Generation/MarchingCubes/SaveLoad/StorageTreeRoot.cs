@@ -23,7 +23,7 @@ namespace MarchingCubes
         public bool TryGetMipMapOfChunkSizePower(int[] relativePosition, int sizePow, out float[] storedNoise, out bool isMipMapComplete)
         {
             IStorageGroupOrganizer<StoredChunkEdits> node;
-            if (TryGetNodeWithSizePower(relativePosition,sizePow, out node))
+            if (TryGetNodeWithSizePower(relativePosition, sizePow, out node))
             {
                 storedNoise = node.NoiseMap;
                 isMipMapComplete = node.IsMipMapComplete;

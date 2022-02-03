@@ -289,7 +289,7 @@ namespace MarchingCubes
 
             bool rebuildChunk;
 
-            if (HasPoints)
+            if (HasPoints || ChunkHandler.TryLoadPoints(this, out points))
             {
                 rebuildChunk = EditPointsOnCPU(start, end, clickedIndex + offset, radius, delta);
             }
@@ -681,6 +681,7 @@ namespace MarchingCubes
                     Vector3Int end;
                     GetNoiseEditData(offset, editDistance, origin - offset, out start, out end);
                     chunkHandler.CreateChunkWithNoiseEdit(newChunkPos, hit.point - newChunkPos, start,end, delta, editDistance, out IMarchingCubeChunk _);
+                    StoreNoiseArray();
                 }
             }
 

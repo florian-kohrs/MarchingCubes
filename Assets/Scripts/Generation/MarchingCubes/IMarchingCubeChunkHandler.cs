@@ -52,7 +52,7 @@ namespace MarchingCubes
 
         Color32 GetColor(PathTriangle t, int steepness);
 
-        void Store(Vector3Int anchorPos, float[] noise);
+        void Store(Vector3Int anchorPos, float[] noise, bool overrideNoise = false);
 
         void TakeMeshDisplayerBack(MarchingCubeMeshDisplayer freeDisplayer);
 
@@ -60,7 +60,7 @@ namespace MarchingCubes
 
         //IMarchingCubeChunk CreateChunkFromNoiseAt(ChunkGroupTreeLeaf leaf, float[] noise);
         void ComputeGrassFor(Maybe<Bounds> bounds, TriangleChunkHeap triangleData);
-    
+        bool TryLoadPoints(IMarchingCubeChunk marchingCubeChunk, out float[] loadedPoints);
     }
 
 }
