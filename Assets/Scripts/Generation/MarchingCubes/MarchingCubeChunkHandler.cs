@@ -359,6 +359,8 @@ namespace MarchingCubes
             }
         }
 
+        protected bool lastChunkWasAir;
+
         protected ICompressedMarchingCubeChunk FindNonEmptyChunkAround(Vector3 pos)
         {
             bool isEmpty = true;
@@ -374,7 +376,7 @@ namespace MarchingCubes
                 if (chunk.IsEmpty)
                 {
                     //TODO: maybe just read noise points here and completly remove isSolid or Air
-                    if (chunk.IsCompletlyAir)
+                    if (lastChunkWasAir)
                     {
                         pos.y -= chunk.ChunkSize;
                     }
@@ -962,15 +964,19 @@ namespace MarchingCubes
                     pointsArray = new float[1];
                 }
                 pointsBuffer.GetData(pointsArray, 0, 0, pointsArray.Length);
-                chunk.Points = pointsArray;
+                //chunk.Points = pointsArray;
                 if (storeNoise)
                 {
                     Store(chunk.AnchorPos, chunk as IMarchingCubeChunk, true);
-
+                }
+                else
+                {
+                    lastChunkWasAir = pointsArray[0] < surfaceLevel;
                 }
             }
             return new TriangleChunkHeap(tris, 0, numTris);
         }
+
 
         public void AccumulateCubesFromNoise(ICompressedMarchingCubeChunk chunk, int offest)
         {

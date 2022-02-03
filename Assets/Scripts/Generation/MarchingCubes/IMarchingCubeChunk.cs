@@ -8,6 +8,11 @@ namespace MarchingCubes
     public interface IMarchingCubeChunk : ICompressedMarchingCubeChunk, IBlockPlaceOrientator
     {
 
+        float[] Points { get; set; }
+
+        bool HasPoints { get; }
+
+
         void StoreChunk(StoredChunkEdits storage);
 
         PathTriangle GetTriangleFromRayHit(RaycastHit hit);

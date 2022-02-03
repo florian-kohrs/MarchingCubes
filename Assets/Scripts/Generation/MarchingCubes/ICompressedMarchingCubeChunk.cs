@@ -16,8 +16,6 @@ namespace MarchingCubes
 
         int ChunkSize { get; }
 
-        float[] Points { get; set; }
-
         WorldUpdater ChunkUpdater { set; }
 
         Vector3Int CenterPos { get; }
@@ -36,8 +34,6 @@ namespace MarchingCubes
 
         bool IsEmpty { get; }
 
-        bool IsCompletlyAir { get; }
-
         float SurfaceLevel { set; }
 
         int LOD { get; }
@@ -47,8 +43,6 @@ namespace MarchingCubes
         int TargetLODPower { get; set; }
 
         Material Material { set; }
-
-        bool HasPoints { get; }
 
         int PointsPerAxis { get; }
 
