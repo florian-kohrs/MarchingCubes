@@ -37,6 +37,8 @@ namespace MarchingCubes
 
         public const int DEFAULT_CHUNK_SIZE = 32;
 
+        public const int POINTS_PER_AXIS_IN_DEFAULT_SIZE = DEFAULT_CHUNK_SIZE + 1;
+
         public const int DEFAULT_CHUNK_SIZE_POWER = 5;
 
         public const int DEFAULT_MIN_CHUNK_LOD_POWER = 0;
@@ -50,6 +52,8 @@ namespace MarchingCubes
         public const int DEACTIVATE_CHUNK_LOD = MAX_CHUNK_LOD_POWER + 1;
 
         public const int VOXELS_IN_DEFAULT_SIZED_CHUNK = DEFAULT_CHUNK_SIZE * DEFAULT_CHUNK_SIZE * DEFAULT_CHUNK_SIZE;
+
+        public const int NOISE_POINTS_IN_DEFAULT_SIZED_CHUNK = POINTS_PER_AXIS_IN_DEFAULT_SIZE * POINTS_PER_AXIS_IN_DEFAULT_SIZE * POINTS_PER_AXIS_IN_DEFAULT_SIZE;
 
         public Dictionary<Vector3Int, IChunkGroupRoot> chunkGroups = new Dictionary<Vector3Int, IChunkGroupRoot>();
 
@@ -95,10 +99,10 @@ namespace MarchingCubes
 
         protected SimpleChunkColliderPool simpleChunkColliderPool;
 
-
+        //Cant really pool noise array, maybe pool tribuilder aray instead (larger than neccessary)
 
         protected int channeledChunks = 0;
-
+            
         protected bool hasFoundInitialChunk;
 
 
@@ -771,11 +775,6 @@ namespace MarchingCubes
         }
 
 
-        public bool TryLoadPoints(ICompressedMarchingCubeChunk chunk, out float[] loadedPoints)
-        {
-            return TryGetMipMapAt(chunk.AnchorPos, chunk.ChunkSizePower, out loadedPoints, out bool complete) && complete;
-        }
-
         public void SetEditedNoiseAtPosition(IMarchingCubeChunk chunk, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance)
         {
             int pointsPerAxis = chunk.PointsPerAxis;
@@ -838,6 +837,11 @@ namespace MarchingCubes
                 densityGenerator.Generate(pointsPerAxis, anchor, lod, hasStoredData);
             }
 
+        }
+
+        public bool TryLoadPoints(ICompressedMarchingCubeChunk chunk, out float[] loadedPoints)
+        {
+            return TryGetMipMapAt(chunk.AnchorPos, chunk.ChunkSizePower, out loadedPoints, out bool complete) && complete;
         }
 
         protected bool TryLoadNoise(Vector3Int anchor, int sizePow, out float[] noise, out bool isMipMapComplete)
@@ -929,6 +933,22 @@ namespace MarchingCubes
             simpleChunkColliderPool.GetItemFromPoolFor(chunk);
         }
 
+        protected void StoreNoise(ICompressedMarchingCubeChunk chunk)
+        {
+            int pointsPerAxis = chunk.PointsPerAxis;
+            int pointsVolume = pointsPerAxis * pointsPerAxis * pointsPerAxis;
+            pointsArray = new float[pointsVolume];
+            pointsBuffer.GetData(pointsArray);
+            Store(chunk.AnchorPos, chunk as IMarchingCubeChunk, true);
+        }
+
+        protected void DetermineIfChunkIsAir(ICompressedMarchingCubeChunk chunk)
+        {
+            pointsArray = new float[1];
+            pointsBuffer.GetData(pointsArray);
+            lastChunkWasAir = pointsArray[0] < surfaceLevel;
+        }
+
         //TODO: Inform about Mesh subset and mesh set vertex buffer
         //Subset may be used to only change parts of the mesh -> dont need multiple mesh displayers with submeshes?
         protected TriangleChunkHeap DispatchAndGetShaderData(ICompressedMarchingCubeChunk chunk, Action WorkOnNoise = null)
@@ -949,28 +969,13 @@ namespace MarchingCubes
                 chunk.GiveUnusedDisplayerBack();
             }
 
-            if (storeNoise || (numTris == 0 && !hasFoundInitialChunk))
+            if(storeNoise)
             {
-                if (storeNoise)
-                {
-                    int pointsPerAxis = chunk.PointsPerAxis;
-                    int pointsVolume = pointsPerAxis * pointsPerAxis * pointsPerAxis;
-                    pointsArray = new float[pointsVolume];
-                }
-                else
-                {
-                    pointsArray = new float[1];
-                }
-                pointsBuffer.GetData(pointsArray, 0, 0, pointsArray.Length);
-                //chunk.Points = pointsArray;
-                if (storeNoise)
-                {
-                    Store(chunk.AnchorPos, chunk as IMarchingCubeChunk, true);
-                }
-                else
-                {
-                    lastChunkWasAir = pointsArray[0] < surfaceLevel;
-                }
+                StoreNoise(chunk);
+            }
+            else if(numTris == 0 && !hasFoundInitialChunk)
+            {
+                DetermineIfChunkIsAir(chunk);
             }
             return new TriangleChunkHeap(tris, 0, numTris);
         }
@@ -1351,6 +1356,10 @@ namespace MarchingCubes
                 r.SetLeafAtPosition(anchorPos, edits, true);
                 //call all instantiableData from chunk that need to be stored
                 //(everything not depending on triangles only, e.g trees )
+            }
+            if(edits.noise != chunk.Points)
+            {
+                throw new Exception();
             }
         }
 

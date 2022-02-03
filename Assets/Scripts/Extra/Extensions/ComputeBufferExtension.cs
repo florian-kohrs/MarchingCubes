@@ -46,5 +46,11 @@ public static class ComputeBufferExtension
         return result;
     }
 
+    public static T[] ReadBufferUntil<T>(ComputeBuffer buffer, int length)
+    {
+        T[] result = new T[length];
+        buffer.GetData(result);
+        return result;
+    }
 
 }

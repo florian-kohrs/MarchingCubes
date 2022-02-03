@@ -659,7 +659,8 @@ namespace MarchingCubes
                     Vector3Int start;
                     Vector3Int end;
                     GetNoiseEditData(offset, editDistance, origin - offset, out start, out end);
-                    chunkHandler.CreateChunkWithNoiseEdit(newChunkPos, hit.point - newChunkPos, start,end, delta, editDistance, out ICompressedMarchingCubeChunk _);
+                    chunkHandler.CreateChunkWithNoiseEdit(newChunkPos, hit.point - newChunkPos, start,end, delta, editDistance, out ICompressedMarchingCubeChunk a);
+                    (a as MarchingCubeChunk).StoreChunkState();
                 }
             }
 
