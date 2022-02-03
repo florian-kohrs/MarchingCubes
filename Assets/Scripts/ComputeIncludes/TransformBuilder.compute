@@ -1,0 +1,75 @@
+﻿#define PI 3.14159265358979323846
+#define DegToRad 0.0174532924
+
+static const float3 WORLD_UP = float3(0, 1, 0);
+
+
+float3 RotateAround(float3 axis, float angle, float3 direction)
+{
+    float3 u = axis;
+    float3 u2 = u;
+    float theta = PI * DegToRad * angle;
+    float c = cos(theta);
+    float minusC = cos(theta);
+    float s = sin(theta);
+
+    float3x3 rotMatrix = float3x3(
+        float3(c + u2.x * minusC, u.x * u.y * minusC - u.z * s, u.x * u.z * minusC + u.y * s),
+        float3(u.y * u.x * minusC + u.z * s, c + u2.y * minusC, u.y * u.z * minusC - u.x * s),
+        float3(u.z * u.x * minusC - u.y * s, u.z * u.y * minusC + u.x * s, c + u2.z * minusC)
+        );
+
+    return mul(rotMatrix, direction);
+}
+
+
+float4x4 GetEulerMatrixFor(float angle, float3 normal/*, float3 offset,*//* float grassScale*/)
+{
+    /* float3 middle = (t.vertexC  + t.vertexB + t.vertexA) / 3;
+     middle -= offset;*/
+
+    float3 rotatedUp = RotateAround(normal, angle, WORLD_UP);
+    
+    float3 forward = normalize(cross(rotatedUp, normal));
+  /*  if (!(right.x < 0 || right.x > 0 || right.x == 0)) {
+        right = float3(1, 0, 0);
+    }*/
+    float3 right = normalize(cross(normal, forward));
+
+    /*  normal *= grassScale;
+      right *= grassScale;
+      up *= grassScale;*/
+
+      //middle += normal * (boundsHeight);
+
+    float4x4 m = float4x4(
+        right.x, normal.x, forward.x, 0/*middle.x*/,
+        right.y, normal.y, forward.y, 0/*middle.y*/,
+        right.z, normal.z, forward.z, 0/*middle.z*/,
+        0, 0, 0, 1);
+
+    return m;
+
+}
+
+
+float4x4 SetPosAndScaleInMatrix(float4x4 org, float3 pos, float scale)
+{
+    float4 c0 = org[0];
+    c0 *= scale;
+    c0.w = pos.x;
+    float4 c1 = org[1];
+    c1 *= scale;
+    c1.w = pos.y;
+    float4 c2 = org[2];
+    c2 *= scale;
+    c2.w = pos.z;
+    return float4x4(
+        c0, c1, c2, org[3]
+        );
+}
+
+float4x4 GetMatrixFor(float angle, float3 normal, float3 pos, float scale/*, float3 offset,*//* float grassScale*/)
+{
+    return SetPosAndScaleInMatrix(GetEulerMatrixFor(angle, normal), pos, scale);
+}

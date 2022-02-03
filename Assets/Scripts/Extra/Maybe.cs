@@ -9,6 +9,11 @@ public class Maybe<T> where T : struct
 
     protected bool hasValue;
 
+    public void LazyRemoveValue()
+    {
+        hasValue = false;
+    }
+
     public T Value
     {
         get 

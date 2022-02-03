@@ -280,6 +280,11 @@ public static class VectorExtension
         return new Vector3Int((int)v.x, (int)v.y, (int)v.z);
     }
 
+    public static Vector4 RaiseVector3Int(Vector3Int vec)
+    {
+        return new Vector4(vec.x, vec.y, vec.z, 0);
+    }
+
     public static int ToInt(this Vector3 v, Vector3 size)
     {
         return (int)(v.x * size.x * size.y + v.y * size.y + v.z);

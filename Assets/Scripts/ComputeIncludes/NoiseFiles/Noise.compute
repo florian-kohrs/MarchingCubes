@@ -7,7 +7,7 @@
 // of the original shader, please see the following description from the
 // original source code.
 //
-
+ 
 //
 // Description : Array and textureless GLSL 2D/3D/4D simplex
 //               noise functions.
@@ -44,8 +44,8 @@ float snoise(float3 v)
     const float2 C = float2(1.0 / 6.0, 1.0 / 3.0);
 
     // First corner
-    float3 i = floor(v + dot(v, C.yyy));
-    float3 x0 = v - i + dot(i, C.xxx);
+    float3 i  = floor(v + dot(v, C.yyy));
+    float3 x0 = v   - i + dot(i, C.xxx);
 
     // Other corners
     float3 g = step(x0.yzx, x0.xyz);
@@ -63,9 +63,9 @@ float snoise(float3 v)
     // Permutations
     i = mod289(i); // Avoid truncation effects in permutation
     float4 p =
-        permute(permute(permute(i.z + float4(0.0, i1.z, i2.z, 1.0))
-            + i.y + float4(0.0, i1.y, i2.y, 1.0))
-            + i.x + float4(0.0, i1.x, i2.x, 1.0));
+      permute(permute(permute(i.z + float4(0.0, i1.z, i2.z, 1.0))
+                            + i.y + float4(0.0, i1.y, i2.y, 1.0))
+                            + i.x + float4(0.0, i1.x, i2.x, 1.0));
 
     // Gradients: 7x7 points over a square, mapped onto an octahedron.
     // The ring size 17*17 = 289 is close to a multiple of 49 (49*6 = 294)
@@ -117,8 +117,8 @@ float4 snoise_grad(float3 v)
     const float2 C = float2(1.0 / 6.0, 1.0 / 3.0);
 
     // First corner
-    float3 i = floor(v + dot(v, C.yyy));
-    float3 x0 = v - i + dot(i, C.xxx);
+    float3 i  = floor(v + dot(v, C.yyy));
+    float3 x0 = v   - i + dot(i, C.xxx);
 
     // Other corners
     float3 g = step(x0.yzx, x0.xyz);
@@ -136,9 +136,9 @@ float4 snoise_grad(float3 v)
     // Permutations
     i = mod289(i); // Avoid truncation effects in permutation
     float4 p =
-        permute(permute(permute(i.z + float4(0.0, i1.z, i2.z, 1.0))
-            + i.y + float4(0.0, i1.y, i2.y, 1.0))
-            + i.x + float4(0.0, i1.x, i2.x, 1.0));
+      permute(permute(permute(i.z + float4(0.0, i1.z, i2.z, 1.0))
+                            + i.y + float4(0.0, i1.y, i2.y, 1.0))
+                            + i.x + float4(0.0, i1.x, i2.x, 1.0));
 
     // Gradients: 7x7 points over a square, mapped onto an octahedron.
     // The ring size 17*17 = 289 is close to a multiple of 49 (49*6 = 294)
@@ -188,4 +188,10 @@ float4 snoise_grad(float3 v)
         -6.0 * m3.w * x3 * dot(x3, g3) + m4.w * g3;
     float4 px = float4(dot(x0, g0), dot(x1, g1), dot(x2, g2), dot(x3, g3));
     return 42.0 * float4(grad, dot(m4, px));
+}
+
+
+float Noise01(int3 coord)
+{
+    return frac(abs(snoise(coord)));
 }

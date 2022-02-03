@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MeshGPUInstanciation;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -47,6 +48,8 @@ namespace MarchingCubes
         public const int DESTROY_CHUNK_LOD = MAX_CHUNK_LOD_POWER + 2;
 
         public const int DEACTIVATE_CHUNK_LOD = MAX_CHUNK_LOD_POWER + 1;
+
+        public const int VOXELS_IN_DEFAULT_SIZED_CHUNK = DEFAULT_CHUNK_SIZE * DEFAULT_CHUNK_SIZE * DEFAULT_CHUNK_SIZE;
 
         public Dictionary<Vector3Int, IChunkGroupRoot> chunkGroups = new Dictionary<Vector3Int, IChunkGroupRoot>();
 
@@ -111,7 +114,7 @@ namespace MarchingCubes
         private ComputeBuffer savedPointBuffer;
         private ComputeBuffer triCountBuffer;
 
-        private ComputeBuffer minDegreesAtCoordBuffer;
+        private DisposablePoolOf<ComputeBuffer> minDegreesAtCoordBufferPool;
 
 
         public WorldUpdater worldUpdater;
@@ -159,7 +162,9 @@ namespace MarchingCubes
         //TODO: Handle chunks spawn with too low lod outside of next level lod collider -> no call to reduce lod
 
         //Test
-        public MeshGPUInstanciation.SpawnGrassForMarchingCube grass;
+        public SpawnGrassForMarchingCube grass;
+
+        public EnvironmentSpawner environmentSpawner;
 
         private void Start()
         {
@@ -173,8 +178,6 @@ namespace MarchingCubes
             InitializeDensityGenerator();
 
             ApplyShaderProperties(marshShader);
-            marshShader.SetBool("storeMinDegrees", false);
-            marshShader.SetBuffer(0, "minDegreeAtCoord", minDegreesAtCoordBuffer);
 
             ApplyShaderProperties(rebuildShader);
             noiseEditShader.SetBuffer(0, "points", pointsBuffer);
@@ -724,6 +727,18 @@ namespace MarchingCubes
         //    return result;
         //}
 
+        protected void PrepareChunkToStoreMinDegreesIfNeeded(IMarchingCubeChunk chunk)
+        {
+            bool storeMinDegree = chunk.LOD <= 2 && !chunk.IsReady;
+            marshShader.SetBool("storeMinDegrees", storeMinDegree);
+            if (storeMinDegree)
+            {
+                ComputeBuffer minDegreeBuffer = minDegreesAtCoordBufferPool.GetItemFromPool();
+                marshShader.SetBuffer(0, "minDegreeAtCoord", minDegreeBuffer);
+                chunk.MinDegreeBuffer = minDegreeBuffer;
+            }
+        }
+
         //TODO:Remove keep points
         protected void BuildChunk(IMarchingCubeChunk chunk, bool careForNeighbours, Action WorkOnNoise = null)
         {
@@ -746,20 +761,24 @@ namespace MarchingCubes
             return RequestNoiseFor(chunk.ChunkSizePower, chunk.PointsPerAxis, chunk.LOD, chunk.AnchorPos);
         }
 
+
         public bool TryLoadPoints(IMarchingCubeChunk chunk, out float[] loadedPoints)
         {
             return TryGetMipMapAt(chunk.AnchorPos, chunk.ChunkSizePower, out loadedPoints, out bool complete) && complete;
         }
 
-        public float[] RequestNoiseAndEditAtPosition(IMarchingCubeChunk chunk, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance)
+        public void SetEditedNoiseAtPosition(IMarchingCubeInteractableChunk chunk, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance)
+
+
+
         {
             int pointsPerAxis = chunk.PointsPerAxis;
             float[] result = new float[pointsPerAxis * pointsPerAxis * pointsPerAxis];
             GenerateNoise(chunk.ChunkSizePower, pointsPerAxis, chunk.LOD, chunk.AnchorPos);
             ApplyNoiseEditing(pointsPerAxis, editPoint, start, end, delta, maxDistance);
             pointsBuffer.GetData(result, 0, 0, result.Length);
-            Store(chunk.AnchorPos, result);
-            return result;
+            chunk.Points = result;
+            Store(chunk.AnchorPos, chunk);
         }
 
         private void ApplyNoiseEditing(int pointsPerAxis, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance)
@@ -866,6 +885,7 @@ namespace MarchingCubes
         }
 
         int numTris;
+
         //TODO: Inform about Mesh subset and mesh set vertex buffer
         //Subset may be used to only change parts of the mesh -> dont need multiple mesh displayers with submeshes?
         protected TriangleChunkHeap DispatchAndGetShaderData(IMarchingCubeChunk chunk, bool careForNeighbours, Action WorkOnNoise = null)
@@ -885,11 +905,16 @@ namespace MarchingCubes
             bool storeNoise = false;
             if (WorkOnNoise != null)
             {
+                if(!(chunk is IStoreableMarchingCube))
+                {
+                    throw new ArgumentException("Chunk has to be storeable to be able to store requested noise!");
+                }
                 WorkOnNoise?.Invoke();
                 storeNoise = true;
             }
 
-            ComputeCubesFromNoise(chunk.ChunkSize, chunk.AnchorPos, lod);
+
+            ComputeCubesFromNoise(chunk, lod);
 
             ///Do work for chunk here, before data from gpu is read, to give gpu time to finish
 
@@ -920,7 +945,9 @@ namespace MarchingCubes
                 chunk.Points = pointsArray;
                 if (storeNoise)
                 {
-                    Store(chunk.AnchorPos, pointsArray, true);
+
+                    Store(chunk.AnchorPos, chunk as IStoreableMarchingCube, true);
+
                 }
             }
             return new TriangleChunkHeap(tris, 0, numTris);
@@ -935,13 +962,13 @@ namespace MarchingCubes
 
         public void AccumulateCubesFromNoise(IMarchingCubeChunk chunk, int offest)
         {
-            ComputeCubesFromNoise(chunk.ChunkSize, chunk.AnchorPos, chunk.LOD, false);
+            ComputeCubesFromNoise(chunk, chunk.LOD, false);
             ComputeBuffer.CopyCount(triangleBuffer, triCountBuffer, offest * 4);
         }
 
         public int RequestCubesFromNoise(IMarchingCubeChunk chunk, int lod, int triCount = -1)
         {
-            ComputeCubesFromNoise(chunk.ChunkSize, chunk.AnchorPos, lod);
+            ComputeCubesFromNoise(chunk, lod);
             return ReadCurrentTriangleData(out tris, triCount);
         }
 
@@ -958,19 +985,28 @@ namespace MarchingCubes
 
             ///Get triangle data from shader
 
-            tris = new TriangleBuilder[triCount];
             //TODO: Check if this changes performance
             if (triCount > 0)
             {
+                tris = new TriangleBuilder[triCount];
                 triangleBuffer.GetData(tris, 0, 0, triCount);
+            }
+            else
+            {
+                tris = null;
             }
 
             totalTriBuild += triCount;
             return triCount;
         }
 
-        public void ComputeCubesFromNoise(int chunkSize, Vector3Int anchor, int lod, bool resetCounter = true)
+        public void ComputeCubesFromNoise(IMarchingCubeChunk chunk, int lod, bool resetCounter = true)
         {
+            int chunkSize = chunk.ChunkSize;
+            Vector3Int anchor = chunk.AnchorPos;
+
+            PrepareChunkToStoreMinDegreesIfNeeded(chunk);
+
             int numVoxelsPerAxis = chunkSize / lod;
             int pointsPerAxis = numVoxelsPerAxis + 1;
 
@@ -1274,12 +1310,18 @@ namespace MarchingCubes
 
             var envirenmentBioms = bioms.Select(b => b.envirenmentData).ToArray();
 
-            minDegreesAtCoordBuffer = new ComputeBuffer(numVoxels, sizeof(float));
+            minDegreesAtCoordBufferPool = new DisposablePoolOf<ComputeBuffer>(CreateMinDegreeBuffer);
+
             pointBiomIndex = new ComputeBuffer(numPoints, sizeof(uint));
             pointsBuffer = new ComputeBuffer(numPoints, sizeof(float));
             savedPointBuffer = new ComputeBuffer(numPoints, sizeof(float));
             triangleBuffer = new ComputeBuffer(maxTriangleCount, TriangleBuilder.SIZE_OF_TRI_BUILD, ComputeBufferType.Append);
             triCountBuffer = new ComputeBuffer(MAX_CHUNKS_PER_ITERATION, sizeof(int), ComputeBufferType.Raw);
+        }
+
+        protected ComputeBuffer CreateMinDegreeBuffer()
+        {
+            return new ComputeBuffer(VOXELS_IN_DEFAULT_SIZED_CHUNK, sizeof(float));
         }
 
         protected const int MAX_CHUNKS_PER_ITERATION = 8;
@@ -1307,7 +1349,7 @@ namespace MarchingCubes
                 triangleBuffer.Dispose();
                 pointsBuffer.Dispose();
                 savedPointBuffer.Dispose();
-                minDegreesAtCoordBuffer.Dispose();
+                minDegreesAtCoordBufferPool.DisposeAll();
                 triCountBuffer.Dispose();
                 triangleBuffer = null;
             }
@@ -1322,15 +1364,18 @@ namespace MarchingCubes
             }
         }
 
-        //TODO: Dont store when chunk knows he stored before 
-        public void Store(Vector3Int anchorPos, float[] noise, bool overrideNoise = false)
+        //TODO: Dont store when chunk knows he stored before
+
+        public void Store(Vector3Int anchorPos, IStoreableMarchingCube chunk, bool overrideNoise = false)
         {
             if (!TryGetStoredEditsAt(anchorPos, out StoredChunkEdits edits) || overrideNoise)
             {
                 edits = new StoredChunkEdits();
                 StorageTreeRoot r = GetOrCreateStorageGroupAtCoordinate(PositionToStorageGroupCoord(anchorPos));
+
+                chunk.StoreChunk(edits);
+
                 r.SetLeafAtPosition(anchorPos, edits, true);
-                edits.noise = noise;
                 //call all instantiableData from chunk that need to be stored
                 //(everything not depending on triangles only, e.g trees )
             }
@@ -1340,11 +1385,21 @@ namespace MarchingCubes
             }
         }
 
-        public void ComputeGrassFor(Maybe<Bounds> bounds, TriangleChunkHeap triangleData)
+        public void ComputeGrassFor(IEnvironmentSurface environmentChunk)
         {
-            //grass.ComputeGrassFor(bounds, triangleData);
+            grass.ComputeGrassFor(environmentChunk);
         }
 
-      
+        public void ReturnMinDegreeBuffer(ComputeBuffer minDegreeBuffer)
+        {
+            minDegreesAtCoordBufferPool.ReturnItemToPool(minDegreeBuffer);
+        }
+
+        public void StartEnvironmentPipelineForChunk(IEnvironmentSurface environmentChunk)
+        {
+            //grass.ComputeGrassFor(environmentChunk);
+            environmentSpawner.AddEnvironmentForOriginalChunk(environmentChunk);
+        }
+
     }
 }

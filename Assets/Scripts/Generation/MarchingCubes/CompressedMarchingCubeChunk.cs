@@ -45,6 +45,7 @@ namespace MarchingCubes
         protected int targetLodPower = -1;
 
         //TODO: Only store in marching cubes maybe
+        //TODO: Also pool theese arrays
         protected float[] points;
 
         protected int TriCount =>  NumTris * 3;
@@ -100,6 +101,9 @@ namespace MarchingCubes
 
         protected List<MeshData> data = new List<MeshData>();
 
+        public Maybe<Bounds> MeshBounds { get; protected set; } = new Maybe<Bounds>();
+
+
         #endregion
 
         #region properties
@@ -133,6 +137,15 @@ namespace MarchingCubes
         public ChunkLodCollider ChunkSimpleCollider { set { chunkSimpleCollider = value; } }
 
         public WorldUpdater ChunkUpdater { set { chunkUpdater = value; } }
+
+
+        public ComputeBuffer minDegreeBuffer;
+
+        public ComputeBuffer MinDegreeBuffer { get { return minDegreeBuffer; } set { minDegreeBuffer = value; } }
+
+        protected bool ShouldBuildEnvironment => minDegreeBuffer != null;
+
+        protected TriangleChunkHeap triangleHeap;
 
         public int LOD
         {
@@ -252,6 +265,10 @@ namespace MarchingCubes
 
         public bool HasPoints => points != null;
 
+        public bool BuildDetailedEnvironment => LOD == 1;
+
+        public TriangleChunkHeap ChunkHeap => triangleHeap;
+
 
         #endregion properties
 
@@ -340,6 +357,12 @@ namespace MarchingCubes
             {
                 BuildAllMeshes();
             }
+
+            if (ShouldBuildEnvironment)
+            {
+                StartEnvironmentPipeline(triangleHeap);
+            }
+            CleanUpOnMainThread();
         }
 
         #endregion async chunk building
@@ -364,10 +387,54 @@ namespace MarchingCubes
                 //TODO: Set always to null?
                 points = null;
             }
-
             IsReady = true;
+
+            if (ShouldBuildEnvironment)
+            {
+                if (!IsInOtherThread)
+                {
+                    StartEnvironmentPipeline(tris);
+                    CleanUpOnMainThread();
+                }
+                else
+                {
+                    triangleHeap = tris;
+                }
+            }
         }
 
+        protected void CleanUpOnMainThread()
+        {
+            triangleHeap = null;
+            if (ShouldBuildEnvironment)
+            {
+                chunkHandler.ReturnMinDegreeBuffer(minDegreeBuffer);
+            }
+        }
+
+        protected void StartEnvironmentPipeline(TriangleChunkHeap tris)
+        {
+            if (IsEmpty)
+                return;
+
+            SetBoundsOfChunk();
+            triangleHeap = tris;
+            if (!IsInOtherThread)
+            {
+                ChunkHandler.StartEnvironmentPipelineForChunk(this);
+                triangleHeap = null;
+            }
+        }
+
+
+        protected void SetBoundsOfChunk()
+        {
+            MeshBounds.Value = activeDisplayers[0].mesh.bounds;
+            for (int i = 1; i < activeDisplayers.Count; i++)
+            {
+                MeshBounds.Value.Encapsulate(activeDisplayers[i].mesh.bounds);
+            }
+        } 
 
         public void ResetChunk()
         {
@@ -397,6 +464,7 @@ namespace MarchingCubes
             }
             IsReady = false;
             HasStarted = false;
+            MeshBounds.LazyRemoveValue();
             FreeSimpleChunkCollider();
         }
 

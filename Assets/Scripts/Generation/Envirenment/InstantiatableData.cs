@@ -1,23 +1,34 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace MeshGPUInstanciation
 {
-    public class InstanciableData : System.IDisposable
+    public class InstantiatableData : System.IDisposable
     {
 
-        private const string MATERIAL_PROPERTY_BUFFER_NAME = "_Properties";
+        protected const string MATERIAL_PROPERTY_BUFFER_NAME = "_Properties";
 
-        ~InstanciableData()
+        public bool ShouldRemoveInstanceData => !bounds.HasValue;
+
+        public Mesh instanceMesh;
+
+        protected uint[] args;
+
+        public ComputeBuffer instanceTransformations;
+        public ComputeBuffer argsBuffer;
+
+        public Material material;
+        public Maybe<Bounds> bounds;
+        public bool changed;
+
+
+        ~InstantiatableData()
         {
             Dispose();
         }
 
-        public bool ShouldRemoveInstanceData => !bounds.HasValue;
-
-        public InstanciableData(Mesh instanceMesh, int count, ComputeBuffer instanceTransformations, Material material, Maybe<Bounds> bounds)
+        public InstantiatableData(Mesh instanceMesh, ComputeBuffer instanceTransformations, Material material, Maybe<Bounds> bounds, int count = 0)
         {
             this.material = material;
             this.instanceTransformations = instanceTransformations;
@@ -29,7 +40,7 @@ namespace MeshGPUInstanciation
                 0,
                 instanceMesh.GetIndexStart(0),
                 instanceMesh.GetBaseVertex(0),
-                0
+                (uint)count
             };
 
 
@@ -40,7 +51,6 @@ namespace MeshGPUInstanciation
             //}
             //instanceMesh.colors = colors;
             argsBuffer = new ComputeBuffer(1, args.Length * sizeof(uint), ComputeBufferType.IndirectArguments);
-            meshPropertiesBuffer = argsBuffer;
             argsBuffer.SetData(args);
 
 
@@ -65,35 +75,25 @@ namespace MeshGPUInstanciation
             //instanceTransformations.SetData(mesh);
 
             material.SetBuffer(MATERIAL_PROPERTY_BUFFER_NAME, instanceTransformations);
+        }
 
+        public InstantiatableData(Mesh instanceMesh, ComputeBuffer instanceTransformations, Material material, Maybe<Bounds> bounds) : this(instanceMesh, instanceTransformations, material, bounds, 0)
+        {
             ComputeBuffer.CopyCount(instanceTransformations, argsBuffer, 4);
 
-            argsBuffer.GetData(args);
-            MeshInstancedProperties[] propss = new MeshInstancedProperties[args[1]];
-            instanceTransformations.GetData(propss);
-
+            //argsBuffer.GetData(args);
+            //MeshInstancedProperties[] propss = new MeshInstancedProperties[args[1]];
+            //instanceTransformations.GetData(propss);
 
             MeshInstantiator.meshInstantiator.AddData(this);
         }
+
+
 
         public void UpdateTransformationBufferLength()
         {
             ComputeBuffer.CopyCount(instanceTransformations, argsBuffer, 4);
         }
-
-        //TODO: may add material property block
-
-        public Mesh instanceMesh;
-
-        private uint[] args;
-
-        public ComputeBuffer meshPropertiesBuffer;
-        public ComputeBuffer instanceTransformations;
-        public ComputeBuffer argsBuffer;
-
-        public Material material;
-        public Maybe<Bounds> bounds;
-        public bool changed;
 
         public void Dispose()
         {
@@ -102,11 +102,6 @@ namespace MeshGPUInstanciation
                 argsBuffer.Dispose();
                 argsBuffer = null;
             }
-            if (meshPropertiesBuffer != null && meshPropertiesBuffer.IsValid())
-            {
-                meshPropertiesBuffer.Dispose();
-                meshPropertiesBuffer = null;
-            }
             if (instanceTransformations != null && instanceTransformations.IsValid())
             {
                 instanceTransformations.Dispose();
@@ -114,5 +109,6 @@ namespace MeshGPUInstanciation
             }
         }
 
+        
     }
 }

@@ -17,6 +17,8 @@ namespace MarchingCubes
 
         public float[] noise;
 
+        public Vector3Int[] originalCubePositions;
+
         //Save tree positions
   
         int ISizeManager.ChunkSizePower { get => 5; set => throw new System.NotImplementedException(); }

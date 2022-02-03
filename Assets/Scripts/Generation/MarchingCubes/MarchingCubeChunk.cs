@@ -10,7 +10,8 @@ namespace MarchingCubes
 
     //TODO: Dont use as Interactablechunk when destruction begun
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
-    public class MarchingCubeChunk : CompressedMarchingCubeChunk, IMarchingCubeInteractableChunk, IHasInteractableMarchingCubeChunk, ICubeNeighbourFinder
+    public class MarchingCubeChunk : CompressedMarchingCubeChunk, 
+        IMarchingCubeInteractableChunk, IHasInteractableMarchingCubeChunk, ICubeNeighbourFinder, IStoreableMarchingCube
     {
 
         public const float REBUILD_SHADER_THREAD_GROUP_SIZE = 4;
@@ -29,48 +30,15 @@ namespace MarchingCubes
         public ComputeBuffer rebuildTriResult;
         public ComputeBuffer rebuildTriCounter;
 
-        public Maybe<Bounds> meshBounds = new Maybe<Bounds>();
-
 
         //TODO: Add for each cube entitiy index in mesh and increase next index by entitiy cube count and try to use this when rebuilding mesh
         //TODO: Build from consume buffer
 
         public override bool UseCollider => true;
 
-        protected TriangleChunkHeap triangleHeap;
-
-        public override void InitializeWithMeshData(TriangleChunkHeap tris)
+        protected void StoreChunkState()
         {
-            base.InitializeWithMeshData(tris);
-            if(IsInOtherThread)
-            {
-                triangleHeap = tris;
-            }
-            else
-            {
-                BuildGrassOnChunk(tris);
-            }
-        }
-
-        protected void BuildGrassOnChunk(TriangleChunkHeap tris)
-        {
-            if (!IsEmpty)
-            {
-                SetBoundsOfChunk();
-                chunkHandler.ComputeGrassFor(meshBounds, tris);
-            }
-        }
-
-        public override void SetChunkOnMainThread()
-        {
-            base.SetChunkOnMainThread();
-            BuildGrassOnChunk(triangleHeap);
-            triangleHeap = null;
-        }
-
-        protected void StoreNoiseArray()
-        {
-            chunkHandler.Store(AnchorPos, Points);
+            chunkHandler.Store(AnchorPos, this);
         }
 
         public MarchingCubeEntity GetEntityAt(Vector3Int v3)
@@ -152,12 +120,6 @@ namespace MarchingCubes
             NumTris = 0;
         }
 
-        public override void PrepareDestruction()
-        {
-            base.PrepareDestruction();
-            meshBounds = default;
-        }
-
         protected MarchingCubeEntity CreateAndAddEntityAt(int x, int y, int z, int triangulationIndex)
         {
             MarchingCubeEntity e = new MarchingCubeEntity(this, triangulationIndex);
@@ -194,15 +156,6 @@ namespace MarchingCubes
                 PathTriangle pathTri = new PathTriangle(cube, in ts[i].tri, ts[i].color32);
                 cube.AddTriangle(pathTri);
                 AddTriangleToMeshData(in ts[i], ref usedTriCount, ref totalTreeCount);
-            }
-        }
-
-        protected void SetBoundsOfChunk()
-        {
-            meshBounds.Value = activeDisplayers[0].mesh.bounds;
-            for (int i = 1; i < activeDisplayers.Count; i++)
-            {
-                meshBounds.Value.Encapsulate(activeDisplayers[i].mesh.bounds);
             }
         }
 
@@ -296,7 +249,7 @@ namespace MarchingCubes
             else
             {
                 rebuildChunk = true;
-                points = ChunkHandler.RequestNoiseAndEditAtPosition(this, clickedIndex + offset, start,end,delta,radius);
+                ChunkHandler.SetEditedNoiseAtPosition(this, clickedIndex + offset, start,end,delta,radius);
             }
 
             if (rebuildChunk)
@@ -307,7 +260,7 @@ namespace MarchingCubes
                 }
                 //System.Diagnostics.Stopwatch w = new System.Diagnostics.Stopwatch();
                 //w.Start();
-                StoreNoiseArray();
+                StoreChunkState();
                 RebuildFromNoiseAroundOnGPU(start, end, clickedIndex, radius);
                 //RebuildFromNoiseAround(start, end, clickedIndex, radius);
                 //w.Stop();
@@ -380,8 +333,8 @@ namespace MarchingCubes
             int voxelMinus = chunkSize - 1;
 
             Vector3 startVec = new Vector3(
-                Mathf.Max(0, start.x - 1), 
-                Mathf.Max(0, start.y - 1), 
+                Mathf.Max(0, start.x - 1),
+                Mathf.Max(0, start.y - 1),
                 Mathf.Max(0, start.z - 1));
 
             Vector3 endVec = new Vector3(
@@ -533,7 +486,7 @@ namespace MarchingCubes
             BuildMeshFromCurrentTriangles();
         }
 
-   
+
         public PathTriangle GetTriangleFromRayHit(RaycastHit hit)
         {
             MarchingCubeEntity cube = GetClosestEntity(hit.point);
@@ -674,7 +627,7 @@ namespace MarchingCubes
                     {
                         Debug.LogWarning("Editing of compressed marchingcube chunks is not supported!");
                     }
-                } 
+                }
                 else
                 {
                     Vector3Int start;
@@ -714,5 +667,26 @@ namespace MarchingCubes
         {
             return GetTriangleFromRayHit(hit).Normal;
         }
+
+        public void StoreChunk(StoredChunkEdits storage)
+        {
+            storage.noise = Points;
+            storage.originalCubePositions = GetCurrentCubePositions();
+        }
+
+        protected Vector3Int[] GetCurrentCubePositions()
+        {
+            int length = entities.Count;
+            Vector3Int[] result = new Vector3Int[length];
+            int index = 0;
+            IEnumerator<MarchingCubeEntity> enumerator = entities.GetEnumerator();
+            while (enumerator.MoveNext())
+            {
+                result[index] = enumerator.Current.origin;
+                index++;
+            }
+            return result;
+        }
+
     }
 }

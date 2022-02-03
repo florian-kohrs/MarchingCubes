@@ -1,4 +1,4 @@
-﻿#include "/Includes/Noise.compute"
+﻿#include "Assets/Scripts/ComputeIncludes/NoiseFiles/Noise.compute"
 
 struct BiomEnvirenments
 {

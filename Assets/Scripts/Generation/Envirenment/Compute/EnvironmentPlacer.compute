@@ -1,0 +1,56 @@
+#pragma kernel EnvironmentPlacer
+#include "Assets/Scripts/ComputeIncludes/NoiseFiles/Noise.compute"
+#include "Assets/Scripts/ComputeIncludes/ZipData.compute"
+#include "Assets/Scripts/ComputeIncludes/TransformBuilder.compute"
+
+#define PI 3.14159265358979323846
+#define DegToRad 0.0174532924
+
+static const int THREAD_GROUP_SIZE = 32;
+
+
+struct Transform
+{
+	float4x4 transform;
+};
+
+
+StructuredBuffer<uint> entitiesAtCube;
+RWStructuredBuffer<Transform> entityTransform;
+uint length;
+//EntityIndexPropertyLookUp
+
+float3 anchorPosition;
+float3 boundsCenter;
+float meshHeightExtends;
+
+float3 GetOffset(float3 normal, float scale)
+{
+	return boundsCenter - normal * scale * meshHeightExtends;
+}
+
+
+[numthreads(THREAD_GROUP_SIZE, 1, 1)]
+void EnvironmentPlacer(uint3 id : SV_DispatchThreadID/*, uint groupIndex : SV_GroupIndex*/)
+{
+	if (id.x >= length)
+		return;
+	 
+	int4 entity = unzipData(entitiesAtCube[id.x]);
+	float3 cubeIndex = float3(entity.x, entity.y, entity.z);
+
+	float3 normal = anchorPosition + cubeIndex;
+	//normal cant be 0,1,0 or wont work
+
+	//add small offset so the normal wont point directly up
+	float3 normalizedNormal = normalize(normal + float3(0.5,0,0.5));
+	float3 position = normal - normalizedNormal;
+	float angle = Noise01(normal) * 360;
+	float scale = 15 + Noise01(normal + anchorPosition);
+	Transform t;
+	position -= GetOffset(normalizedNormal, scale);
+	t.transform = GetMatrixFor(angle, normalizedNormal, int3(0,0,0), scale);
+	//t.transform = GetEulerMatrixFor(angle, normalizedNormal);// normalizedNormal);
+	entityTransform[id.x] = t;
+
+}

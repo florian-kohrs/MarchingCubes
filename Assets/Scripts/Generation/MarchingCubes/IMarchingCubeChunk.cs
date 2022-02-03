@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public interface IMarchingCubeChunk : ISizeManager
+    public interface IMarchingCubeChunk : ISizeManager, IEnvironmentSurface
     {
 
         bool IsReady { get; }
@@ -17,8 +17,6 @@ namespace MarchingCubes
         int ChunkSize { get; }
 
         WorldUpdater ChunkUpdater { set; }
-
-        Vector3Int AnchorPos { get; set; }
 
         Vector3Int CenterPos { get; }
 

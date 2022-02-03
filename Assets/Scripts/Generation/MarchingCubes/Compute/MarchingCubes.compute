@@ -2,6 +2,7 @@
 #include "/Includes/MarchTables.compute"
 #include "/Includes/BiomVisualizationData.compute"
 #include "/Includes/Bioms.compute"
+#include "Assets/Scripts/ComputeIncludes/ZipData.compute"
 
 #define PI 3.14159265358979323846
 
@@ -27,7 +28,7 @@ struct Vertex
 
 AppendStructuredBuffer<Triangle> triangles;
 RWStructuredBuffer<float> points;
-RWStructuredBuffer<BiomVisualizationData> biomsViz;
+StructuredBuffer<BiomVisualizationData> biomsViz;
 RWStructuredBuffer<float> minDegreeAtCoord;
 
 bool storeMinDegrees;
@@ -54,10 +55,6 @@ int indexFromCoord(int x, int y, int z)
 	return z * numPointsPerAxis * numPointsPerAxis + y * numPointsPerAxis + x;
 }
 
-
-int zipData(int x, int y, int z, int w) {
-	return (x << 24) + (y << 16) + (z << 8) + w;
-}
 
 //int angle(int3 a, int3 b)
 //{
