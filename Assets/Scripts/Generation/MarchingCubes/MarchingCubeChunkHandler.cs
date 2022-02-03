@@ -588,12 +588,6 @@ namespace MarchingCubes
             return TryGetChunkAtPosition(p, out chunk) && chunk.IsReady;
         }
 
-        public bool TryGetReadyChunkAt(Vector3Int p, out ICompressedMarchingCubeChunk chunk, out Vector3Int relativePositionInChunk)
-        {
-            return TryGetChunkAtPosition(p, out chunk, out relativePositionInChunk) && chunk.IsReady;
-        }
-
-
         public bool HasChunkStartedAt(Vector3Int p)
         {
             if (TryGetChunkAtPosition(p, out ICompressedMarchingCubeChunk chunk))
@@ -1019,17 +1013,6 @@ namespace MarchingCubes
             marshShader.Dispatch(0, numThreadsPerAxis, numThreadsPerAxis, numThreadsPerAxis);
         }
 
-        public Color32 GetColor(PathTriangle t, int steepness)
-        {
-            float invLerp = (steepness - minSteepness) / ((float)maxSteepness - minSteepness);
-            if (invLerp < 0)
-                invLerp = 0;
-            else if (invLerp > 1)
-                invLerp = 1;
-
-            return new Color32(15, 150, 15, (byte)steepness);
-        }
-
         public int GetFeasibleReducedLodForChunk(ICompressedMarchingCubeChunk c, int toLodPower)
         {
             return Mathf.Min(toLodPower, c.LODPower + 1);
@@ -1231,11 +1214,6 @@ namespace MarchingCubes
             {
                 displayerPool.ReturnItemToPool(display);
             }
-        }
-
-        public void FreeMeshDisplayer(MarchingCubeMeshDisplayer display)
-        {
-            TakeMeshDisplayerBack(display);
         }
 
         public void FreeAllDisplayers(List<MarchingCubeMeshDisplayer> displayers)

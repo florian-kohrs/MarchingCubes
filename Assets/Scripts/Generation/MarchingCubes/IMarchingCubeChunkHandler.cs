@@ -32,13 +32,9 @@ namespace MarchingCubes
         /// <returns></returns>
         bool CreateChunkWithNoiseEdit(Vector3Int p, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance, out ICompressedMarchingCubeChunk chunk);
 
-        bool TryGetReadyChunkAt(Vector3Int p, out ICompressedMarchingCubeChunk chunk, out Vector3Int positionInOtherChunk);
-
         MarchingCubeMeshDisplayer GetNextMeshDisplayer();
 
         MarchingCubeMeshDisplayer GetNextInteractableMeshDisplayer(IMarchingCubeChunk forChunk);
-
-        void FreeMeshDisplayer(MarchingCubeMeshDisplayer display);
 
         void FreeAllDisplayers(List<MarchingCubeMeshDisplayer> displayers);
 
@@ -47,8 +43,6 @@ namespace MarchingCubes
         float[] RequestNoiseForChunk(ICompressedMarchingCubeChunk chunk);
 
         void SetEditedNoiseAtPosition(IMarchingCubeChunk chunk, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance);
-
-        Color32 GetColor(PathTriangle t, int steepness);
 
         void Store(Vector3Int anchorPos, IMarchingCubeChunk chunk, bool overrideNoise = false);
 

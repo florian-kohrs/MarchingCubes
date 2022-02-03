@@ -589,7 +589,7 @@ namespace MarchingCubes
                         InterpolateVerts(cubeCorners, noisePoints, a1, b1),
                         InterpolateVerts(cubeCorners, noisePoints, a2, b2));
 
-                    e.AddTriangle(new PathTriangle(e, in tri, ChunkHandler.GetColor));
+                    e.AddTriangle(new PathTriangle(e, in tri, Color.red));
                     NumTris++;
                 }
 
