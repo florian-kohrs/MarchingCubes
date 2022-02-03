@@ -21,6 +21,8 @@ uint biomSize;
 uint biomsCount;
 uint biomSpacing;
 
+//TODO: Interpolate interpolation 
+
 Biom interpolate(Biom b1, Biom b2, float t)
 {
     float reversedT = 1 - t;
