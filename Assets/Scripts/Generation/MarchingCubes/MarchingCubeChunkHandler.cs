@@ -893,45 +893,62 @@ namespace MarchingCubes
 
         int numTris;
 
-        //TODO: Inform about Mesh subset and mesh set vertex buffer
-        //Subset may be used to only change parts of the mesh -> dont need multiple mesh displayers with submeshes?
-        protected TriangleChunkHeap DispatchAndGetShaderData(ICompressedMarchingCubeChunk chunk, bool careForNeighbours, Action WorkOnNoise = null)
+        protected void PrepareNoiseForChunk(ICompressedMarchingCubeChunk chunk)
         {
             int lod = chunk.LOD;
             int chunkSize = chunk.ChunkSize;
 
-            if (chunkSize % lod != 0)
-                throw new Exception("Lod must be divisor of chunksize");
-
             int numVoxelsPerAxis = chunkSize / lod;
             int pointsPerAxis = numVoxelsPerAxis + 1;
-            int pointsVolume = pointsPerAxis * pointsPerAxis * pointsPerAxis;
 
             GenerateNoise(chunk.ChunkSizePower, pointsPerAxis, lod, chunk.AnchorPos);
+        }
 
+        protected void ValidateChunkProperties(ICompressedMarchingCubeChunk chunk)
+        {
+            if (chunk.ChunkSize % chunk.LOD != 0)
+                throw new Exception("Lod must be divisor of chunksize");
+        }
+
+        /// <summary>
+        /// returns true if the resulting noise map needs to be saved
+        /// </summary>
+        /// <param name="a"></param>
+        /// <returns></returns>
+        protected bool WorkOnNoiseMap(ICompressedMarchingCubeChunk chunk, Action a)
+        {
             bool storeNoise = false;
-            if (WorkOnNoise != null)
+            if (a != null)
             {
-                if(!(chunk is IMarchingCubeChunk))
+                if (!(chunk is IMarchingCubeChunk))
                 {
                     throw new ArgumentException("Chunk has to be storeable to be able to store requested noise!");
                 }
-                WorkOnNoise();
+                a();
                 storeNoise = true;
             }
+            return storeNoise;
+        }
 
-
-            ComputeCubesFromNoise(chunk, lod);
-
-            ///Do work for chunk here, before data from gpu is read, to give gpu time to finish
-
-            SetDisplayerOfChunk(chunk);
+        protected void SetLODColliderOfChunk(ICompressedMarchingCubeChunk chunk)
+        {
             simpleChunkColliderPool.GetItemFromPoolFor(chunk);
+        }
+
+        //TODO: Inform about Mesh subset and mesh set vertex buffer
+        //Subset may be used to only change parts of the mesh -> dont need multiple mesh displayers with submeshes?
+        protected TriangleChunkHeap DispatchAndGetShaderData(ICompressedMarchingCubeChunk chunk, bool careForNeighbours, Action WorkOnNoise = null)
+        {
+            ValidateChunkProperties(chunk);
+            PrepareNoiseForChunk(chunk);
+            bool storeNoise = WorkOnNoiseMap(chunk, WorkOnNoise);
+            ComputeCubesFromNoise(chunk, chunk.LOD);
+            ///Do work for chunk here, before data from gpu is read, to give gpu time to finish
+            SetDisplayerOfChunk(chunk);
+            SetLODColliderOfChunk(chunk);
 
             ///read data from gpu
-
             numTris = ReadCurrentTriangleData(out tris);
-
             if (numTris == 0)
             {
                 chunk.FreeSimpleChunkCollider();
@@ -942,6 +959,8 @@ namespace MarchingCubes
             {
                 if (careForNeighbours || storeNoise)
                 {
+                    int pointsPerAxis = chunk.PointsPerAxis;
+                    int pointsVolume = pointsPerAxis * pointsPerAxis * pointsPerAxis;
                     pointsArray = new float[pointsVolume];
                 }
                 else
@@ -959,49 +978,16 @@ namespace MarchingCubes
             return new TriangleChunkHeap(tris, 0, numTris);
         }
 
-        public TriangleBuilder[] GenerateCubesFromNoise(ICompressedMarchingCubeChunk chunk, int triCount, float[] noise)
-        {
-            pointsBuffer.SetData(noise);
-            RequestCubesFromNoise(chunk, chunk.LOD, triCount);
-            return tris;
-        }
-
         public void AccumulateCubesFromNoise(ICompressedMarchingCubeChunk chunk, int offest)
         {
             ComputeCubesFromNoise(chunk, chunk.LOD, false);
             ComputeBuffer.CopyCount(triangleBuffer, triCountBuffer, offest * 4);
         }
 
-        public int RequestCubesFromNoise(ICompressedMarchingCubeChunk chunk, int lod, int triCount = -1)
+        public int ReadCurrentTriangleData(out TriangleBuilder[] tris)
         {
-            ComputeCubesFromNoise(chunk, lod);
-            return ReadCurrentTriangleData(out tris, triCount);
-        }
-
-        public int ReadCurrentTriangleData(out TriangleBuilder[] tris, int triCount = -1)
-        {
-            if (triCount < 0)
-            {
-                ///Get number of triangles in the triangle buffer
-                ComputeBuffer.CopyCount(triangleBuffer, triCountBuffer, 0);
-                int[] triCountArray = new int[1];
-                triCountBuffer.GetData(triCountArray);
-                triCount = triCountArray[0];
-            }
-
-            ///Get triangle data from shader
-
-            //TODO: Check if this changes performance
-            if (triCount > 0)
-            {
-                tris = new TriangleBuilder[triCount];
-                triangleBuffer.GetData(tris, 0, 0, triCount);
-            }
-            else
-            {
-                tris = null;
-            }
-
+            int triCount;
+            tris = ComputeBufferExtension.ReadAppendBuffer<TriangleBuilder>(triangleBuffer, triCountBuffer, out triCount);
             totalTriBuild += triCount;
             return triCount;
         }
@@ -1202,6 +1188,7 @@ namespace MarchingCubes
                 }
             });
         }
+
         public void FreeCollider(ChunkLodCollider c)
         {
             simpleChunkColliderPool.ReturnItemToPool(c);

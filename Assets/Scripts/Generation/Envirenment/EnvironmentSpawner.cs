@@ -107,16 +107,21 @@ namespace MeshGPUInstanciation
 
             PrepareEnvironmentForChunk(chunk);
             environmentSpawner.Dispatch(0, THREADS_PER_AXIS, THREADS_PER_AXIS, THREADS_PER_AXIS);
-            int entityCount = GetLengthOfAppendBuffer(environmentEntities);
+            int entityCount = ComputeBufferExtension.GetLengthOfAppendBuffer(environmentEntities,bufferCount);
+            if (entityCount <= 0)
+                return;
+
             entityTransforms = new ComputeBuffer(entityCount, sizeof(float) * 16);
             environmentPlacer.SetBuffer(0, "entityTransform", entityTransforms);
             environmentPlacer.SetInt("length", entityCount);
             int threadsOnXAxis = Mathf.CeilToInt(entityCount / ENVIRONMENT_THREAD_SIZE);
             environmentPlacer.Dispatch(0, threadsOnXAxis, 1, 1);
             MeshInstantiator.meshInstantiator.AddData(new InstantiatableData(mesh, entityTransforms, mat, chunk.MeshBounds, entityCount));
+
+            //Debug test data
             Matrix4x4[] test = new Matrix4x4[entityCount];
             entityTransforms.GetData(test);
-            int[] results = ReadAppendBuffer<int>(environmentEntities);
+            int[] results = ComputeBufferExtension.ReadAppendBuffer<int>(environmentEntities, bufferCount);
             int i = 0;
 
 
@@ -142,7 +147,7 @@ namespace MeshGPUInstanciation
             environmentSpawner.SetBuffer(0, "minAngleAtCubeIndex", chunk.MinDegreeBuffer);
             environmentSpawner.SetVector("anchorPosition", VectorExtension.RaiseVector3Int(chunk.AnchorPos));
             environmentSpawner.Dispatch(0, THREADS_PER_AXIS, THREADS_PER_AXIS, THREADS_PER_AXIS);
-            int[] results = ReadAppendBuffer<int>(environmentEntities);
+            int[] results = ComputeBufferExtension.ReadAppendBuffer<int>(environmentEntities, bufferCount);
 
             //AsyncGPUReadback.Request(environmentEntities, OnTreePositionsRecieved);
 
@@ -152,31 +157,6 @@ namespace MeshGPUInstanciation
             //when editing chunk store tree positions and rotations and original cubes
         }
 
-        protected T[] ReadAppendBuffer<T>(ComputeBuffer buffer)
-        {
-            return ReadAppendBuffer<T>(buffer, GetLengthOfAppendBuffer(buffer));
-        }
-        protected T[] ReadAppendBuffer<T>(ComputeBuffer buffer, int length)
-        {
-            T[] result = new T[length];
-            buffer.GetData(result);
-            return result;
-        }
-
-        protected int GetLengthOfAppendBuffer(ComputeBuffer buffer)
-        {
-            ComputeBuffer.CopyCount(buffer, bufferCount, 0);
-            int[] length = new int[1];
-            bufferCount.GetData(length);
-            return length[0];
-        }
-
-        protected T[] ReadBuffer<T>(ComputeBuffer buffer)
-        {
-            T[] result = new T[BUFFER_CHUNK_SIZE];
-            buffer.GetData(result);
-            return result;
-        }
 
 
         protected void OnTreePositionsRecieved(AsyncGPUReadbackRequest result)
