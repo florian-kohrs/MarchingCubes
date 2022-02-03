@@ -6,7 +6,6 @@ using UnityEngine;
 public interface IEnvironmentSurface
 {
 
-
     ComputeBuffer MinDegreeBuffer { get; set; }
 
     bool BuildDetailedEnvironment { get; }

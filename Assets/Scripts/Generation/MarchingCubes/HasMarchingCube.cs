@@ -7,9 +7,9 @@ namespace MarchingCubes
     public class HasMarchingCube : MonoBehaviour, IHasInteractableMarchingCubeChunk
     {
 
-        public IMarchingCubeInteractableChunk chunk;
+        public IMarchingCubeChunk chunk;
 
-        public IMarchingCubeInteractableChunk GetChunk => chunk;
+        public IMarchingCubeChunk GetChunk => chunk;
 
         public Vector3 NormalFromRay(RaycastHit hit)
         {

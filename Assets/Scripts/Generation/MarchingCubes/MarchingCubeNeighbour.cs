@@ -7,7 +7,7 @@ namespace MarchingCubes
     public class MarchingCubeNeighbour
     {
 
-        public IMarchingCubeChunk chunk;
+        public ICompressedMarchingCubeChunk chunk;
         public int estimatedLodPower;
         public bool IsInitialized => chunk != null;
         public int ActiveLodPower

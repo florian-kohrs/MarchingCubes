@@ -9,7 +9,7 @@ namespace MarchingCubes
 
         private void OnTriggerEnter(Collider other)
         {
-            IMarchingCubeChunk chunk = other.GetComponent<ChunkLodCollider>()?.chunk;
+            ICompressedMarchingCubeChunk chunk = other.GetComponent<ChunkLodCollider>()?.chunk;
             if (chunk != null)
             {
                 chunk.TargetLODPower = Mathf.Min(chunk.TargetLODPower, lod);

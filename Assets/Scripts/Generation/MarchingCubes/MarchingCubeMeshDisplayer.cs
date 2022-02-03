@@ -25,10 +25,10 @@ namespace MarchingCubes
 
         public bool IsColliderActive => HasCollider && collider.sharedMesh != null;
 
-        protected MarchingCubeMeshDisplayer(IMarchingCubeInteractableChunk chunk, GameObject g, Transform t) : this(g, g.AddComponent<MeshFilter>(), g.AddComponent<MeshRenderer>(), new Mesh(), g.AddComponent<MeshCollider>())
+        protected MarchingCubeMeshDisplayer(IMarchingCubeChunk chunk, GameObject g, Transform t) : this(g, g.AddComponent<MeshFilter>(), g.AddComponent<MeshRenderer>(), new Mesh(), g.AddComponent<MeshCollider>())
         {
             g.transform.SetParent(t, false);
-            if (chunk is IMarchingCubeInteractableChunk interactable)
+            if (chunk is IMarchingCubeChunk interactable)
             {
                 hasCube = g.AddComponent<HasMarchingCube>();
                 hasCube.chunk = chunk;
@@ -41,7 +41,7 @@ namespace MarchingCubes
             g.transform.SetParent(t, false);
         }
 
-        public MarchingCubeMeshDisplayer(IMarchingCubeInteractableChunk chunk, Transform t) : this(chunk, new GameObject(/*$"{chunk.AnchorPos.x},{chunk.AnchorPos.y},{chunk.AnchorPos.z} "*/),t) { }
+        public MarchingCubeMeshDisplayer(IMarchingCubeChunk chunk, Transform t) : this(chunk, new GameObject(/*$"{chunk.AnchorPos.x},{chunk.AnchorPos.y},{chunk.AnchorPos.z} "*/),t) { }
 
         public MarchingCubeMeshDisplayer(Transform t, bool useCollider) : this(new GameObject(),t) 
         { 
@@ -95,7 +95,7 @@ namespace MarchingCubes
             return hasCube;
         }
 
-        public void SetInteractableChunk(IMarchingCubeInteractableChunk chunk)
+        public void SetInteractableChunk(IMarchingCubeChunk chunk)
         {
             if (chunk != null)
             {

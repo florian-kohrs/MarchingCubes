@@ -1,78 +1,27 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace MarchingCubes
 {
-    public interface IMarchingCubeChunk : ISizeManager, IEnvironmentSurface, IMarchingCubeNoise
+
+    public interface IMarchingCubeChunk : ICompressedMarchingCubeChunk, IBlockPlaceOrientator
     {
 
-        bool IsReady { get; }
+        void StoreChunk(StoredChunkEdits storage);
 
-        int NumTris { get; }
+        PathTriangle GetTriangleFromRayHit(RaycastHit hit);
 
-        bool UseCollider { get; }
+        MarchingCubeEntity GetClosestEntity(Vector3 v3);
 
-        int ChunkSize { get; }
+        void EditPointsAroundRayHit(float delta, RaycastHit hit, int editDistance);
 
-        WorldUpdater ChunkUpdater { set; }
+        MarchingCubeEntity GetEntityAt(Vector3Int v3);
 
-        Vector3Int CenterPos { get; }
+        MarchingCubeEntity GetEntityAt(int x, int y, int z);
 
-        bool HasStarted { get; }
+        void RebuildAround(Vector3 offset, int radius, Vector3Int clickedIndex, float delta);
 
-        bool[] HasNeighbourInDirection { get; }
 
-        IMarchingCubeChunkHandler ChunkHandler { set; }
-
-        ChunkLodCollider ChunkSimpleCollider { set; }
-
-        void FreeSimpleChunkCollider();
-
-        void PrepareDestruction();
-
-        bool IsEmpty { get; }
-
-        bool IsCompletlyAir { get; }
-
-        float SurfaceLevel { set; }
-
-        int LOD { get; }
-
-        int LODPower { get; set; }
-
-        int TargetLODPower { get; set; }
-
-        Material Material { set; }
-
-        bool HasPoints { get; }
-
-        int PointsPerAxis { get; }
-
-        void ResetChunk();
-
-        bool IsSpawner { get; set; }
-
-        // void InitializeWithMeshData(Material mat, TriangleBuilder[] tris, int activeTris, float[] points, IMarchingCubeChunkHandler handler, float surfaceLevel);
-
-        void InitializeWithMeshDataParallel(TriangleChunkHeap triangleData, Queue<IMarchingCubeChunk> readyChunks);
-
-        void InitializeWithMeshDataParallel(TriangleChunkHeap triangleData, Action<IMarchingCubeChunk> OnChunkDone);
-
-        void InitializeWithMeshData(TriangleChunkHeap triangleData);
-
-        void DestroyChunk();
-
-        void AddDisplayer(MarchingCubeMeshDisplayer b);
-
-        ChunkGroupTreeLeaf Leaf { get; set; }
-
-        void GiveUnusedDisplayerBack();
-
-        //void InitializeEmpty(IMarchingCubeChunkHandler handler, MarchingCubeChunkNeighbourLODs neighbourLODs, float surfaceLevel);
-
-        void SetChunkOnMainThread();
     }
-
 }

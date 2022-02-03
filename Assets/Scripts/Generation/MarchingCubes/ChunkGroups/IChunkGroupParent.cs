@@ -9,11 +9,11 @@ namespace MarchingCubes
     public interface IChunkGroupParent<T> : ITreeNodeParent<T>
     {
 
-        void RemoveChildAtIndex(int index, IMarchingCubeChunk chunk);
+        void RemoveChildAtIndex(int index, ICompressedMarchingCubeChunk chunk);
 
         bool EntireHirachyHasAtLeastTargetLod(int targetLodPower);
 
-        void PrepareBranchDestruction(List<IMarchingCubeChunk> oldChunks);
+        void PrepareBranchDestruction(List<ICompressedMarchingCubeChunk> oldChunks);
 
     }
 

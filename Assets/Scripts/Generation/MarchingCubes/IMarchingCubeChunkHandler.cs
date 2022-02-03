@@ -13,11 +13,11 @@ namespace MarchingCubes
 
         void FreeCollider(ChunkLodCollider c);
 
-        void SetChunkColliderOf(IMarchingCubeChunk c);
+        void SetChunkColliderOf(ICompressedMarchingCubeChunk c);
 
-        bool TryGetReadyChunkAt(Vector3Int p, out IMarchingCubeChunk chunk);
+        bool TryGetReadyChunkAt(Vector3Int p, out ICompressedMarchingCubeChunk chunk);
 
-        bool TryGetOrCreateChunkAt(Vector3Int p, out IMarchingCubeChunk chunk);
+        bool TryGetOrCreateChunkAt(Vector3Int p, out ICompressedMarchingCubeChunk chunk);
 
         /// <summary>
         /// returns true if the chunk was created
@@ -30,29 +30,29 @@ namespace MarchingCubes
         /// <param name="maxDistance"></param>
         /// <param name="chunk"></param>
         /// <returns></returns>
-        bool CreateChunkWithNoiseEdit(Vector3Int p, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance, out IMarchingCubeChunk chunk);
+        bool CreateChunkWithNoiseEdit(Vector3Int p, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance, out ICompressedMarchingCubeChunk chunk);
 
-        bool TryGetReadyChunkAt(Vector3Int p, out IMarchingCubeChunk chunk, out Vector3Int positionInOtherChunk);
+        bool TryGetReadyChunkAt(Vector3Int p, out ICompressedMarchingCubeChunk chunk, out Vector3Int positionInOtherChunk);
 
         MarchingCubeMeshDisplayer GetNextMeshDisplayer();
 
-        MarchingCubeMeshDisplayer GetNextInteractableMeshDisplayer(IMarchingCubeInteractableChunk forChunk);
+        MarchingCubeMeshDisplayer GetNextInteractableMeshDisplayer(IMarchingCubeChunk forChunk);
 
         void FreeMeshDisplayer(MarchingCubeMeshDisplayer display);
 
         void FreeAllDisplayers(List<MarchingCubeMeshDisplayer> displayers);
 
-        void DecreaseChunkLod(IMarchingCubeChunk chunk, int toLodPower);
+        void DecreaseChunkLod(ICompressedMarchingCubeChunk chunk, int toLodPower);
 
-        float[] RequestNoiseForChunk(IMarchingCubeChunk chunk);
+        float[] RequestNoiseForChunk(ICompressedMarchingCubeChunk chunk);
 
-        void SetEditedNoiseAtPosition(IMarchingCubeInteractableChunk chunk, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance);
+        void SetEditedNoiseAtPosition(IMarchingCubeChunk chunk, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance);
 
-        TriangleBuilder[] GenerateCubesFromNoise(IMarchingCubeChunk chunk, int triCount, float[] noise);
+        TriangleBuilder[] GenerateCubesFromNoise(ICompressedMarchingCubeChunk chunk, int triCount, float[] noise);
 
         Color32 GetColor(PathTriangle t, int steepness);
 
-        void Store(Vector3Int anchorPos, IStoreableMarchingCube chunk, bool overrideNoise = false);
+        void Store(Vector3Int anchorPos, IMarchingCubeChunk chunk, bool overrideNoise = false);
 
         void TakeMeshDisplayerBack(MarchingCubeMeshDisplayer freeDisplayer);
 
@@ -60,7 +60,7 @@ namespace MarchingCubes
 
         //IMarchingCubeChunk CreateChunkFromNoiseAt(ChunkGroupTreeLeaf leaf, float[] noise);
 
-        bool TryLoadPoints(IMarchingCubeChunk marchingCubeChunk, out float[] loadedPoints);
+        bool TryLoadPoints(ICompressedMarchingCubeChunk marchingCubeChunk, out float[] loadedPoints);
         void ReturnMinDegreeBuffer(ComputeBuffer minDegreeBuffer);
 
         void StartEnvironmentPipelineForChunk(IEnvironmentSurface environmentChunk);

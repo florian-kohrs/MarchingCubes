@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public class ChunkGroupRoot : GenericTreeRoot<IMarchingCubeChunk, ChunkGroupTreeLeaf, IChunkGroupOrganizer<IMarchingCubeChunk>>, IChunkGroupParent<ChunkGroupTreeLeaf>
+    public class ChunkGroupRoot : GenericTreeRoot<ICompressedMarchingCubeChunk, ChunkGroupTreeLeaf, IChunkGroupOrganizer<ICompressedMarchingCubeChunk>>, IChunkGroupParent<ChunkGroupTreeLeaf>
     {
 
         public ChunkGroupRoot(int[] coord) : base(coord, MarchingCubeChunkHandler.CHUNK_GROUP_SIZE)
@@ -15,22 +15,22 @@ namespace MarchingCubes
 
         public override int SizePower => MarchingCubeChunkHandler.CHUNK_GROUP_SIZE_POWER;
         
-        public void PrepareBranchDestruction(List<IMarchingCubeChunk> allLeafs)
+        public void PrepareBranchDestruction(List<ICompressedMarchingCubeChunk> allLeafs)
         {
             throw new System.NotImplementedException();
         }
 
-        public override IChunkGroupOrganizer<IMarchingCubeChunk> GetLeaf(IMarchingCubeChunk leaf, int index, int[] anchor, int[] relAnchor, int sizePow)
+        public override IChunkGroupOrganizer<ICompressedMarchingCubeChunk> GetLeaf(ICompressedMarchingCubeChunk leaf, int index, int[] anchor, int[] relAnchor, int sizePow)
         {
             return new ChunkGroupTreeLeaf(this, leaf, index, anchor, relAnchor, sizePow);
         }
 
-        public override IChunkGroupOrganizer<IMarchingCubeChunk> GetNode(int[] anchor, int[] relAnchor, int sizePow)
+        public override IChunkGroupOrganizer<ICompressedMarchingCubeChunk> GetNode(int[] anchor, int[] relAnchor, int sizePow)
         {
             return new ChunkGroupTreeNode(anchor, relAnchor, sizePow);
         }
 
-        public void RemoveChildAtIndex(int index, IMarchingCubeChunk chunk)
+        public void RemoveChildAtIndex(int index, ICompressedMarchingCubeChunk chunk)
         {
             if(child.IsLeaf && child is ChunkGroupTreeLeaf leaf && leaf.leaf == chunk)
             {

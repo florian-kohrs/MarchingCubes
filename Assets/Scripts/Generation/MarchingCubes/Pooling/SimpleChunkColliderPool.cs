@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public class SimpleChunkColliderPool : BaseMarchingCubePool<ChunkLodCollider, IMarchingCubeChunk>
+    public class SimpleChunkColliderPool : BaseMarchingCubePool<ChunkLodCollider, ICompressedMarchingCubeChunk>
     {
         public SimpleChunkColliderPool(Transform t)
         {
@@ -13,7 +13,7 @@ namespace MarchingCubes
 
         protected Transform colliderParent;
 
-        protected override void ApplyChunkToItem(ChunkLodCollider item, IMarchingCubeChunk c)
+        protected override void ApplyChunkToItem(ChunkLodCollider item, ICompressedMarchingCubeChunk c)
         {
             item.chunk = c;
             item.transform.position = c.CenterPos;

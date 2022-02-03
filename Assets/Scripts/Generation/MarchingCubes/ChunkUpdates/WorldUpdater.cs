@@ -32,7 +32,7 @@ namespace MarchingCubes
 
         public Stack<ReadyChunkExchange> readyExchangeChunks = new Stack<ReadyChunkExchange>();
 
-        public void RemoveLowerLodChunk(IMarchingCubeChunk c)
+        public void RemoveLowerLodChunk(ICompressedMarchingCubeChunk c)
         {
             if (isInDecreasingChunkIteration)
             {
@@ -44,11 +44,11 @@ namespace MarchingCubes
             }
         }
 
-        public HashSet<IMarchingCubeChunk> lowerChunkLods = new HashSet<IMarchingCubeChunk>();
-        public HashSet<IMarchingCubeChunk> increaseChunkLods = new HashSet<IMarchingCubeChunk>();
+        public HashSet<ICompressedMarchingCubeChunk> lowerChunkLods = new HashSet<ICompressedMarchingCubeChunk>();
+        public HashSet<ICompressedMarchingCubeChunk> increaseChunkLods = new HashSet<ICompressedMarchingCubeChunk>();
 
-        public HashSet<IMarchingCubeChunk> removedLowerChunkLodsBuffer = new HashSet<IMarchingCubeChunk>();
-        public HashSet<IMarchingCubeChunk> increaseChunkLodsBuffer = new HashSet<IMarchingCubeChunk>();
+        public HashSet<ICompressedMarchingCubeChunk> removedLowerChunkLodsBuffer = new HashSet<ICompressedMarchingCubeChunk>();
+        public HashSet<ICompressedMarchingCubeChunk> increaseChunkLodsBuffer = new HashSet<ICompressedMarchingCubeChunk>();
 
         protected bool isInIncreasingChunkIteration;
         protected bool isInDecreasingChunkIteration;
@@ -115,8 +115,8 @@ namespace MarchingCubes
                 {
                     change = readyExchangeChunks.Pop();
                 }
-                List<IMarchingCubeChunk> chunk = change.chunks;
-                List<IMarchingCubeChunk> olds = change.old;
+                List<ICompressedMarchingCubeChunk> chunk = change.chunks;
+                List<ICompressedMarchingCubeChunk> olds = change.old;
                 
                 if (olds[0].IsSpawner)
                 {
@@ -141,7 +141,7 @@ namespace MarchingCubes
             }
 
 
-            List<IMarchingCubeChunk> chunks = new List<IMarchingCubeChunk>();
+            List<ICompressedMarchingCubeChunk> chunks = new List<ICompressedMarchingCubeChunk>();
             isInIncreasingChunkIteration = true;
             foreach (var item in increaseChunkLods)
             {

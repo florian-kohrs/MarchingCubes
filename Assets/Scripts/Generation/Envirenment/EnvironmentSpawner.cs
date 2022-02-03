@@ -131,13 +131,13 @@ namespace MeshGPUInstanciation
 
 
 
-        protected void ComputeGrassForChunk(IMarchingCubeChunk chunk)
+        protected void ComputeGrassForChunk(ICompressedMarchingCubeChunk chunk)
         {
 
         }
 
 
-        public void AddEnvirenmentForEditedChunk(IMarchingCubeChunk chunk, bool buildDetailEnvironment)
+        public void AddEnvirenmentForEditedChunk(ICompressedMarchingCubeChunk chunk, bool buildDetailEnvironment)
         {
             environmentSpawner.SetBuffer(0, "minAngleAtCubeIndex", chunk.MinDegreeBuffer);
             environmentSpawner.SetVector("anchorPosition", VectorExtension.RaiseVector3Int(chunk.AnchorPos));

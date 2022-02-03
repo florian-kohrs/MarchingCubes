@@ -7,7 +7,7 @@ using UnityEngine;
 namespace MarchingCubes
 {
 
-    public class CompressedMarchingCubeChunk : IMarchingCubeChunk
+    public class CompressedMarchingCubeChunk : ICompressedMarchingCubeChunk
     {
 
         //TODO: Check this: Graphics.DrawProceduralIndirect
@@ -91,13 +91,13 @@ namespace MarchingCubes
 
         private Vector3Int anchorPos;
 
-        int IMarchingCubeChunk.PointsPerAxis => pointsPerAxis;
+        int ICompressedMarchingCubeChunk.PointsPerAxis => pointsPerAxis;
 
         protected float surfaceLevel;
 
-        protected Queue<IMarchingCubeChunk> readyChunks;
+        protected Queue<ICompressedMarchingCubeChunk> readyChunks;
 
-        protected Action<IMarchingCubeChunk> OnChunkFinished;
+        protected Action<ICompressedMarchingCubeChunk> OnChunkFinished;
 
         protected List<MeshData> data = new List<MeshData>();
 
@@ -286,13 +286,13 @@ namespace MarchingCubes
 
         #region async chunk building
 
-        public void InitializeWithMeshDataParallel(TriangleChunkHeap heap, Queue<IMarchingCubeChunk> readyChunks)
+        public void InitializeWithMeshDataParallel(TriangleChunkHeap heap, Queue<ICompressedMarchingCubeChunk> readyChunks)
         {
             this.readyChunks = readyChunks;
             StartParallel(heap);
         }
 
-        public void InitializeWithMeshDataParallel(TriangleChunkHeap heap, Action<IMarchingCubeChunk> OnChunkFinished)
+        public void InitializeWithMeshDataParallel(TriangleChunkHeap heap, Action<ICompressedMarchingCubeChunk> OnChunkFinished)
         {
             this.OnChunkFinished = OnChunkFinished;
             StartParallel(heap);
@@ -749,7 +749,7 @@ namespace MarchingCubes
         {
             if (UseCollider)
             {
-                return GetMeshInteractableDisplayer((IMarchingCubeInteractableChunk)this);
+                return GetMeshInteractableDisplayer((IMarchingCubeChunk)this);
             }
             else
             {
@@ -757,7 +757,7 @@ namespace MarchingCubes
             }
         }
 
-        protected MarchingCubeMeshDisplayer GetMeshInteractableDisplayer(IMarchingCubeInteractableChunk interactable)
+        protected MarchingCubeMeshDisplayer GetMeshInteractableDisplayer(IMarchingCubeChunk interactable)
         {
             if (freeDisplayer != null)
             {

@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public class ChunkGroupTreeNode : GenericTreeNode<IMarchingCubeChunk, IChunkGroupOrganizer<IMarchingCubeChunk>, ChunkGroupTreeLeaf>, IChunkGroupParent<ChunkGroupTreeLeaf>
+    public class ChunkGroupTreeNode : GenericTreeNode<ICompressedMarchingCubeChunk, IChunkGroupOrganizer<ICompressedMarchingCubeChunk>, ChunkGroupTreeLeaf>, IChunkGroupParent<ChunkGroupTreeLeaf>
     {
 
         public ChunkGroupTreeNode(
@@ -29,11 +29,11 @@ namespace MarchingCubes
         }
 
 
-        public void PrepareBranchDestruction(List<IMarchingCubeChunk> allLeafs)
+        public void PrepareBranchDestruction(List<ICompressedMarchingCubeChunk> allLeafs)
         {
             for (int i = 0; i < 8 ; i++)
             {
-                IChunkGroupOrganizer<IMarchingCubeChunk> child = children[i];
+                IChunkGroupOrganizer<ICompressedMarchingCubeChunk> child = children[i];
                 if (child == null)
                     continue;
 
@@ -50,7 +50,7 @@ namespace MarchingCubes
             }
         }
 
-        public void RemoveChildAtIndex(int index, IMarchingCubeChunk chunk)
+        public void RemoveChildAtIndex(int index, ICompressedMarchingCubeChunk chunk)
         {
             if(children[index] != null 
                 && children[index].IsLeaf 
@@ -75,12 +75,12 @@ namespace MarchingCubes
             }
         }
 
-        public override IChunkGroupOrganizer<IMarchingCubeChunk> GetLeaf(IMarchingCubeChunk leaf, int index, int[] anchor, int[] relAnchor, int sizePow)
+        public override IChunkGroupOrganizer<ICompressedMarchingCubeChunk> GetLeaf(ICompressedMarchingCubeChunk leaf, int index, int[] anchor, int[] relAnchor, int sizePow)
         {
             return new ChunkGroupTreeLeaf(this, leaf, index, anchor, relAnchor, sizePow);
         }
 
-        public override IChunkGroupOrganizer<IMarchingCubeChunk> GetNode(int[] anchor, int[] relAnchor, int sizePow)
+        public override IChunkGroupOrganizer<ICompressedMarchingCubeChunk> GetNode(int[] anchor, int[] relAnchor, int sizePow)
         {
             return new ChunkGroupTreeNode(anchor, relAnchor, sizePow);
         }

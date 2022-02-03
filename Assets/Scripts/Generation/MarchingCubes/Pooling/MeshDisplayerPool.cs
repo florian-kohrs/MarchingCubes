@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public class MeshDisplayerPool : BaseMarchingCubePool<MarchingCubeMeshDisplayer, IMarchingCubeChunk>
+    public class MeshDisplayerPool : BaseMarchingCubePool<MarchingCubeMeshDisplayer, ICompressedMarchingCubeChunk>
     {
 
         public MeshDisplayerPool(Transform t)
@@ -14,7 +14,7 @@ namespace MarchingCubes
 
         protected Transform transform;
 
-        protected override void ApplyChunkToItem(MarchingCubeMeshDisplayer item, IMarchingCubeChunk c)
+        protected override void ApplyChunkToItem(MarchingCubeMeshDisplayer item, ICompressedMarchingCubeChunk c)
         {
         }
 
