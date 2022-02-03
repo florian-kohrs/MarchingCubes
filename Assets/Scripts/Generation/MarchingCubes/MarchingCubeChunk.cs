@@ -634,7 +634,6 @@ namespace MarchingCubes
                     Vector3Int end;
                     GetNoiseEditData(offset, editDistance, origin - offset, out start, out end);
                     chunkHandler.CreateChunkWithNoiseEdit(newChunkPos, hit.point - newChunkPos, start,end, delta, editDistance, out IMarchingCubeChunk _);
-                    StoreChunkState();
                 }
             }
 
@@ -671,7 +670,7 @@ namespace MarchingCubes
         public void StoreChunk(StoredChunkEdits storage)
         {
             storage.noise = Points;
-            storage.originalCubePositions = GetCurrentCubePositions();
+            //storage.originalCubePositions = GetCurrentCubePositions();
         }
 
         protected Vector3Int[] GetCurrentCubePositions()

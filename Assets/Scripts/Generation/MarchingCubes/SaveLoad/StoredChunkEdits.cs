@@ -17,7 +17,9 @@ namespace MarchingCubes
 
         public float[] noise;
 
-        public Vector3Int[] originalCubePositions;
+        public int[] zippedOriginalCubeIndices;
+
+        //public Vector3Int[] originalCubePositions;
 
         //Save tree positions
   

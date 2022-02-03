@@ -758,7 +758,22 @@ namespace MarchingCubes
 
         public float[] RequestNoiseForChunk(IMarchingCubeChunk chunk)
         {
-            return RequestNoiseFor(chunk.ChunkSizePower, chunk.PointsPerAxis, chunk.LOD, chunk.AnchorPos);
+            float[] result;
+            if(!TryLoadNoise(chunk.AnchorPos, chunk.ChunkSizePower, out result, out bool _))
+            {
+                result = GenerateAndGetNoiseForChunk(chunk);
+            }
+            return result;
+        }
+
+        public float[] GenerateAndGetNoiseForChunk(IMarchingCubeChunk chunk)
+        {
+            float[] result;
+            int pointsPerAxis = chunk.PointsPerAxis;
+            GenerateNoise(chunk.ChunkSizePower, pointsPerAxis, chunk.LOD, chunk.AnchorPos);
+            result = new float[pointsPerAxis * pointsPerAxis * pointsPerAxis];
+            pointsBuffer.GetData(result, 0, 0, result.Length);
+            return result;
         }
 
 
@@ -794,16 +809,6 @@ namespace MarchingCubes
             noiseEditShader.SetFloat("maxDistance", maxDistance);
         }
 
-        public float[] RequestNoiseFor(int sizePow, int pointsPerAxis, int LOD, Vector3Int anchor)
-        {
-            float[] result;
-            GenerateNoise(sizePow, pointsPerAxis, LOD, anchor);
-            result = new float[pointsPerAxis * pointsPerAxis * pointsPerAxis];
-            pointsBuffer.GetData(result, 0, 0, result.Length);
-            return result;
-        }
-
-
         public void GenerateNoise(int sizePow, int pointsPerAxis, int LOD, Vector3Int anchor, bool loadNoiseData = true)
         {
             if (loadNoiseData)
@@ -823,7 +828,7 @@ namespace MarchingCubes
             bool hasToDispatch = pointsPerAxis < DEFAULT_CHUNK_SIZE;
             if (sizePow <= STORAGE_GROUP_SIZE_POWER)
             {
-                hasStoredData = TryGetMipMapAt(anchor, sizePow, out storedNoiseData, out isMipMapComplete);
+                hasStoredData = TryLoadNoise(anchor, sizePow, out storedNoiseData, out isMipMapComplete);
                 if (hasStoredData && (!isMipMapComplete || hasToDispatch))
                 {
                     savedPointBuffer.SetData(storedNoiseData);
@@ -839,6 +844,11 @@ namespace MarchingCubes
                 densityGenerator.Generate(pointsPerAxis, anchor, lod, hasStoredData);
             }
 
+        }
+
+        protected bool TryLoadNoise(Vector3Int anchor, int sizePow, out float[] noise, out bool isMipMapComplete)
+        {
+            return TryGetMipMapAt(anchor, sizePow, out noise, out isMipMapComplete) && isMipMapComplete;
         }
 
         //TODO: Maybe remove pooling theese -> could reduce size of buffer for faster reads
@@ -1376,9 +1386,9 @@ namespace MarchingCubes
                 //call all instantiableData from chunk that need to be stored
                 //(everything not depending on triangles only, e.g trees )
             }
-            else if(edits.noise != chunk.Points)
+            if(edits.noise != chunk.Points)
             {
-                throw new Exception();
+                //throw new Exception();
             }
         }
 
