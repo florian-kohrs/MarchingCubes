@@ -11,7 +11,7 @@ namespace MarchingCubes
     //TODO: Dont use as Interactablechunk when destruction begun
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
     public class MarchingCubeChunk : CompressedMarchingCubeChunk, 
-        IMarchingCubeInteractableChunk, IHasInteractableMarchingCubeChunk, ICubeNeighbourFinder, IStoreableMarchingCube
+        IMarchingCubeInteractableChunk, IHasInteractableMarchingCubeChunk, ICubeNeighbourFinder
     {
 
         public const float REBUILD_SHADER_THREAD_GROUP_SIZE = 4;
@@ -634,7 +634,7 @@ namespace MarchingCubes
                     Vector3Int end;
                     GetNoiseEditData(offset, editDistance, origin - offset, out start, out end);
                     chunkHandler.CreateChunkWithNoiseEdit(newChunkPos, hit.point - newChunkPos, start,end, delta, editDistance, out IMarchingCubeChunk _);
-                    StoreNoiseArray();
+                    StoreChunkState();
                 }
             }
 

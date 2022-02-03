@@ -52,7 +52,7 @@ namespace MarchingCubes
 
         Color32 GetColor(PathTriangle t, int steepness);
 
-        void Store(Vector3Int anchorPos, IStoreableMarchingCube chunk);
+        void Store(Vector3Int anchorPos, IStoreableMarchingCube chunk, bool overrideNoise = false);
 
         void TakeMeshDisplayerBack(MarchingCubeMeshDisplayer freeDisplayer);
 

@@ -768,9 +768,6 @@ namespace MarchingCubes
         }
 
         public void SetEditedNoiseAtPosition(IMarchingCubeInteractableChunk chunk, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance)
-
-
-
         {
             int pointsPerAxis = chunk.PointsPerAxis;
             float[] result = new float[pointsPerAxis * pointsPerAxis * pointsPerAxis];
@@ -1379,7 +1376,7 @@ namespace MarchingCubes
                 //call all instantiableData from chunk that need to be stored
                 //(everything not depending on triangles only, e.g trees )
             }
-            else if(edits.noise != noise)
+            else if(edits.noise != chunk.Points)
             {
                 throw new Exception();
             }

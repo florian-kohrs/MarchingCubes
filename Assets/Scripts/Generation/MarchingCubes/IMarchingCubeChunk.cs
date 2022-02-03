@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public interface IMarchingCubeChunk : ISizeManager, IEnvironmentSurface
+    public interface IMarchingCubeChunk : ISizeManager, IEnvironmentSurface, IMarchingCubeNoise
     {
 
         bool IsReady { get; }
@@ -47,8 +47,6 @@ namespace MarchingCubes
         Material Material { set; }
 
         bool HasPoints { get; }
-
-        float[] Points { get; set; }
 
         int PointsPerAxis { get; }
 

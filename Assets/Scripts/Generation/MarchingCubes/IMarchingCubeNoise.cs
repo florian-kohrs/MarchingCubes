@@ -4,10 +4,8 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public interface IStoreableMarchingCube : IMarchingCubeNoise
+    public interface IMarchingCubeNoise
     {
-
-        void StoreChunk(StoredChunkEdits storage);
-
+        float[] Points { get; set; }
     }
 }
