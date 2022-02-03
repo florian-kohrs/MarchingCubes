@@ -11,7 +11,9 @@ namespace MarchingCubes
 
         public ComputeShader densityShader;
 
-        protected List<ComputeBuffer> buffersToRelease = new List<ComputeBuffer>();
+        protected ComputeBuffer octaveOffsetsBuffer;
+
+        protected ComputeBuffer biomsBuffer;
 
         protected BiomNoiseData[] bioms;
 
@@ -72,10 +74,6 @@ namespace MarchingCubes
             densityShader.SetFloat("spacing", spacing);
             densityShader.SetVector("anchor", new Vector4(anchor.x, anchor.y, anchor.z));
         }
-
-        protected ComputeBuffer octaveOffsetsBuffer;
-
-        protected ComputeBuffer biomsBuffer;
 
         protected void SetBiomData(params ComputeShader[] shaders)
         {

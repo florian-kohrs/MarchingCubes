@@ -399,7 +399,6 @@ namespace MarchingCubes
         {
             int lodPower;
             int chunkSizePower;
-            bool careForNeighbours;
             GetSizeAndLodPowerForChunkPosition(pos, out chunkSizePower, out lodPower);
 
             ICompressedMarchingCubeChunk chunk = GetThreadedChunkObjectAt(Vector3Int.FloorToInt(pos), coord, lodPower, chunkSizePower, false);
@@ -462,7 +461,6 @@ namespace MarchingCubes
         {
             int lodPower;
             int chunkSizePower;
-            bool careForNeighbours;
             GetSizeAndLodPowerForChunkPosition(pos, out chunkSizePower, out lodPower);
             return CreateChunkWithProperties(VectorExtension.ToVector3Int(pos), coord, lodPower, chunkSizePower, allowOverride);
         }
@@ -1002,7 +1000,7 @@ namespace MarchingCubes
             int numVoxelsPerAxis = chunkSize / lod;
             int pointsPerAxis = numVoxelsPerAxis + 1;
 
-            int numThreadsPerAxis = Mathf.CeilToInt(numVoxelsPerAxis / (float)threadGroupSize);
+            int numThreadsPerAxis = Mathf.CeilToInt(numVoxelsPerAxis / threadGroupSize);
 
             float spacing = lod;
 
@@ -1329,7 +1327,6 @@ namespace MarchingCubes
                 triCountBuffer.Dispose();
                 triangleBuffer = null;
             }
-
         }
 
         protected override void onDestroy()
