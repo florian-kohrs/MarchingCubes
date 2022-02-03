@@ -398,17 +398,17 @@ namespace MarchingCubes
             int lodPower;
             int chunkSizePower;
             bool careForNeighbours;
-            GetSizeAndLodPowerForChunkPosition(pos, out chunkSizePower, out lodPower, out careForNeighbours);
+            GetSizeAndLodPowerForChunkPosition(pos, out chunkSizePower, out lodPower);
 
             ICompressedMarchingCubeChunk chunk = GetThreadedChunkObjectAt(Vector3Int.FloorToInt(pos), coord, lodPower, chunkSizePower, false);
-            BuildChunkParallel(chunk, careForNeighbours);
+            BuildChunkParallel(chunk);
         }
 
         public bool TryGetOrCreateChunkAt(Vector3Int p, out ICompressedMarchingCubeChunk chunk)
         {
             if (!TryGetChunkAtPosition(p, out chunk))
             {
-                chunk = CreateChunkWithProperties(p, PositionToChunkGroupCoord(p), 0, DEFAULT_CHUNK_SIZE_POWER, false, false);
+                chunk = CreateChunkWithProperties(p, PositionToChunkGroupCoord(p), 0, DEFAULT_CHUNK_SIZE_POWER, false);
             }
             if (chunk != null && !chunk.IsReady)
             {
@@ -439,7 +439,7 @@ namespace MarchingCubes
                 {
                     chunk.DestroyChunk();
                 }
-                chunk = CreateChunkWithProperties(p, PositionToChunkGroupCoord(p), 0, DEFAULT_CHUNK_SIZE_POWER, false, false,
+                chunk = CreateChunkWithProperties(p, PositionToChunkGroupCoord(p), 0, DEFAULT_CHUNK_SIZE_POWER, false,
                     () => {
                         ApplyNoiseEditing(33, editPoint, start, end, delta, maxDistance);
                     });
@@ -461,14 +461,14 @@ namespace MarchingCubes
             int lodPower;
             int chunkSizePower;
             bool careForNeighbours;
-            GetSizeAndLodPowerForChunkPosition(pos, out chunkSizePower, out lodPower, out careForNeighbours);
-            return CreateChunkWithProperties(VectorExtension.ToVector3Int(pos), coord, lodPower, chunkSizePower, careForNeighbours, allowOverride);
+            GetSizeAndLodPowerForChunkPosition(pos, out chunkSizePower, out lodPower);
+            return CreateChunkWithProperties(VectorExtension.ToVector3Int(pos), coord, lodPower, chunkSizePower, allowOverride);
         }
 
-        protected ICompressedMarchingCubeChunk CreateChunkWithProperties(Vector3Int pos, Vector3Int coord, int lodPower, int chunkSizePower, bool careForNeighbours, bool allowOverride, Action WorkOnNoise = null)
+        protected ICompressedMarchingCubeChunk CreateChunkWithProperties(Vector3Int pos, Vector3Int coord, int lodPower, int chunkSizePower, bool allowOverride, Action WorkOnNoise = null)
         {
             ICompressedMarchingCubeChunk chunk = GetThreadedChunkObjectAt(pos, coord, lodPower, chunkSizePower, allowOverride);
-            BuildChunk(chunk, careForNeighbours, WorkOnNoise);
+            BuildChunk(chunk, WorkOnNoise);
             return chunk;
         }
 
@@ -740,17 +740,17 @@ namespace MarchingCubes
         }
 
         //TODO:Remove keep points
-        protected void BuildChunk(ICompressedMarchingCubeChunk chunk, bool careForNeighbours, Action WorkOnNoise = null)
+        protected void BuildChunk(ICompressedMarchingCubeChunk chunk, Action WorkOnNoise = null)
         {
-            TriangleChunkHeap ts = DispatchAndGetShaderData(chunk, careForNeighbours, WorkOnNoise);
+            TriangleChunkHeap ts = DispatchAndGetShaderData(chunk, WorkOnNoise);
             chunk.InitializeWithMeshData(ts);
         }
 
         protected Queue<ICompressedMarchingCubeChunk> readyParallelChunks = new Queue<ICompressedMarchingCubeChunk>();
 
-        protected void BuildChunkParallel(ICompressedMarchingCubeChunk chunk, bool careForNeighbours)
+        protected void BuildChunkParallel(ICompressedMarchingCubeChunk chunk)
         {
-            TriangleChunkHeap ts = DispatchAndGetShaderData(chunk, careForNeighbours);
+            TriangleChunkHeap ts = DispatchAndGetShaderData(chunk);
             channeledChunks++;
             chunk.InitializeWithMeshDataParallel(ts, readyParallelChunks);
         }
@@ -937,7 +937,7 @@ namespace MarchingCubes
 
         //TODO: Inform about Mesh subset and mesh set vertex buffer
         //Subset may be used to only change parts of the mesh -> dont need multiple mesh displayers with submeshes?
-        protected TriangleChunkHeap DispatchAndGetShaderData(ICompressedMarchingCubeChunk chunk, bool careForNeighbours, Action WorkOnNoise = null)
+        protected TriangleChunkHeap DispatchAndGetShaderData(ICompressedMarchingCubeChunk chunk, Action WorkOnNoise = null)
         {
             ValidateChunkProperties(chunk);
             PrepareNoiseForChunk(chunk);
@@ -955,9 +955,9 @@ namespace MarchingCubes
                 chunk.GiveUnusedDisplayerBack();
             }
 
-            if (storeNoise || (numTris == 0 && !hasFoundInitialChunk) || careForNeighbours)
+            if (storeNoise || (numTris == 0 && !hasFoundInitialChunk))
             {
-                if (careForNeighbours || storeNoise)
+                if (storeNoise)
                 {
                     int pointsPerAxis = chunk.PointsPerAxis;
                     int pointsVolume = pointsPerAxis * pointsPerAxis * pointsPerAxis;
@@ -1050,7 +1050,7 @@ namespace MarchingCubes
             int newSizePow = DEFAULT_CHUNK_SIZE_POWER + toLodPower;
             if (newSizePow == chunk.ChunkSizePower || newSizePow == CHUNK_GROUP_SIZE_POWER)
             {
-                ExchangeSingleChunkParallel(chunk, chunk.AnchorPos, toLodPower, chunk.ChunkSizePower, false, true);
+                ExchangeSingleChunkParallel(chunk, chunk.AnchorPos, toLodPower, chunk.ChunkSizePower, true);
             }
             else
             {
@@ -1071,10 +1071,10 @@ namespace MarchingCubes
             }
         }
 
-        protected ICompressedMarchingCubeChunk ExchangeSingleChunkParallel(ICompressedMarchingCubeChunk from, Vector3Int anchorPos, int lodPow, int sizePow, bool careForNeighbours, bool allowOveride)
+        protected ICompressedMarchingCubeChunk ExchangeSingleChunkParallel(ICompressedMarchingCubeChunk from, Vector3Int anchorPos, int lodPow, int sizePow, bool allowOveride)
         {
             from.PrepareDestruction();
-            return ExchangeChunkParallel(anchorPos, lodPow, sizePow, careForNeighbours, allowOveride, (c) => { FinishParallelChunk(from, c); });
+            return ExchangeChunkParallel(anchorPos, lodPow, sizePow, allowOveride, (c) => { FinishParallelChunk(from, c); });
         }
 
 
@@ -1087,10 +1087,10 @@ namespace MarchingCubes
         }
 
 
-        protected ICompressedMarchingCubeChunk ExchangeChunkParallel(Vector3Int anchorPos, int lodPow, int sizePow, bool careForNeighbours, bool allowOveride, Action<ICompressedMarchingCubeChunk> onChunkDone)
+        protected ICompressedMarchingCubeChunk ExchangeChunkParallel(Vector3Int anchorPos, int lodPow, int sizePow, bool allowOveride, Action<ICompressedMarchingCubeChunk> onChunkDone)
         {
             ICompressedMarchingCubeChunk newChunk = GetThreadedChunkObjectAt(anchorPos, lodPow, sizePow, allowOveride);
-            newChunk.InitializeWithMeshDataParallel(DispatchAndGetShaderData(newChunk, careForNeighbours), onChunkDone);
+            newChunk.InitializeWithMeshDataParallel(DispatchAndGetShaderData(newChunk), onChunkDone);
             return newChunk;
         }
 
@@ -1169,7 +1169,7 @@ namespace MarchingCubes
                 else
                 {
                     ///Decrease single chunk lod
-                    ExchangeSingleChunkParallel(chunk, chunk.CenterPos, toLodPower, chunk.ChunkSizePower, false, true);
+                    ExchangeSingleChunkParallel(chunk, chunk.CenterPos, toLodPower, chunk.ChunkSizePower, true);
                 }
             }
         }
@@ -1180,7 +1180,7 @@ namespace MarchingCubes
             List<ICompressedMarchingCubeChunk> oldChunks = new List<ICompressedMarchingCubeChunk>();
             chunk.Leaf.parent.PrepareBranchDestruction(oldChunks);
 
-            ExchangeChunkParallel(chunk.CenterPos, toLodPower, chunk.ChunkSizePower + 1, false, true, (c) =>
+            ExchangeChunkParallel(chunk.CenterPos, toLodPower, chunk.ChunkSizePower + 1, true, (c) =>
             {
                 lock (exchangeLocker)
                 {
@@ -1273,13 +1273,12 @@ namespace MarchingCubes
         }
 
 
-        public void GetSizeAndLodPowerForChunkPosition(Vector3 pos, out int sizePower, out int lodPower, out bool careForNeighbours)
+        public void GetSizeAndLodPowerForChunkPosition(Vector3 pos, out int sizePower, out int lodPower)
         {
             float distance = (startPos - pos).magnitude;
             lodPower = GetLodPower(distance);
             sizePower = GetSizePowerForChunkAtDistance(distance);
             //TODO: check this
-            careForNeighbours = GetLodPower(distance + sizePower) > lodPower;
         }
 
         protected int RoundToPowerOf2(float f)
