@@ -6,6 +6,7 @@ using UnityEngine;
 public class DisposablePoolOf<T> : PoolOf<T> where T : IDisposable
 {
 
+    //TODO: If a lot of unused buffers exist, dispose some of them
     public DisposablePoolOf(Func<T> CreateItem) : base(CreateItem) { }
 
 

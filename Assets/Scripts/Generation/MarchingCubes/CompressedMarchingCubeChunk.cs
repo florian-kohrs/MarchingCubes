@@ -377,6 +377,7 @@ namespace MarchingCubes
             if (ShouldBuildEnvironment)
             {
                 chunkHandler.ReturnMinDegreeBuffer(minDegreeBuffer);
+                minDegreeBuffer = null;
             }
         }
 
@@ -421,6 +422,7 @@ namespace MarchingCubes
         {
             FreeAllMeshes();
             PrepareDestruction();
+            CleanUpOnMainThread();
         }
 
   
