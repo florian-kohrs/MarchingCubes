@@ -63,5 +63,11 @@ namespace MeshGPUInstanciation
             grassProperties = null;
         }
 
+        private void OnDestroy()
+        {
+            triangleBuffer.Dispose();
+        }
+
+
     }
 }

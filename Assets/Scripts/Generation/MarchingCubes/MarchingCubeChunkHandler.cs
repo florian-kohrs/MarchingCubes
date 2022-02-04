@@ -1380,7 +1380,7 @@ namespace MarchingCubes
         public void StartEnvironmentPipelineForChunk(IEnvironmentSurface environmentChunk)
         {
             //grass.ComputeGrassFor(environmentChunk);
-            environmentSpawner.AddEnvironmentForOriginalChunk(environmentChunk);
+            //environmentSpawner.AddEnvironmentForOriginalChunk(environmentChunk);
         }
 
     }
