@@ -559,32 +559,17 @@ namespace MarchingCubes
 
         public bool TryGetChunkAtPosition(Vector3Int p, out ICompressedMarchingCubeChunk chunk)
         {
-            Vector3Int _;
-            return TryGetChunkAtPosition(p, out chunk, out _);
-        }
-
-        public bool TryGetChunkAtPosition(Vector3Int p, out ICompressedMarchingCubeChunk chunk, out Vector3Int positionInOtherChunk)
-        {
             Vector3Int coord = PositionToChunkGroupCoord(p);
             IChunkGroupRoot chunkGroup;
+            chunk = null;
             if (chunkGroups.TryGetValue(coord, out chunkGroup))
             {
-                if (chunkGroup.HasChild)
+                if (/*chunkGroup.HasChild && */chunkGroup.TryGetLeafAtGlobalPosition(p, out chunk))
                 {
-                    if (/*chunkGroup.HasChild && */chunkGroup.TryGetLeafAtGlobalPosition(p, out chunk))
-                    {
-                        positionInOtherChunk = p - chunk.AnchorPos;
-                        return true;
-                    }
-                }
-                else
-                {
-                    Debug.LogWarning("Chunk is nt set yet -> may loose neighbours");
+                    return true;
                 }
             }
-            chunk = null;
-            positionInOtherChunk = default;
-            return false;
+            return chunk != null;
         }
 
         public bool TryGetReadyChunkAt(Vector3Int p, out ICompressedMarchingCubeChunk chunk)
@@ -594,11 +579,7 @@ namespace MarchingCubes
 
         public bool HasChunkStartedAt(Vector3Int p)
         {
-            if (TryGetChunkAtPosition(p, out ICompressedMarchingCubeChunk chunk))
-            {
-                return chunk.HasStarted;
-            }
-            return false;
+            return TryGetChunkAtPosition(p, out ICompressedMarchingCubeChunk chunk) && chunk.HasStarted;
         }
 
         protected ICompressedMarchingCubeChunk GetChunkObjectAt(ICompressedMarchingCubeChunk chunk, Vector3Int position, Vector3Int coord, int lodPower, int chunkSizePower, bool allowOverride)
@@ -678,6 +659,7 @@ namespace MarchingCubes
         {
             return PositionToChunkGroupCoord(pos.x, pos.y, pos.z);
         }
+
         protected Vector3Int PositionToChunkGroupCoord(float x, float y, float z)
         {
             return new Vector3Int(
@@ -727,7 +709,7 @@ namespace MarchingCubes
 
         protected void PrepareChunkToStoreMinDegreesIfNeeded(ICompressedMarchingCubeChunk chunk)
         {
-            bool storeMinDegree = chunk.LOD <= 2 && !chunk.IsReady;
+            bool storeMinDegree = chunk.LOD <= 1 && !chunk.IsReady;
             marshShader.SetBool("storeMinDegrees", storeMinDegree);
             if (storeMinDegree)
             {
