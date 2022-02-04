@@ -104,7 +104,7 @@ namespace MarchingCubes
         //Cant really pool noise array, maybe pool tribuilder aray instead (larger than neccessary)
 
         protected int channeledChunks = 0;
-            
+
         protected bool hasFoundInitialChunk;
 
 
@@ -774,7 +774,11 @@ namespace MarchingCubes
             int pointsVolume = pointsPerAxis * pointsPerAxis * pointsPerAxis;
             pointsArray = new float[pointsVolume];
             pointsBuffer.GetData(pointsArray);
-            storageGroup.Store(chunk.AnchorPos, chunk as IMarchingCubeChunk, true);
+            if (chunk is IMarchingCubeChunk c)
+            {
+                c.Points = pointsArray;
+                storageGroup.Store(chunk.AnchorPos, chunk as IMarchingCubeChunk, true);
+            }
         }
 
         protected void DetermineIfChunkIsAir(ICompressedMarchingCubeChunk chunk)
@@ -1194,7 +1198,7 @@ namespace MarchingCubes
         public void StartEnvironmentPipelineForChunk(IEnvironmentSurface environmentChunk)
         {
             //grass.ComputeGrassFor(environmentChunk);
-            environmentSpawner.AddEnvironmentForOriginalChunk(environmentChunk);
+            //environmentSpawner.AddEnvironmentForOriginalChunk(environmentChunk);
         }
 
         public void Store(Vector3Int anchorPos, IMarchingCubeChunk chunk, bool overrideNoise = false) => storageGroup.Store(anchorPos, chunk, overrideNoise);

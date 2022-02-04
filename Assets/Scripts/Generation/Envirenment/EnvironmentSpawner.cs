@@ -173,7 +173,7 @@ namespace MeshGPUInstanciation
         private void OnDestroy()
         {
             environmentEntities.SetCounterValue(0);
-
+            bufferCount.Dispose();
             environmentEntities.Dispose();
             //originalCubeSet.Dispose();
             isTreeAtCube.Dispose();
