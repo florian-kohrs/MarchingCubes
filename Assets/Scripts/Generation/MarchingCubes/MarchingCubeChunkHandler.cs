@@ -939,7 +939,11 @@ namespace MarchingCubes
             int pointsVolume = pointsPerAxis * pointsPerAxis * pointsPerAxis;
             pointsArray = new float[pointsVolume];
             pointsBuffer.GetData(pointsArray);
-            Store(chunk.AnchorPos, chunk as IMarchingCubeChunk, true);
+            if (chunk is IMarchingCubeChunk c)
+            {
+                c.Points = pointsArray;
+                Store(chunk.AnchorPos, c, true);
+            }
         }
 
         protected void DetermineIfChunkIsAir(ICompressedMarchingCubeChunk chunk)
