@@ -11,7 +11,7 @@ namespace MarchingCubes
 
         public StorageTreeRoot() { }
 
-        public StorageTreeRoot(int[] coord) : base(coord, MarchingCubeChunkHandler.STORAGE_GROUP_SIZE)
+        public StorageTreeRoot(int[] coord, int size) : base(coord, size)
         {
         }
 

@@ -7,7 +7,7 @@ namespace MarchingCubes
     public class ChunkGroupRoot : GenericTreeRoot<ICompressedMarchingCubeChunk, ChunkGroupTreeLeaf, IChunkGroupOrganizer<ICompressedMarchingCubeChunk>>, IChunkGroupParent<ChunkGroupTreeLeaf>
     {
 
-        public ChunkGroupRoot(int[] coord) : base(coord, MarchingCubeChunkHandler.CHUNK_GROUP_SIZE)
+        public ChunkGroupRoot(int[] coord, int chunkGroupSize) : base(coord, chunkGroupSize)
         {
         }
 

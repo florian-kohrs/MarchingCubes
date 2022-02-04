@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading;
 using UnityEngine;
 using IChunkGroupRoot = MarchingCubes.IChunkGroupRoot<MarchingCubes.ICompressedMarchingCubeChunk>;
+using StorageGroup = MarchingCubes.GroupMesh<MarchingCubes.StorageTreeRoot, MarchingCubes.StoredChunkEdits, MarchingCubes.StorageTreeLeaf, MarchingCubes.IStorageGroupOrganizer<MarchingCubes.StoredChunkEdits>>;
 
 
 namespace MarchingCubes
@@ -55,10 +56,11 @@ namespace MarchingCubes
 
         public const int NOISE_POINTS_IN_DEFAULT_SIZED_CHUNK = POINTS_PER_AXIS_IN_DEFAULT_SIZE * POINTS_PER_AXIS_IN_DEFAULT_SIZE * POINTS_PER_AXIS_IN_DEFAULT_SIZE;
 
-        public Dictionary<Vector3Int, IChunkGroupRoot> chunkGroups = new Dictionary<Vector3Int, IChunkGroupRoot>();
+
+        protected ChunkGroupMesh chunkGroup = new ChunkGroupMesh(CHUNK_GROUP_SIZE);
 
         [Save]
-        public Dictionary<Serializable3DIntVector, StorageTreeRoot> storageGroups = new Dictionary<Serializable3DIntVector, StorageTreeRoot>();
+        protected StorageGroupMesh storageGroup = new StorageGroupMesh(STORAGE_GROUP_SIZE);
 
         protected float[] storedNoiseData;
 
@@ -248,7 +250,7 @@ namespace MarchingCubes
                 do
                 {
                     next = closestNeighbours.Dequeue();
-                    isNextInProgress = HasChunkStartedAt(next);
+                    isNextInProgress = chunkGroup.HasChunkStartedAt(next);
                 } while (isNextInProgress && closestNeighbours.size > 0);
 
 
@@ -307,7 +309,7 @@ namespace MarchingCubes
                 do
                 {
                     next = closestNeighbours.Dequeue();
-                    isNextInProgress = HasChunkStartedAt(next);
+                    isNextInProgress = chunkGroup.HasChunkStartedAt(next);
                 } while (isNextInProgress && closestNeighbours.size > 0);
 
                 if (!isNextInProgress)
@@ -351,7 +353,7 @@ namespace MarchingCubes
                     float sqrDist = (startPos - v3).sqrMagnitude;
 
                     if (sqrDist <= buildAroundSqrDistance
-                        && !HasChunkAtPosition(v3))
+                        && !chunkGroup.HasGroupItemAt(v3))
                     {
                         closestNeighbours.Enqueue(sqrDist, v3);
                     }
@@ -368,14 +370,12 @@ namespace MarchingCubes
         protected ICompressedMarchingCubeChunk FindNonEmptyChunkAround(Vector3 pos)
         {
             bool isEmpty = true;
-            Vector3Int chunkIndex;
             ICompressedMarchingCubeChunk chunk = null;
             int tryCount = 0;
             //TODO:Remove trycount later
             while (isEmpty && tryCount++ < 100)
             {
-                chunkIndex = PositionToChunkGroupCoord(pos);
-                chunk = CreateChunkAt(pos, chunkIndex);
+                chunk = CreateChunkAt(pos);
                 isEmpty = chunk.IsEmpty;
                 if (chunk.IsEmpty)
                 {
@@ -396,24 +396,19 @@ namespace MarchingCubes
 
         protected void CreateChunkParallelAt(Vector3 pos)
         {
-            CreateChunkParallelAt(pos, PositionToChunkGroupCoord(pos));
-        }
-
-        protected void CreateChunkParallelAt(Vector3 pos, Vector3Int coord)
-        {
             int lodPower;
             int chunkSizePower;
             GetSizeAndLodPowerForChunkPosition(pos, out chunkSizePower, out lodPower);
 
-            ICompressedMarchingCubeChunk chunk = GetThreadedChunkObjectAt(Vector3Int.FloorToInt(pos), coord, lodPower, chunkSizePower, false);
+            ICompressedMarchingCubeChunk chunk = GetThreadedChunkObjectAt(Vector3Int.FloorToInt(pos), lodPower, chunkSizePower, false);
             BuildChunkParallel(chunk);
         }
 
         public bool TryGetOrCreateChunkAt(Vector3Int p, out ICompressedMarchingCubeChunk chunk)
         {
-            if (!TryGetChunkAtPosition(p, out chunk))
+            if (!chunkGroup.TryGetGroupItemAt(p, out chunk))
             {
-                chunk = CreateChunkWithProperties(p, PositionToChunkGroupCoord(p), 0, DEFAULT_CHUNK_SIZE_POWER, false);
+                chunk = CreateChunkWithProperties(p, 0, DEFAULT_CHUNK_SIZE_POWER, false);
             }
             if (chunk != null && !chunk.IsReady)
             {
@@ -436,15 +431,16 @@ namespace MarchingCubes
         public bool CreateChunkWithNoiseEdit(Vector3Int p, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance, out ICompressedMarchingCubeChunk chunk)
         {
             bool createdChunk = false;
-            bool hasChunkAtPosition = TryGetChunkAtPosition(p, out chunk);
+            bool hasChunkAtPosition = chunkGroup.TryGetGroupItemAt(p, out chunk);
 
             if (!hasChunkAtPosition || !chunk.HasStarted)
             {
                 if (chunk != null)
                 {
+                    ///current chunk is marks border of generated chunks, so destroy it
                     chunk.DestroyChunk();
                 }
-                chunk = CreateChunkWithProperties(p, PositionToChunkGroupCoord(p), 0, DEFAULT_CHUNK_SIZE_POWER, false,
+                chunk = CreateChunkWithProperties(p, 0, DEFAULT_CHUNK_SIZE_POWER, false,
                     () => {
                         ApplyNoiseEditing(33, editPoint, start, end, delta, maxDistance);
                     });
@@ -455,138 +451,56 @@ namespace MarchingCubes
 
         protected ICompressedMarchingCubeChunk CreateChunkAt(Vector3Int p, bool allowOverride = false)
         {
-            return CreateChunkAt(p, PositionToChunkGroupCoord(p), allowOverride);
+            return CreateChunkAt(p, allowOverride);
         }
 
         //TODO:Check if collider can be removed from most chunks.
         //Collision can be approximated by calling noise function for lowest point of object and checking if its noise is larger than surface value
 
-        protected ICompressedMarchingCubeChunk CreateChunkAt(Vector3 pos, Vector3Int coord, bool allowOverride = false)
+        protected ICompressedMarchingCubeChunk CreateChunkAt(Vector3 pos, bool allowOverride = false)
         {
             int lodPower;
             int chunkSizePower;
             GetSizeAndLodPowerForChunkPosition(pos, out chunkSizePower, out lodPower);
-            return CreateChunkWithProperties(VectorExtension.ToVector3Int(pos), coord, lodPower, chunkSizePower, allowOverride);
+            return CreateChunkWithProperties(VectorExtension.ToVector3Int(pos), lodPower, chunkSizePower, allowOverride);
         }
 
-        protected ICompressedMarchingCubeChunk CreateChunkWithProperties(Vector3Int pos, Vector3Int coord, int lodPower, int chunkSizePower, bool allowOverride, Action WorkOnNoise = null)
+        protected ICompressedMarchingCubeChunk CreateChunkWithProperties(Vector3Int pos, int lodPower, int chunkSizePower, bool allowOverride, Action WorkOnNoise = null)
         {
-            ICompressedMarchingCubeChunk chunk = GetThreadedChunkObjectAt(pos, coord, lodPower, chunkSizePower, allowOverride);
+            ICompressedMarchingCubeChunk chunk = GetThreadedChunkObjectAt(pos, lodPower, chunkSizePower, allowOverride);
             BuildChunk(chunk, WorkOnNoise);
             return chunk;
         }
 
 
-        protected IChunkGroupRoot CreateChunkGroupAtCoordinate(Vector3Int coord)
-        {
-            IChunkGroupRoot chunkGroup = new ChunkGroupRoot(new int[] { coord.x, coord.y, coord.z });
-            chunkGroups.Add(coord, chunkGroup);
-            return chunkGroup;
-        }
 
-        protected StorageTreeRoot CreateStorageGroupAtCoordinate(Vector3Int coord)
-        {
-            StorageTreeRoot chunkGroup = new StorageTreeRoot(new int[] { coord.x, coord.y, coord.z });
-            storageGroups.Add(coord, chunkGroup);
-            return chunkGroup;
-        }
+        //protected bool HasChunkAtPosition(Vector3Int v3)
+        //{
+        //    ICompressedMarchingCubeChunk _;
+        //    return TryGetChunkAtPosition(v3, out _);
+        //}
 
-        public bool TryGetChunkGroupAt(Vector3Int p, out IChunkGroupRoot chunkGroup)
-        {
-            Vector3Int coord = PositionToChunkGroupCoord(p);
-            return chunkGroups.TryGetValue(coord, out chunkGroup);
-        }
+        //public bool TryGetChunkAtPosition(Vector3Int p, out ICompressedMarchingCubeChunk chunk)
+        //{
+        //    Vector3Int coord = PositionToChunkGroupCoord(p);
+        //    IChunkGroupRoot chunkGroup;
+        //    chunk = null;
+        //    if (chunkGroups.TryGetValue(coord, out chunkGroup))
+        //    {
+        //        if (/*chunkGroup.HasChild && */chunkGroup.TryGetLeafAtGlobalPosition(p, out chunk))
+        //        {
+        //            return true;
+        //        }
+        //    }
+        //    return chunk != null;
+        //}
 
-        public IChunkGroupRoot GetOrCreateChunkGroupAtCoordinate(Vector3 p)
-        {
-            return GetOrCreateChunkGroupAtCoordinate(PositionToChunkGroupCoord(p));
-        }
+        public bool TryGetReadyChunkAt(Vector3Int p, out ICompressedMarchingCubeChunk chunk) => chunkGroup.TryGetReadyChunkAt(p, out chunk);
 
-        public IChunkGroupRoot GetOrCreateChunkGroupAtCoordinate(Vector3Int coord)
-        {
-            IChunkGroupRoot chunkGroup;
-            if (!chunkGroups.TryGetValue(coord, out chunkGroup))
-            {
-                chunkGroup = CreateChunkGroupAtCoordinate(coord);
-            }
-            return chunkGroup;
-        }
-
-        public StorageTreeRoot GetOrCreateStorageGroupAtCoordinate(Vector3Int coord)
-        {
-            StorageTreeRoot chunkGroup;
-            if (!storageGroups.TryGetValue(coord, out chunkGroup))
-            {
-                chunkGroup = CreateStorageGroupAtCoordinate(coord);
-            }
-            return chunkGroup;
-        }
-
-        //TODO: Has to mark mipmaps dirty if any child changes!
-        public bool TryGetMipMapAt(Vector3Int pos, int sizePower, out float[] storedNoise, out bool isMipMapComplete)
-        {
-            if (storageGroups.TryGetValue(PositionToStorageGroupCoord(pos), out StorageTreeRoot chunkGroup))
-            {
-                return chunkGroup.TryGetMipMapOfChunkSizePower(new int[] { pos.x, pos.y, pos.z }, sizePower, out storedNoise, out isMipMapComplete);
-            }
-            isMipMapComplete = false;
-            storedNoise = null;
-            return false;
-        }
-
-        public bool TryGetStoredEditsAt(Vector3Int pos, out StoredChunkEdits edits)
-        {
-            Vector3Int coord = PositionToStorageGroupCoord(pos);
-            if (storageGroups.TryGetValue(coord, out StorageTreeRoot chunkGroup))
-            {
-                if (chunkGroup.HasChild)
-                {
-                    if (chunkGroup.TryGetLeafAtGlobalPosition(pos, out edits))
-                    {
-                        return true;
-                    }
-                }
-            }
-            edits = null;
-            return false;
-        }
-
-        protected bool HasChunkAtPosition(Vector3Int v3)
-        {
-            ICompressedMarchingCubeChunk _;
-            return TryGetChunkAtPosition(v3, out _);
-        }
-
-        public bool TryGetChunkAtPosition(Vector3Int p, out ICompressedMarchingCubeChunk chunk)
-        {
-            Vector3Int coord = PositionToChunkGroupCoord(p);
-            IChunkGroupRoot chunkGroup;
-            chunk = null;
-            if (chunkGroups.TryGetValue(coord, out chunkGroup))
-            {
-                if (/*chunkGroup.HasChild && */chunkGroup.TryGetLeafAtGlobalPosition(p, out chunk))
-                {
-                    return true;
-                }
-            }
-            return chunk != null;
-        }
-
-        public bool TryGetReadyChunkAt(Vector3Int p, out ICompressedMarchingCubeChunk chunk)
-        {
-            return TryGetChunkAtPosition(p, out chunk) && chunk.IsReady;
-        }
-
-        public bool HasChunkStartedAt(Vector3Int p)
-        {
-            return TryGetChunkAtPosition(p, out ICompressedMarchingCubeChunk chunk) && chunk.HasStarted;
-        }
-
-        protected ICompressedMarchingCubeChunk GetChunkObjectAt(ICompressedMarchingCubeChunk chunk, Vector3Int position, Vector3Int coord, int lodPower, int chunkSizePower, bool allowOverride)
+        protected ICompressedMarchingCubeChunk GetChunkObjectAt(ICompressedMarchingCubeChunk chunk, Vector3Int position, int lodPower, int chunkSizePower, bool allowOverride)
         {
             ///Pot racecondition
-            IChunkGroupRoot chunkGroup = GetOrCreateChunkGroupAtCoordinate(coord);
-
+            ChunkGroupRoot chunkGroupRoot = chunkGroup.GetOrCreateGroupAtGlobalPosition(position);
             chunk.ChunkHandler = this;
             chunk.ChunkSizePower = chunkSizePower;
             chunk.ChunkUpdater = worldUpdater;
@@ -594,18 +508,17 @@ namespace MarchingCubes
             chunk.SurfaceLevel = surfaceLevel;
             chunk.LODPower = lodPower;
 
-            chunkGroup.SetLeafAtPosition(new int[] { position.x, position.y, position.z }, chunk, allowOverride);
+            chunkGroupRoot.SetLeafAtPosition(new int[] { position.x, position.y, position.z }, chunk, allowOverride);
 
             return chunk;
         }
 
         public void BuildEmptyChunkAt(Vector3Int pos)
         {
-            IChunkGroupRoot chunkGroup = GetOrCreateChunkGroupAtCoordinate(PositionToChunkGroupCoord(pos));
-            if (!chunkGroup.TryGetLeafAtGlobalPosition(pos, out ICompressedMarchingCubeChunk chunk))
+            ChunkGroupRoot chunkGroupRoot = chunkGroup.GetOrCreateGroupAtGlobalPosition(pos);
+            if (!chunkGroupRoot.HasLeafAtGlobalPosition(pos))
             {
-                chunk = new CompressedMarchingCubeChunk();
-
+                ICompressedMarchingCubeChunk chunk = new CompressedMarchingCubeChunk();
                 chunk.ChunkHandler = this;
                 chunk.ChunkSizePower = CHUNK_GROUP_SIZE_POWER;
                 chunk.ChunkUpdater = worldUpdater;
@@ -615,20 +528,13 @@ namespace MarchingCubes
 
                 chunk.IsSpawner = true;
 
-                chunkGroup.SetLeafAtPosition(new int[] { pos.x, pos.y, pos.z }, chunk, false);
+                chunkGroupRoot.SetLeafAtPosition(new int[] { pos.x, pos.y, pos.z }, chunk, false);
 
                 simpleChunkColliderPool.GetItemFromPoolFor(chunk);
             }
         }
 
-
-        protected ICompressedMarchingCubeChunk GetThreadedChunkObjectAt(Vector3Int pos, int lodPower, int chunkSizePower, bool allowOverride)
-        {
-            return GetThreadedChunkObjectAt(pos, PositionToChunkGroupCoord(pos), lodPower, chunkSizePower, allowOverride);
-        }
-
-
-        protected ICompressedMarchingCubeChunk GetThreadedChunkObjectAt(Vector3Int position, Vector3Int coord, int lodPower, int chunkSizePower, bool allowOverride)
+        protected ICompressedMarchingCubeChunk GetThreadedChunkObjectAt(Vector3Int position, int lodPower, int chunkSizePower, bool allowOverride)
         {
             if (lodPower <= DEFAULT_MIN_CHUNK_LOD_POWER)
             {
@@ -637,56 +543,13 @@ namespace MarchingCubes
                 chunk.rebuildTriCounter = triCountBuffer;
                 chunk.rebuildTriResult = triangleBuffer;
                 chunk.rebuildNoiseBuffer = pointsBuffer;
-                return GetChunkObjectAt(chunk, position, coord, lodPower, chunkSizePower, allowOverride);
+                return GetChunkObjectAt(chunk, position, lodPower, chunkSizePower, allowOverride);
             }
             else
             {
-                return GetChunkObjectAt(new CompressedMarchingCubeChunk(), position, coord, lodPower, chunkSizePower, allowOverride);
+                return GetChunkObjectAt(new CompressedMarchingCubeChunk(), position, lodPower, chunkSizePower, allowOverride);
             }
         }
-
-        protected Vector3Int CoordToPosition(Vector3Int coord)
-        {
-            return coord * CHUNK_GROUP_SIZE;
-        }
-
-        protected Vector3Int PositionToChunkGroupCoord(Vector3 pos)
-        {
-            return PositionToChunkGroupCoord(pos.x, pos.y, pos.z);
-        }
-
-        protected Vector3Int PositionToChunkGroupCoord(Vector3Int pos)
-        {
-            return PositionToChunkGroupCoord(pos.x, pos.y, pos.z);
-        }
-
-        protected Vector3Int PositionToChunkGroupCoord(float x, float y, float z)
-        {
-            return new Vector3Int(
-                Mathf.FloorToInt(x / CHUNK_GROUP_SIZE),
-                Mathf.FloorToInt(y / CHUNK_GROUP_SIZE),
-                Mathf.FloorToInt(z / CHUNK_GROUP_SIZE));
-        }
-
-        protected Vector3Int PositionToStorageGroupCoord(Vector3 pos)
-        {
-            return PositionToStorageGroupCoord(pos.x, pos.y, pos.z);
-        }
-
-
-        protected Vector3Int PositionToStorageGroupCoord(Vector3Int pos)
-        {
-            return PositionToStorageGroupCoord(pos.x, pos.y, pos.z);
-        }
-
-        protected Vector3Int PositionToStorageGroupCoord(float x, float y, float z)
-        {
-            return new Vector3Int(
-                Mathf.FloorToInt(x / STORAGE_GROUP_SIZE),
-                Mathf.FloorToInt(y / STORAGE_GROUP_SIZE),
-                Mathf.FloorToInt(z / STORAGE_GROUP_SIZE));
-        }
-
 
         //public MarchingCubeChunkNeighbourLODs GetNeighbourLODSFrom(IMarchingCubeChunk chunk)
         //{
@@ -739,7 +602,7 @@ namespace MarchingCubes
         public float[] RequestNoiseForChunk(ICompressedMarchingCubeChunk chunk)
         {
             float[] result;
-            if(!TryLoadNoise(chunk.AnchorPos, chunk.ChunkSizePower, out result, out bool _))
+            if(!storageGroup.TryLoadNoise(chunk.AnchorPos, chunk.ChunkSizePower, out result, out bool _))
             {
                 result = GenerateAndGetNoiseForChunk(chunk);
             }
@@ -765,7 +628,7 @@ namespace MarchingCubes
             ApplyNoiseEditing(pointsPerAxis, editPoint, start, end, delta, maxDistance);
             pointsBuffer.GetData(result, 0, 0, result.Length);
             chunk.Points = result;
-            Store(chunk.AnchorPos, chunk);
+            storageGroup.Store(chunk.AnchorPos, chunk);
         }
 
         private void ApplyNoiseEditing(int pointsPerAxis, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance)
@@ -803,7 +666,7 @@ namespace MarchingCubes
             bool hasToDispatch = pointsPerAxis < DEFAULT_CHUNK_SIZE;
             if (sizePow <= STORAGE_GROUP_SIZE_POWER)
             {
-                hasStoredData = TryLoadNoise(anchor, sizePow, out storedNoiseData, out isMipMapComplete);
+                hasStoredData = storageGroup.TryLoadNoise(anchor, sizePow, out storedNoiseData, out isMipMapComplete);
                 if (hasStoredData && (!isMipMapComplete || hasToDispatch))
                 {
                     savedPointBuffer.SetData(storedNoiseData);
@@ -819,16 +682,6 @@ namespace MarchingCubes
                 densityGenerator.Generate(pointsPerAxis, anchor, lod, hasStoredData);
             }
 
-        }
-
-        public bool TryLoadPoints(ICompressedMarchingCubeChunk chunk, out float[] loadedPoints)
-        {
-            return TryGetMipMapAt(chunk.AnchorPos, chunk.ChunkSizePower, out loadedPoints, out bool complete) && complete;
-        }
-
-        protected bool TryLoadNoise(Vector3Int anchor, int sizePow, out float[] noise, out bool isMipMapComplete)
-        {
-            return TryGetMipMapAt(anchor, sizePow, out noise, out isMipMapComplete) && isMipMapComplete;
         }
 
         //TODO: Maybe remove pooling theese -> could reduce size of buffer for faster reads
@@ -921,7 +774,7 @@ namespace MarchingCubes
             int pointsVolume = pointsPerAxis * pointsPerAxis * pointsPerAxis;
             pointsArray = new float[pointsVolume];
             pointsBuffer.GetData(pointsArray);
-            Store(chunk.AnchorPos, chunk as IMarchingCubeChunk, true);
+            storageGroup.Store(chunk.AnchorPos, chunk as IMarchingCubeChunk, true);
         }
 
         protected void DetermineIfChunkIsAir(ICompressedMarchingCubeChunk chunk)
@@ -1076,7 +929,7 @@ namespace MarchingCubes
             {
                 Vector3Int v3 = IntArrToVector3(anchors[i]);
                 //TODO:use already referenced parent to set children
-                newChunks[i] = GetThreadedChunkObjectAt(v3, PositionToChunkGroupCoord(v3), toLodPower, newSizePow, true);
+                newChunks[i] = GetThreadedChunkObjectAt(v3, toLodPower, newSizePow, true);
             }
             chunk.PrepareDestruction();
             TriangleChunkHeap[] tris = DispatchMultipleChunks(newChunks);
@@ -1104,20 +957,20 @@ namespace MarchingCubes
 
         protected Vector3Int IntArrToVector3(int[] arr) => new Vector3Int(arr[0], arr[1], arr[2]);
 
-        protected int NumberOfSavedChunksAt(Vector3Int pos, int sizePow)
-        {
-            Vector3Int coord = PositionToStorageGroupCoord(pos);
-            StorageTreeRoot r;
-            if (storageGroups.TryGetValue(coord, out r))
-            {
-                IStorageGroupOrganizer<StoredChunkEdits> node;
-                if (r.TryGetNodeWithSizePower(new int[] { pos.x, pos.y, pos.z }, sizePow, out node))
-                {
-                    return node.ChildrenWithMipMapReady;
-                }
-            }
-            return 0;
-        }
+        //protected int NumberOfSavedChunksAt(Vector3Int pos, int sizePow)
+        //{
+        //    Vector3Int coord = PositionToStorageGroupCoord(pos);
+        //    StorageTreeRoot r;
+        //    if (storageGroups.TryGetValue(coord, out r))
+        //    {
+        //        IStorageGroupOrganizer<StoredChunkEdits> node;
+        //        if (r.TryGetNodeWithSizePower(new int[] { pos.x, pos.y, pos.z }, sizePow, out node))
+        //        {
+        //            return node.ChildrenWithMipMapReady;
+        //        }
+        //    }
+        //    return 0;
+        //}
 
         public void DecreaseChunkLod(ICompressedMarchingCubeChunk chunk, int toLodPower)
         {
@@ -1326,25 +1179,6 @@ namespace MarchingCubes
 
         //TODO: Dont store when chunk knows he stored before
 
-        public void Store(Vector3Int anchorPos, IMarchingCubeChunk chunk, bool overrideNoise = false)
-        {
-            if (!TryGetStoredEditsAt(anchorPos, out StoredChunkEdits edits) || overrideNoise)
-            {
-                edits = new StoredChunkEdits();
-                StorageTreeRoot r = GetOrCreateStorageGroupAtCoordinate(PositionToStorageGroupCoord(anchorPos));
-
-                chunk.StoreChunk(edits);
-
-                r.SetLeafAtPosition(anchorPos, edits, true);
-                //call all instantiableData from chunk that need to be stored
-                //(everything not depending on triangles only, e.g trees )
-            }
-            if(edits.noise != chunk.Points)
-            {
-                throw new Exception();
-            }
-        }
-
         public void ComputeGrassFor(IEnvironmentSurface environmentChunk)
         {
             grass.ComputeGrassFor(environmentChunk);
@@ -1355,11 +1189,17 @@ namespace MarchingCubes
             minDegreesAtCoordBufferPool.ReturnItemToPool(minDegreeBuffer);
         }
 
+
+
         public void StartEnvironmentPipelineForChunk(IEnvironmentSurface environmentChunk)
         {
             //grass.ComputeGrassFor(environmentChunk);
             environmentSpawner.AddEnvironmentForOriginalChunk(environmentChunk);
         }
+
+        public void Store(Vector3Int anchorPos, IMarchingCubeChunk chunk, bool overrideNoise = false) => storageGroup.Store(anchorPos, chunk, overrideNoise);
+
+        public bool TryLoadPoints(ICompressedMarchingCubeChunk marchingCubeChunk, out float[] loadedPoints) => storageGroup.TryLoadPoints(marchingCubeChunk,out loadedPoints);
 
     }
 }

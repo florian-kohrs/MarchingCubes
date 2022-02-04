@@ -12,7 +12,11 @@ namespace MarchingCubes
         public GenericTreeRoot() { }
 
         public GenericTreeRoot(int[] coord, int size)
+        {
+            Initialize(coord, size);
+        }
 
+        public void Initialize(int[] coord, int size) 
         {
             GroupAnchorPosition = new int[]{
             coord[0] * size,
@@ -94,6 +98,11 @@ namespace MarchingCubes
                 return false;
             }
             return child.TryGetLeafAtLocalPosition(new int[] { pos.x, pos.y, pos.z }, out chunk);
+        }
+
+        public bool HasLeafAtGlobalPosition(Vector3Int pos)
+        {
+            return TryGetLeafAtGlobalPosition(pos, out T _);
         }
 
         public Leaf[] GetLeafs()
