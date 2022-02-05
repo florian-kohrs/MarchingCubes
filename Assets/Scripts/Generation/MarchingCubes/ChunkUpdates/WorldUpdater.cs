@@ -72,7 +72,7 @@ namespace MarchingCubes
                 float timeDiff = f.time - last.time;
                 float extraTime = timeDiff * distThreshold;
 
-                CreateTriggerOfTypeForLod<ChunkLodIncreaseTrigger>(i - 1, f.time - extraTime, increaseTriggerParent);
+                CreateTriggerOfTypeForLod<ChunkLodIncreaseTrigger>(i - 1, f.time, increaseTriggerParent);
                 CreateTriggerOfTypeForLod<ChunkLodDecreaseTrigger>(i, f.time + extraTime, decreaseTriggerParent);
 
                 last = f;
