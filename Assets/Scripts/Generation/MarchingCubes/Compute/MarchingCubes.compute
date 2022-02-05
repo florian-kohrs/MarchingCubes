@@ -126,20 +126,22 @@ void March(uint3 id : SV_DispatchThreadID)
 
 	float minDegree = 180;
 
+	int triangulationAtIndex[] = triangulation[cubeIndex];
+
 	// Create triangles for current cube configuration
-	for (int i = 0; triangulation[cubeIndex][i] != -1; i += 3)
+	for (int i = 0; triangulationAtIndex[i] != -1; i += 3)
 	{
 
 		// Get indices of corner points A and B for each of the three edges
 		// of the cube that need to be joined to form the triangle.
-		int a0 = cornerIndexAFromEdge[triangulation[cubeIndex][i]];
-		int b0 = cornerIndexBFromEdge[triangulation[cubeIndex][i]];
+		int a0 = cornerIndexAFromEdge[triangulationAtIndex[i]];
+		int b0 = cornerIndexBFromEdge[triangulationAtIndex[i]];
 
-		int a1 = cornerIndexAFromEdge[triangulation[cubeIndex][i + 1]];
-		int b1 = cornerIndexBFromEdge[triangulation[cubeIndex][i + 1]];
+		int a1 = cornerIndexAFromEdge[triangulationAtIndex[i + 1]];
+		int b1 = cornerIndexBFromEdge[triangulationAtIndex[i + 1]];
 
-		int a2 = cornerIndexAFromEdge[triangulation[cubeIndex][i + 2]];
-		int b2 = cornerIndexBFromEdge[triangulation[cubeIndex][i + 2]];
+		int a2 = cornerIndexAFromEdge[triangulationAtIndex[i + 2]];
+		int b2 = cornerIndexBFromEdge[triangulationAtIndex[i + 2]];
 
 		Triangle tri;
 		tri.cubeData = zipedCubeData;
@@ -161,8 +163,6 @@ void March(uint3 id : SV_DispatchThreadID)
 			invLerp = 0;
 		else if (invLerp > 1)
 			invLerp = 1;
-
-
 
 		uint3 flatColor = biom.flatRGB;
 		uint3 steepColor = biom.steepRGB;
