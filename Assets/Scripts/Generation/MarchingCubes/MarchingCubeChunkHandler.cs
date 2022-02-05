@@ -472,32 +472,7 @@ namespace MarchingCubes
             return chunk;
         }
 
-
-
-        //protected bool HasChunkAtPosition(Vector3Int v3)
-        //{
-        //    ICompressedMarchingCubeChunk _;
-        //    return TryGetChunkAtPosition(v3, out _);
-        //}
-
-        //public bool TryGetChunkAtPosition(Vector3Int p, out ICompressedMarchingCubeChunk chunk)
-        //{
-        //    Vector3Int coord = PositionToChunkGroupCoord(p);
-        //    IChunkGroupRoot chunkGroup;
-        //    chunk = null;
-        //    if (chunkGroups.TryGetValue(coord, out chunkGroup))
-        //    {
-        //        if (/*chunkGroup.HasChild && */chunkGroup.TryGetLeafAtGlobalPosition(p, out chunk))
-        //        {
-        //            return true;
-        //        }
-        //    }
-        //    return chunk != null;
-        //}
-
-        public bool TryGetReadyChunkAt(Vector3Int p, out ICompressedMarchingCubeChunk chunk) => chunkGroup.TryGetReadyChunkAt(p, out chunk);
-
-        protected ICompressedMarchingCubeChunk GetChunkObjectAt(ICompressedMarchingCubeChunk chunk, Vector3Int position, int lodPower, int chunkSizePower, bool allowOverride)
+            protected ICompressedMarchingCubeChunk GetChunkObjectAt(ICompressedMarchingCubeChunk chunk, Vector3Int position, int lodPower, int chunkSizePower, bool allowOverride)
         {
             ///Pot racecondition
             ChunkGroupRoot chunkGroupRoot = chunkGroup.GetOrCreateGroupAtGlobalPosition(position);
@@ -522,8 +497,8 @@ namespace MarchingCubes
                 chunk.ChunkHandler = this;
                 chunk.ChunkSizePower = CHUNK_GROUP_SIZE_POWER;
                 chunk.ChunkUpdater = worldUpdater;
-                chunk.Material = chunkMaterial;
-                chunk.SurfaceLevel = surfaceLevel;
+                //chunk.Material = chunkMaterial;
+                //chunk.SurfaceLevel = surfaceLevel;
                 chunk.LODPower = MAX_CHUNK_LOD_POWER + 1;
 
                 chunk.IsSpawner = true;
@@ -551,6 +526,32 @@ namespace MarchingCubes
             }
         }
 
+
+
+        //protected bool HasChunkAtPosition(Vector3Int v3)
+        //{
+        //    ICompressedMarchingCubeChunk _;
+        //    return TryGetChunkAtPosition(v3, out _);
+        //}
+
+        //public bool TryGetChunkAtPosition(Vector3Int p, out ICompressedMarchingCubeChunk chunk)
+        //{
+        //    Vector3Int coord = PositionToChunkGroupCoord(p);
+        //    IChunkGroupRoot chunkGroup;
+        //    chunk = null;
+        //    if (chunkGroups.TryGetValue(coord, out chunkGroup))
+        //    {
+        //        if (/*chunkGroup.HasChild && */chunkGroup.TryGetLeafAtGlobalPosition(p, out chunk))
+        //        {
+        //            return true;
+        //        }
+        //    }
+        //    return chunk != null;
+        //}
+
+        public bool TryGetReadyChunkAt(Vector3Int p, out ICompressedMarchingCubeChunk chunk) => chunkGroup.TryGetReadyChunkAt(p, out chunk);
+
+    
         //public MarchingCubeChunkNeighbourLODs GetNeighbourLODSFrom(IMarchingCubeChunk chunk)
         //{
         //    MarchingCubeChunkNeighbourLODs result = new MarchingCubeChunkNeighbourLODs();
