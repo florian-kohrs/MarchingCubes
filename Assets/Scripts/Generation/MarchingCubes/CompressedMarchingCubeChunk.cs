@@ -181,20 +181,20 @@ namespace MarchingCubes
                 {
                     DestroyChunk();
                 }
-                else if (targetLodPower > lodPower)
+                if (targetLodPower > lodPower)
                 {
                     chunkUpdater.lowerChunkLods.Add(this);
                     chunkUpdater.increaseChunkLods.Remove(this);
                 }
-                else if (targetLodPower < lodPower)
-                {
-                    chunkUpdater.increaseChunkLods.Add(this);
-                    chunkUpdater.lowerChunkLods.Remove(this);
-                }
-                else
+                else if (targetLodPower == lodPower)
                 {
                     chunkUpdater.lowerChunkLods.Remove(this);
                     chunkUpdater.increaseChunkLods.Remove(this);
+                }
+                else
+                {
+                    chunkUpdater.increaseChunkLods.Add(this);
+                    chunkUpdater.lowerChunkLods.Remove(this);
                 }
             }
         }
