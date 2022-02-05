@@ -87,8 +87,6 @@ namespace MarchingCubes
 
         int ICompressedMarchingCubeChunk.PointsPerAxis => pointsPerAxis;
 
-        protected float surfaceLevel;
-
         protected Queue<ICompressedMarchingCubeChunk> readyChunks;
 
         protected Action<ICompressedMarchingCubeChunk> OnChunkFinished;
@@ -121,8 +119,6 @@ namespace MarchingCubes
         public bool IsInOtherThread { get; set; }
 
         public ChunkGroupTreeLeaf Leaf { get; set; }
-
-        public float SurfaceLevel { set => surfaceLevel = value; }
 
         protected int PointsPerAxis => pointsPerAxis;
 

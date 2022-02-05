@@ -34,8 +34,6 @@ namespace MarchingCubes
 
         bool IsEmpty { get; }
 
-        float SurfaceLevel { set; }
-
         int LOD { get; }
 
         int LODPower { get; set; }

@@ -28,6 +28,8 @@ namespace MarchingCubes
 
         public const int MIN_CHUNK_SIZE_POWER = 3;
 
+        public const int SURFACE_LEVEL = 0;
+
         public const int STORAGE_GROUP_SIZE = 128;
 
         public const int STORAGE_GROUP_SIZE_POWER = 7;
@@ -138,9 +140,6 @@ namespace MarchingCubes
         public int deactivateAfterDistance = 40;
 
         public Material chunkMaterial;
-
-        [Range(0, 1)]
-        public float surfaceLevel = 0.45f;
 
         public Transform player;
 
@@ -480,7 +479,6 @@ namespace MarchingCubes
             chunk.ChunkSizePower = chunkSizePower;
             chunk.ChunkUpdater = worldUpdater;
             chunk.Material = chunkMaterial;
-            chunk.SurfaceLevel = surfaceLevel;
             chunk.LODPower = lodPower;
 
             chunkGroupRoot.SetLeafAtPosition(new int[] { position.x, position.y, position.z }, chunk, allowOverride);
@@ -786,7 +784,7 @@ namespace MarchingCubes
         {
             pointsArray = new float[1];
             pointsBuffer.GetData(pointsArray);
-            lastChunkWasAir = pointsArray[0] < surfaceLevel;
+            lastChunkWasAir = pointsArray[0] < SURFACE_LEVEL;
         }
 
         //TODO: Inform about Mesh subset and mesh set vertex buffer
@@ -1155,7 +1153,6 @@ namespace MarchingCubes
 
             s.SetInt("minSteepness", minSteepness);
             s.SetInt("maxSteepness", maxSteepness);
-            s.SetFloat("surfaceLevel", surfaceLevel);
         }
 
         protected void ReleaseBuffers()

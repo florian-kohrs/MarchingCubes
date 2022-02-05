@@ -611,8 +611,8 @@ namespace MarchingCubes
             return pointIndex;
         }
 
-        protected bool SmallerThanSurface(float f) => f < surfaceLevel;
-        protected bool LargerThanSurface(float f) => f >= surfaceLevel;
+        protected bool SmallerThanSurface(float f) => f < MarchingCubeChunkHandler.SURFACE_LEVEL;
+        protected bool LargerThanSurface(float f) => f >= MarchingCubeChunkHandler.SURFACE_LEVEL;
 
         public void EditPointsAroundRayHit(float delta, RaycastHit hit, int editDistance)
         {
@@ -720,14 +720,14 @@ namespace MarchingCubes
             float[] noisePoints = GetNoiseInCornersForPoint(x, y, z, lod);
 
             int cubeIndex = 0;
-            if (noisePoints[0] > surfaceLevel) cubeIndex |= 1;
-            if (noisePoints[1] > surfaceLevel) cubeIndex |= 2;
-            if (noisePoints[2] > surfaceLevel) cubeIndex |= 4;
-            if (noisePoints[3] > surfaceLevel) cubeIndex |= 8;
-            if (noisePoints[4] > surfaceLevel) cubeIndex |= 16;
-            if (noisePoints[5] > surfaceLevel) cubeIndex |= 32;
-            if (noisePoints[6] > surfaceLevel) cubeIndex |= 64;
-            if (noisePoints[7] > surfaceLevel) cubeIndex |= 128;
+            if (noisePoints[0] > MarchingCubeChunkHandler.SURFACE_LEVEL) cubeIndex |= 1;
+            if (noisePoints[1] > MarchingCubeChunkHandler.SURFACE_LEVEL) cubeIndex |= 2;
+            if (noisePoints[2] > MarchingCubeChunkHandler.SURFACE_LEVEL) cubeIndex |= 4;
+            if (noisePoints[3] > MarchingCubeChunkHandler.SURFACE_LEVEL) cubeIndex |= 8;
+            if (noisePoints[4] > MarchingCubeChunkHandler.SURFACE_LEVEL) cubeIndex |= 16;
+            if (noisePoints[5] > MarchingCubeChunkHandler.SURFACE_LEVEL) cubeIndex |= 32;
+            if (noisePoints[6] > MarchingCubeChunkHandler.SURFACE_LEVEL) cubeIndex |= 64;
+            if (noisePoints[7] > MarchingCubeChunkHandler.SURFACE_LEVEL) cubeIndex |= 128;
 
             if (cubeIndex > 0 && cubeIndex < 255)
             {
@@ -781,7 +781,7 @@ namespace MarchingCubes
         {
             int index1 = startIndex1 * 3;
             int index2 = startIndex2 * 3;
-            float t = (surfaceLevel - points[startIndex1]) / (points[startIndex2] - points[startIndex1]);
+            float t = (points[startIndex1]) / (points[startIndex2] - points[startIndex1]);
             return new Vector3(
                 cubeCorners[index1] + t * (cubeCorners[index2] - cubeCorners[index1]),
                 cubeCorners[index1 + 1] + t * (cubeCorners[index2 + 1] - cubeCorners[index1 + 1]),

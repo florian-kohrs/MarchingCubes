@@ -5,6 +5,7 @@
 #include "Assets/Scripts/ComputeIncludes/ZipData.compute"
 
 #define PI 3.14159265358979323846
+#define SURFACE_LEVEL 0
 
 static const int numThreads = 4;
 
@@ -39,13 +40,12 @@ int maxSteepness;
 float3 anchor;
 float spacing;
 int numPointsPerAxis;
-float surfaceLevel;
 
 
 float3 interpolateVerts(float4 v1, float4 v2)
 {
 	//return v1.xyz + 0.5 * (v2.xyz - v1.xyz);
-	float t = (surfaceLevel - v1.w) / (v2.w - v1.w);
+	float t = (- v1.w) / (v2.w - v1.w);
 	return v1.xyz + t * (v2.xyz - v1.xyz);
 }
 
@@ -94,14 +94,14 @@ void March(uint3 id : SV_DispatchThreadID)
 	// The value is used to look up the edge table, which indicates which edges of the cube are cut by the isosurface.
 	int cubeIndex = 0;
 
-	cubeIndex |= (cubeCorners[0].w < surfaceLevel) * 1;
-	cubeIndex |= (cubeCorners[1].w < surfaceLevel) * 2;
-	cubeIndex |= (cubeCorners[2].w < surfaceLevel) * 4;
-	cubeIndex |= (cubeCorners[3].w < surfaceLevel) * 8;
-	cubeIndex |= (cubeCorners[4].w < surfaceLevel) * 16;
-	cubeIndex |= (cubeCorners[5].w < surfaceLevel) * 32;
-	cubeIndex |= (cubeCorners[6].w < surfaceLevel) * 64;
-	cubeIndex |= (cubeCorners[7].w < surfaceLevel) * 128;
+	cubeIndex |= (cubeCorners[0].w < SURFACE_LEVEL) * 1;
+	cubeIndex |= (cubeCorners[1].w < SURFACE_LEVEL) * 2;
+	cubeIndex |= (cubeCorners[2].w < SURFACE_LEVEL) * 4;
+	cubeIndex |= (cubeCorners[3].w < SURFACE_LEVEL) * 8;
+	cubeIndex |= (cubeCorners[4].w < SURFACE_LEVEL) * 16;
+	cubeIndex |= (cubeCorners[5].w < SURFACE_LEVEL) * 32;
+	cubeIndex |= (cubeCorners[6].w < SURFACE_LEVEL) * 64;
+	cubeIndex |= (cubeCorners[7].w < SURFACE_LEVEL) * 128;
 
 
 	/*if (cubeCorners[0].w < surfaceLevel) cubeIndex |= 1;
