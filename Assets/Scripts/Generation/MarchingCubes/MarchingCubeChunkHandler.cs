@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Rendering;
 using IChunkGroupRoot = MarchingCubes.IChunkGroupRoot<MarchingCubes.ICompressedMarchingCubeChunk>;
 using StorageGroup = MarchingCubes.GroupMesh<MarchingCubes.StorageTreeRoot, MarchingCubes.StoredChunkEdits, MarchingCubes.StorageTreeLeaf, MarchingCubes.IStorageGroupOrganizer<MarchingCubes.StoredChunkEdits>>;
 
@@ -838,6 +839,66 @@ namespace MarchingCubes
             return new TriangleChunkHeap(tris, 0, numTris);
         }
 
+        protected TriangleChunkHeap DispatchAndGetShaderDataAsync(ICompressedMarchingCubeChunk chunk, Action<AsyncGPUReadbackRequest> OnDataDone, Action WorkOnNoise = null)
+        {
+            ValidateChunkProperties(chunk);
+            PrepareNoiseForChunk(chunk);
+            bool storeNoise = WorkOnNoiseMap(chunk, WorkOnNoise);
+            int numTris = ComputeCubesFromNoise(chunk, chunk.LOD);
+            ///Do work for chunk here, before data from gpu is read, to give gpu time to finish
+            SetDisplayerOfChunk(chunk);
+            SetLODColliderOfChunk(chunk);
+
+            tris = new TriangleBuilder[numTris];
+            ///read data from gpu
+            ReadCurrentTriangleData(tris);
+            if (numTris == 0)
+            {
+                chunk.FreeSimpleChunkCollider();
+                chunk.GiveUnusedDisplayerBack();
+            }
+
+            if (storeNoise)
+            {
+                StoreNoise(chunk);
+            }
+            else if (numTris == 0 && !hasFoundInitialChunk)
+            {
+                DetermineIfChunkIsAir(chunk);
+            }
+            return new TriangleChunkHeap(tris, 0, numTris);
+        }
+
+        protected TriangleChunkHeap BuildChunkFromPreparedTriangles(ICompressedMarchingCubeChunk chunk, int triLength, Action WorkOnNoise = null)
+        {
+            ValidateChunkProperties(chunk);
+            PrepareNoiseForChunk(chunk);
+            bool storeNoise = WorkOnNoiseMap(chunk, WorkOnNoise);
+            int numTris = ComputeCubesFromNoise(chunk, chunk.LOD);
+            ///Do work for chunk here, before data from gpu is read, to give gpu time to finish
+            SetDisplayerOfChunk(chunk);
+            SetLODColliderOfChunk(chunk);
+
+            tris = new TriangleBuilder[numTris];
+            ///read data from gpu
+            ReadCurrentTriangleData(tris);
+            if (numTris == 0)
+            {
+                chunk.FreeSimpleChunkCollider();
+                chunk.GiveUnusedDisplayerBack();
+            }
+
+            if (storeNoise)
+            {
+                StoreNoise(chunk);
+            }
+            else if (numTris == 0 && !hasFoundInitialChunk)
+            {
+                DetermineIfChunkIsAir(chunk);
+            }
+            return new TriangleChunkHeap(tris, 0, numTris);
+        }
+
 
         public void AccumulateCubesFromNoise(ICompressedMarchingCubeChunk chunk, int offest)
         {
@@ -850,10 +911,9 @@ namespace MarchingCubes
             triangleBuffer.GetData(tris);
         }
 
-        public int ComputeCubesFromNoise(ICompressedMarchingCubeChunk chunk, int lod, bool resetCounter = true)
+        public int DispatchCubesFromNoise(ICompressedMarchingCubeChunk chunk, int lod, bool resetCounter = true)
         {
             int chunkSize = chunk.ChunkSize;
-            Vector3Int anchor = chunk.AnchorPos;
 
             PrepareChunkToStoreMinDegreesIfNeeded(chunk);
 
@@ -861,8 +921,6 @@ namespace MarchingCubes
             int pointsPerAxis = numVoxelsPerAxis + 1;
 
             int numThreadsPerAxis = Mathf.CeilToInt(numVoxelsPerAxis / threadGroupSize);
-
-            float spacing = lod;
 
             if (resetCounter)
             {
@@ -872,11 +930,40 @@ namespace MarchingCubes
             cubesPrepare.SetInt("numPointsPerAxis", pointsPerAxis);
 
             cubesPrepare.Dispatch(0, numThreadsPerAxis, numThreadsPerAxis, numThreadsPerAxis);
+            return pointsPerAxis;
+        }
+
+        public int ComputeCubesFromNoise(ICompressedMarchingCubeChunk chunk, int lod, bool resetCounter = true)
+        {
+            int pointsPerAxis = DispatchCubesFromNoise(chunk, lod, resetCounter);
             int numTris = ComputeBufferExtension.GetLengthOfAppendBuffer(trianglesToBuild, triCountBuffer);
             totalTriBuild += numTris;
 
+            BuildPreparedCubes(chunk, lod, pointsPerAxis, numTris);
+
+            return numTris;
+        }
+
+        //public int ComputeCubesFromNoise(ICompressedMarchingCubeChunk chunk, int lod, bool resetCounter = true)
+        //{
+        //    int pointsPerAxis = DispatchCubesFromNoise(chunk, lod, resetCounter);
+        //    int numTris = ComputeBufferExtension.GetLengthOfAppendBuffer(trianglesToBuild, triCountBuffer);
+        //    totalTriBuild += numTris;
+
+        //    BuildPreparedCubes(chunk, lod, pointsPerAxis, numTris);
+
+        //    return numTris;
+        //}
+
+
+        protected void BuildPreparedCubes(ICompressedMarchingCubeChunk chunk, int pointsPerAxis, int lod, int numTris)
+        {
             if (numTris > 0)
             {
+                Vector3Int anchor = chunk.AnchorPos;
+
+                float spacing = lod;
+
                 //TODO: Check if this needs to be changed or if correct value is still set
                 buildPreparedCubes.SetInt("numPointsPerAxis", pointsPerAxis);
                 buildPreparedCubes.SetInt("length", numTris);
@@ -887,9 +974,7 @@ namespace MarchingCubes
 
                 buildPreparedCubes.Dispatch(0, numThreads, 1, 1);
             }
-            return numTris;
         }
-
       
 
         public int GetFeasibleReducedLodForChunk(ICompressedMarchingCubeChunk c, int toLodPower)
