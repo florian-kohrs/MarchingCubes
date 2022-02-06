@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Rendering;
 using IChunkGroupRoot = MarchingCubes.IChunkGroupRoot<MarchingCubes.ICompressedMarchingCubeChunk>;
@@ -814,7 +815,7 @@ namespace MarchingCubes
             ValidateChunkProperties(chunk);
             PrepareNoiseForChunk(chunk);
             bool storeNoise = WorkOnNoiseMap(chunk, WorkOnNoise);
-            int numTris = ComputeCubesFromNoise(chunk, chunk.LOD);
+            int numTris = ComputeCubesFromNoise(chunk);
             ///Do work for chunk here, before data from gpu is read, to give gpu time to finish
             SetDisplayerOfChunk(chunk);
             SetLODColliderOfChunk(chunk);
@@ -839,34 +840,35 @@ namespace MarchingCubes
             return new TriangleChunkHeap(tris, 0, numTris);
         }
 
-        protected TriangleChunkHeap DispatchAndGetShaderDataAsync(ICompressedMarchingCubeChunk chunk, Action<AsyncGPUReadbackRequest> OnDataDone, Action WorkOnNoise = null)
+        protected void DispatchAndGetShaderDataAsync(ICompressedMarchingCubeChunk chunk, Action<TriangleChunkHeap> OnDataDone, Action WorkOnNoise = null)
         {
             ValidateChunkProperties(chunk);
             PrepareNoiseForChunk(chunk);
             bool storeNoise = WorkOnNoiseMap(chunk, WorkOnNoise);
-            int numTris = ComputeCubesFromNoise(chunk, chunk.LOD);
-            ///Do work for chunk here, before data from gpu is read, to give gpu time to finish
-            SetDisplayerOfChunk(chunk);
-            SetLODColliderOfChunk(chunk);
+            DispatchCubesFromNoise(chunk);
+            //TODO: create and pool buffers to make async work
+            ComputeBufferExtension.GetLengthOfAppendBufferAsync(trianglesToBuild, triCountBuffer, (numTris) =>
+            {
+                if(numTris <= 0) return;
 
-            tris = new TriangleBuilder[numTris];
-            ///read data from gpu
-            ReadCurrentTriangleData(tris);
-            if (numTris == 0)
-            {
-                chunk.FreeSimpleChunkCollider();
-                chunk.GiveUnusedDisplayerBack();
-            }
+                ///Do work for chunk here, before data from gpu is read, to give gpu time to finish
+                SetDisplayerOfChunk(chunk);
+                SetLODColliderOfChunk(chunk);
 
-            if (storeNoise)
-            {
-                StoreNoise(chunk);
-            }
-            else if (numTris == 0 && !hasFoundInitialChunk)
-            {
-                DetermineIfChunkIsAir(chunk);
-            }
-            return new TriangleChunkHeap(tris, 0, numTris);
+                ///read data from gpu
+                ReadCurrentTriangleDataAsync((tris) =>
+                {
+                    if (storeNoise)
+                    {
+                        StoreNoise(chunk);
+                    }
+                    else if (numTris == 0 && !hasFoundInitialChunk)
+                    {
+                        DetermineIfChunkIsAir(chunk);
+                    }
+                    OnDataDone(new TriangleChunkHeap(tris, 0, numTris));
+                });
+            });
         }
 
         protected TriangleChunkHeap BuildChunkFromPreparedTriangles(ICompressedMarchingCubeChunk chunk, int triLength, Action WorkOnNoise = null)
@@ -874,7 +876,7 @@ namespace MarchingCubes
             ValidateChunkProperties(chunk);
             PrepareNoiseForChunk(chunk);
             bool storeNoise = WorkOnNoiseMap(chunk, WorkOnNoise);
-            int numTris = ComputeCubesFromNoise(chunk, chunk.LOD);
+            int numTris = ComputeCubesFromNoise(chunk);
             ///Do work for chunk here, before data from gpu is read, to give gpu time to finish
             SetDisplayerOfChunk(chunk);
             SetLODColliderOfChunk(chunk);
@@ -911,18 +913,19 @@ namespace MarchingCubes
             triangleBuffer.GetData(tris);
         }
 
-        public void ComputeCubesFromNoise(ICompressedMarchingCubeChunk chunk, bool resetCounter = true)
+        public void ReadCurrentTriangleDataAsync(Action<NativeArray<TriangleBuilder>> callback)
         {
-            Vector3Int anchor = chunk.AnchorPos;
+            ComputeBufferExtension.ReadBufferAsync(triangleBuffer, callback);
+        }
 
+        public void DispatchCubesFromNoise(ICompressedMarchingCubeChunk chunk, bool resetCounter = true)
+        {
             PrepareChunkToStoreMinDegreesIfNeeded(chunk);
 
             int pointsPerAxis = chunk.PointsPerAxis;
             int numVoxelsPerAxis = pointsPerAxis - 1;
 
             int numThreadsPerAxis = Mathf.CeilToInt(numVoxelsPerAxis / threadGroupSize);
-
-            float spacing = chunk.LOD;
 
             if (resetCounter)
             {
@@ -932,16 +935,15 @@ namespace MarchingCubes
             cubesPrepare.SetInt("numPointsPerAxis", pointsPerAxis);
 
             cubesPrepare.Dispatch(0, numThreadsPerAxis, numThreadsPerAxis, numThreadsPerAxis);
-            return pointsPerAxis;
         }
 
-        public int ComputeCubesFromNoise(ICompressedMarchingCubeChunk chunk, int lod, bool resetCounter = true)
+        public int ComputeCubesFromNoise(ICompressedMarchingCubeChunk chunk, bool resetCounter = true)
         {
-            int pointsPerAxis = DispatchCubesFromNoise(chunk, lod, resetCounter);
+            DispatchCubesFromNoise(chunk, resetCounter);
             int numTris = ComputeBufferExtension.GetLengthOfAppendBuffer(trianglesToBuild, triCountBuffer);
             totalTriBuild += numTris;
 
-            BuildPreparedCubes(chunk, lod, pointsPerAxis, numTris);
+            BuildPreparedCubes(chunk, numTris);
 
             return numTris;
         }
@@ -958,13 +960,13 @@ namespace MarchingCubes
         //}
 
 
-        protected void BuildPreparedCubes(ICompressedMarchingCubeChunk chunk, int pointsPerAxis, int lod, int numTris)
+        protected void BuildPreparedCubes(ICompressedMarchingCubeChunk chunk, int numTris)
         {
             if (numTris > 0)
             {
                 Vector3Int anchor = chunk.AnchorPos;
-
-                float spacing = lod;
+                int pointsPerAxis = chunk.PointsPerAxis;
+                float spacing = chunk.LOD;
 
                 //TODO: Check if this needs to be changed or if correct value is still set
                 buildPreparedCubes.SetInt("numPointsPerAxis", pointsPerAxis);
