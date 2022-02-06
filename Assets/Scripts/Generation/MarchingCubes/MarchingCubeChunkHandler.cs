@@ -571,7 +571,7 @@ namespace MarchingCubes
 
         public bool TryGetReadyChunkAt(Vector3Int p, out ICompressedMarchingCubeChunk chunk) => chunkGroup.TryGetReadyChunkAt(p, out chunk);
 
-    
+
         //public MarchingCubeChunkNeighbourLODs GetNeighbourLODSFrom(IMarchingCubeChunk chunk)
         //{
         //    MarchingCubeChunkNeighbourLODs result = new MarchingCubeChunkNeighbourLODs();
@@ -902,7 +902,7 @@ namespace MarchingCubes
 
         public void AccumulateCubesFromNoise(ICompressedMarchingCubeChunk chunk, int offest)
         {
-            ComputeCubesFromNoise(chunk, chunk.LOD, false);
+            ComputeCubesFromNoise(chunk, false);
             ComputeBuffer.CopyCount(triangleBuffer, triCountBuffer, offest * 4);
         }
 
@@ -911,16 +911,18 @@ namespace MarchingCubes
             triangleBuffer.GetData(tris);
         }
 
-        public int DispatchCubesFromNoise(ICompressedMarchingCubeChunk chunk, int lod, bool resetCounter = true)
+        public void ComputeCubesFromNoise(ICompressedMarchingCubeChunk chunk, bool resetCounter = true)
         {
-            int chunkSize = chunk.ChunkSize;
+            Vector3Int anchor = chunk.AnchorPos;
 
             PrepareChunkToStoreMinDegreesIfNeeded(chunk);
 
-            int numVoxelsPerAxis = chunkSize / lod;
-            int pointsPerAxis = numVoxelsPerAxis + 1;
+            int pointsPerAxis = chunk.PointsPerAxis;
+            int numVoxelsPerAxis = pointsPerAxis - 1;
 
             int numThreadsPerAxis = Mathf.CeilToInt(numVoxelsPerAxis / threadGroupSize);
+
+            float spacing = chunk.LOD;
 
             if (resetCounter)
             {
@@ -975,7 +977,7 @@ namespace MarchingCubes
                 buildPreparedCubes.Dispatch(0, numThreads, 1, 1);
             }
         }
-      
+
 
         public int GetFeasibleReducedLodForChunk(ICompressedMarchingCubeChunk c, int toLodPower)
         {

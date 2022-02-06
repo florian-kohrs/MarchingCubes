@@ -10,7 +10,7 @@ namespace MarchingCubes
 
     //TODO: Dont use as Interactablechunk when destruction begun
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
-    public class MarchingCubeChunk : CompressedMarchingCubeChunk, 
+    public class MarchingCubeChunk : CompressedMarchingCubeChunk,
         IMarchingCubeChunk, IHasInteractableMarchingCubeChunk, ICubeNeighbourFinder
     {
 
@@ -167,7 +167,6 @@ namespace MarchingCubes
             MarchingCubeEntity cube;
             cubeEntities = new MarchingCubeEntity[ChunkSize, ChunkSize, ChunkSize];
             int x, y, z;
-            int count = heap.triCount;
             int endIndex = heap.startIndex + heap.triCount;
             for (int i = heap.startIndex; i < endIndex; ++i)
             {
@@ -185,7 +184,7 @@ namespace MarchingCubes
             }
         }
 
-        protected void AddFromTriangleArray(TriangleBuilder[] ts, Vector3 origin, float distance)
+        protected void AddFromTriangleArray(TriangleBuilder[] ts)
         {
             int count = ts.Length;
             int x, y, z;
