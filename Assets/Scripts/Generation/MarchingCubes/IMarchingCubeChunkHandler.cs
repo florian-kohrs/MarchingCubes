@@ -48,11 +48,12 @@ namespace MarchingCubes
 
         void TakeMeshDisplayerBack(MarchingCubeMeshDisplayer freeDisplayer);
 
-        int ReadCurrentTriangleData(out TriangleBuilder[] ts);
+        void ReadCurrentTriangleData(TriangleBuilder[] ts);
 
         //IMarchingCubeChunk CreateChunkFromNoiseAt(ChunkGroupTreeLeaf leaf, float[] noise);
 
         bool TryLoadPoints(ICompressedMarchingCubeChunk marchingCubeChunk, out float[] loadedPoints);
+
         void ReturnMinDegreeBuffer(ComputeBuffer minDegreeBuffer);
 
         void StartEnvironmentPipelineForChunk(IEnvironmentSurface environmentChunk);

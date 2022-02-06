@@ -116,7 +116,7 @@ void March(uint3 id : SV_DispatchThreadID)
 
 	int zipedCubeData = zipData(id.x, id.y, id.z, cubeIndex);
 
-	float3 pos = anchor + id * spacing;
+	float3 pos = cubeCorners[0].xyz;
 	int3 biomEvaluationPos = GetBiomEvaluationPosition(pos);
 	uint biomIndex = GetClosestBiomIndex(biomEvaluationPos);
 

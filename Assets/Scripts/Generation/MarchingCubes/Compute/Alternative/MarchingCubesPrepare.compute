@@ -1,0 +1,66 @@
+﻿#pragma kernel MarchPrepare
+#include "../Includes/MarchTables.compute"
+#include "../Includes/BiomVisualizationData.compute"
+#include "../Includes/Bioms.compute"
+#include "Assets/Scripts/ComputeIncludes/ZipData.compute"
+
+#define PI 3.14159265358979323846
+#define SURFACE_LEVEL 0
+
+static const int numThreads = 4;
+
+AppendStructuredBuffer<int2> triangles;
+RWStructuredBuffer<float> points;
+
+int numPointsPerAxis;
+
+int indexFromCoord(int x, int y, int z)
+{
+	return z * numPointsPerAxis * numPointsPerAxis + y * numPointsPerAxis + x;
+}
+
+
+float GetHeightDataFrom(int x, int y, int z)
+{
+	return points[indexFromCoord(x, y, z)];
+}
+
+
+[numthreads(numThreads, numThreads, numThreads)]
+void MarchPrepare(uint3 id : SV_DispatchThreadID)
+{
+
+	float cubeCorners[8] =
+	{
+		GetHeightDataFrom(id.x, id.y, id.z),
+		GetHeightDataFrom(id.x + 1, id.y, id.z),
+		GetHeightDataFrom(id.x + 1, id.y, id.z + 1),
+		GetHeightDataFrom(id.x, id.y, id.z + 1),
+		GetHeightDataFrom(id.x, id.y + 1, id.z),
+		GetHeightDataFrom(id.x + 1, id.y + 1, id.z),
+		GetHeightDataFrom(id.x + 1, id.y + 1, id.z + 1),
+		GetHeightDataFrom(id.x, id.y + 1, id.z + 1)
+	};
+
+	int cubeIndex = 0;
+
+	cubeIndex |= (cubeCorners[0] < SURFACE_LEVEL) * 1;
+	cubeIndex |= (cubeCorners[1] < SURFACE_LEVEL) * 2;
+	cubeIndex |= (cubeCorners[2] < SURFACE_LEVEL) * 4;
+	cubeIndex |= (cubeCorners[3] < SURFACE_LEVEL) * 8;
+	cubeIndex |= (cubeCorners[4] < SURFACE_LEVEL) * 16;
+	cubeIndex |= (cubeCorners[5] < SURFACE_LEVEL) * 32;
+	cubeIndex |= (cubeCorners[6] < SURFACE_LEVEL) * 64;
+	cubeIndex |= (cubeCorners[7] < SURFACE_LEVEL) * 128;
+
+	int triangulationAtIndex[] = triangulation[cubeIndex];
+	int zippedCubeData = zipData(id.x, id.y, id.z, cubeIndex);
+	// Create triangles for current cube configuration
+	for (int i = 0; triangulationAtIndex[i] != -1; i += 3)
+	{
+		int2 zipedCubeData = int2(zippedCubeData, i);
+		triangles.Append(zipedCubeData);
+	}
+
+
+}

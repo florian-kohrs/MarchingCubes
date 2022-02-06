@@ -430,9 +430,9 @@ namespace MarchingCubes
             }
 
             TriangleBuilder[] ts;
-            NumTris += ChunkHandler.ReadCurrentTriangleData(out ts);
+            //NumTris += ChunkHandler.ReadCurrentTriangleData(out ts);
 
-            AddFromTriangleArray(ts, clickedIndex, marchDistance);
+            //AddFromTriangleArray(ts, clickedIndex, marchDistance);
 
             if (!IsEmpty)
             {
