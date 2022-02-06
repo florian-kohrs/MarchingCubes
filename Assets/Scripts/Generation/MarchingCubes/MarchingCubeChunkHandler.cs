@@ -794,7 +794,7 @@ namespace MarchingCubes
             ValidateChunkProperties(chunk);
             PrepareNoiseForChunk(chunk);
             bool storeNoise = WorkOnNoiseMap(chunk, WorkOnNoise);
-            ComputeCubesFromNoise(chunk, chunk.LOD);
+            ComputeCubesFromNoise(chunk);
             ///Do work for chunk here, before data from gpu is read, to give gpu time to finish
             SetDisplayerOfChunk(chunk);
             SetLODColliderOfChunk(chunk);
@@ -821,7 +821,7 @@ namespace MarchingCubes
 
         public void AccumulateCubesFromNoise(ICompressedMarchingCubeChunk chunk, int offest)
         {
-            ComputeCubesFromNoise(chunk, chunk.LOD, false);
+            ComputeCubesFromNoise(chunk, false);
             ComputeBuffer.CopyCount(triangleBuffer, triCountBuffer, offest * 4);
         }
 
@@ -833,19 +833,18 @@ namespace MarchingCubes
             return triCount;
         }
 
-        public void ComputeCubesFromNoise(ICompressedMarchingCubeChunk chunk, int lod, bool resetCounter = true)
+        public void ComputeCubesFromNoise(ICompressedMarchingCubeChunk chunk, bool resetCounter = true)
         {
-            int chunkSize = chunk.ChunkSize;
             Vector3Int anchor = chunk.AnchorPos;
 
             PrepareChunkToStoreMinDegreesIfNeeded(chunk);
 
-            int numVoxelsPerAxis = chunkSize / lod;
-            int pointsPerAxis = numVoxelsPerAxis + 1;
+            int pointsPerAxis = chunk.PointsPerAxis;
+            int numVoxelsPerAxis = pointsPerAxis - 1;
 
             int numThreadsPerAxis = Mathf.CeilToInt(numVoxelsPerAxis / threadGroupSize);
 
-            float spacing = lod;
+            float spacing = chunk.LOD;
 
             if (resetCounter)
             {
