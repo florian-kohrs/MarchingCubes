@@ -60,6 +60,8 @@ namespace MarchingCubes
 
         public const int NOISE_POINTS_IN_DEFAULT_SIZED_CHUNK = POINTS_PER_AXIS_IN_DEFAULT_SIZE * POINTS_PER_AXIS_IN_DEFAULT_SIZE * POINTS_PER_AXIS_IN_DEFAULT_SIZE;
 
+        public const int MAX_TRIANGLES_IN_CHUNK = VOXELS_IN_DEFAULT_SIZED_CHUNK * 2;
+
 
         protected ChunkGroupMesh chunkGroup = new ChunkGroupMesh(CHUNK_GROUP_SIZE);
 
@@ -83,7 +85,7 @@ namespace MarchingCubes
 
         public ComputeShader buildPreparedCubes;
 
-        public ComputeBuffer trianglesToBuild;
+       // public ComputeBuffer trianglesToBuild;
 
 
 
@@ -132,12 +134,12 @@ namespace MarchingCubes
         private ComputeBuffer pointBiomIndex;
         private ComputeBuffer biomBuffer;
         private ComputeBuffer savedPointBuffer;
-        private ComputeBuffer triCountBuffer;
+        //private ComputeBuffer triCountBuffer;
 
         private DisposablePoolOf<ComputeBuffer> minDegreesAtCoordBufferPool;
 
-        private DisposablePoolOf<ComputeBuffer> copyCountBuffer;
-        private DisposablePoolOf<ComputeBuffer> preparedTriangleBuffer;
+        private DisposablePoolOf<ComputeBuffer> copyCountPool;
+        private DisposablePoolOf<ComputeBuffer> preparedTrianglePool;
 
 
         public WorldUpdater worldUpdater;
@@ -191,7 +193,7 @@ namespace MarchingCubes
             simpleChunkColliderPool = new SimpleChunkColliderPool(colliderParent);
             displayerPool = new MeshDisplayerPool(transform);
             interactableDisplayerPool = new InteractableMeshDisplayPool(transform);
-            CreateAllBuffersWithSizes(32);
+            CreateAllBuffersWithSizes();
 
             TriangulationTableStaticData.BuildLookUpTables();
 
@@ -203,7 +205,6 @@ namespace MarchingCubes
             noiseEditShader.SetBuffer(0, "points", pointsBuffer);
 
             ApplyShaderProperties(buildPreparedCubes);
-            buildPreparedCubes.SetBuffer(0, "preparedTriangles", trianglesToBuild);
 
             ApplyPreparerProperties(cubesPrepare);
 
@@ -212,23 +213,22 @@ namespace MarchingCubes
             startPos = player.position;
 
 
-            ICompressedMarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
-            maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
-            BuildRelevantChunksParallelBlockingAround(chunk);
+            //ICompressedMarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
+            //maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
+            //BuildRelevantChunksParallelBlockingAround(chunk);
 
 
-            //FindNonEmptyChunkAroundAsync(startPos, (chunk) =>
-            //{
-            //    maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
+            FindNonEmptyChunkAroundAsync(startPos, (chunk) =>
+            {
+                maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
 
-            //    BuildRelevantChunksParallelBlockingAround(chunk);
-            //});
+                BuildRelevantChunksParallelBlockingAround(chunk);
+            });
         }
 
         protected void ApplyPreparerProperties(ComputeShader s)
         {
             s.SetBuffer(0, "points", pointsBuffer);
-            s.SetBuffer(0, "triangles", trianglesToBuild);
         }
 
         protected void InitializeDensityGenerator()
@@ -596,10 +596,10 @@ namespace MarchingCubes
             if (lodPower <= DEFAULT_MIN_CHUNK_LOD_POWER)
             {
                 MarchingCubeChunk chunk = new MarchingCubeChunk();
-                chunk.rebuildShader = rebuildShader;
-                chunk.rebuildTriCounter = triCountBuffer;
-                chunk.rebuildTriResult = triangleBuffer;
-                chunk.rebuildNoiseBuffer = pointsBuffer;
+                //chunk.rebuildShader = rebuildShader;
+                //chunk.rebuildTriCounter = triCountBuffer;
+                //chunk.rebuildTriResult = triangleBuffer;
+                //chunk.rebuildNoiseBuffer = pointsBuffer;
                 return GetChunkObjectAt(chunk, position, lodPower, chunkSizePower, allowOverride);
             }
             else
@@ -777,43 +777,47 @@ namespace MarchingCubes
         }
 
         //TODO: Maybe remove pooling theese -> could reduce size of buffer for faster reads
-        protected TriangleChunkHeap[] DispatchMultipleChunks(ICompressedMarchingCubeChunk[] chunks)
+        protected void DispatchMultipleChunks(ICompressedMarchingCubeChunk[] chunks, Action<ICompressedMarchingCubeChunk> callbackPerChunk)
         {
-            trianglesToBuild.SetCounterValue(0);
-            int chunkLength = chunks.Length;
-            for (int i = 0; i < chunkLength; i++)
+            for (int i = 0; i < chunks.Length; i++)
             {
-                ICompressedMarchingCubeChunk c = chunks[i];
-                GenerateNoise(c.ChunkSizePower, c.PointsPerAxis, c.LOD, c.AnchorPos);
-                AccumulateCubesFromNoise(c, i);
+                BuildChunkAsync(chunks[i], callbackPerChunk);
             }
-            int[] triCounts = new int[chunkLength];
+            //trianglesToBuild.SetCounterValue(0);
+            //int chunkLength = chunks.Length;
+            //for (int i = 0; i < chunkLength; i++)
+            //{
+            //    ICompressedMarchingCubeChunk c = chunks[i];
+            //    GenerateNoise(c.ChunkSizePower, c.PointsPerAxis, c.LOD, c.AnchorPos);
+            //    AccumulateCubesFromNoise(c, i);
+            //}
+            //int[] triCounts = new int[chunkLength];
 
-            for (int i = 0; i < chunkLength; i++)
-            {
-                //TODO:check if this reduces wait time from gpu
-                SetDisplayerOfChunk(chunks[i]);
-                simpleChunkColliderPool.GetItemFromPoolFor(chunks[i]);
-            }
+            //for (int i = 0; i < chunkLength; i++)
+            //{
+            //    //TODO:check if this reduces wait time from gpu
+            //    SetDisplayerOfChunk(chunks[i]);
+            //    simpleChunkColliderPool.GetItemFromPoolFor(chunks[i]);
+            //}
 
-            triCountBuffer.GetData(triCounts, 0, 0, chunkLength);
-            TriangleChunkHeap[] result = new TriangleChunkHeap[chunkLength];
-            TriangleBuilder[] allTris = new TriangleBuilder[triCounts[triCounts.Length - 1]];
-            triangleBuffer.GetData(allTris, 0, 0, allTris.Length);
-            int last = 0;
-            for (int i = 0; i < chunkLength; i++)
-            {
-                int current = triCounts[i];
-                int length = current - last;
-                result[i] = new TriangleChunkHeap(allTris, last, length);
-                last = current;
+            //triCountBuffer.GetData(triCounts, 0, 0, chunkLength);
+            //TriangleChunkHeap[] result = new TriangleChunkHeap[chunkLength];
+            //TriangleBuilder[] allTris = new TriangleBuilder[triCounts[triCounts.Length - 1]];
+            //triangleBuffer.GetData(allTris, 0, 0, allTris.Length);
+            //int last = 0;
+            //for (int i = 0; i < chunkLength; i++)
+            //{
+            //    int current = triCounts[i];
+            //    int length = current - last;
+            //    result[i] = new TriangleChunkHeap(allTris, last, length);
+            //    last = current;
 
-                if (length == 0)
-                {
-                    chunks[i].FreeSimpleChunkCollider();
-                }
-            }
-            return result;
+            //    if (length == 0)
+            //    {
+            //        chunks[i].FreeSimpleChunkCollider();
+            //    }
+            //}
+            //return result;
         }
 
         protected void PrepareNoiseForChunk(ICompressedMarchingCubeChunk chunk)
@@ -915,11 +919,12 @@ namespace MarchingCubes
             ValidateChunkProperties(chunk);
             PrepareNoiseForChunk(chunk);
             bool storeNoise = WorkOnNoiseMap(chunk, WorkOnNoise);
-            DispatchCubesFromNoise(chunk);
+            ComputeBuffer trianglesToBuild = DispatchCubesFromNoise(chunk);
             //TODO: create and pool buffers to make async work
-            int length = ComputeBufferExtension.GetLengthOfAppendBuffer(trianglesToBuild, triCountBuffer);
+            ComputeBuffer triCountBuffer = copyCountPool.GetItemFromPool();
             ComputeBufferExtension.GetLengthOfAppendBufferAsync(trianglesToBuild, triCountBuffer, (numTris) =>
             {
+                copyCountPool.ReturnItemToPool(triCountBuffer);
                 if (numTris <= 0)
                 {
                     if (!hasFoundInitialChunk)
@@ -984,13 +989,6 @@ namespace MarchingCubes
             return new TriangleChunkHeap(tris, 0, numTris);
         }
 
-
-        public void AccumulateCubesFromNoise(ICompressedMarchingCubeChunk chunk, int offest)
-        {
-            ComputeCubesFromNoise(chunk, false);
-            ComputeBuffer.CopyCount(triangleBuffer, triCountBuffer, offest * 4);
-        }
-
         public void ReadCurrentTriangleData(TriangleBuilder[] tris)
         {
             triangleBuffer.GetData(tris);
@@ -1001,31 +999,33 @@ namespace MarchingCubes
             ComputeBufferExtension.ReadBufferAsync(triangleBuffer, callback);
         }
 
-        public void DispatchCubesFromNoise(ICompressedMarchingCubeChunk chunk, bool resetCounter = true)
+        public ComputeBuffer DispatchCubesFromNoise(ICompressedMarchingCubeChunk chunk)
         {
             PrepareChunkToStoreMinDegreesIfNeeded(chunk);
+
+            ComputeBuffer trisToBuild = preparedTrianglePool.GetItemFromPool();
+            trisToBuild.SetCounterValue(0);
 
             int pointsPerAxis = chunk.PointsPerAxis;
             int numVoxelsPerAxis = pointsPerAxis - 1;
 
             int numThreadsPerAxis = Mathf.CeilToInt(numVoxelsPerAxis / threadGroupSize);
 
-            if (resetCounter)
-            {
-                trianglesToBuild.SetCounterValue(0);
-            }
-
             cubesPrepare.SetInt("numPointsPerAxis", pointsPerAxis);
+            cubesPrepare.SetBuffer(0, "triangles", trisToBuild);
 
             cubesPrepare.Dispatch(0, numThreadsPerAxis, numThreadsPerAxis, numThreadsPerAxis);
+            return trisToBuild;
         }
 
-        public int ComputeCubesFromNoise(ICompressedMarchingCubeChunk chunk, bool resetCounter = true)
+        public int ComputeCubesFromNoise(ICompressedMarchingCubeChunk chunk)
         {
-            DispatchCubesFromNoise(chunk, resetCounter);
-            int numTris = ComputeBufferExtension.GetLengthOfAppendBuffer(trianglesToBuild, triCountBuffer);
-            totalTriBuild += numTris;
+            ComputeBuffer trisToBuildBuffer = DispatchCubesFromNoise(chunk);
+            ComputeBuffer triCountBuffer = copyCountPool.GetItemFromPool();
+            int numTris = ComputeBufferExtension.GetLengthOfAppendBuffer(trisToBuildBuffer, triCountBuffer);
+            copyCountPool.ReturnItemToPool(triCountBuffer);
 
+            totalTriBuild += numTris;
             BuildPreparedCubes(chunk, numTris);
 
             return numTris;
@@ -1139,26 +1139,28 @@ namespace MarchingCubes
                 newChunks[i] = GetThreadedChunkObjectAt(v3, toLodPower, newSizePow, true);
             }
             chunk.PrepareDestruction();
-            TriangleChunkHeap[] tris = DispatchMultipleChunks(newChunks);
             object listLock = new object();
+
             List<ICompressedMarchingCubeChunk> chunks = new List<ICompressedMarchingCubeChunk>();
-            for (int i = 0; i < 8; i++)
+
+            Action<ICompressedMarchingCubeChunk> f = (c) =>
             {
-                newChunks[i].InitializeWithMeshDataParallel(tris[i], (c) =>
+                //c.Hide();
+                lock (listLock)
                 {
-                    lock (listLock)
+                    chunks.Add(c);
+                }
+                if (chunks.Count == 8)
+                {
+                    lock (exchangeLocker)
                     {
-                        chunks.Add(c);
+                        worldUpdater.readyExchangeChunks.Push(new ReadyChunkExchange(chunk, chunks));
                     }
-                    if (chunks.Count == 8)
-                    {
-                        lock (exchangeLocker)
-                        {
-                            worldUpdater.readyExchangeChunks.Push(new ReadyChunkExchange(chunk, chunks));
-                        }
-                    }
-                });
-            }
+                }
+            };
+
+            DispatchMultipleChunks(newChunks,f);
+
         }
 
 
@@ -1317,12 +1319,9 @@ namespace MarchingCubes
             return Mathf.Max(1, r);
         }
 
-        protected void CreateAllBuffersWithSizes(int numVoxelsPerAxis)
+        protected void CreateAllBuffersWithSizes()
         {
-            int points = numVoxelsPerAxis + 1;
-            int numPoints = points * points * points;
-            int numVoxels = numVoxelsPerAxis * numVoxelsPerAxis * numVoxelsPerAxis;
-            int maxTriangleCount = numVoxels * 2;
+            int maxTriangleCount = MAX_TRIANGLES_IN_CHUNK;
             maxTriangleCount *= MAX_CHUNKS_PER_ITERATION;
 
             biomBuffer = new ComputeBuffer(bioms.Length, BiomColor.SIZE);
@@ -1332,13 +1331,15 @@ namespace MarchingCubes
             var envirenmentBioms = bioms.Select(b => b.envirenmentData).ToArray();
 
             minDegreesAtCoordBufferPool = new DisposablePoolOf<ComputeBuffer>(CreateMinDegreeBuffer);
+            copyCountPool = new DisposablePoolOf<ComputeBuffer>(CreateCopyCountBuffer);
+            preparedTrianglePool = new DisposablePoolOf<ComputeBuffer>(CreatePrepareTriangleBuffer);
 
-            pointBiomIndex = new ComputeBuffer(numPoints, sizeof(uint));
-            pointsBuffer = new ComputeBuffer(numPoints, sizeof(float));
-            savedPointBuffer = new ComputeBuffer(numPoints, sizeof(float));
-            trianglesToBuild = new ComputeBuffer(maxTriangleCount, sizeof(int) * 2, ComputeBufferType.Append);
+            pointBiomIndex = new ComputeBuffer(NOISE_POINTS_IN_DEFAULT_SIZED_CHUNK, sizeof(uint));
+            pointsBuffer = new ComputeBuffer(NOISE_POINTS_IN_DEFAULT_SIZED_CHUNK, sizeof(float));
+            savedPointBuffer = new ComputeBuffer(NOISE_POINTS_IN_DEFAULT_SIZED_CHUNK, sizeof(float));
+            //trianglesToBuild = new ComputeBuffer(maxTriangleCount, sizeof(int) * 2, ComputeBufferType.Append);
             triangleBuffer = new ComputeBuffer(maxTriangleCount, TriangleBuilder.SIZE_OF_TRI_BUILD);
-            triCountBuffer = new ComputeBuffer(MAX_CHUNKS_PER_ITERATION, sizeof(int), ComputeBufferType.Raw);
+            //triCountBuffer = new ComputeBuffer(MAX_CHUNKS_PER_ITERATION, sizeof(int), ComputeBufferType.Raw);
         }
 
         protected ComputeBuffer CreateMinDegreeBuffer()
@@ -1378,11 +1379,13 @@ namespace MarchingCubes
                 pointBiomIndex.Dispose();
                 triangleBuffer.Dispose();
                 pointsBuffer.Dispose();
-                trianglesToBuild.SetCounterValue(0);
-                trianglesToBuild.Dispose();
+                //trianglesToBuild.SetCounterValue(0);
+                //trianglesToBuild.Dispose();
                 savedPointBuffer.Dispose();
                 minDegreesAtCoordBufferPool.DisposeAll();
-                triCountBuffer.Dispose();
+                copyCountPool.DisposeAll();
+                preparedTrianglePool.DisposeAll();
+                //triCountBuffer.Dispose();
                 triangleBuffer = null;
             }
         }
