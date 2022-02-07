@@ -136,6 +136,9 @@ namespace MarchingCubes
 
         private DisposablePoolOf<ComputeBuffer> minDegreesAtCoordBufferPool;
 
+        private DisposablePoolOf<ComputeBuffer> copyCountBuffer;
+        private DisposablePoolOf<ComputeBuffer> preparedTriangleBuffer;
+
 
         public WorldUpdater worldUpdater;
 
@@ -208,10 +211,18 @@ namespace MarchingCubes
             buildAroundSqrDistance = (long)buildAroundDistance * buildAroundDistance;
             startPos = player.position;
 
+
             ICompressedMarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
             maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
-
             BuildRelevantChunksParallelBlockingAround(chunk);
+
+
+            //FindNonEmptyChunkAroundAsync(startPos, (chunk) =>
+            //{
+            //    maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
+
+            //    BuildRelevantChunksParallelBlockingAround(chunk);
+            //});
         }
 
         protected void ApplyPreparerProperties(ComputeShader s)
@@ -416,6 +427,42 @@ namespace MarchingCubes
             return chunk;
         }
 
+        protected void FindNonEmptyChunkAroundAsync(Vector3 pos, Action<ICompressedMarchingCubeChunk> callback)
+        {
+            FindNonEmptyChunkAroundAsync(pos, callback, 0);
+        }
+
+        protected void FindNonEmptyChunkAroundAsync(Vector3 pos, Action<ICompressedMarchingCubeChunk> callback, int tryCount)
+        {
+            //TODO:Remove trycount later
+            if (tryCount++ >= 100)
+                return;
+
+            CreateChunkAtAsync(pos, (c) => CheckChunk(c, callback, tryCount, ref pos));
+        }
+
+        protected void CheckChunk(ICompressedMarchingCubeChunk chunk, Action<ICompressedMarchingCubeChunk> callback, int tryCount, ref Vector3 pos)
+        {
+            if (chunk.IsEmpty)
+            {
+                //TODO: maybe just read noise points here and completly remove isSolid or Air
+                if (lastChunkWasAir)
+                {
+                    pos.y -= chunk.ChunkSize;
+                }
+                else
+                {
+                    pos.y += chunk.ChunkSize;
+                }
+                FindNonEmptyChunkAroundAsync(pos, callback, tryCount);
+            }
+            else
+            {
+                hasFoundInitialChunk = true;
+                callback(chunk);
+            }
+        }
+
         protected void CreateChunkParallelAt(Vector3 pos)
         {
             int lodPower;
@@ -494,7 +541,21 @@ namespace MarchingCubes
             return chunk;
         }
 
-            protected ICompressedMarchingCubeChunk GetChunkObjectAt(ICompressedMarchingCubeChunk chunk, Vector3Int position, int lodPower, int chunkSizePower, bool allowOverride)
+        protected void CreateChunkAtAsync(Vector3 pos, Action<ICompressedMarchingCubeChunk> callback, bool allowOverride = false)
+        {
+            int lodPower;
+            int chunkSizePower;
+            GetSizeAndLodPowerForChunkPosition(pos, out chunkSizePower, out lodPower);
+            CreateChunkWithPropertiesAsync(VectorExtension.ToVector3Int(pos), lodPower, chunkSizePower, allowOverride, callback);
+        }
+
+        protected void CreateChunkWithPropertiesAsync(Vector3Int pos, int lodPower, int chunkSizePower, bool allowOverride, Action<ICompressedMarchingCubeChunk> callback, Action WorkOnNoise = null)
+        {
+            ICompressedMarchingCubeChunk chunk = GetThreadedChunkObjectAt(pos, lodPower, chunkSizePower, allowOverride);
+            BuildChunkAsync(chunk, callback);
+        }
+
+        protected ICompressedMarchingCubeChunk GetChunkObjectAt(ICompressedMarchingCubeChunk chunk, Vector3Int position, int lodPower, int chunkSizePower, bool allowOverride)
         {
             ///Pot racecondition
             ChunkGroupRoot chunkGroupRoot = chunkGroup.GetOrCreateGroupAtGlobalPosition(position);
@@ -620,6 +681,15 @@ namespace MarchingCubes
             chunk.InitializeWithMeshDataParallel(ts, readyParallelChunks);
         }
 
+        protected void BuildChunkAsync(ICompressedMarchingCubeChunk chunk, Action<ICompressedMarchingCubeChunk> onChunkDone = null)
+        {
+            DispatchAndGetShaderDataAsync(chunk, (ts) =>
+            {
+                channeledChunks++;
+                chunk.InitializeWithMeshData(ts);
+                onChunkDone(chunk);
+            });
+        }
 
         public float[] RequestNoiseForChunk(ICompressedMarchingCubeChunk chunk)
         {
@@ -801,7 +871,7 @@ namespace MarchingCubes
             }
         }
 
-        protected void DetermineIfChunkIsAir(ICompressedMarchingCubeChunk chunk)
+        protected void DetermineIfChunkIsAir()
         {
             pointsArray = new float[1];
             pointsBuffer.GetData(pointsArray);
@@ -835,7 +905,7 @@ namespace MarchingCubes
             }
             else if(numTris == 0 && !hasFoundInitialChunk)
             {
-                DetermineIfChunkIsAir(chunk);
+                DetermineIfChunkIsAir();
             }
             return new TriangleChunkHeap(tris, 0, numTris);
         }
@@ -847,27 +917,40 @@ namespace MarchingCubes
             bool storeNoise = WorkOnNoiseMap(chunk, WorkOnNoise);
             DispatchCubesFromNoise(chunk);
             //TODO: create and pool buffers to make async work
+            int length = ComputeBufferExtension.GetLengthOfAppendBuffer(trianglesToBuild, triCountBuffer);
             ComputeBufferExtension.GetLengthOfAppendBufferAsync(trianglesToBuild, triCountBuffer, (numTris) =>
             {
-                if(numTris <= 0) return;
-
-                ///Do work for chunk here, before data from gpu is read, to give gpu time to finish
-                SetDisplayerOfChunk(chunk);
-                SetLODColliderOfChunk(chunk);
-
-                ///read data from gpu
-                ReadCurrentTriangleDataAsync((tris) =>
+                if (numTris <= 0)
                 {
-                    if (storeNoise)
+                    if (!hasFoundInitialChunk)
                     {
-                        StoreNoise(chunk);
+                        DetermineIfChunkIsAir();
                     }
-                    else if (numTris == 0 && !hasFoundInitialChunk)
+                    OnDataDone(new TriangleChunkHeap(Array.Empty<TriangleBuilder>(), 0, numTris));
+                }
+                else
+                {
+                    totalTriBuild += numTris;
+                    ///Do work for chunk here, before data from gpu is read, to give gpu time to finish
+                    SetDisplayerOfChunk(chunk);
+                    SetLODColliderOfChunk(chunk);
+
+                    BuildPreparedCubes(chunk, numTris);
+
+                    ///read data from gpu
+                    ReadCurrentTriangleDataAsync((tris) =>
                     {
-                        DetermineIfChunkIsAir(chunk);
-                    }
-                    OnDataDone(new TriangleChunkHeap(tris, 0, numTris));
-                });
+                        if (storeNoise)
+                        {
+                            StoreNoise(chunk);
+                        }
+                        else if (numTris == 0 && !hasFoundInitialChunk)
+                        {
+                            DetermineIfChunkIsAir();
+                        }
+                        OnDataDone(new TriangleChunkHeap(tris.ToArray(), 0, numTris));
+                    });
+                }
             });
         }
 
@@ -896,7 +979,7 @@ namespace MarchingCubes
             }
             else if (numTris == 0 && !hasFoundInitialChunk)
             {
-                DetermineIfChunkIsAir(chunk);
+                DetermineIfChunkIsAir();
             }
             return new TriangleChunkHeap(tris, 0, numTris);
         }
@@ -1263,7 +1346,17 @@ namespace MarchingCubes
             return new ComputeBuffer(VOXELS_IN_DEFAULT_SIZED_CHUNK, sizeof(float));
         }
 
-        protected const int MAX_CHUNKS_PER_ITERATION = 8;
+        protected ComputeBuffer CreateCopyCountBuffer()
+        {
+            return new ComputeBuffer(MAX_CHUNKS_PER_ITERATION, sizeof(int), ComputeBufferType.Raw);
+        }
+
+        protected ComputeBuffer CreatePrepareTriangleBuffer()
+        {
+            return new ComputeBuffer(VOXELS_IN_DEFAULT_SIZED_CHUNK, sizeof(float));
+        }
+
+        protected const int MAX_CHUNKS_PER_ITERATION = 1;
 
         protected void ApplyShaderProperties(ComputeShader s)
         {
