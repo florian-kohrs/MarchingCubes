@@ -9,7 +9,7 @@
 
 static const int numThreads = 4;
 
-AppendStructuredBuffer<int2> triangles;
+AppendStructuredBuffer<int2> triangleLocations;
 RWStructuredBuffer<float> points;
 
 int numPointsPerAxis;
@@ -43,11 +43,11 @@ void MarchPrepare(uint3 id : SV_DispatchThreadID)
 
 	int triangulationAtIndex[] = triangulation[cubeIndex];
 	int zippedCubeData = zipData(id.x, id.y, id.z, cubeIndex);
-	// Create triangles for current cube configuration
+	// Create triangleLocations for current cube configuration
 	for (int i = 0; triangulationAtIndex[i] != -1; i += 3)
 	{
 		int2 zipedCubeData = int2(zippedCubeData, i);
-		triangles.Append(zipedCubeData);
+		triangleLocations.Append(zipedCubeData);
 	}
 
 

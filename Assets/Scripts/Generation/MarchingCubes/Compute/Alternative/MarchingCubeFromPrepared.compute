@@ -23,7 +23,7 @@ struct Triangle
 
 RWStructuredBuffer<Triangle> triangles;
 RWStructuredBuffer<float> points;
-RWStructuredBuffer<int2> preparedTriangles;
+RWStructuredBuffer<int2> triangleLocations;
 StructuredBuffer<BiomVisualizationData> biomsViz;
 RWStructuredBuffer<float> minDegreeAtCoord;
 
@@ -73,7 +73,7 @@ void MarchPrepared(uint3 id : SV_DispatchThreadID)
 	if (threadXID >= length)
 		return;
 
-	int2 buildThis = preparedTriangles[id.x];
+	int2 buildThis = triangleLocations[id.x];
 	int zipedCubeData = buildThis.x;
 	int4 data = unzipData(zipedCubeData);
 	id = uint3(data.x, data.y, data.z);

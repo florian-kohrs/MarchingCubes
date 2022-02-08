@@ -47,7 +47,6 @@ namespace MarchingCubes
 
         public void SetBuffer(ComputeBuffer pointsBuffer, ComputeBuffer savedPointBuffer, ComputeBuffer pointClosestBiomBuffer)
         {
-            densityShader.SetBuffer(0, "points", pointsBuffer);
             densityShader.SetBuffer(0, "savedPoints", savedPointBuffer);
             densityShader.SetBuffer(0, "pointBiomIndex", pointClosestBiomBuffer);
         }
