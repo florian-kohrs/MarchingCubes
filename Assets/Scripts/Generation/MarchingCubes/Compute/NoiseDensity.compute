@@ -21,7 +21,6 @@ StructuredBuffer<float> savedPoints;
 bool tryLoadData;
 int numPointsPerAxis;
 float3 anchor;
-float3 center;
 float3 offset;
 float spacing;
 

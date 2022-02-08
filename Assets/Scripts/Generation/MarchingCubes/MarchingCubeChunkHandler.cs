@@ -75,29 +75,23 @@ namespace MarchingCubes
 
         private const int maxTrianglesLeft = 5000000;
 
-        //public ComputeShader marshShader;
-
         public ComputeShader rebuildShader;
 
-        //do compute shader pool?
 
+        public ComputeShader densityShader;
 
         public ComputeShader cubesPrepare;
 
         public ComputeShader buildPreparedCubes;
 
-       // public ComputeBuffer trianglesToBuild;
-
-
-
         public ComputeShader noiseEditShader;
+
 
 
         [Header("Voxel Settings")]
         //public float boundsSize = 8;
         public Vector3 noiseOffset = Vector3.zero;
 
-        public BiomScriptableObject[] bioms;
 
         //[Range(2, 100)]
         //public int numPointsPerAxis = 30;
@@ -130,29 +124,18 @@ namespace MarchingCubes
         TriangleBuilder[] tris;// = new TriangleBuilder[CHUNK_VOLUME * 5];
         float[] pointsArray;
 
-        //private ComputeBuffer triangleBuffer;
-        //private ComputeBuffer pointsBuffer;
         private ComputeBuffer pointBiomIndex;
         private ComputeBuffer biomBuffer;
-        private ComputeBuffer savedPointBuffer;
-        //private ComputeBuffer triCountBuffer;
-
-        private BufferPool minDegreesAtCoordBufferPool;
-
-        private DisposablePoolOf<ComputeBuffer> copyCountPool;
-        private BufferPool preparedTrianglePool;
-
-        private BufferPool pointsBufferPool;
-
 
         public WorldUpdater worldUpdater;
 
         public Transform colliderParent;
 
+        private BufferPool minDegreesAtCoordBufferPool;
 
+        public ChunkGenerationPipelinePool chunkPipelinePool;
 
-
-        public BaseDensityGenerator densityGenerator;
+        protected ChunkGenerationPipeline currentChunkPipeline;
 
         public bool useTerrainNoise;
 
@@ -212,12 +195,6 @@ namespace MarchingCubes
 
             InitializeDensityGenerator();
 
-            //ApplyShaderProperties(marshShader);
-
-            ApplyShaderProperties(rebuildShader);
-            //noiseEditShader.SetBuffer(0, "points", pointsBuffer);
-
-            ApplyShaderProperties(buildPreparedCubes);
 
             ApplyPreparerProperties(cubesPrepare);
 
@@ -252,7 +229,6 @@ namespace MarchingCubes
 
         protected void InitializeDensityGenerator()
         {
-            densityGenerator.SetBioms(bioms.Select(b => b.biom).ToArray(), buildPreparedCubes, rebuildShader);
             //densityGenerator.SetBuffer(pointsBuffer, savedPointBuffer, pointBiomIndex);
         }
 
@@ -719,30 +695,21 @@ namespace MarchingCubes
             return result;
         }
 
-        public float[] GenerateAndGetNoiseForChunk(ICompressedMarchingCubeChunk chunk)
-        {
-            float[] result;
-            int pointsPerAxis = chunk.PointsPerAxis;
-            ComputeBuffer pointsBuffer = pointsBufferPool.GetItemFromPool();
-            GenerateNoise(pointsBuffer, chunk.ChunkSizePower, pointsPerAxis, chunk.LOD, chunk.AnchorPos);
-            result = new float[pointsPerAxis * pointsPerAxis * pointsPerAxis];
-            pointsBuffer.GetData(result, 0, 0, result.Length);
-            pointsBufferPool.ReturnItemToPool(pointsBuffer);
-            return result;
-        }
-
+    
 
         public void SetEditedNoiseAtPosition(IMarchingCubeChunk chunk, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance)
         {
-            int pointsPerAxis = chunk.PointsPerAxis;
-            float[] result = new float[pointsPerAxis * pointsPerAxis * pointsPerAxis];
-            ComputeBuffer pointsBuffer = pointsBufferPool.GetItemFromPool();
-            GenerateNoise(pointsBuffer, chunk.ChunkSizePower, pointsPerAxis, chunk.LOD, chunk.AnchorPos);
-            ApplyNoiseEditing(pointsPerAxis, editPoint, start, end, delta, maxDistance);
-            pointsBuffer.GetData(result, 0, 0, result.Length);
-            pointsBufferPool.ReturnItemToPool(pointsBuffer);
-            chunk.Points = result;
-            storageGroup.Store(chunk.AnchorPos, chunk);
+            //propably remove edit noise shader :/
+
+            //int pointsPerAxis = chunk.PointsPerAxis;
+            //float[] result = new float[pointsPerAxis * pointsPerAxis * pointsPerAxis];
+            //ComputeBuffer pointsBuffer = pointsBufferPool.GetItemFromPool();
+            //GenerateNoise(pointsBuffer, chunk.ChunkSizePower, pointsPerAxis, chunk.LOD, chunk.AnchorPos);
+            //ApplyNoiseEditing(pointsPerAxis, editPoint, start, end, delta, maxDistance);
+            //pointsBuffer.GetData(result, 0, 0, result.Length);
+            //pointsBufferPool.ReturnItemToPool(pointsBuffer);
+            //chunk.Points = result;
+            //storageGroup.Store(chunk.AnchorPos, chunk);
         }
 
         private void ApplyNoiseEditing(int pointsPerAxis, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance)
@@ -761,39 +728,27 @@ namespace MarchingCubes
             noiseEditShader.SetFloat("maxDistance", maxDistance);
         }
 
-        public void GenerateNoise(ComputeBuffer pointsBuffer, int sizePow, int pointsPerAxis, int LOD, Vector3Int anchor, bool loadNoiseData = true)
-        {
-            if (loadNoiseData)
-            {
-                TryLoadOrGenerateNoise(pointsBuffer, sizePow, pointsPerAxis, LOD, anchor);
-            }
-            else
-            {
-                densityGenerator.Generate(pointsPerAxis, anchor, LOD);
-            }
-        }
-
-        protected void TryLoadOrGenerateNoise(ComputeBuffer pointsBuffer, int sizePow, int pointsPerAxis, int lod, Vector3Int anchor)
+        protected void TryLoadOrGenerateNoise(ChunkGenerationPipeline pipeline, ICompressedMarchingCubeChunk chunk)
         {
             bool hasStoredData = false;
             bool isMipMapComplete = false;
-            bool hasToDispatch = pointsPerAxis < DEFAULT_CHUNK_SIZE;
+            int sizePow = chunk.ChunkSizePower;
             if (sizePow <= STORAGE_GROUP_SIZE_POWER)
             {
                 hasStoredData = storageGroup.TryLoadNoise(anchor, sizePow, out storedNoiseData, out isMipMapComplete);
-                if (hasStoredData && (!isMipMapComplete || hasToDispatch))
+                if (hasStoredData && (!isMipMapComplete))
                 {
-                    savedPointBuffer.SetData(storedNoiseData);
+                    pipeline.savedPointsBuffer.SetData(storedNoiseData);
                 }
             }
-            if (isMipMapComplete && !hasToDispatch)
+            if (isMipMapComplete)
             {
                 pointsBuffer.SetData(storedNoiseData);
                 pointsArray = storedNoiseData;
             }
             else
             {
-                densityGenerator.Generate(pointsPerAxis, anchor, lod, hasStoredData);
+                densityGenerator.Generate(pointsPerAxis, hasStoredData);
             }
 
         }
@@ -1329,8 +1284,6 @@ namespace MarchingCubes
             var b = bioms.Select(b => new BiomColor(b.visualizationData)).ToArray();
             biomBuffer.SetData(b);
 
-            var envirenmentBioms = bioms.Select(b => b.envirenmentData).ToArray();
-
             minDegreesAtCoordBufferPool = new BufferPool(CreateMinDegreeBuffer, "minDegreeAtCoord", buildPreparedCubes);
             copyCountPool = new DisposablePoolOf<ComputeBuffer>(CreateCopyCountBuffer);
             preparedTrianglePool = new BufferPool(CreatePrepareTriangleBuffer, "triangleLocations", cubesPrepare, buildPreparedCubes);
@@ -1365,18 +1318,6 @@ namespace MarchingCubes
         }
 
         protected const int MAX_CHUNKS_PER_ITERATION = 1;
-
-        protected void ApplyShaderProperties(ComputeShader s)
-        {
-            //s.SetBuffer(0, "points", pointsBuffer);
-            s.SetBuffer(0, "pointBiomIndex", pointBiomIndex);
-            s.SetBuffer(0, "savedPoints", savedPointBuffer);
-            //s.SetBuffer(0, "triangles", triangleBuffer);
-            s.SetBuffer(0, "biomsViz", biomBuffer);
-
-            s.SetInt("minSteepness", minSteepness);
-            s.SetInt("maxSteepness", maxSteepness);
-        }
 
         protected void ReleaseBuffers()
         {

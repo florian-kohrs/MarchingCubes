@@ -1,21 +1,31 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace MarchingCubes
 {
-    public class BaseDensityGenerator : MonoBehaviour
+    public class NoiseData : MonoBehaviour
     {
 
         protected const int threadGroupSize = 4;
-
-        public ComputeShader densityShader;
 
         protected ComputeBuffer octaveOffsetsBuffer;
 
         protected ComputeBuffer biomsBuffer;
 
+        protected ComputeBuffer biomsColorBuffer;
+
+        protected ComputeBuffer biomEnvironmentData;
+
         protected BiomNoiseData[] bioms;
+
+        protected BiomEnvirenmentData[] envirenmentBioms;
+
+        protected BiomColor[] biomColorData;
+
+        public BiomScriptableObject[] biomsScriptable;
+
 
         public int biomSize = 500;
 
@@ -23,70 +33,66 @@ namespace MarchingCubes
 
         public float radius = 1000;
 
+        [Range(1,11)]
         public int octaves = 9;
 
         public Vector3 offset;
 
         public int seed;
 
-        public void SetBioms(BiomNoiseData[] bioms, params ComputeShader[] shaders)
+        public void SetBioms()
         {
-            this.bioms = bioms;
-            SetBiomData(shaders);
+            envirenmentBioms = biomsScriptable.Select(b => b.envirenmentData).ToArray();
+            bioms = biomsScriptable.Select(b => b.biom).ToArray();
+            biomColorData = biomsScriptable.Select(b => new BiomColor(b.visualizationData)).ToArray();
+            
+            SetBiomData();
+
+            ApplyStaticBiomDataToPipeline();
         }
 
-        public virtual void Generate(int numPointsPerAxis, Vector3 anchor, float spacing, bool tryLoad = false)
+        protected void ApplyStaticBiomDataToPipeline()
         {
-            ApplyShaderProperties(numPointsPerAxis, anchor, spacing, tryLoad);
+            ChunkGenerationPipeline.biomsVizBuffer = biomsColorBuffer;
+            ChunkGenerationPipeline.octaveOffsetsBuffer = octaveOffsetsBuffer;
+            ChunkGenerationPipeline.biomBuffer = biomsBuffer;
+            //ChunkGenerationPipeline.buf = octaveOffsetsBuffer;
 
-            int numThreadsPerAxis = Mathf.CeilToInt(numPointsPerAxis / (float)threadGroupSize);
+            ChunkGenerationPipeline.octaves = octaves;
+            ChunkGenerationPipeline.radius = radius;
+            ChunkGenerationPipeline.biomsCount = bioms.Length;
+            ChunkGenerationPipeline.biomSpacing = biomSpacing;
+            ChunkGenerationPipeline.biomSize = biomSize;
 
-            densityShader.Dispatch(0, numThreadsPerAxis, numThreadsPerAxis, numThreadsPerAxis);
-
-        }
-
-        public void SetBuffer(ComputeBuffer pointsBuffer, ComputeBuffer savedPointBuffer, ComputeBuffer pointClosestBiomBuffer)
-        {
-            densityShader.SetBuffer(0, "savedPoints", savedPointBuffer);
-            densityShader.SetBuffer(0, "pointBiomIndex", pointClosestBiomBuffer);
         }
 
         private void Awake()
         {
             GetOctaveOffsetsBuffer();
-            densityShader.SetInt("octaves", Mathf.Max(1, octaves));
-            densityShader.SetBuffer(0, "octaveOffsets", octaveOffsetsBuffer);
-            densityShader.SetVector("offset", new Vector4(offset.x, offset.y, offset.z));
+            SetBioms();
         }
 
         private void OnDestroy()
         {
-            octaveOffsetsBuffer.Release();
-            biomsBuffer.Release();
+            octaveOffsetsBuffer.Dispose();
+            biomsBuffer.Dispose();
+            biomEnvironmentData.Dispose();
             octaveOffsetsBuffer = null;
         }
 
-        protected void ApplyShaderProperties(int numPointsPerAxis, Vector3 anchor, float spacing, bool tryLoad)
-        {
-            densityShader.SetBool("tryLoadData", tryLoad);
-            densityShader.SetInt("numPointsPerAxis", numPointsPerAxis);
-            densityShader.SetFloat("spacing", spacing);
-            densityShader.SetVector("anchor", new Vector4(anchor.x, anchor.y, anchor.z));
-        }
-
-        protected void SetBiomData(params ComputeShader[] shaders)
+        protected void SetBiomData()
         {
             if (biomsBuffer != null)
                 return;
 
             biomsBuffer = new ComputeBuffer(bioms.Length, BiomNoiseData.SIZE);
             biomsBuffer.SetData(bioms);
-            SetShaderBiomProperties(densityShader);
 
-            for (int i = 0; i < shaders.Length; i++)
-            {
-                SetShaderBiomProperties(shaders[i]);
-            }
+            biomsColorBuffer = new ComputeBuffer(bioms.Length, BiomColor.SIZE);
+            biomsColorBuffer.SetData(biomColorData);
+
+            biomEnvironmentData = new ComputeBuffer(bioms.Length, BiomEnvirenmentData.SIZE);
+            biomEnvironmentData.SetData(envirenmentBioms);
         }
 
         protected void SetShaderBiomProperties(ComputeShader s)

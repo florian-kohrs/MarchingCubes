@@ -9,5 +9,6 @@ public struct BiomEnvirenmentData
     public float grassDensity;
     public float treeDensity;
 
+    public const int SIZE = sizeof(float) * 2;
 
 }
