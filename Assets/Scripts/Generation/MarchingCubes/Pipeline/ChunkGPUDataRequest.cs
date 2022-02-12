@@ -24,28 +24,7 @@ namespace MarchingCubes
 
         public BufferPool minDegreeBufferPool;
 
-
-        protected ChunkGenerationGPUData gpuData;
-
-        protected NoisePipeline noise;
-
-        protected ChunkPipeline chunkPipeline;
-
       
-        protected void PrepareDataRequest()
-        {
-            gpuData = pipelinePool.GetItemFromPool();
-            noise = new NoisePipeline(gpuData, storedNoiseEdits);
-            chunkPipeline = new ChunkPipeline(gpuData, minDegreeBufferPool);
-        }
-
-        protected void ReturnToPool()
-        {
-            noise = null;
-            chunkPipeline = null;
-            pipelinePool.ReturnItemToPool(gpuData);
-        }
-
         public void ValidateChunkProperties(ICompressedMarchingCubeChunk chunk)
         {
             if (chunk.ChunkSize % chunk.LOD != 0)
@@ -57,7 +36,9 @@ namespace MarchingCubes
         //Subset may be used to only change parts of the mesh -> dont need multiple mesh displayers with submeshes?
         public TriangleChunkHeap DispatchAndGetShaderData(ICompressedMarchingCubeChunk chunk, Action<ICompressedMarchingCubeChunk> SetChunkComponents, Action WorkOnNoise = null)
         {
-            PrepareDataRequest();
+            ChunkGenerationGPUData gpuData = pipelinePool.GetItemFromPool();
+            NoisePipeline noise = new NoisePipeline(gpuData, storedNoiseEdits);
+            ChunkPipeline chunkPipeline = new ChunkPipeline(gpuData, minDegreeBufferPool);
 
             ComputeBuffer triangleBuffer;
 
@@ -85,21 +66,20 @@ namespace MarchingCubes
             {
                 noise.StoreNoise(chunk);
             }
-            ReturnToPool();
+            pipelinePool.ReturnItemToPool(gpuData);
             return new TriangleChunkHeap(tris, 0, numTris);
         }
 
         public void DispatchAndGetShaderDataAsync(ICompressedMarchingCubeChunk chunk, Action<ICompressedMarchingCubeChunk> SetChunkComponents, Action<TriangleChunkHeap> OnDataDone, Action WorkOnNoise = null)
         {
-            PrepareDataRequest();
+            ChunkGenerationGPUData gpuData = pipelinePool.GetItemFromPool();
+            NoisePipeline noise = new NoisePipeline(gpuData, storedNoiseEdits);
+            ChunkPipeline chunkPipeline = new ChunkPipeline(gpuData, minDegreeBufferPool);
 
             ValidateChunkProperties(chunk);
             noise.TryLoadOrGenerateNoise(chunk);
             bool storeNoise = noise.WorkOnNoiseMap(chunk, WorkOnNoise);
             chunkPipeline.DispatchPrepareCubesFromNoise(chunk);
-
-            float[] test = ComputeBufferExtension.ReadBuffer<float>(gpuData.pointsBuffer);
-            Vector2Int[] test2 = ComputeBufferExtension.ReadBuffer<Vector2Int>(gpuData.preparedTrisBuffer);
 
             if (storeNoise)
             {
@@ -110,7 +90,7 @@ namespace MarchingCubes
             {
                 if (numTris <= 0)
                 {
-                    ReturnToPool();
+                    pipelinePool.ReturnItemToPool(gpuData);
                     OnDataDone(new TriangleChunkHeap(Array.Empty<TriangleBuilder>(), 0, numTris));
                 }
                 else
@@ -125,7 +105,7 @@ namespace MarchingCubes
                     ReadCurrentTriangleDataAsync(trianglesBuffer, (tris) =>
                     {
                         trianglesBuffer.Dispose();
-                        ReturnToPool();
+                        pipelinePool.ReturnItemToPool(gpuData);
                         //TODO:Remove to Array!!
                         OnDataDone(new TriangleChunkHeap(tris.ToArray(), 0, numTris));
                     });

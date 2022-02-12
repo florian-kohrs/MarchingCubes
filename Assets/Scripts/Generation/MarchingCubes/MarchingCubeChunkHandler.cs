@@ -194,11 +194,13 @@ namespace MarchingCubes
             //maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
             //BuildRelevantChunksParallelBlockingAround(chunk);
 
-            for (int i = 1; i < 2; i++)
+            int amount = 0;
+            for (int x = -amount; x <= amount; x++)
             {
-                CreateChunkAtAsync(startPos + new Vector3(0, -DEFAULT_CHUNK_SIZE, 0) * i, (c) => { });
-                //CreateChunkAtAsync(startPos + new Vector3(32, -DEFAULT_CHUNK_SIZE, 0) * i, (c) => { });
-                //CreateChunkAtAsync(startPos + new Vector3(32, -DEFAULT_CHUNK_SIZE, 32) * i, (c) => { });
+                for (int y = -amount; y <= amount; y++)
+                {
+                    CreateChunkAtAsync(startPos + new Vector3(32 * x, -DEFAULT_CHUNK_SIZE, 32 * y), (c) => { });
+                }
             }
 
             //FindNonEmptyChunkAroundAsync(startPos, (chunk) =>
@@ -652,8 +654,14 @@ namespace MarchingCubes
             chunkGPURequest.DispatchAndGetShaderDataAsync(chunk, SetChunkComponents, (ts) =>
             {
                 channeledChunks++;
-                chunk.InitializeWithMeshData(ts);
-                onChunkDone(chunk);
+                chunk.InitializeWithMeshDataParallel(ts,(c)=>
+                {
+                    OnParallelChunkDoneCallBack(c);
+                    onChunkDone(c);
+                });
+
+                //chunk.InitializeWithMeshData(ts);
+                //onChunkDone(chunk);
             });
         }
 
@@ -1048,6 +1056,7 @@ namespace MarchingCubes
             ChunkGenerationGPUData result = new ChunkGenerationGPUData();
 
             result.densityGeneratorShader = Instantiate(densityShader);
+
             result.prepareTrisShader = Instantiate(cubesPrepare);
             result.buildTrisShader = Instantiate(buildPreparedCubes);
 
