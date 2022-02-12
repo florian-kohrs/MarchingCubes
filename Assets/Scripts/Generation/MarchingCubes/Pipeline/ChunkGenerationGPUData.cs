@@ -6,13 +6,8 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public class ChunkGenerationPipeline : IDisposable
+    public class ChunkGenerationGPUData : IDisposable
     {
-
-        public ChunkGenerationPipeline()
-        {
-            noisePipeline = new NoisePipeline(this);
-        }
 
         #region static shader properties
 
@@ -43,8 +38,6 @@ namespace MarchingCubes
         public ComputeBuffer savedPointsBuffer;
         public ComputeBuffer preparedTrisBuffer;
 
-        protected NoisePipeline noisePipeline;
-
         public void ApplyStaticProperties()
         {
             ApplyDensityProperties();
@@ -65,12 +58,11 @@ namespace MarchingCubes
 
             ApplyPrepareTrianglesForChunk(chunk);
 
-            ApplyBuildTrianglesForChunk(chunk);
+            ApplyBuildTrianglesForChunkProperties(chunk);
         }
 
         public void ApplyDensityPropertiesForChunk(ICompressedMarchingCubeChunk chunk, bool tryLoadData = true)
         {
-
             Vector4 anchor = VectorExtension.RaiseVector3Int(chunk.AnchorPos);
             int pointsPerAxis = chunk.PointsPerAxis;
 
@@ -79,15 +71,15 @@ namespace MarchingCubes
             densityGeneratorShader.SetInt("numPointsPerAxis", pointsPerAxis);
             densityGeneratorShader.SetInt("spacing", chunk.LOD);
             densityGeneratorShader.SetBool("tryLoadData", tryLoadData);
-
         }
 
         public void ApplyPrepareTrianglesForChunk(ICompressedMarchingCubeChunk chunk)
         {
             prepareTrisShader.SetInt("numPointsPerAxis", chunk.PointsPerAxis);
+            preparedTrisBuffer.SetCounterValue(0);
         }
 
-        public void ApplyBuildTrianglesForChunk(ICompressedMarchingCubeChunk chunk)
+        public void ApplyBuildTrianglesForChunkProperties(ICompressedMarchingCubeChunk chunk, int numTris)
         {
             Vector4 anchor = VectorExtension.RaiseVector3Int(chunk.AnchorPos);
             int pointsPerAxis = chunk.PointsPerAxis;
@@ -99,6 +91,7 @@ namespace MarchingCubes
             buildTrisShader.SetVector("anchor", anchor);
             buildTrisShader.SetInt("numPointsPerAxis", pointsPerAxis);
             buildTrisShader.SetInt("spacing", chunk.LOD);
+            buildTrisShader.SetInt("length", numTris);
             buildTrisShader.SetBool("storeMinDegrees", storeMinDegree);
 
             if (storeMinDegree)
@@ -107,7 +100,7 @@ namespace MarchingCubes
             }
         }
 
-        public void ApplyDensityProperties()
+        protected void ApplyDensityProperties()
         {
             densityGeneratorShader.SetBuffer(0, "points", pointsBuffer);
             densityGeneratorShader.SetBuffer(0, "savedPoints", savedPointsBuffer);
@@ -116,13 +109,13 @@ namespace MarchingCubes
             ApplyBiomPropertiesToShader(densityGeneratorShader);
         }
 
-        public void ApplyPrepareTrisProperties()
+        protected void ApplyPrepareTrisProperties()
         {
             prepareTrisShader.SetBuffer(0, "points", pointsBuffer);
             prepareTrisShader.SetBuffer(0, "triangleLocations", preparedTrisBuffer);
         }
 
-        public void ApplyTriBuilderProperties()
+        protected void ApplyTriBuilderProperties()
         {
             buildTrisShader.SetBuffer(0, "points", pointsBuffer);
             buildTrisShader.SetBuffer(0, "biomsViz", biomsVizBuffer);
@@ -150,5 +143,7 @@ namespace MarchingCubes
             preparedTrisBuffer.Dispose();
             savedPointsBuffer.Dispose();
         }
+
+
     }
 }

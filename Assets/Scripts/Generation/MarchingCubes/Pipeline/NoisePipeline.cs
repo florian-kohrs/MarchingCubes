@@ -10,12 +10,42 @@ namespace MarchingCubes
 
         public const float THREAD_GROUP_SIZE_PER_AXIS = 4;
 
-        public NoisePipeline(ChunkGenerationPipeline pipeline)
+        public NoisePipeline(ChunkGenerationGPUData pipeline, StorageGroupMesh storageGroup)
         {
+            this.storageGroup = storageGroup;
             this.pipeline = pipeline;
         }
 
-        protected ChunkGenerationPipeline pipeline;
+        protected ChunkGenerationGPUData pipeline;
+
+        public StorageGroupMesh storageGroup;
+
+        protected void StoreNoise(ICompressedMarchingCubeChunk chunk)
+        {
+            int pointsPerAxis = chunk.PointsPerAxis;
+            int pointsVolume = pointsPerAxis * pointsPerAxis * pointsPerAxis;
+            float[] pointsArray = new float[pointsVolume];
+            pipeline.pointsBuffer.GetData(pointsArray);
+            if (chunk is IMarchingCubeChunk c)
+            {
+                c.Points = pointsArray;
+                storageGroup.Store(chunk.AnchorPos, chunk as IMarchingCubeChunk, true);
+            }
+        }
+
+
+        public int ComputeCubesFromNoise(ICompressedMarchingCubeChunk chunk)
+        {
+            ComputeBuffer trisToBuildBuffer = DispatchCubesFromNoise(chunk);
+            ComputeBuffer triCountBuffer = copyCountPool.GetItemFromPool();
+            int numTris = ComputeBufferExtension.GetLengthOfAppendBuffer(trisToBuildBuffer, triCountBuffer);
+            copyCountPool.ReturnItemToPool(triCountBuffer);
+
+            totalTriBuild += numTris;
+            BuildPreparedCubes(chunk, trisToBuildBuffer, numTris);
+
+            return numTris;
+        }
 
         public float[] GenerateAndGetNoiseForChunk(ICompressedMarchingCubeChunk chunk)
         {
@@ -27,7 +57,18 @@ namespace MarchingCubes
             return result;
         }
 
-        protected void TryLoadOrGenerateNoise(ICompressedMarchingCubeChunk chunk)
+
+        public float[] RequestNoiseForChunk(ICompressedMarchingCubeChunk chunk)
+        {
+            float[] result;
+            if (!storageGroup.TryLoadNoise(chunk.AnchorPos, chunk.ChunkSizePower, out result, out bool _))
+            {
+                result = GenerateAndGetNoiseForChunk(chunk);
+            }
+            return result;
+        }
+
+        public void TryLoadOrGenerateNoise(ICompressedMarchingCubeChunk chunk)
         {
             bool hasStoredData = false;
             bool isMipMapComplete = false;
@@ -54,9 +95,23 @@ namespace MarchingCubes
         protected void DispatchNoiseForChunk(ICompressedMarchingCubeChunk chunk, bool hasStoredData)
         {
             int groupsPerAxis = Mathf.CeilToInt(THREAD_GROUP_SIZE_PER_AXIS);
-            pipeline.densityGeneratorShader.SetBool("tryLoadData", hasStoredData);
-            pipeline.ApplyDensityPropertiesForChunk(chunk);
+            pipeline.ApplyDensityPropertiesForChunk(chunk, hasStoredData);
             pipeline.densityGeneratorShader.Dispatch(0, groupsPerAxis, groupsPerAxis, groupsPerAxis);
+        }
+
+        public bool WorkOnNoiseMap(ICompressedMarchingCubeChunk chunk, Action a)
+        {
+            bool storeNoise = false;
+            if (a != null)
+            {
+                if (!(chunk is IMarchingCubeChunk))
+                {
+                    throw new ArgumentException("Chunk has to be storeable to be able to store requested noise!");
+                }
+                a();
+                storeNoise = true;
+            }
+            return storeNoise;
         }
 
     }

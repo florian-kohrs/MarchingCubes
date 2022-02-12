@@ -4,28 +4,31 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ChunkGenerationPipelinePool : DisposablePoolOf<ChunkGenerationPipeline>
+public class ChunkGenerationPipelinePool : DisposablePoolOf<ChunkGenerationGPUData>
 {
 
-    public ChunkGenerationPipelinePool(Func<ChunkGenerationPipeline> CreateItem) : base(CreateItem)
+    public ChunkGenerationPipelinePool(Func<ChunkGenerationGPUData> CreateItem) : base(CreateItem)
     {
     }
 
-    protected override ChunkGenerationPipeline BuildItemInstance()
+    public StorageGroupMesh storageGroup;
+
+    protected override ChunkGenerationGPUData BuildItemInstance()
     {
-        ChunkGenerationPipeline result = base.BuildItemInstance();
+        ChunkGenerationGPUData result = base.BuildItemInstance();
         result.ApplyStaticProperties();
         return result;
     }
 
-    public ChunkGenerationPipeline GetChunkGenerationPipelineFor(ICompressedMarchingCubeChunk chunk)
+    public ChunkGenerationGPUData GetChunkGenerationPipelineFor(ICompressedMarchingCubeChunk chunk)
     {
-        ChunkGenerationPipeline chunkGenerationPipeline = GetItemFromPool();
+        ChunkGenerationGPUData chunkGenerationPipeline = GetItemFromPool();
 
         chunkGenerationPipeline.ApplyChunkDataToShaders(chunk);
 
         return chunkGenerationPipeline;
     }
+
 
 
 }

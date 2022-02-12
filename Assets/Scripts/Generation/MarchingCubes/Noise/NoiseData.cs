@@ -53,16 +53,16 @@ namespace MarchingCubes
 
         protected void ApplyStaticBiomDataToPipeline()
         {
-            ChunkGenerationPipeline.biomsVizBuffer = biomsColorBuffer;
-            ChunkGenerationPipeline.octaveOffsetsBuffer = octaveOffsetsBuffer;
-            ChunkGenerationPipeline.biomBuffer = biomsBuffer;
+            ChunkGenerationGPUData.biomsVizBuffer = biomsColorBuffer;
+            ChunkGenerationGPUData.octaveOffsetsBuffer = octaveOffsetsBuffer;
+            ChunkGenerationGPUData.biomBuffer = biomsBuffer;
             //ChunkGenerationPipeline.buf = octaveOffsetsBuffer;
 
-            ChunkGenerationPipeline.octaves = octaves;
-            ChunkGenerationPipeline.radius = radius;
-            ChunkGenerationPipeline.biomsCount = bioms.Length;
-            ChunkGenerationPipeline.biomSpacing = biomSpacing;
-            ChunkGenerationPipeline.biomSize = biomSize;
+            ChunkGenerationGPUData.octaves = octaves;
+            ChunkGenerationGPUData.radius = radius;
+            ChunkGenerationGPUData.biomsCount = bioms.Length;
+            ChunkGenerationGPUData.biomSpacing = biomSpacing;
+            ChunkGenerationGPUData.biomSize = biomSize;
 
         }
 

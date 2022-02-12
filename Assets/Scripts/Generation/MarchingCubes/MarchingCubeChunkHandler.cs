@@ -135,7 +135,7 @@ namespace MarchingCubes
 
         public ChunkGenerationPipelinePool chunkPipelinePool;
 
-        protected ChunkGenerationPipeline currentChunkPipeline;
+        protected ChunkGenerationGPUData currentChunkPipeline;
 
         public bool useTerrainNoise;
 
@@ -648,16 +648,6 @@ namespace MarchingCubes
         //    return result;
         //}
 
-        protected void PrepareChunkToStoreMinDegreesIfNeeded(ICompressedMarchingCubeChunk chunk)
-        {
-            bool storeMinDegree = chunk.LOD <= 1 && !chunk.IsReady;
-            buildPreparedCubes.SetBool("storeMinDegrees", storeMinDegree);
-            if (storeMinDegree)
-            {
-                ComputeBuffer minDegreeBuffer = minDegreesAtCoordBufferPool.GetBufferForShaders();
-                chunk.MinDegreeBuffer = minDegreeBuffer;
-            }
-        }
 
         //TODO:Remove keep points
         protected void BuildChunk(ICompressedMarchingCubeChunk chunk, Action WorkOnNoise = null)
@@ -683,16 +673,6 @@ namespace MarchingCubes
                 chunk.InitializeWithMeshData(ts);
                 onChunkDone(chunk);
             });
-        }
-
-        public float[] RequestNoiseForChunk(ICompressedMarchingCubeChunk chunk)
-        {
-            float[] result;
-            if(!storageGroup.TryLoadNoise(chunk.AnchorPos, chunk.ChunkSizePower, out result, out bool _))
-            {
-                result = GenerateAndGetNoiseForChunk(chunk);
-            }
-            return result;
         }
 
     
@@ -728,31 +708,7 @@ namespace MarchingCubes
             noiseEditShader.SetFloat("maxDistance", maxDistance);
         }
 
-        protected void TryLoadOrGenerateNoise(ChunkGenerationPipeline pipeline, ICompressedMarchingCubeChunk chunk)
-        {
-            bool hasStoredData = false;
-            bool isMipMapComplete = false;
-            int sizePow = chunk.ChunkSizePower;
-            if (sizePow <= STORAGE_GROUP_SIZE_POWER)
-            {
-                hasStoredData = storageGroup.TryLoadNoise(anchor, sizePow, out storedNoiseData, out isMipMapComplete);
-                if (hasStoredData && (!isMipMapComplete))
-                {
-                    pipeline.savedPointsBuffer.SetData(storedNoiseData);
-                }
-            }
-            if (isMipMapComplete)
-            {
-                pointsBuffer.SetData(storedNoiseData);
-                pointsArray = storedNoiseData;
-            }
-            else
-            {
-                densityGenerator.Generate(pointsPerAxis, hasStoredData);
-            }
-
-        }
-
+     
         //TODO: Maybe remove pooling theese -> could reduce size of buffer for faster reads
         protected void DispatchMultipleChunks(ICompressedMarchingCubeChunk[] chunks, Action<ICompressedMarchingCubeChunk> callbackPerChunk)
         {
@@ -797,45 +753,10 @@ namespace MarchingCubes
             //return result;
         }
 
-        protected ComputeBuffer PrepareNoiseForChunk(ICompressedMarchingCubeChunk chunk)
-        {
-            int lod = chunk.LOD;
-            int chunkSize = chunk.ChunkSize;
-
-            int numVoxelsPerAxis = chunkSize / lod;
-            int pointsPerAxis = numVoxelsPerAxis + 1;
-
-            ComputeBuffer noiseBuffer = pointsBufferPool.GetBufferForShaders();
-
-            GenerateNoise(noiseBuffer, chunk.ChunkSizePower, pointsPerAxis, lod, chunk.AnchorPos);
-
-            return noiseBuffer;
-        }
-
         protected void ValidateChunkProperties(ICompressedMarchingCubeChunk chunk)
         {
             if (chunk.ChunkSize % chunk.LOD != 0)
                 throw new Exception("Lod must be divisor of chunksize");
-        }
-
-        /// <summary>
-        /// returns true if the resulting noise map needs to be saved
-        /// </summary>
-        /// <param name="a"></param>
-        /// <returns></returns>
-        protected bool WorkOnNoiseMap(ICompressedMarchingCubeChunk chunk, Action a)
-        {
-            bool storeNoise = false;
-            if (a != null)
-            {
-                if (!(chunk is IMarchingCubeChunk))
-                {
-                    throw new ArgumentException("Chunk has to be storeable to be able to store requested noise!");
-                }
-                a();
-                storeNoise = true;
-            }
-            return storeNoise;
         }
 
         protected void SetLODColliderOfChunk(ICompressedMarchingCubeChunk chunk)
@@ -996,28 +917,6 @@ namespace MarchingCubes
 
         //    return numTris;
         //}
-
-
-        protected void BuildPreparedCubes(ICompressedMarchingCubeChunk chunk, ComputeBuffer preparedBuffer, int numTris)
-        {
-            if (numTris > 0)
-            {
-                Vector3Int anchor = chunk.AnchorPos;
-                int pointsPerAxis = chunk.PointsPerAxis;
-                float spacing = chunk.LOD;
-
-                //TODO: Check if this needs to be changed or if correct value is still set
-                buildPreparedCubes.SetInt("numPointsPerAxis", pointsPerAxis);
-                buildPreparedCubes.SetBuffer(0, "preparedTriangles", preparedBuffer);
-                buildPreparedCubes.SetInt("length", numTris);
-                buildPreparedCubes.SetFloat("spacing", spacing);
-                buildPreparedCubes.SetVector("anchor", new Vector4(anchor.x, anchor.y, anchor.z));
-
-                int numThreads = Mathf.CeilToInt(numTris / (float)32);
-
-                buildPreparedCubes.Dispatch(0, numThreads, 1, 1);
-            }
-        }
 
 
         public int GetFeasibleReducedLodForChunk(ICompressedMarchingCubeChunk c, int toLodPower)
