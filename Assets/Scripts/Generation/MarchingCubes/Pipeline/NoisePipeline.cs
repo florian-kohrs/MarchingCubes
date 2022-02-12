@@ -80,7 +80,7 @@ namespace MarchingCubes
 
         protected void DispatchNoiseForChunk(ICompressedMarchingCubeChunk chunk, bool hasStoredData)
         {
-            int groupsPerAxis = Mathf.CeilToInt(THREAD_GROUP_SIZE_PER_AXIS);
+            int groupsPerAxis = Mathf.CeilToInt(chunk.PointsPerAxis / THREAD_GROUP_SIZE_PER_AXIS);
             pipeline.ApplyDensityPropertiesForChunk(chunk, hasStoredData);
             pipeline.densityGeneratorShader.Dispatch(0, groupsPerAxis, groupsPerAxis, groupsPerAxis);
         }

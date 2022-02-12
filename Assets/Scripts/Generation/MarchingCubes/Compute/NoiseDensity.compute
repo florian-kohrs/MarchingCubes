@@ -43,71 +43,70 @@ void NoiseEdit(int3 id : SV_DispatchThreadID)
     }
 
     int index = indexFromCoord(id.x, id.y, id.z);
-    points[index] = index;
+
     //TODO: Maybe do normalize and scale to radius for biom selection
      
+    if (tryLoadData) 
+    {
+        int savedPointsSpacing = (uint)(MIP_MAP_SIZE - 1) / (numPointsPerAxis - 1);
+        int savedPointIndex = indexFromMipMap(savedPointsSpacing * id.x, savedPointsSpacing * id.y, savedPointsSpacing * id.z);
+        float storedNoise = savedPoints[savedPointIndex];
+        if (storedNoise > -9999)
+        {
+            points[index] = storedNoise;
+            return;
+        }
+    }
 
-  //  if (tryLoadData) 
-  //  {
-  //      int savedPointsSpacing = (uint)(MIP_MAP_SIZE - 1) / (numPointsPerAxis - 1);
-  //      int savedPointIndex = indexFromMipMap(savedPointsSpacing * id.x, savedPointsSpacing * id.y, savedPointsSpacing * id.z);
-  //      float storedNoise = savedPoints[savedPointIndex];
-  //      if (storedNoise > -9999)
-  //      {
-  //          points[index] = storedNoise;
-  //          return;
-  //      }
-  //  }
+    float3 pos = anchor + id * spacing;
+    int3 biomEvaluationPos = GetBiomEvaluationPosition(pos);
 
-  //  float3 pos = anchor + id * spacing;
-  //  int3 biomEvaluationPos = GetBiomEvaluationPosition(pos);
+    //Interpolate biom for position
+    Biom b = GetInterpolatedBiomAt(biomEvaluationPos);
 
-  //  //Interpolate biom for position
-  //  Biom b = GetInterpolatedBiomAt(biomEvaluationPos);
+    float noise = b.heightOffset + radius - length(pos);
 
-  //  float noise = b.heightOffset + radius - length(pos);
+    float frequency = b.noiseScale / 100;
+    float localAmplitude = b.amplitude;
 
-  //  float frequency = b.noiseScale / 100;
-  //  float localAmplitude = b.amplitude;
+  /*  float lengthPos = length(pos);
 
-  ///*  float lengthPos = length(pos);
+    float originalNoise = radius - lengthPos;
 
-  //  float originalNoise = radius - lengthPos;
+    float caveBeginHeight = radius - 80;
+    float caveEndHeight = caveBeginHeight - 30;
+    float noise;*/
 
-  //  float caveBeginHeight = radius - 80;
-  //  float caveEndHeight = caveBeginHeight - 30;
-  //  float noise;*/
-
-  //  //if (lengthPos > radius)
-  //  //    noise = originalNoise;
-  //  //else if (lengthPos > caveBeginHeight)
-  //  //    noise = min(originalNoise, lengthPos - caveBeginHeight);
-  //  //else if (lengthPos > caveEndHeight) {
-  //  //    noise = min(caveBeginHeight - lengthPos, lengthPos - caveEndHeight);
-  //  //    localAmplitude /= 2;
-  //  //}
-  //  //else
-  //  //    noise = (caveEndHeight - lengthPos);
-
+    //if (lengthPos > radius)
+    //    noise = originalNoise;
+    //else if (lengthPos > caveBeginHeight)
+    //    noise = min(originalNoise, lengthPos - caveBeginHeight);
+    //else if (lengthPos > caveEndHeight) {
+    //    noise = min(caveBeginHeight - lengthPos, lengthPos - caveEndHeight);
+    //    localAmplitude /= 2;
+    //}
+    //else
+    //    noise = (caveEndHeight - lengthPos);
 
 
 
-  //  for (int j =0; j < octaves; j ++) {
-  //      float n = snoise((pos * frequency) / b.scale + octaveOffsets[j] + offset);
-  //      n *= localAmplitude;
 
-  //      noise += n;
+    for (int j =0; j < octaves; j ++) {
+        float n = snoise((pos * frequency) / b.scale + octaveOffsets[j] + offset);
+        n *= localAmplitude;
 
-  //      localAmplitude *= b.persistence;
-  //      frequency *= b.lacunarity;
-  //  }
+        noise += n;
 
-  //  if (noise < -100)
-  //      noise = -100;
-  //  else if (noise > 100)
-  //      noise = 100;
+        localAmplitude *= b.persistence;
+        frequency *= b.lacunarity;
+    }
+
+    if (noise < -100)
+        noise = -100;
+    else if (noise > 100)
+        noise = 100;
 
 
-  //  points[index] = noise;
-  //  
+    points[index] = noise;
+    
 }

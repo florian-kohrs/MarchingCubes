@@ -75,6 +75,7 @@ namespace MarchingCubes
         private void OnDestroy()
         {
             octaveOffsetsBuffer.Dispose();
+            biomsColorBuffer.Dispose();
             biomsBuffer.Dispose();
             biomEnvironmentData.Dispose();
             octaveOffsetsBuffer = null;
