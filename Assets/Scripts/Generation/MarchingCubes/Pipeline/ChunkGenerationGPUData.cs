@@ -52,15 +52,6 @@ namespace MarchingCubes
             return triangles;
         }
 
-        public void ApplyChunkDataToShaders(ICompressedMarchingCubeChunk chunk, bool tryLoadData = true)
-        {
-            ApplyDensityPropertiesForChunk(chunk, tryLoadData);
-
-            ApplyPrepareTrianglesForChunk(chunk);
-
-            ApplyBuildTrianglesForChunkProperties(chunk);
-        }
-
         public void ApplyDensityPropertiesForChunk(ICompressedMarchingCubeChunk chunk, bool tryLoadData = true)
         {
             Vector4 anchor = VectorExtension.RaiseVector3Int(chunk.AnchorPos);

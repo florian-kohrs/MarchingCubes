@@ -13,22 +13,5 @@ public class ChunkGenerationPipelinePool : DisposablePoolOf<ChunkGenerationGPUDa
 
     public StorageGroupMesh storageGroup;
 
-    protected override ChunkGenerationGPUData BuildItemInstance()
-    {
-        ChunkGenerationGPUData result = base.BuildItemInstance();
-        result.ApplyStaticProperties();
-        return result;
-    }
-
-    public ChunkGenerationGPUData GetChunkGenerationPipelineFor(ICompressedMarchingCubeChunk chunk)
-    {
-        ChunkGenerationGPUData chunkGenerationPipeline = GetItemFromPool();
-
-        chunkGenerationPipeline.ApplyChunkDataToShaders(chunk);
-
-        return chunkGenerationPipeline;
-    }
-
-
 
 }

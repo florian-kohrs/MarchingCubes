@@ -20,7 +20,7 @@ namespace MarchingCubes
 
         public StorageGroupMesh storageGroup;
 
-        protected void StoreNoise(ICompressedMarchingCubeChunk chunk)
+        public void StoreNoise(ICompressedMarchingCubeChunk chunk)
         {
             int pointsPerAxis = chunk.PointsPerAxis;
             int pointsVolume = pointsPerAxis * pointsPerAxis * pointsPerAxis;
@@ -31,20 +31,6 @@ namespace MarchingCubes
                 c.Points = pointsArray;
                 storageGroup.Store(chunk.AnchorPos, chunk as IMarchingCubeChunk, true);
             }
-        }
-
-
-        public int ComputeCubesFromNoise(ICompressedMarchingCubeChunk chunk)
-        {
-            ComputeBuffer trisToBuildBuffer = DispatchCubesFromNoise(chunk);
-            ComputeBuffer triCountBuffer = copyCountPool.GetItemFromPool();
-            int numTris = ComputeBufferExtension.GetLengthOfAppendBuffer(trisToBuildBuffer, triCountBuffer);
-            copyCountPool.ReturnItemToPool(triCountBuffer);
-
-            totalTriBuild += numTris;
-            BuildPreparedCubes(chunk, trisToBuildBuffer, numTris);
-
-            return numTris;
         }
 
         public float[] GenerateAndGetNoiseForChunk(ICompressedMarchingCubeChunk chunk)

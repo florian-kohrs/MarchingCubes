@@ -66,8 +66,8 @@ namespace MarchingCubes
 
         }
 
-        private void Awake()
-        {
+        public void ApplyNoiseBiomData()
+        { 
             GetOctaveOffsetsBuffer();
             SetBioms();
         }

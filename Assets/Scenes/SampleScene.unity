@@ -195,7 +195,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 8
+  m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &163582543
 GameObject:
@@ -426,7 +426,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 4
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &358158685
 GameObject:
@@ -730,56 +730,6 @@ MonoBehaviour:
   minCameraScrollAnchor: {fileID: 358158686}
   scrollSpeed: 10
   scrollZoomValue: 1
---- !u!1 &840254376
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 840254378}
-  - component: {fileID: 840254377}
-  m_Layer: 0
-  m_Name: StoreTerainData
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!114 &840254377
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 840254376}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e82f3bfefec4e69478bf511958eaa6b6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  densityShader: {fileID: 7200000, guid: 2dd2295c8799c9a4297e6c83b1fc4a4b, type: 3}
-  biomSize: 64
-  biomSpacing: 14
-  radius: 1000
-  octaves: 9
-  offset: {x: 0, y: 0, z: 0}
-  seed: 4
---- !u!4 &840254378
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 840254376}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -417.56808, y: 65414.55, z: -340.21155}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 3
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &857565835
 GameObject:
   m_ObjectHideFlags: 0
@@ -821,7 +771,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 7
+  m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &910780109
 GameObject:
@@ -986,13 +936,12 @@ MonoBehaviour:
   dontSaveScriptValues: 0
   blockAroundPlayer: 40
   rebuildShader: {fileID: 7200000, guid: 80bf3eea68e1c5245ad28526c9610cb6, type: 3}
+  noiseData: {fileID: 1484889474}
+  densityShader: {fileID: 7200000, guid: 2dd2295c8799c9a4297e6c83b1fc4a4b, type: 3}
   cubesPrepare: {fileID: 7200000, guid: 0722e04f7ffb56044b4dfa02d94035c4, type: 3}
   buildPreparedCubes: {fileID: 7200000, guid: 9e0a68c44c7d8cc44b82c846ae0fdd88, type: 3}
   noiseEditShader: {fileID: 7200000, guid: d542438b314919740a681546e49cb644, type: 3}
   noiseOffset: {x: 0, y: 0, z: 0}
-  bioms:
-  - {fileID: 11400000, guid: e570a0f1c7e1b584484b270a87f291ed, type: 2}
-  - {fileID: 11400000, guid: 9c80e1a169bfef64c982baea7f819166, type: 2}
   lodPowerForDistances:
     serializedVersion: 2
     m_Curve:
@@ -1116,7 +1065,6 @@ MonoBehaviour:
   totalTriBuild: 0
   worldUpdater: {fileID: 1125545290}
   colliderParent: {fileID: 1768635035}
-  densityGenerator: {fileID: 1484889474}
   useTerrainNoise: 1
   deactivateAfterDistance: 400
   chunkMaterial: {fileID: 2100000, guid: 97d2f9aa8d16b8241a90494b8d616c04, type: 2}
@@ -1279,7 +1227,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 6
+  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1484889472
 GameObject:
@@ -1324,7 +1272,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e82f3bfefec4e69478bf511958eaa6b6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  densityShader: {fileID: 7200000, guid: 2dd2295c8799c9a4297e6c83b1fc4a4b, type: 3}
+  biomsScriptable:
+  - {fileID: 11400000, guid: e570a0f1c7e1b584484b270a87f291ed, type: 2}
+  - {fileID: 11400000, guid: 9c80e1a169bfef64c982baea7f819166, type: 2}
   biomSize: 600
   biomSpacing: 14
   radius: 10000
@@ -2007,5 +1957,5 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 5
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

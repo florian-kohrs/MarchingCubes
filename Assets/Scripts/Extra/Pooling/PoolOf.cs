@@ -15,8 +15,6 @@ public class PoolOf<T>
 
     protected Func<T> CreateItem;
 
-    protected virtual T BuildItemInstance() => CreateItem();
-
     public void ReturnItemToPool(T item)
     {
         pool.Push(item);
@@ -31,7 +29,7 @@ public class PoolOf<T>
         }
         else
         {
-            item = BuildItemInstance();
+            item = CreateItem();
         }
         return item;
     }
