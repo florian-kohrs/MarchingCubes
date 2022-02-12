@@ -115,7 +115,7 @@ namespace MarchingCubes
 
         //Cant really pool noise array, maybe pool tribuilder aray instead (larger than neccessary)
 
-        protected int channeledChunks = 0;
+        protected HashSet<ICompressedMarchingCubeChunk> channeledChunks = new HashSet<ICompressedMarchingCubeChunk>();
 
         protected bool hasFoundInitialChunk;
 
@@ -172,6 +172,10 @@ namespace MarchingCubes
 
         private void Start()
         {
+            mainCam = Camera.main;
+            mainCam.enabled = false;
+            Time.timeScale = 0;
+
             noiseData.ApplyNoiseBiomData();
 
             CreatePools();
@@ -186,9 +190,9 @@ namespace MarchingCubes
             startPos = player.position;
 
 
-            //ICompressedMarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
-            //maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
-            //BuildRelevantChunksParallelBlockingAround(chunk);
+            ICompressedMarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
+            maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
+            BuildRelevantChunksParallelBlockingAround(chunk);
 
             //int amount = 5;
             //for (int x = -amount; x <= amount; x++)
@@ -199,25 +203,31 @@ namespace MarchingCubes
             //    }
             //}
 
-            FindNonEmptyChunkAroundAsync(startPos, (chunk) =>
-            {
-                maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
+            //FindNonEmptyChunkAroundAsync(startPos, (chunk) =>
+            //{
+            //    maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
 
-                BuildRelevantChunksParallelWithAsyncGpuAround(chunk);
-            });
+            //    BuildRelevantChunksParallelWithAsyncGpuAround(chunk);
+            //});
         }
+
+        int count = 0;
+        Camera mainCam;
 
         private void Update()
         {
             List<Exception> x = CompressedMarchingCubeChunk.xs;
             Vector3Int next;
             bool isNextInProgress;
+
+
             if (totalTriBuild < maxTrianglesLeft)
             {
                 
                 //TODO: while waiting create mesh displayers! -> leads to worse performance?
                 while (readyParallelChunks.Count > 0)
                 {
+                    count--;
                     OnParallelChunkDoneCallBack(readyParallelChunks.Dequeue());
                 }
             }
@@ -232,19 +242,41 @@ namespace MarchingCubes
 
                 if (!isNextInProgress)
                 {
+                    count++;
                     CreateChunkWithAsyncGPUReadbackParallel(next);
                 }
             }
+
+            if (hasFoundInitialChunk && /*count <= x.Count && */channeledChunks.Count <= x.Count /*|| channeledChunks > maxRunningThreads*/)
+            {
+                enabled = false;
+
+                Time.timeScale = 1;
+                mainCam.enabled = true;
+
+                watch.Stop();
+                Debug.Log("Total millis: " + watch.Elapsed.TotalMilliseconds);
+                if (totalTriBuild >= maxTrianglesLeft)
+                {
+                    Debug.Log("Aborted");
+                }
+                Debug.Log("Total triangles: " + totalTriBuild);
+
+            }
+
         }
 
         public void BuildRelevantChunksParallelWithAsyncGpuAround(ICompressedMarchingCubeChunk chunk)
         {
+            mainCam.enabled = false;
+            Time.timeScale = 0;
             bool[] dirs = chunk.HasNeighbourInDirection;
             int count = dirs.Length;
             for (int i = 0; i < count; ++i)
             {
                 if (!dirs[i])
                     continue;
+
 
                 Vector3Int v3 = VectorExtension.GetDirectionFromIndex(i) * (chunk.ChunkSize + 1) + chunk.CenterPos;
                 closestNeighbours.Enqueue(0, v3);
@@ -260,14 +292,6 @@ namespace MarchingCubes
             {
                 BuildRelevantChunksParallelWithAsyncGpuAround();
             }
-
-            watch.Stop();
-            Debug.Log("Total millis: " + watch.Elapsed.TotalMilliseconds);
-            if (totalTriBuild >= maxTrianglesLeft)
-            {
-                Debug.Log("Aborted");
-            }
-            Debug.Log("Total triangles: " + totalTriBuild);
 
             // Debug.Log($"Number of chunks: {ChunkGroups.Count}");
         }
@@ -357,7 +381,7 @@ namespace MarchingCubes
                 }
                 if (totalTriBuild < maxTrianglesLeft)
                 {
-                    while ((closestNeighbours.size == 0 && channeledChunks > x.Count) /*|| channeledChunks > maxRunningThreads*/)
+                    while ((closestNeighbours.size == 0 && channeledChunks.Count > x.Count) /*|| channeledChunks > maxRunningThreads*/)
                     {
                         //TODO: while waiting create mesh displayers! -> leads to worse performance?
                         while (readyParallelChunks.Count > 0)
@@ -415,7 +439,7 @@ namespace MarchingCubes
                 }
                 if (totalTriBuild < maxTrianglesLeft)
                 {
-                    while ((closestNeighbours.size == 0 && channeledChunks > x.Count) /*|| channeledChunks > maxRunningThreads*/)
+                    while ((closestNeighbours.size == 0 && channeledChunks.Count > x.Count) /*|| channeledChunks > maxRunningThreads*/)
                     {
                         while (readyParallelChunks.Count > 0)
                         {
@@ -429,7 +453,7 @@ namespace MarchingCubes
 
         protected void OnParallelChunkDoneCallBack(ICompressedMarchingCubeChunk chunk)
         {
-            channeledChunks--;
+            channeledChunks.Remove(chunk);
 
             chunk.SetChunkOnMainThread();
             if (chunk.IsEmpty)
@@ -742,14 +766,13 @@ namespace MarchingCubes
 
         protected void BuildChunkParallel(ICompressedMarchingCubeChunk chunk)
         {
+            channeledChunks.Add(chunk);
             TriangleChunkHeap ts = chunkGPURequest.DispatchAndGetShaderData(chunk, SetChunkComponents);
-            channeledChunks++;
             chunk.InitializeWithMeshDataParallel(ts, readyParallelChunks);
         }
 
         protected void BuildChunkAsync(ICompressedMarchingCubeChunk chunk, Action<ICompressedMarchingCubeChunk> onChunkDone)
         {
-            channeledChunks++;
             chunkGPURequest.DispatchAndGetShaderDataAsync(chunk, SetChunkComponents, (ts) =>
             {
                 //chunk.InitializeWithMeshDataParallel(ts, readyParallelChunks);
@@ -761,8 +784,7 @@ namespace MarchingCubes
 
         protected void BuildChunkAsyncParallel(ICompressedMarchingCubeChunk chunk)
         {
-            channeledChunks++;
-
+            channeledChunks.Add(chunk);
             chunkGPURequest.DispatchAndGetShaderDataAsync(chunk, SetChunkComponents, (ts) =>
             {
                 //chunk.InitializeWithMeshDataParallel(ts,(c)=>

@@ -9,6 +9,7 @@ public class DisposablePoolOf<T> : PoolOf<T> where T : IDisposable
     //TODO: If a lot of unused buffers exist, dispose some of them
     public DisposablePoolOf(Func<T> CreateItem) : base(CreateItem) { }
 
+    protected virtual void OnDispose() { }
 
     public void DisposeAll()
     {
@@ -21,7 +22,8 @@ public class DisposablePoolOf<T> : PoolOf<T> where T : IDisposable
 
     ~DisposablePoolOf()
     {
-        DisposeAll();   
+        DisposeAll();
+        OnDispose();
     }
 
 }

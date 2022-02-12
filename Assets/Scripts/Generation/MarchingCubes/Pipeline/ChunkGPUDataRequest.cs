@@ -9,13 +9,18 @@ namespace MarchingCubes
     public class ChunkGPUDataRequest
     {
 
-
         public ChunkGPUDataRequest(ChunkGenerationPipelinePool pipelinePool, StorageGroupMesh storedNoiseEdits, BufferPool minDegreeBufferPool)
         {
             this.pipelinePool = pipelinePool;
             this.storedNoiseEdits = storedNoiseEdits;
             this.minDegreeBufferPool = minDegreeBufferPool;
+            if(emptyMinDegreeBuffer == null)
+            {
+                emptyMinDegreeBuffer = minDegreeBufferPool.GetItemFromPool();
+            }
         }
+
+        public static ComputeBuffer emptyMinDegreeBuffer;
 
 
         public ChunkGenerationPipelinePool pipelinePool;

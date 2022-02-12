@@ -13,5 +13,9 @@ public class ChunkGenerationPipelinePool : DisposablePoolOf<ChunkGenerationGPUDa
 
     public StorageGroupMesh storageGroup;
 
+    protected override void OnDispose()
+    {
+        ChunkGPUDataRequest.emptyMinDegreeBuffer.Dispose();
+    }
 
 }

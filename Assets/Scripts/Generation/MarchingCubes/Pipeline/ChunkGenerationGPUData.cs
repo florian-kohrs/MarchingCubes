@@ -27,6 +27,7 @@ namespace MarchingCubes
         public static ComputeBuffer biomsVizBuffer;
         public static ComputeBuffer biomBuffer;
 
+
         #endregion
 
         public ComputeShader densityGeneratorShader;
@@ -90,6 +91,10 @@ namespace MarchingCubes
             if (storeMinDegree)
             {
                 buildTrisShader.SetBuffer(0, "minDegreeAtCoord", chunk.MinDegreeBuffer);
+            }
+            else
+            {
+                buildTrisShader.SetBuffer(0, "minDegreeAtCoord", ChunkGPUDataRequest.emptyMinDegreeBuffer);
             }
 
             return trianglesBuffer;

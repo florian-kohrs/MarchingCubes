@@ -24,7 +24,6 @@ namespace MarchingCubes
         public void PrepareChunkToStoreMinDegreesIfNeeded(ICompressedMarchingCubeChunk chunk)
         {
             bool storeMinDegree = chunk.LOD <= 1 && !chunk.IsReady;
-            pipeline.buildTrisShader.SetBool("storeMinDegrees", storeMinDegree);
             if (storeMinDegree)
             {
                 ComputeBuffer minDegreeBuffer = minDegreeBufferPool.GetBufferForShaders();
