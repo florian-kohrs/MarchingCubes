@@ -26,6 +26,9 @@ namespace MarchingCubes
 
         public BiomScriptableObject[] biomsScriptable;
 
+        public int minDegree = 15;
+
+        public int maxDegree = 45;
 
         public int biomSize = 500;
 
@@ -64,6 +67,8 @@ namespace MarchingCubes
             ChunkGenerationGPUData.biomSpacing = biomSpacing;
             ChunkGenerationGPUData.biomSize = biomSize;
 
+            ChunkGenerationGPUData.minDegree = minDegree;
+            ChunkGenerationGPUData.maxDegree = maxDegree;
         }
 
         public void ApplyNoiseBiomData()

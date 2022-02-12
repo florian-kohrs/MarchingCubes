@@ -122,7 +122,6 @@ namespace MarchingCubes
 
         public int totalTriBuild;
 
-        TriangleBuilder[] tris;// = new TriangleBuilder[CHUNK_VOLUME * 5];
         float[] pointsArray;
 
         public WorldUpdater worldUpdater;
@@ -151,9 +150,6 @@ namespace MarchingCubes
         System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
 
         public static object exchangeLocker = new object();
-
-        public int minSteepness = 15;
-        public int maxSteepness = 50;
 
         protected Vector3 startPos;
         protected float maxSqrChunkDistance;
@@ -194,22 +190,115 @@ namespace MarchingCubes
             //maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
             //BuildRelevantChunksParallelBlockingAround(chunk);
 
-            int amount = 0;
-            for (int x = -amount; x <= amount; x++)
+            //int amount = 5;
+            //for (int x = -amount; x <= amount; x++)
+            //{
+            //    for (int y = -amount; y <= amount; y++)
+            //    {
+            //        CreateChunkWithAsyncGPUReadbackParallel(startPos + new Vector3(32 * x, -DEFAULT_CHUNK_SIZE, 32 * y));
+            //    }
+            //}
+
+            FindNonEmptyChunkAroundAsync(startPos, (chunk) =>
             {
-                for (int y = -amount; y <= amount; y++)
+                maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
+
+                BuildRelevantChunksParallelWithAsyncGpuAround(chunk);
+            });
+        }
+
+        private void Update()
+        {
+            List<Exception> x = CompressedMarchingCubeChunk.xs;
+            Vector3Int next;
+            bool isNextInProgress;
+            if (totalTriBuild < maxTrianglesLeft)
+            {
+                
+                //TODO: while waiting create mesh displayers! -> leads to worse performance?
+                while (readyParallelChunks.Count > 0)
                 {
-                    CreateChunkAtAsync(startPos + new Vector3(32 * x, -DEFAULT_CHUNK_SIZE, 32 * y), (c) => { });
+                    OnParallelChunkDoneCallBack(readyParallelChunks.Dequeue());
                 }
             }
 
-            //FindNonEmptyChunkAroundAsync(startPos, (chunk) =>
-            //{
-            //    maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
+            while (closestNeighbours.size > 0)
+            {
+                do
+                {
+                    next = closestNeighbours.Dequeue();
+                    isNextInProgress = chunkGroup.HasChunkStartedAt(next);
+                } while (isNextInProgress && closestNeighbours.size > 0);
 
-            //    //BuildRelevantChunksParallelBlockingAround(chunk);
-            //});
+                if (!isNextInProgress)
+                {
+                    CreateChunkWithAsyncGPUReadbackParallel(next);
+                }
+            }
         }
+
+        public void BuildRelevantChunksParallelWithAsyncGpuAround(ICompressedMarchingCubeChunk chunk)
+        {
+            bool[] dirs = chunk.HasNeighbourInDirection;
+            int count = dirs.Length;
+            for (int i = 0; i < count; ++i)
+            {
+                if (!dirs[i])
+                    continue;
+
+                Vector3Int v3 = VectorExtension.GetDirectionFromIndex(i) * (chunk.ChunkSize + 1) + chunk.CenterPos;
+                closestNeighbours.Enqueue(0, v3);
+                ///for initial neighbours build additional chunks to not just wait for first thread to be done
+                ///seems to worsen performance?
+                //v3 = 2 * VectorExtension.GetDirectionFromIndex(i) * (chunk.ChunkSize + 1) + chunk.CenterPos;
+                //closestNeighbours.Enqueue(0, v3);
+
+                //v3 = 3 * VectorExtension.GetDirectionFromIndex(i) * (chunk.ChunkSize + 1) + chunk.CenterPos;
+                //closestNeighbours.Enqueue(0, v3);
+            }
+            if (closestNeighbours.size > 0)
+            {
+                BuildRelevantChunksParallelWithAsyncGpuAround();
+            }
+
+            watch.Stop();
+            Debug.Log("Total millis: " + watch.Elapsed.TotalMilliseconds);
+            if (totalTriBuild >= maxTrianglesLeft)
+            {
+                Debug.Log("Aborted");
+            }
+            Debug.Log("Total triangles: " + totalTriBuild);
+
+            // Debug.Log($"Number of chunks: {ChunkGroups.Count}");
+        }
+
+        //Todo: try do this work on compute shader already
+        private void BuildRelevantChunksParallelWithAsyncGpuAround()
+        {
+            Vector3Int next;
+            bool isNextInProgress;
+            while (closestNeighbours.size > 0)
+            {
+                do
+                {
+                    next = closestNeighbours.Dequeue();
+                    isNextInProgress = chunkGroup.HasChunkStartedAt(next);
+                } while (isNextInProgress && closestNeighbours.size > 0);
+
+
+                if (!isNextInProgress)
+                {
+                    CreateChunkWithAsyncGPUReadbackParallel(next);
+                }
+                
+            }
+        }
+
+
+
+
+
+
 
 
         public void BuildRelevantChunksParallelBlockingAround(ICompressedMarchingCubeChunk chunk)
@@ -413,7 +502,7 @@ namespace MarchingCubes
             if (tryCount++ >= 100)
                 return;
 
-            CreateChunkAtAsync(pos, (c) => CheckChunk(c, callback, tryCount, ref pos));
+            CreateChunkWithAsyncGPUReadback(pos, (c) => CheckChunk(c, callback, tryCount, ref pos));
         }
 
         protected void CheckChunk(ICompressedMarchingCubeChunk chunk, Action<ICompressedMarchingCubeChunk> callback, int tryCount, ref Vector3 pos)
@@ -516,7 +605,7 @@ namespace MarchingCubes
             return chunk;
         }
 
-        protected void CreateChunkAtAsync(Vector3 pos, Action<ICompressedMarchingCubeChunk> callback, bool allowOverride = false)
+        protected void CreateChunkWithAsyncGPUReadback(Vector3 pos, Action<ICompressedMarchingCubeChunk> callback, bool allowOverride = false)
         {
             int lodPower;
             int chunkSizePower;
@@ -528,6 +617,15 @@ namespace MarchingCubes
         {
             ICompressedMarchingCubeChunk chunk = GetThreadedChunkObjectAt(pos, lodPower, chunkSizePower, allowOverride);
             BuildChunkAsync(chunk, callback);
+        }
+
+        protected void CreateChunkWithAsyncGPUReadbackParallel(Vector3 pos, bool allowOverride = false)
+        {
+            int lodPower;
+            int chunkSizePower;
+            GetSizeAndLodPowerForChunkPosition(pos, out chunkSizePower, out lodPower);
+            ICompressedMarchingCubeChunk chunk = GetThreadedChunkObjectAt(VectorExtension.ToVector3Int(pos), lodPower, chunkSizePower, allowOverride);
+            BuildChunkAsyncParallel(chunk);
         }
 
         protected ICompressedMarchingCubeChunk GetChunkObjectAt(ICompressedMarchingCubeChunk chunk, Vector3Int position, int lodPower, int chunkSizePower, bool allowOverride)
@@ -649,19 +747,31 @@ namespace MarchingCubes
             chunk.InitializeWithMeshDataParallel(ts, readyParallelChunks);
         }
 
-        protected void BuildChunkAsync(ICompressedMarchingCubeChunk chunk, Action<ICompressedMarchingCubeChunk> onChunkDone = null)
+        protected void BuildChunkAsync(ICompressedMarchingCubeChunk chunk, Action<ICompressedMarchingCubeChunk> onChunkDone)
         {
+            channeledChunks++;
             chunkGPURequest.DispatchAndGetShaderDataAsync(chunk, SetChunkComponents, (ts) =>
             {
-                channeledChunks++;
-                chunk.InitializeWithMeshDataParallel(ts,(c)=>
-                {
-                    OnParallelChunkDoneCallBack(c);
-                    onChunkDone(c);
-                });
+                //chunk.InitializeWithMeshDataParallel(ts, readyParallelChunks);
 
-                //chunk.InitializeWithMeshData(ts);
-                //onChunkDone(chunk);
+                chunk.InitializeWithMeshData(ts);
+                onChunkDone(chunk);
+            });
+        }
+
+        protected void BuildChunkAsyncParallel(ICompressedMarchingCubeChunk chunk)
+        {
+            channeledChunks++;
+
+            chunkGPURequest.DispatchAndGetShaderDataAsync(chunk, SetChunkComponents, (ts) =>
+            {
+                //chunk.InitializeWithMeshDataParallel(ts,(c)=>
+                //{
+                //    OnParallelChunkDoneCallBack(c);
+                //    onChunkDone(c);
+                //});
+
+                chunk.InitializeWithMeshDataParallel(ts, readyParallelChunks);
             });
         }
 
@@ -1055,8 +1165,9 @@ namespace MarchingCubes
         {
             ChunkGenerationGPUData result = new ChunkGenerationGPUData();
 
-            result.densityGeneratorShader = Instantiate(densityShader);
+            //TODO: Test shader variant collection less shader variant loading time (https://docs.unity3d.com/ScriptReference/ShaderVariantCollection.html)
 
+            result.densityGeneratorShader = Instantiate(densityShader);
             result.prepareTrisShader = Instantiate(cubesPrepare);
             result.buildTrisShader = Instantiate(buildPreparedCubes);
 
