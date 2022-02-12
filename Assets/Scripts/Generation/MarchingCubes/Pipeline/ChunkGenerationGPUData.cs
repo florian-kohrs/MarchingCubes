@@ -60,7 +60,7 @@ namespace MarchingCubes
             densityGeneratorShader.SetVector("anchor", anchor);
             densityGeneratorShader.SetVector("offset", offset);
             densityGeneratorShader.SetInt("numPointsPerAxis", pointsPerAxis);
-            densityGeneratorShader.SetInt("spacing", chunk.LOD);
+            densityGeneratorShader.SetFloat("spacing", chunk.LOD);
             densityGeneratorShader.SetBool("tryLoadData", tryLoadData);
         }
 
