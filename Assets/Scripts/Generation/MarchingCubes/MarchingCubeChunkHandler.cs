@@ -1047,9 +1047,9 @@ namespace MarchingCubes
         {
             ChunkGenerationGPUData result = new ChunkGenerationGPUData();
 
-            result.densityGeneratorShader = (densityShader);
-            result.prepareTrisShader = (cubesPrepare);
-            result.buildTrisShader = (buildPreparedCubes);
+            result.densityGeneratorShader = Instantiate(densityShader);
+            result.prepareTrisShader = Instantiate(cubesPrepare);
+            result.buildTrisShader = Instantiate(buildPreparedCubes);
 
             result.triCountBuffer = CreateCopyCountBuffer();
             result.pointsBuffer = CreatePointsBuffer();

@@ -49,10 +49,7 @@ namespace MarchingCubes
         {
             PrepareChunkToStoreMinDegreesIfNeeded(chunk);
 
-            pipeline.ApplyBuildTrianglesForChunkProperties(chunk, numTris);
-
-            ComputeBuffer trianglesBuffer = new ComputeBuffer(numTris, TriangleBuilder.SIZE_OF_TRI_BUILD);
-            pipeline.buildTrisShader.SetBuffer(0, "triangles", trianglesBuffer);
+            ComputeBuffer trianglesBuffer = pipeline.ApplyBuildTrianglesForChunkProperties(chunk, numTris);
 
             int numThreads = Mathf.CeilToInt(numTris / THREAD_GROUP_SIZE);
 

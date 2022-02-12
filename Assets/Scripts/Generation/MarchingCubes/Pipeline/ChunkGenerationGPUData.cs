@@ -35,6 +35,7 @@ namespace MarchingCubes
 
         public ComputeBuffer triCountBuffer;
         public ComputeBuffer pointsBuffer;
+        //TODO: Pool theese seperatly somewhere else
         public ComputeBuffer savedPointsBuffer;
         public ComputeBuffer preparedTrisBuffer;
 
@@ -70,18 +71,19 @@ namespace MarchingCubes
             preparedTrisBuffer.SetCounterValue(0);
         }
 
-        public void ApplyBuildTrianglesForChunkProperties(ICompressedMarchingCubeChunk chunk, int numTris)
+        public ComputeBuffer ApplyBuildTrianglesForChunkProperties(ICompressedMarchingCubeChunk chunk, int numTris)
         {
             Vector4 anchor = VectorExtension.RaiseVector3Int(chunk.AnchorPos);
             int pointsPerAxis = chunk.PointsPerAxis;
 
             bool storeMinDegree = chunk.MinDegreeBuffer != null;
 
-            //TODO: Apply triangle buffer.
+            ComputeBuffer trianglesBuffer = new ComputeBuffer(numTris, TriangleBuilder.SIZE_OF_TRI_BUILD);
+            buildTrisShader.SetBuffer(0, "triangles", trianglesBuffer);
 
             buildTrisShader.SetVector("anchor", anchor);
+            buildTrisShader.SetFloat("spacing", chunk.LOD);
             buildTrisShader.SetInt("numPointsPerAxis", pointsPerAxis);
-            buildTrisShader.SetInt("spacing", chunk.LOD);
             buildTrisShader.SetInt("length", numTris);
             buildTrisShader.SetBool("storeMinDegrees", storeMinDegree);
 
@@ -89,6 +91,8 @@ namespace MarchingCubes
             {
                 buildTrisShader.SetBuffer(0, "minDegreeAtCoord", chunk.MinDegreeBuffer);
             }
+
+            return trianglesBuffer;
         }
 
         protected void ApplyDensityProperties()
