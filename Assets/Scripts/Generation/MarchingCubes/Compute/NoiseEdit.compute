@@ -4,6 +4,9 @@
 
 static const int numThreads = 4;
 
+static const int SQR_NUM_POINTS_PER_AXIS = NUM_POINTS_PER_AXIS * NUM_POINTS_PER_AXIS;
+
+
 //Envirenment settings
 RWStructuredBuffer<float> points;
 
@@ -15,7 +18,7 @@ float maxDistance;
 
 
 int indexFromCoord(uint x, uint y, uint z) {
-    return z * NUM_POINTS_PER_AXIS * NUM_POINTS_PER_AXIS + y * NUM_POINTS_PER_AXIS + x;
+    return z * SQR_NUM_POINTS_PER_AXIS + y * NUM_POINTS_PER_AXIS + x;
 }
 
 [numthreads(numThreads,numThreads,numThreads)]

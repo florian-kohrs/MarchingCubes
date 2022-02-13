@@ -48,7 +48,7 @@ namespace MarchingCubes
 
         //TODO: Inform about Mesh subset and mesh set vertex buffer
         //Subset may be used to only change parts of the mesh -> dont need multiple mesh displayers with submeshes?
-        public TriangleChunkHeap DispatchAndGetShaderData(ICompressedMarchingCubeChunk chunk, Action<ICompressedMarchingCubeChunk> SetChunkComponents, Action WorkOnNoise = null)
+        public TriangleChunkHeap DispatchAndGetShaderData(ICompressedMarchingCubeChunk chunk, Action<ICompressedMarchingCubeChunk> SetChunkComponents, Action<ComputeBuffer> WorkOnNoise = null)
         {
             ChunkGenerationGPUData gpuData = pipelinePool.GetItemFromPool();
             NoisePipeline noise = new NoisePipeline(gpuData, storedNoiseEdits);
@@ -60,7 +60,9 @@ namespace MarchingCubes
             noise.TryLoadOrGenerateNoise(chunk);
             bool storeNoise = noise.WorkOnNoiseMap(chunk, WorkOnNoise);
             int numTris = chunkPipeline.ComputeCubesFromNoise(chunk, out triangleBuffer);
- 
+
+            float[] noise2 = ComputeBufferExtension.ReadBuffer<float>(gpuData.pointsBuffer);
+
             TriangleBuilder[] tris;
 
             ///read data from gpu
@@ -84,7 +86,7 @@ namespace MarchingCubes
             return new TriangleChunkHeap(tris, 0, numTris);
         }
 
-        public void DispatchAndGetShaderDataAsync(ICompressedMarchingCubeChunk chunk, Action<ICompressedMarchingCubeChunk> SetChunkComponents, Action<TriangleChunkHeap> OnDataDone, Action WorkOnNoise = null)
+        public void DispatchAndGetShaderDataAsync(ICompressedMarchingCubeChunk chunk, Action<ICompressedMarchingCubeChunk> SetChunkComponents, Action<TriangleChunkHeap> OnDataDone)
         {
             ChunkGenerationGPUData gpuData = pipelinePool.GetItemFromPool();
             NoisePipeline noise = new NoisePipeline(gpuData, storedNoiseEdits);
@@ -92,13 +94,8 @@ namespace MarchingCubes
 
             ValidateChunkProperties(chunk);
             noise.TryLoadOrGenerateNoise(chunk);
-            bool storeNoise = noise.WorkOnNoiseMap(chunk, WorkOnNoise);
             chunkPipeline.DispatchPrepareCubesFromNoise(chunk);
 
-            if (storeNoise)
-            {
-                noise.StoreNoise(chunk);
-            }
 
             ComputeBufferExtension.GetLengthOfAppendBufferAsync(gpuData.preparedTrisBuffer, gpuData.triCountBuffer, (numTris) =>
             {

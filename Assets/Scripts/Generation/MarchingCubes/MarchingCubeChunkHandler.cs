@@ -79,6 +79,8 @@ namespace MarchingCubes
 
         public NoiseData noiseData;
 
+        public ComputeShader prepareAroundShader;
+
         public ComputeShader densityShader;
 
         public ComputeShader cubesPrepare;
@@ -597,8 +599,8 @@ namespace MarchingCubes
                     chunk.DestroyChunk();
                 }
                 chunk = CreateChunkWithProperties(p, 0, DEFAULT_CHUNK_SIZE_POWER, false,
-                    () => {
-                        ApplyNoiseEditing(33, editPoint, start, end, delta, maxDistance);
+                    (b) => {
+                        ApplyNoiseEditing(b, editPoint, start, end, delta, maxDistance);
                     });
             }
         }
@@ -619,7 +621,7 @@ namespace MarchingCubes
             return CreateChunkWithProperties(VectorExtension.ToVector3Int(pos), lodPower, chunkSizePower, allowOverride);
         }
 
-        protected ICompressedMarchingCubeChunk CreateChunkWithProperties(Vector3Int pos, int lodPower, int chunkSizePower, bool allowOverride, Action WorkOnNoise = null)
+        protected ICompressedMarchingCubeChunk CreateChunkWithProperties(Vector3Int pos, int lodPower, int chunkSizePower, bool allowOverride, Action<ComputeBuffer> WorkOnNoise = null)
         {
             ICompressedMarchingCubeChunk chunk = GetThreadedChunkObjectAt(pos, lodPower, chunkSizePower, allowOverride);
             BuildChunk(chunk, WorkOnNoise);
@@ -753,7 +755,7 @@ namespace MarchingCubes
 
 
         //TODO:Remove keep points
-        protected void BuildChunk(ICompressedMarchingCubeChunk chunk, Action WorkOnNoise = null)
+        protected void BuildChunk(ICompressedMarchingCubeChunk chunk, Action<ComputeBuffer> WorkOnNoise = null)
         {
             TriangleChunkHeap ts = chunkGPURequest.DispatchAndGetShaderData(chunk, SetChunkComponents, WorkOnNoise);
             chunk.InitializeWithMeshData(ts);
@@ -834,15 +836,17 @@ namespace MarchingCubes
             //storageGroup.Store(chunk.AnchorPos, chunk);
         }
 
-        private void ApplyNoiseEditing(int pointsPerAxis, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance)
+        private void ApplyNoiseEditing(ComputeBuffer noiseBuffer, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance)
         {
-            SetNoiseEditProperties(editPoint, start, end, delta, maxDistance);
-            int threadsPerAxis = Mathf.CeilToInt(pointsPerAxis / threadGroupSize);
+            SetNoiseEditProperties(noiseBuffer,editPoint, start, end, delta, maxDistance);
+            int threadsPerAxis = Mathf.CeilToInt(POINTS_PER_AXIS_IN_DEFAULT_SIZE / threadGroupSize);
             noiseEditShader.Dispatch(0, threadsPerAxis, threadsPerAxis, threadsPerAxis);
         }
 
-        private void SetNoiseEditProperties(Vector3 editPoint, Vector3 start, Vector3 end, float delta, float maxDistance)
+        private void SetNoiseEditProperties(ComputeBuffer noiseBuffer, Vector3 editPoint, Vector3 start, Vector3 end, float delta, float maxDistance)
         {
+            noiseEditShader.SetBuffer(0,"points", noiseBuffer);
+
             noiseEditShader.SetVector("clickPoint", editPoint);
             noiseEditShader.SetVector("start", start);
             noiseEditShader.SetVector("end", end);

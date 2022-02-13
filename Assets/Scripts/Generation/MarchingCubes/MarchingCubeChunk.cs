@@ -374,6 +374,8 @@ namespace MarchingCubes
                Mathf.CeilToInt((1 + (endVec.z - startVec.z)) / REBUILD_SHADER_THREAD_GROUP_SIZE)
                );
 
+            ChunkHandler.DispatchRebuildAround(this, clickedIndex, startVec, endVec, marchSquare);
+
             rebuildShader.SetVector("editPoint", new Vector4(clickedIndex.x, clickedIndex.y, clickedIndex.z,0));
             rebuildShader.SetVector("start", startVec);
             rebuildShader.SetVector("end", endVec);

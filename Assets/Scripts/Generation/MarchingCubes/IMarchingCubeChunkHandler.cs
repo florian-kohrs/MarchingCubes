@@ -55,7 +55,7 @@ namespace MarchingCubes
         void ReturnMinDegreeBuffer(ComputeBuffer minDegreeBuffer);
 
         void StartEnvironmentPipelineForChunk(IEnvironmentSurface environmentChunk);
-
+        void DispatchRebuildAround(MarchingCubeChunk marchingCubeChunk, Vector3Int clickedIndex, Vector3 startVec, Vector3 endVec, float marchSquare);
     }
 
 }

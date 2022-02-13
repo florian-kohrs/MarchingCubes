@@ -85,7 +85,7 @@ namespace MarchingCubes
             pipeline.densityGeneratorShader.Dispatch(0, groupsPerAxis, groupsPerAxis, groupsPerAxis);
         }
 
-        public bool WorkOnNoiseMap(ICompressedMarchingCubeChunk chunk, Action a)
+        public bool WorkOnNoiseMap(ICompressedMarchingCubeChunk chunk, Action<ComputeBuffer> a)
         {
             bool storeNoise = false;
             if (a != null)
@@ -94,7 +94,7 @@ namespace MarchingCubes
                 {
                     throw new ArgumentException("Chunk has to be storeable to be able to store requested noise!");
                 }
-                a();
+                a(pipeline.pointsBuffer);
                 storeNoise = true;
             }
             return storeNoise;
