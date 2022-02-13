@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Collections;
 using UnityEngine;
 
@@ -46,6 +47,7 @@ namespace MarchingCubes
             return result;
         }
 
+
         //TODO: Inform about Mesh subset and mesh set vertex buffer
         //Subset may be used to only change parts of the mesh -> dont need multiple mesh displayers with submeshes?
         public TriangleChunkHeap DispatchAndGetShaderData(ICompressedMarchingCubeChunk chunk, Action<ICompressedMarchingCubeChunk> SetChunkComponents, Action<ComputeBuffer> WorkOnNoise = null)
@@ -84,6 +86,41 @@ namespace MarchingCubes
             }
             pipelinePool.ReturnItemToPool(gpuData);
             return new TriangleChunkHeap(tris, 0, numTris);
+        }
+
+        public TriangleBuilder[] DispatchRebuildAround(IMarchingCubeChunk chunk, ComputeShader rebuildShader, Action DoStuffBeforeReadback, Vector3Int threadsPerAxis)
+        {
+            ChunkGenerationGPUData gpuData = pipelinePool.GetItemFromPool();
+            gpuData.pointsBuffer.SetData(chunk.Points);
+
+            ChunkPipeline chunkPipeline = new ChunkPipeline(gpuData, minDegreeBufferPool);
+            ComputeBuffer triangleBuffer;
+
+            int numTris = chunkPipeline.ComputeCubesFromNoiseAround(chunk, rebuildShader, threadsPerAxis, out triangleBuffer);
+
+            float[] test = ComputeBufferExtension.ReadBuffer<float>(gpuData.pointsBuffer);
+            Vector4[] test2 = ComputeBufferExtension.ReadBuffer<Vector2Int>(gpuData.preparedTrisBuffer).Select((data) => new Vector4((uint)data.x >> 24,
+                ((uint)data.x << 8) >> 24,
+                ((uint)data.x << 16) >> 24,
+                ((uint)data.x << 24) >> 24)).ToArray();
+
+            TriangleBuilder[] tris;
+
+            ///read data from gpu
+            if (numTris == 0)
+            {
+                tris = Array.Empty<TriangleBuilder>();
+            }
+            else
+            {
+                DoStuffBeforeReadback();
+                tris = new TriangleBuilder[numTris];
+                triangleBuffer.GetData(tris);
+                triangleBuffer.Dispose();
+            }
+
+            pipelinePool.ReturnItemToPool(gpuData);
+            return tris;
         }
 
         public void DispatchAndGetShaderDataAsync(ICompressedMarchingCubeChunk chunk, Action<ICompressedMarchingCubeChunk> SetChunkComponents, Action<TriangleChunkHeap> OnDataDone)

@@ -8,6 +8,7 @@ namespace MarchingCubes
     public class ChunkPipeline
     {
 
+
         public const float THREAD_GROUP_SIZE = 32;
 
         public ChunkPipeline(ChunkGenerationGPUData pipeline, BufferPool minDegreeBufferPool)
@@ -60,6 +61,30 @@ namespace MarchingCubes
         public int ComputeCubesFromNoise(ICompressedMarchingCubeChunk chunk, out ComputeBuffer triangleBuffer)
         {
             DispatchPrepareCubesFromNoise(chunk);
+            int numTris = ComputeBufferExtension.GetLengthOfAppendBuffer(pipeline.preparedTrisBuffer, pipeline.triCountBuffer);
+            if (numTris > 0)
+            {
+                triangleBuffer = BuildPreparedCubes(chunk, numTris);
+            }
+            else
+            {
+                triangleBuffer = null;
+            }
+            return numTris;
+        }
+
+        public void DispatchPrepareCubesFromNoiseAround(ComputeShader rebuildShader, Vector3Int threadsPerAxis)
+        {
+            rebuildShader.SetBuffer(0, "points", pipeline.pointsBuffer);
+            rebuildShader.SetBuffer(0, "triangleLocations", pipeline.preparedTrisBuffer);
+            pipeline.preparedTrisBuffer.SetCounterValue(0);
+
+            rebuildShader.Dispatch(0, threadsPerAxis.x, threadsPerAxis.y, threadsPerAxis.z);
+        }
+
+        public int ComputeCubesFromNoiseAround(ICompressedMarchingCubeChunk chunk, ComputeShader rebuildShader, Vector3Int threadsPerAxis, out ComputeBuffer triangleBuffer)
+        {
+            DispatchPrepareCubesFromNoiseAround(rebuildShader, threadsPerAxis);
             int numTris = ComputeBufferExtension.GetLengthOfAppendBuffer(pipeline.preparedTrisBuffer, pipeline.triCountBuffer);
             if (numTris > 0)
             {

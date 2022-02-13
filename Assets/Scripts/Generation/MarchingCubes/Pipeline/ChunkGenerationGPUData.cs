@@ -56,7 +56,7 @@ namespace MarchingCubes
 
         public void ApplyDensityPropertiesForChunk(ICompressedMarchingCubeChunk chunk, bool tryLoadData = true)
         {
-            Vector4 anchor = VectorExtension.RaiseVector3Int(chunk.AnchorPos);
+            Vector4 anchor = VectorExtension.ToVector4(chunk.AnchorPos);
             int pointsPerAxis = chunk.PointsPerAxis;
 
             densityGeneratorShader.SetVector("anchor", anchor);
@@ -74,7 +74,7 @@ namespace MarchingCubes
 
         public ComputeBuffer ApplyBuildTrianglesForChunkProperties(ICompressedMarchingCubeChunk chunk, int numTris)
         {
-            Vector4 anchor = VectorExtension.RaiseVector3Int(chunk.AnchorPos);
+            Vector4 anchor = VectorExtension.ToVector4(chunk.AnchorPos);
             int pointsPerAxis = chunk.PointsPerAxis;
 
             bool storeMinDegree = chunk.MinDegreeBuffer != null;

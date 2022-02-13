@@ -42,7 +42,7 @@ namespace MarchingCubes
 
         protected int targetLodPower = -1;
 
-        protected int TriCount =>  NumTris * 3;
+        protected int VertexCount =>  NumTris * 3;
 
         protected int trisLeft;
 
@@ -499,7 +499,7 @@ namespace MarchingCubes
 
         protected virtual void RebuildFromTriangleArray(TriangleChunkHeap heap)
         {
-            trisLeft = TriCount;
+            trisLeft = VertexCount;
 
             ResetArrayData();
 

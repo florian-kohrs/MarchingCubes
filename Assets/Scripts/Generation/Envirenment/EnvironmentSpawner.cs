@@ -89,7 +89,7 @@ namespace MeshGPUInstanciation
         {
             environmentEntities.SetCounterValue(0);
             environmentSpawner.SetBuffer(0, "minAngleAtCubeIndex", chunk.MinDegreeBuffer);
-            Vector4 v4 = VectorExtension.RaiseVector3Int(chunk.AnchorPos);
+            Vector4 v4 = VectorExtension.ToVector4(chunk.AnchorPos);
             environmentSpawner.SetVector("anchorPosition", v4);
             environmentPlacer.SetVector("anchorPosition", v4);
             environmentPlacer.SetVector(BOUNDS_CENTER_NAME, chunk.MeshBounds.Value.center);
@@ -145,7 +145,7 @@ namespace MeshGPUInstanciation
         public void AddEnvirenmentForEditedChunk(ICompressedMarchingCubeChunk chunk, bool buildDetailEnvironment)
         {
             environmentSpawner.SetBuffer(0, "minAngleAtCubeIndex", chunk.MinDegreeBuffer);
-            environmentSpawner.SetVector("anchorPosition", VectorExtension.RaiseVector3Int(chunk.AnchorPos));
+            environmentSpawner.SetVector("anchorPosition", VectorExtension.ToVector4(chunk.AnchorPos));
             environmentSpawner.Dispatch(0, THREADS_PER_AXIS, THREADS_PER_AXIS, THREADS_PER_AXIS);
             int[] results = ComputeBufferExtension.ReadAppendBuffer<int>(environmentEntities, bufferCount);
 

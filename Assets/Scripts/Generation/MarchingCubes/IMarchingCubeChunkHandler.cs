@@ -1,4 +1,5 @@
 ﻿using MarchingCubes;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -55,7 +56,8 @@ namespace MarchingCubes
         void ReturnMinDegreeBuffer(ComputeBuffer minDegreeBuffer);
 
         void StartEnvironmentPipelineForChunk(IEnvironmentSurface environmentChunk);
-        void DispatchRebuildAround(MarchingCubeChunk marchingCubeChunk, Vector3Int clickedIndex, Vector3 startVec, Vector3 endVec, float marchSquare);
+
+        TriangleBuilder[] DispatchRebuildAround(IMarchingCubeChunk marchingCubeChunk, Action removeCubes, Vector3Int clickedIndex, Vector3 startVec, Vector3 endVec, float marchSquare);
     }
 
 }

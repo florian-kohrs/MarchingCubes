@@ -24,7 +24,9 @@ namespace MarchingCubes
         /// <summary>
         /// This should be the same value as in the compute shader "MarchingCubes"
         /// </summary>
-        protected const float threadGroupSize = 4;
+        protected const float THREAD_GROUP_SIZE = 4;
+
+        public const float REBUILD_SHADER_THREAD_GROUP_SIZE = 4;
 
         public const int MIN_CHUNK_SIZE = 8;
 
@@ -74,8 +76,6 @@ namespace MarchingCubes
         public int blockAroundPlayer = 16;
 
         private const int maxTrianglesLeft = 5000000;
-
-        public ComputeShader rebuildShader;
 
         public NoiseData noiseData;
 
@@ -839,7 +839,7 @@ namespace MarchingCubes
         private void ApplyNoiseEditing(ComputeBuffer noiseBuffer, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance)
         {
             SetNoiseEditProperties(noiseBuffer,editPoint, start, end, delta, maxDistance);
-            int threadsPerAxis = Mathf.CeilToInt(POINTS_PER_AXIS_IN_DEFAULT_SIZE / threadGroupSize);
+            int threadsPerAxis = Mathf.CeilToInt(POINTS_PER_AXIS_IN_DEFAULT_SIZE / THREAD_GROUP_SIZE);
             noiseEditShader.Dispatch(0, threadsPerAxis, threadsPerAxis, threadsPerAxis);
         }
 
@@ -1291,6 +1291,26 @@ namespace MarchingCubes
         public float[] RequestNoiseForChunk(ICompressedMarchingCubeChunk chunk)
         {
             return chunkGPURequest.RequestNoiseForChunk(chunk);
+        }
+
+        public TriangleBuilder[] DispatchRebuildAround(IMarchingCubeChunk chunk, Action removeCubes, Vector3Int clickedIndex, Vector3 startVec, Vector3 endVec, float marchSquare)
+        {
+            prepareAroundShader.SetVector("editPoint", new Vector4(clickedIndex.x, clickedIndex.y, clickedIndex.z, 0));
+            prepareAroundShader.SetVector("start", startVec);
+            prepareAroundShader.SetVector("end", endVec);
+            prepareAroundShader.SetVector("anchor", VectorExtension.ToVector4(chunk.AnchorPos));
+            prepareAroundShader.SetInt("numPointsPerAxis", chunk.PointsPerAxis);
+            prepareAroundShader.SetFloat("spacing", 1);
+            prepareAroundShader.SetFloat("sqrRebuildRadius", marchSquare);
+
+
+            Vector3Int threadsPerAxis = new Vector3Int(
+               Mathf.CeilToInt((1 + (endVec.x - startVec.x)) / REBUILD_SHADER_THREAD_GROUP_SIZE),
+               Mathf.CeilToInt((1 + (endVec.y - startVec.y)) / REBUILD_SHADER_THREAD_GROUP_SIZE),
+               Mathf.CeilToInt((1 + (endVec.z - startVec.z)) / REBUILD_SHADER_THREAD_GROUP_SIZE)
+               );
+
+            return chunkGPURequest.DispatchRebuildAround(chunk, prepareAroundShader, removeCubes, threadsPerAxis);
         }
 
     }

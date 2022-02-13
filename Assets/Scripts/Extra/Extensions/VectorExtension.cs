@@ -280,7 +280,7 @@ public static class VectorExtension
         return new Vector3Int((int)v.x, (int)v.y, (int)v.z);
     }
 
-    public static Vector4 RaiseVector3Int(Vector3Int vec)
+    public static Vector4 ToVector4(Vector3Int vec)
     {
         return new Vector4(vec.x, vec.y, vec.z, 0);
     }

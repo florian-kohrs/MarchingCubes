@@ -14,7 +14,6 @@ namespace MarchingCubes
         IMarchingCubeChunk, IHasInteractableMarchingCubeChunk, ICubeNeighbourFinder
     {
 
-        public const float REBUILD_SHADER_THREAD_GROUP_SIZE = 4;
 
         public const int MAX_NOISE_VALUE  = 100;
 
@@ -23,12 +22,6 @@ namespace MarchingCubes
         public MarchingCubeEntity[,,] cubeEntities;
 
         public HashSet<MarchingCubeEntity> entities = new HashSet<MarchingCubeEntity>();
-
-        public ComputeShader rebuildShader;
-        public ComputeBuffer rebuildNoiseBuffer;
-        public ComputeBuffer rebuildTriResult;
-        public ComputeBuffer rebuildTriCounter;
-
 
         //TODO: pool theese arrays
         protected float[] points;
@@ -157,7 +150,7 @@ namespace MarchingCubes
 
         protected override void RebuildFromTriangleArray(TriangleChunkHeap heap)
         {
-            trisLeft = TriCount;
+            trisLeft = VertexCount;
             ResetArrayData();
 
             int totalTreeCount = 0;
@@ -202,7 +195,7 @@ namespace MarchingCubes
                 }
                 //else
                 //{
-                //    Debug.Log($"didint remove {x} {y} {z} with distance {(new Vector3(x,y,z)-origin).magnitude} with allowed distance {distance}." +
+                //    Debug.Log($"didint remove {x} {y} {z} with distance {(new Vector3(x, y, z) - origin).magnitude} with allowed distance {distance}." +
                 //        $"triangle has {TriangulationTable.triangulationSizes[ts[i].triIndex]}");
                 //}
                 PathTriangle pathTri = new PathTriangle(cube, in ts[i].tri, ts[i].color32);
@@ -215,7 +208,7 @@ namespace MarchingCubes
             if (IsEmpty)
                 return;
 
-            trisLeft = TriCount;
+            trisLeft = VertexCount;
 
             ResetArrayData();
 
@@ -368,73 +361,58 @@ namespace MarchingCubes
                 Mathf.Min(voxelMinus, end.y + 1),
                 Mathf.Min(voxelMinus, end.z + 1));
 
-            Vector3Int threadsPerAxis = new Vector3Int(
-               Mathf.CeilToInt((1 + (endVec.x - startVec.x)) / REBUILD_SHADER_THREAD_GROUP_SIZE),
-               Mathf.CeilToInt((1 + (endVec.y - startVec.y)) / REBUILD_SHADER_THREAD_GROUP_SIZE),
-               Mathf.CeilToInt((1 + (endVec.z - startVec.z)) / REBUILD_SHADER_THREAD_GROUP_SIZE)
-               );
-
-            ChunkHandler.DispatchRebuildAround(this, clickedIndex, startVec, endVec, marchSquare);
-
-            rebuildShader.SetVector("editPoint", new Vector4(clickedIndex.x, clickedIndex.y, clickedIndex.z,0));
-            rebuildShader.SetVector("start", startVec);
-            rebuildShader.SetVector("end", endVec);
-            rebuildShader.SetVector("anchor", new Vector4(AnchorPos.x, AnchorPos.y, AnchorPos.z, 0));
-            rebuildShader.SetInt("numPointsPerAxis", pointsPerAxis);
-            rebuildShader.SetFloat("spacing", 1);
-            rebuildNoiseBuffer.SetData(Points);
-            rebuildShader.SetFloat("sqrRebuildRadius", marchSquare);
-            rebuildTriResult.SetCounterValue(0);
-
-            rebuildShader.Dispatch(0, threadsPerAxis.x, threadsPerAxis.y, threadsPerAxis.z);
-
-            int startX = (int)startVec.x;
-            int startY = (int)startVec.y;
-            int startZ = (int)startVec.z;
-
-            int editPointY = clickedIndex.y;
-            int editPointZ = clickedIndex.z;
-
-            int endX = (int)endVec.x;
-            int endY = (int)endVec.y;
-            int endZ = (int)endVec.z;
-
-            float distanceX = startX - clickedIndex.x;
-            float xx = distanceX * distanceX;
-            for (int x = startX; x <= endX; x++)
+            Action doStuff = () =>
             {
-                float distanceY = startY - editPointY;
-                float yy = distanceY * distanceY;
-                for (int y = startY; y <= endY; y++)
+                int removedCount = 0;
+                int startX = (int)startVec.x;
+                int startY = (int)startVec.y;
+                int startZ = (int)startVec.z;
+
+                int editPointY = clickedIndex.y;
+                int editPointZ = clickedIndex.z;
+
+                int endX = (int)endVec.x;
+                int endY = (int)endVec.y;
+                int endZ = (int)endVec.z;
+
+                float distanceX = startX - clickedIndex.x;
+                float xx = distanceX * distanceX;
+                for (int x = startX; x <= endX; x++)
                 {
-                    float distanceZ = startZ - editPointZ;
-                    float zz = distanceZ * distanceZ;
-                    for (int z = startZ; z <= endZ; z++)
+                    float distanceY = startY - editPointY;
+                    float yy = distanceY * distanceY;
+                    for (int y = startY; y <= endY; y++)
                     {
-                        float sqrDis = xx + yy + zz;
-                        if (sqrDis <= marchSquare)
+                        float distanceZ = startZ - editPointZ;
+                        float zz = distanceZ * distanceZ;
+                        for (int z = startZ; z <= endZ; z++)
                         {
-                            MarchingCubeEntity cube;
-                            if (TryGetEntityAt(x, y, z, out cube))
+                            float sqrDis = xx + yy + zz;
+                            if (sqrDis <= marchSquare)
                             {
-                                NumTris -= cube.triangles.Length;
-                                RemoveEntityAt(x, y, z, cube);
+                                MarchingCubeEntity cube;
+                                if (TryGetEntityAt(x, y, z, out cube))
+                                {
+                                    removedCount+= cube.triangles.Length;
+                                    NumTris -= cube.triangles.Length;
+                                    RemoveEntityAt(x, y, z, cube);
+                                }
                             }
+                            distanceZ++;
+                            zz = distanceZ * distanceZ;
                         }
-                        distanceZ++;
-                        zz = distanceZ * distanceZ;
+                        distanceY++;
+                        yy = distanceY * distanceY;
                     }
-                    distanceY++;
-                    yy = distanceY * distanceY;
+                    distanceX++;
+                    xx = distanceX * distanceX;
                 }
-                distanceX++;
-                xx = distanceX * distanceX;
-            }
+            };
 
-            TriangleBuilder[] ts;
-            //NumTris += ChunkHandler.ReadCurrentTriangleData(out ts);
+            TriangleBuilder[] ts = ChunkHandler.DispatchRebuildAround(this, doStuff, clickedIndex, startVec, endVec, marchSquare);
 
-            //AddFromTriangleArray(ts, clickedIndex, marchDistance);
+            NumTris += ts.Length;
+            AddFromTriangleArray(ts);
 
             if (!IsEmpty)
             {
