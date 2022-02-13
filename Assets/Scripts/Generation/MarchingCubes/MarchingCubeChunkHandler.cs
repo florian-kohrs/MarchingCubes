@@ -175,9 +175,6 @@ namespace MarchingCubes
         private void Start()
         {
             mainCam = Camera.main;
-            mainCam.enabled = false;
-            Time.timeScale = 0;
-
             noiseData.ApplyNoiseBiomData();
 
             CreatePools();
@@ -216,56 +213,59 @@ namespace MarchingCubes
         int count = 0;
         Camera mainCam;
 
-        private void Update()
+        protected IEnumerator WaitTillAsynGenerationDone()
         {
-            List<Exception> x = CompressedMarchingCubeChunk.xs;
-            Vector3Int next;
-            bool isNextInProgress;
-
-
-            if (totalTriBuild < maxTrianglesLeft)
+            bool repeat = true;
+            while (repeat)
             {
-                
-                //TODO: while waiting create mesh displayers! -> leads to worse performance?
-                while (readyParallelChunks.Count > 0)
+                List<Exception> x = CompressedMarchingCubeChunk.xs;
+                Vector3Int next;
+                bool isNextInProgress;
+
+
+                if (totalTriBuild < maxTrianglesLeft)
                 {
-                    count--;
-                    OnParallelChunkDoneCallBack(readyParallelChunks.Dequeue());
+
+                    //TODO: while waiting create mesh displayers! -> leads to worse performance?
+                    while (readyParallelChunks.Count > 0)
+                    {
+                        count--;
+                        OnParallelChunkDoneCallBack(readyParallelChunks.Dequeue());
+                    }
                 }
-            }
 
-            while (closestNeighbours.size > 0)
-            {
-                do
+                while (closestNeighbours.size > 0)
                 {
-                    next = closestNeighbours.Dequeue();
-                    isNextInProgress = chunkGroup.HasChunkStartedAt(next);
-                } while (isNextInProgress && closestNeighbours.size > 0);
+                    do
+                    {
+                        next = closestNeighbours.Dequeue();
+                        isNextInProgress = chunkGroup.HasChunkStartedAt(next);
+                    } while (isNextInProgress && closestNeighbours.size > 0);
 
-                if (!isNextInProgress)
-                {
-                    count++;
-                    CreateChunkWithAsyncGPUReadbackParallel(next);
+                    if (!isNextInProgress)
+                    {
+                        count++;
+                        CreateChunkWithAsyncGPUReadbackParallel(next);
+                    }
                 }
-            }
 
-            if (hasFoundInitialChunk && /*count <= x.Count && */channeledChunks.Count <= x.Count /*|| channeledChunks > maxRunningThreads*/)
-            {
-                enabled = false;
-
-                Time.timeScale = 1;
-                mainCam.enabled = true;
-
-                watch.Stop();
-                Debug.Log("Total millis: " + watch.Elapsed.TotalMilliseconds);
-                if (totalTriBuild >= maxTrianglesLeft)
+                if (hasFoundInitialChunk && /*count <= x.Count && */channeledChunks.Count <= x.Count /*|| channeledChunks > maxRunningThreads*/)
                 {
-                    Debug.Log("Aborted");
+                    repeat= false;
+                    Time.timeScale = 1;
+                    mainCam.enabled = true;
+
+                    watch.Stop();
+                    Debug.Log("Total millis: " + watch.Elapsed.TotalMilliseconds);
+                    if (totalTriBuild >= maxTrianglesLeft)
+                    {
+                        Debug.Log("Aborted");
+                    }
+                    Debug.Log("Total triangles: " + totalTriBuild);
+
                 }
-                Debug.Log("Total triangles: " + totalTriBuild);
-
+                yield return null;
             }
-
         }
 
         public void BuildRelevantChunksParallelWithAsyncGpuAround(ICompressedMarchingCubeChunk chunk)
@@ -519,6 +519,9 @@ namespace MarchingCubes
 
         protected void FindNonEmptyChunkAroundAsync(Vector3 pos, Action<ICompressedMarchingCubeChunk> callback)
         {
+            Time.timeScale = 0;
+            mainCam.enabled = false;
+            StartCoroutine(WaitTillAsynGenerationDone());
             FindNonEmptyChunkAroundAsync(pos, callback, 0);
         }
 
