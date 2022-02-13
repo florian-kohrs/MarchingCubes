@@ -117,7 +117,7 @@ namespace MarchingCubes
 
         //Cant really pool noise array, maybe pool tribuilder aray instead (larger than neccessary)
 
-        protected HashSet<ICompressedMarchingCubeChunk> channeledChunks = new HashSet<ICompressedMarchingCubeChunk>();
+        public static HashSet<ICompressedMarchingCubeChunk> channeledChunks = new HashSet<ICompressedMarchingCubeChunk>();
 
         protected bool hasFoundInitialChunk;
 
@@ -191,7 +191,8 @@ namespace MarchingCubes
 
             ICompressedMarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
             maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
-            BuildRelevantChunksParallelBlockingAround(chunk);
+            //BuildRelevantChunksParallelBlockingAround(chunk);
+            BuildRelevantChunksParallelWithAsyncGpuAround(chunk);
 
             //int amount = 5;
             //for (int x = -amount; x <= amount; x++)
@@ -249,7 +250,8 @@ namespace MarchingCubes
                     }
                 }
 
-                if (hasFoundInitialChunk && /*count <= x.Count && */channeledChunks.Count <= x.Count /*|| channeledChunks > maxRunningThreads*/)
+                channeledChunks.RemoveWhere(c => c == null);
+                if (hasFoundInitialChunk && /*count <= x.Count && */channeledChunks.Count <= 0 /*|| channeledChunks > maxRunningThreads*/)
                 {
                     repeat= false;
                     Time.timeScale = 1;
@@ -272,6 +274,8 @@ namespace MarchingCubes
         {
             mainCam.enabled = false;
             Time.timeScale = 0;
+
+
             bool[] dirs = chunk.HasNeighbourInDirection;
             int count = dirs.Length;
             for (int i = 0; i < count; ++i)
@@ -293,6 +297,7 @@ namespace MarchingCubes
             if (closestNeighbours.size > 0)
             {
                 BuildRelevantChunksParallelWithAsyncGpuAround();
+                StartCoroutine(WaitTillAsynGenerationDone());
             }
 
             // Debug.Log($"Number of chunks: {ChunkGroups.Count}");
@@ -521,7 +526,6 @@ namespace MarchingCubes
         {
             Time.timeScale = 0;
             mainCam.enabled = false;
-            StartCoroutine(WaitTillAsynGenerationDone());
             FindNonEmptyChunkAroundAsync(pos, callback, 0);
         }
 

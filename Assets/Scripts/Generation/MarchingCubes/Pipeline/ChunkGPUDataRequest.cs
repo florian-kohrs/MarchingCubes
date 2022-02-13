@@ -133,7 +133,8 @@ namespace MarchingCubes
                 if (numTris <= 0)
                 {
                     pipelinePool.ReturnItemToPool(gpuData);
-                    OnDataDone(new TriangleChunkHeap(Array.Empty<TriangleBuilder>(), 0, numTris));
+                    OnDataDone(new TriangleChunkHeap(Array.Empty<TriangleBuilder>(), 0, 0));
+                    //OnDataDone(new GpuAsyncRequestResult());
                 }
                 else
                 {
@@ -148,8 +149,8 @@ namespace MarchingCubes
                     {
                         trianglesBuffer.Dispose();
                         pipelinePool.ReturnItemToPool(gpuData);
-                        //TODO:Remove to Array!!
                         OnDataDone(new TriangleChunkHeap(tris.ToArray(), 0, numTris));
+                        //OnDataDone(new GpuAsyncRequestResult(tris));
                     });
                 }
             });
