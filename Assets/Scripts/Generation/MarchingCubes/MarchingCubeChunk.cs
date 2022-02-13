@@ -361,6 +361,8 @@ namespace MarchingCubes
                 Mathf.Min(voxelMinus, end.y + 1),
                 Mathf.Min(voxelMinus, end.z + 1));
 
+            //TODO: Remove to array from native array
+            //TODO: maybe add non empty chunks here already to new mesh?
             Action doStuff = () =>
             {
                 int removedCount = 0;
@@ -675,7 +677,7 @@ namespace MarchingCubes
 
         public void StoreChunk(StoredChunkEdits storage)
         {
-            storage.noise = Points;
+            storage.noise = Points; 
             //storage.originalCubePositions = GetCurrentCubePositions();
         }
 
