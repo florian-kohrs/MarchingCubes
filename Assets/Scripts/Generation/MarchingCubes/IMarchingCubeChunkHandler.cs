@@ -30,7 +30,7 @@ namespace MarchingCubes
         /// <param name="maxDistance"></param>
         /// <param name="chunk"></param>
         /// <returns></returns>
-        bool CreateChunkWithNoiseEdit(Vector3Int p, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance, out ICompressedMarchingCubeChunk chunk);
+        void CreateChunkWithNoiseEdit(Vector3Int p, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance, out ICompressedMarchingCubeChunk chunk);
 
         MarchingCubeMeshDisplayer GetNextMeshDisplayer();
 
@@ -47,8 +47,6 @@ namespace MarchingCubes
         void Store(Vector3Int anchorPos, IMarchingCubeChunk chunk, bool overrideNoise = false);
 
         void TakeMeshDisplayerBack(MarchingCubeMeshDisplayer freeDisplayer);
-
-        void ReadCurrentTriangleData(TriangleBuilder[] ts);
 
         //IMarchingCubeChunk CreateChunkFromNoiseAt(ChunkGroupTreeLeaf leaf, float[] noise);
 

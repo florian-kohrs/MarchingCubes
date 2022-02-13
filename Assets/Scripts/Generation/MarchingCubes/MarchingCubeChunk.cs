@@ -266,16 +266,17 @@ namespace MarchingCubes
             GetNoiseEditData(offset, radius, VectorExtension.ToVector3Int(clickedIndex - offset), out start, out end);
 
             bool rebuildChunk;
+            if (!HasPoints)
+            {
+                ChunkHandler.RequestNoiseForChunk(this);
+            }
+            rebuildChunk = EditPointsOnCPU(start, end, clickedIndex + offset, radius, delta);
 
-            if (HasPoints || ChunkHandler.TryLoadPoints(this, out points))
-            {
-                rebuildChunk = EditPointsOnCPU(start, end, clickedIndex + offset, radius, delta);
-            }
-            else
-            {
-                rebuildChunk = true;
-                ChunkHandler.SetEditedNoiseAtPosition(this, clickedIndex + offset, start,end,delta,radius);
-            }
+            //else
+            //{
+            //    rebuildChunk = true;
+            //    ChunkHandler.SetEditedNoiseAtPosition(this, clickedIndex + offset, start,end,delta,radius);
+            //}
 
             if (rebuildChunk)
             {
@@ -659,7 +660,6 @@ namespace MarchingCubes
                     Vector3Int end;
                     GetNoiseEditData(offset, editDistance, origin - offset, out start, out end);
                     chunkHandler.CreateChunkWithNoiseEdit(newChunkPos, hit.point - newChunkPos, start,end, delta, editDistance, out ICompressedMarchingCubeChunk a);
-                    (a as MarchingCubeChunk).StoreChunkState();
                 }
             }
 

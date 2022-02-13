@@ -36,6 +36,15 @@ namespace MarchingCubes
                 throw new Exception("Lod must be divisor of chunksize");
         }
 
+        public float[] RequestNoiseForChunk(ICompressedMarchingCubeChunk chunk)
+        {
+            ChunkGenerationGPUData gpuData = pipelinePool.GetItemFromPool();
+            NoisePipeline noise = new NoisePipeline(gpuData, storedNoiseEdits);
+            float[] result = noise.RequestNoiseForChunk(chunk);
+            pipelinePool.ReturnItemToPool(gpuData);
+
+            return result;
+        }
 
         //TODO: Inform about Mesh subset and mesh set vertex buffer
         //Subset may be used to only change parts of the mesh -> dont need multiple mesh displayers with submeshes?

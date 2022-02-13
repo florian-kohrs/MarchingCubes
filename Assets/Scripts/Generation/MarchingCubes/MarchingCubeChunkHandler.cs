@@ -585,9 +585,8 @@ namespace MarchingCubes
         /// <param name="maxDistance"></param>
         /// <param name="chunk"></param>
         /// <returns></returns>
-        public bool CreateChunkWithNoiseEdit(Vector3Int p, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance, out ICompressedMarchingCubeChunk chunk)
+        public void CreateChunkWithNoiseEdit(Vector3Int p, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance, out ICompressedMarchingCubeChunk chunk)
         {
-            bool createdChunk = false;
             bool hasChunkAtPosition = chunkGroup.TryGetGroupItemAt(p, out chunk);
 
             if (!hasChunkAtPosition || !chunk.HasStarted)
@@ -601,9 +600,7 @@ namespace MarchingCubes
                     () => {
                         ApplyNoiseEditing(33, editPoint, start, end, delta, maxDistance);
                     });
-                createdChunk = true;
             }
-            return createdChunk;
         }
 
         protected ICompressedMarchingCubeChunk CreateChunkAt(Vector3Int p, bool allowOverride = false)
@@ -1265,12 +1262,8 @@ namespace MarchingCubes
 
         public float[] RequestNoiseForChunk(ICompressedMarchingCubeChunk chunk)
         {
-            throw new NotImplementedException();
+            return chunkGPURequest.RequestNoiseForChunk(chunk);
         }
 
-        public void ReadCurrentTriangleData(TriangleBuilder[] ts)
-        {
-            throw new NotImplementedException();
-        }
     }
 }
