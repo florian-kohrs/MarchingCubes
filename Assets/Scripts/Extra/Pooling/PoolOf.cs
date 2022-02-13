@@ -15,6 +15,8 @@ public class PoolOf<T>
 
     protected Func<T> CreateItem;
 
+    int count = 0;
+
     public void ReturnItemToPool(T item)
     {
         pool.Push(item);
@@ -29,6 +31,7 @@ public class PoolOf<T>
         }
         else
         {
+            count++;
             item = CreateItem();
         }
         return item;

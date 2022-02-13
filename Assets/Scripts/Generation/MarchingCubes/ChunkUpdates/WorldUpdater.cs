@@ -64,7 +64,7 @@ namespace MarchingCubes
         protected void GenerateTriggers()
         {
             Keyframe last = lodPowerAtDistance[0];
-            float distThreshold = 0.3f;
+            float distThreshold = 0.15f;
             for (int i = 1; i < lodPowerAtDistance.length; i++)
             {
                 Keyframe f = lodPowerAtDistance.keys[i];
@@ -72,7 +72,7 @@ namespace MarchingCubes
                 float timeDiff = f.time - last.time;
                 float extraTime = timeDiff * distThreshold;
 
-                CreateTriggerOfTypeForLod<ChunkLodIncreaseTrigger>(i - 1, f.time, increaseTriggerParent);
+                CreateTriggerOfTypeForLod<ChunkLodIncreaseTrigger>(i - 1, f.time - extraTime, increaseTriggerParent);
                 CreateTriggerOfTypeForLod<ChunkLodDecreaseTrigger>(i, f.time + extraTime, decreaseTriggerParent);
 
                 last = f;
@@ -143,14 +143,14 @@ namespace MarchingCubes
 
             List<ICompressedMarchingCubeChunk> chunks = new List<ICompressedMarchingCubeChunk>();
             isInIncreasingChunkIteration = true;
-            foreach (var item in increaseChunkLods)
+            foreach (ICompressedMarchingCubeChunk chunk in increaseChunkLods)
             {
                 if (FrameTimer.HasTimeLeftInFrame)
                 {
-                    if (item.IsReady || item.IsSpawner)
+                    if (chunk.IsReady || chunk.IsSpawner)
                     {
-                        chunkHandler.IncreaseChunkLod(item, item.TargetLODPower);
-                        chunks.Add(item);
+                        chunkHandler.IncreaseChunkLod(chunk, chunk.TargetLODPower);
+                        chunks.Add(chunk);
                     }
                 }
                 else 
@@ -164,6 +164,7 @@ namespace MarchingCubes
                 increaseChunkLods.Remove(c);
             }
             chunks.Clear();
+
             isInDecreasingChunkIteration = true;
             foreach (var item in lowerChunkLods)
             {

@@ -794,6 +794,18 @@ namespace MarchingCubes
             });
         }
 
+        protected void BuildChunkAsyncParallel(ICompressedMarchingCubeChunk chunk, Action<ICompressedMarchingCubeChunk> onChunkDone)
+        {
+            channeledChunks.Add(chunk);
+            chunkGPURequest.DispatchAndGetShaderDataAsync(chunk, SetChunkComponents, (ts) =>
+            {
+                chunk.InitializeWithMeshDataParallel(ts, (c) =>
+                {
+                    onChunkDone(c);
+                });
+            });
+        }
+
         protected void OnChunkDataDone(TriangleChunkHeap chunkHeap)
         {
             if(chunkHeap.triCount == 0)
@@ -839,12 +851,12 @@ namespace MarchingCubes
         }
 
      
-        //TODO: Maybe remove pooling theese -> could reduce size of buffer for faster reads
+        //TODO: Maybe pool theese for fewer pipeline instances
         protected void DispatchMultipleChunks(ICompressedMarchingCubeChunk[] chunks, Action<ICompressedMarchingCubeChunk> callbackPerChunk)
         {
             for (int i = 0; i < chunks.Length; i++)
             {
-                BuildChunkAsync(chunks[i], callbackPerChunk);
+                BuildChunkAsyncParallel(chunks[i], callbackPerChunk);
             }
             //trianglesToBuild.SetCounterValue(0);
             //int chunkLength = chunks.Length;
@@ -935,7 +947,7 @@ namespace MarchingCubes
             int newSizePow = DEFAULT_CHUNK_SIZE_POWER + toLodPower;
             if (newSizePow == chunk.ChunkSizePower || newSizePow == CHUNK_GROUP_SIZE_POWER)
             {
-                ExchangeSingleChunkParallel(chunk, chunk.AnchorPos, toLodPower, chunk.ChunkSizePower, true);
+                ExchangeSingleChunkAsyncParallel(chunk, chunk.AnchorPos, toLodPower, chunk.ChunkSizePower, true);
             }
             else
             {
@@ -962,6 +974,12 @@ namespace MarchingCubes
             return ExchangeChunkParallel(anchorPos, lodPow, sizePow, allowOveride, (c) => { FinishParallelChunk(from, c); });
         }
 
+        protected void ExchangeSingleChunkAsyncParallel(ICompressedMarchingCubeChunk from, Vector3Int anchorPos, int lodPow, int sizePow, bool allowOveride)
+        {
+            from.PrepareDestruction();
+            ExchangeChunkAsyncParallel(anchorPos, lodPow, sizePow, allowOveride, (c) => { FinishParallelChunk(from, c); });
+        }
+
 
         protected void FinishParallelChunk(ICompressedMarchingCubeChunk from, ICompressedMarchingCubeChunk newChunk)
         {
@@ -977,6 +995,12 @@ namespace MarchingCubes
             ICompressedMarchingCubeChunk newChunk = GetThreadedChunkObjectAt(anchorPos, lodPow, sizePow, allowOveride);
             newChunk.InitializeWithMeshDataParallel(chunkGPURequest.DispatchAndGetShaderData(newChunk, SetChunkComponents), onChunkDone);
             return newChunk;
+        }
+
+        protected void ExchangeChunkAsyncParallel(Vector3Int anchorPos, int lodPow, int sizePow, bool allowOveride, Action<ICompressedMarchingCubeChunk> onChunkDone)
+        {
+            ICompressedMarchingCubeChunk newChunk = GetThreadedChunkObjectAt(anchorPos, lodPow, sizePow, allowOveride);
+            BuildChunkAsyncParallel(newChunk, onChunkDone);
         }
 
         private void SplitChunkAndIncreaseLod(ICompressedMarchingCubeChunk chunk, int toLodPower, int newSizePow)
@@ -1056,7 +1080,7 @@ namespace MarchingCubes
                 else
                 {
                     ///Decrease single chunk lod
-                    ExchangeSingleChunkParallel(chunk, chunk.CenterPos, toLodPower, chunk.ChunkSizePower, true);
+                    ExchangeSingleChunkAsyncParallel(chunk, chunk.CenterPos, toLodPower, chunk.ChunkSizePower, true);
                 }
             }
         }
@@ -1067,7 +1091,7 @@ namespace MarchingCubes
             List<ICompressedMarchingCubeChunk> oldChunks = new List<ICompressedMarchingCubeChunk>();
             chunk.Leaf.parent.PrepareBranchDestruction(oldChunks);
 
-            ExchangeChunkParallel(chunk.CenterPos, toLodPower, chunk.ChunkSizePower + 1, true, (c) =>
+            ExchangeChunkAsyncParallel(chunk.CenterPos, toLodPower, chunk.ChunkSizePower + 1, true, (c) =>
             {
                 lock (exchangeLocker)
                 {
@@ -1182,7 +1206,7 @@ namespace MarchingCubes
 
         protected ChunkGenerationGPUData CreateChunkPipeline()
         {
-            ChunkGenerationGPUData result = new ChunkGenerationGPUData();
+             ChunkGenerationGPUData result = new ChunkGenerationGPUData();
 
             //TODO: Test shader variant collection less shader variant loading time (https://docs.unity3d.com/ScriptReference/ShaderVariantCollection.html)
 
