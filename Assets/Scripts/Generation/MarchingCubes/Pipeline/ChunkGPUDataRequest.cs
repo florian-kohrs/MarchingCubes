@@ -98,12 +98,6 @@ namespace MarchingCubes
 
             int numTris = chunkPipeline.ComputeCubesFromNoiseAround(chunk, rebuildShader, threadsPerAxis, out triangleBuffer);
 
-            float[] test = ComputeBufferExtension.ReadBuffer<float>(gpuData.pointsBuffer);
-            Vector4[] test2 = ComputeBufferExtension.ReadBuffer<Vector2Int>(gpuData.preparedTrisBuffer).Select((data) => new Vector4((uint)data.x >> 24,
-                ((uint)data.x << 8) >> 24,
-                ((uint)data.x << 16) >> 24,
-                ((uint)data.x << 24) >> 24)).ToArray();
-
             TriangleBuilder[] tris;
 
             ///read data from gpu
