@@ -60,6 +60,24 @@ public static class ComputeBufferExtension
         return result;
     }
 
+
+    public static void ReadBuffersAsync<T, J>(ComputeBuffer buffer1, ComputeBuffer buffer2, Action<T[], J[]> callback) where T : struct where J : struct
+    {
+        T[] first = null;
+        J[] snd = null;
+        Action checkIfBothAreDone = () =>
+        {
+            if (first != null && snd != null)
+            {
+                callback(first, snd);
+            }
+        };
+        AsyncGPUReadback.Request(buffer1, (r) => { first = ReadFromGPUReadbackResult<T>(r).ToArray(); checkIfBothAreDone(); });
+        AsyncGPUReadback.Request(buffer2, (r) => { snd = ReadFromGPUReadbackResult<J>(r).ToArray(); checkIfBothAreDone(); });
+    }
+
+
+
     //check speed on standalone version if this is going to be slow
     public static void ReadBufferAsync<T>(ComputeBuffer buffer, Action<NativeArray<T>> callback) where T : struct
     {

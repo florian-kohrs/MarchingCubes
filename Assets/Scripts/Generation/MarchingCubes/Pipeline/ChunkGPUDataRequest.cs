@@ -87,7 +87,48 @@ namespace MarchingCubes
                 noise.StoreNoise(chunk);
             }
             pipelinePool.ReturnItemToPool(gpuData);
-            return new MeshData(verts,colors, chunk.UseCollider);
+            return new MeshData(verts, colors, chunk.UseCollider);
+        }
+
+        public void DispatchAndGetChunkMeshDataAsync(ICompressedMarchingCubeChunk chunk, Action<ICompressedMarchingCubeChunk> SetChunkComponents, Action<MeshData> onMeshDataDone)
+        {
+
+            ChunkGenerationGPUData gpuData = pipelinePool.GetItemFromPool();
+            NoisePipeline noise = new NoisePipeline(gpuData, storedNoiseEdits);
+            ChunkPipeline chunkPipeline = new ChunkPipeline(gpuData, minDegreeBufferPool);
+
+            ValidateChunkProperties(chunk);
+            noise.TryLoadOrGenerateNoise(chunk);
+            chunkPipeline.DispatchPrepareCubesFromNoise(chunk);
+
+
+            ComputeBufferExtension.GetLengthOfAppendBufferAsync(gpuData.preparedTrisBuffer, gpuData.triCountBuffer, (numTris) =>
+            {
+                if (numTris <= 0)
+                {
+                    pipelinePool.ReturnItemToPool(gpuData);
+                    onMeshDataDone(new MeshData(null, null, false));
+                }
+                else
+                {
+                    //totalTriBuild += numTris;
+
+                    SetChunkComponents(chunk);
+                    ComputeBuffer verts;
+                    ComputeBuffer colors;
+                    chunkPipeline.BuildMeshFromPreparedCubes(chunk, numTris, out verts, out colors);
+
+                    ///read data from gpu
+                    ComputeBufferExtension.ReadBuffersAsync<Vector3, Color32>(verts, colors, (vs, cs) =>
+                    {
+                        verts.Dispose();
+                        colors.Dispose();
+                        pipelinePool.ReturnItemToPool(gpuData);
+                        onMeshDataDone(new MeshData(vs, cs, chunk.UseCollider));
+                        //OnDataDone(new GpuAsyncRequestResult(tris));
+                    });
+                }
+            });
         }
 
         //TODO: Inform about Mesh subset and mesh set vertex buffer

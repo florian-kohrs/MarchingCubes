@@ -83,6 +83,8 @@ namespace MarchingCubes
 
         public ComputeShader densityShader;
 
+        public ComputeShader chunkMeshDataShader;
+
         public ComputeShader cubesPrepare;
 
         public ComputeShader buildPreparedCubes;
@@ -774,7 +776,7 @@ namespace MarchingCubes
         {
             channeledChunks.Add(chunk);
             TriangleChunkHeap ts = chunkGPURequest.DispatchAndGetShaderData(chunk, SetChunkComponents);
-            chunk.InitializeWithMeshDataParallel(ts, readyParallelChunks);
+            chunk.InitializeWithTriangleDataParallel(ts, readyParallelChunks);
         }
 
         protected void BuildChunkAsync(ICompressedMarchingCubeChunk chunk, Action<ICompressedMarchingCubeChunk> onChunkDone)
@@ -799,7 +801,7 @@ namespace MarchingCubes
                 //    onChunkDone(c);
                 //});
 
-                chunk.InitializeWithMeshDataParallel(ts, readyParallelChunks);
+                chunk.InitializeWithTriangleDataParallel(ts, readyParallelChunks);
             });
         }
 
@@ -808,7 +810,7 @@ namespace MarchingCubes
             channeledChunks.Add(chunk);
             chunkGPURequest.DispatchAndGetShaderDataAsync(chunk, SetChunkComponents, (ts) =>
             {
-                chunk.InitializeWithMeshDataParallel(ts, (c) =>
+                chunk.InitializeWithTriangleDataParallel(ts, (c) =>
                 {
                     onChunkDone(c);
                 });
@@ -867,7 +869,7 @@ namespace MarchingCubes
         {
             for (int i = 0; i < chunks.Length; i++)
             {
-                BuildChunkAsyncParallel(chunks[i], callbackPerChunk);
+                BuildChunkAsyncFromMeshData(chunks[i], callbackPerChunk);
             }
             //trianglesToBuild.SetCounterValue(0);
             //int chunkLength = chunks.Length;
@@ -1004,14 +1006,20 @@ namespace MarchingCubes
         protected ICompressedMarchingCubeChunk ExchangeChunkParallel(Vector3Int anchorPos, int lodPow, int sizePow, bool allowOveride, Action<ICompressedMarchingCubeChunk> onChunkDone)
         {
             ICompressedMarchingCubeChunk newChunk = GetThreadedChunkObjectAt(anchorPos, lodPow, sizePow, allowOveride);
-            newChunk.InitializeWithMeshDataParallel(chunkGPURequest.DispatchAndGetShaderData(newChunk, SetChunkComponents), onChunkDone);
+            newChunk.InitializeWithTriangleDataParallel(chunkGPURequest.DispatchAndGetShaderData(newChunk, SetChunkComponents), onChunkDone);
             return newChunk;
+        }
+
+        protected void BuildChunkAsyncFromMeshData(ICompressedMarchingCubeChunk chunk, Action<ICompressedMarchingCubeChunk> onChunkDone)
+        {
+            chunkGPURequest.DispatchAndGetChunkMeshDataAsync(chunk, SetChunkComponents, (data) => { chunk.InitializeWithMeshData(data); onChunkDone(chunk); });
         }
 
         protected void ExchangeChunkAsyncParallel(Vector3Int anchorPos, int lodPow, int sizePow, bool allowOveride, Action<ICompressedMarchingCubeChunk> onChunkDone)
         {
             ICompressedMarchingCubeChunk newChunk = GetThreadedChunkObjectAt(anchorPos, lodPow, sizePow, allowOveride);
-            BuildChunkAsyncParallel(newChunk, onChunkDone);
+            BuildChunkAsyncFromMeshData(newChunk, onChunkDone);
+            //BuildChunkAsyncParallel(newChunk, onChunkDone);
         }
 
         private void SplitChunkAndIncreaseLod(ICompressedMarchingCubeChunk chunk, int toLodPower, int newSizePow)
@@ -1224,6 +1232,7 @@ namespace MarchingCubes
             result.densityGeneratorShader = Instantiate(densityShader);
             result.prepareTrisShader = Instantiate(cubesPrepare);
             result.buildTrisShader = Instantiate(buildPreparedCubes);
+            result.buildMeshDataShader = Instantiate(chunkMeshDataShader);
 
             result.triCountBuffer = CreateCopyCountBuffer();
             result.pointsBuffer = CreatePointsBuffer();

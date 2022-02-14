@@ -153,8 +153,7 @@ void MarchPrepared(uint3 id : SV_DispatchThreadID)
 
 	tri.colorAndSteepness = zipData((int)angleFromCenter, colorB, colorG, colorR);
 	//tri.colorAndSteepness = 0;
+
 	triangles[threadXID] = tri;
 	
-
-
 }

@@ -46,7 +46,8 @@ namespace MarchingCubes
         {
             ApplyDensityProperties();
             ApplyPrepareTrisProperties();
-            ApplyTriBuilderProperties();
+            ApplyTriBuilderProperties(buildMeshDataShader);
+            ApplyTriBuilderProperties(buildTrisShader);
         }
 
         public ComputeBuffer ApplyTriangleBuffer(int numPoints)
@@ -137,15 +138,15 @@ namespace MarchingCubes
             prepareTrisShader.SetBuffer(0, "triangleLocations", preparedTrisBuffer);
         }
 
-        protected void ApplyTriBuilderProperties()
+        protected void ApplyTriBuilderProperties(ComputeShader s)
         {
-            buildTrisShader.SetBuffer(0, "points", pointsBuffer);
-            buildTrisShader.SetBuffer(0, "biomsViz", biomsVizBuffer);
-            buildTrisShader.SetBuffer(0, "triangleLocations", preparedTrisBuffer);
+            s.SetBuffer(0, "points", pointsBuffer);
+            s.SetBuffer(0, "biomsViz", biomsVizBuffer);
+            s.SetBuffer(0, "triangleLocations", preparedTrisBuffer);
 
-            buildTrisShader.SetInt("minSteepness", minDegree);
-            buildTrisShader.SetInt("maxSteepness", maxDegree);
-            ApplyBiomPropertiesToShader(buildTrisShader);
+            s.SetInt("minSteepness", minDegree);
+            s.SetInt("maxSteepness", maxDegree);
+            ApplyBiomPropertiesToShader(s);
         }
 
 

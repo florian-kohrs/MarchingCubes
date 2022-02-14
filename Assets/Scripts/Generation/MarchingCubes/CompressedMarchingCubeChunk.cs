@@ -258,13 +258,13 @@ namespace MarchingCubes
 
         #region async chunk building
 
-        public void InitializeWithMeshDataParallel(TriangleChunkHeap heap, Queue<ICompressedMarchingCubeChunk> readyChunks)
+        public void InitializeWithTriangleDataParallel(TriangleChunkHeap heap, Queue<ICompressedMarchingCubeChunk> readyChunks)
         {
             this.readyChunks = readyChunks;
             StartParallel(heap);
         }
 
-        public void InitializeWithMeshDataParallel(TriangleChunkHeap heap, Action<ICompressedMarchingCubeChunk> OnChunkFinished)
+        public void InitializeWithTriangleDataParallel(TriangleChunkHeap heap, Action<ICompressedMarchingCubeChunk> OnChunkFinished)
         {
             this.OnChunkFinished = OnChunkFinished;
             StartParallel(heap);
@@ -342,12 +342,9 @@ namespace MarchingCubes
         public virtual void InitializeWithMeshData(MeshData meshData)
         {
             HasStarted = true;
-            NumTris = meshData.vertices.Length / 3;
-
-            //neighbourLODs = chunkHandler.GetNeighbourLODSFrom(this);
-            //careAboutNeighbourLODS = neighbourLODs.HasNeighbourWithHigherLOD(LODPower);
             if (!meshData.IsEmpty)
             {
+                NumTris = meshData.vertices.Length / 3;
                 RebuildFromMeshData(meshData);
             }
             IsReady = true;
