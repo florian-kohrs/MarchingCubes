@@ -9,6 +9,8 @@ public struct MeshData
     public Color32[] colorData;
     public bool useCollider;
 
+    public bool IsEmpty => vertices == null || vertices.Length <= 0;
+
     public MeshData(Vector3[] vertices, Color32[] colorData, bool useCollider)
     {
         this.vertices = vertices;

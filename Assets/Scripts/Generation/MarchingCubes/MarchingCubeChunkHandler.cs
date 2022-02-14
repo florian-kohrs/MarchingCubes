@@ -765,7 +765,7 @@ namespace MarchingCubes
         protected void BuildChunk(ICompressedMarchingCubeChunk chunk, Action<ComputeBuffer> WorkOnNoise = null)
         {
             TriangleChunkHeap ts = chunkGPURequest.DispatchAndGetShaderData(chunk, SetChunkComponents, WorkOnNoise);
-            chunk.InitializeWithMeshData(ts);
+            chunk.InitializeWithTriangleData(ts);
         }
 
         protected Queue<ICompressedMarchingCubeChunk> readyParallelChunks = new Queue<ICompressedMarchingCubeChunk>();
@@ -783,7 +783,7 @@ namespace MarchingCubes
             {
                 //chunk.InitializeWithMeshDataParallel(ts, readyParallelChunks);
 
-                chunk.InitializeWithMeshData(ts);
+                chunk.InitializeWithTriangleData(ts);
                 onChunkDone(chunk);
             });
         }

@@ -34,6 +34,8 @@ namespace MarchingCubes
         public ComputeShader prepareTrisShader;
         public ComputeShader buildTrisShader;
 
+        public ComputeShader buildMeshDataShader;
+
         public ComputeBuffer triCountBuffer;
         public ComputeBuffer pointsBuffer;
         //TODO: Pool theese seperatly somewhere else
@@ -74,18 +76,13 @@ namespace MarchingCubes
 
         public ComputeBuffer ApplyBuildTrianglesForChunkProperties(ICompressedMarchingCubeChunk chunk, int numTris)
         {
-            Vector4 anchor = VectorExtension.ToVector4(chunk.AnchorPos);
-            int pointsPerAxis = chunk.PointsPerAxis;
-
             bool storeMinDegree = chunk.MinDegreeBuffer != null;
 
             ComputeBuffer trianglesBuffer = new ComputeBuffer(numTris, TriangleBuilder.SIZE_OF_TRI_BUILD);
             buildTrisShader.SetBuffer(0, "triangles", trianglesBuffer);
 
-            buildTrisShader.SetVector("anchor", anchor);
-            buildTrisShader.SetFloat("spacing", chunk.LOD);
-            buildTrisShader.SetInt("numPointsPerAxis", pointsPerAxis);
-            buildTrisShader.SetInt("length", numTris);
+            ApplyBuildGenericTrianglesForChunkProperties(buildTrisShader, chunk, numTris);
+
             buildTrisShader.SetBool("storeMinDegrees", storeMinDegree);
 
             if (storeMinDegree)
@@ -99,6 +96,31 @@ namespace MarchingCubes
 
             return trianglesBuffer;
         }
+
+        public void ApplyBuildMeshDataPropertiesForChunk(ICompressedMarchingCubeChunk chunk, int numTris, out ComputeBuffer verts, out ComputeBuffer colors)
+        {
+            verts = new ComputeBuffer(numTris * 3, sizeof(float) * 3);
+            colors = new ComputeBuffer(numTris * 3, sizeof(uint));
+
+            buildMeshDataShader.SetBuffer(0, "verts", verts);
+            buildMeshDataShader.SetBuffer(0, "colors", colors);
+
+            ApplyBuildGenericTrianglesForChunkProperties(buildMeshDataShader, chunk, numTris);
+        }
+
+        protected void ApplyBuildGenericTrianglesForChunkProperties(ComputeShader forShader, ICompressedMarchingCubeChunk chunk, int numTris)
+        {
+
+            Vector4 anchor = VectorExtension.ToVector4(chunk.AnchorPos);
+            int pointsPerAxis = chunk.PointsPerAxis;
+
+            forShader.SetVector("anchor", anchor);
+            forShader.SetFloat("spacing", chunk.LOD);
+            forShader.SetInt("numPointsPerAxis", pointsPerAxis);
+            forShader.SetInt("length", numTris);
+
+        }
+
 
         protected void ApplyDensityProperties()
         {

@@ -270,29 +270,6 @@ namespace MarchingCubes
             StartParallel(heap);
         }
 
-        public void InitializeWithMeshDataParallelFromAsyncResult(GpuAsyncRequestResult asyncResult, Queue<ICompressedMarchingCubeChunk> readyChunks, Action<ICompressedMarchingCubeChunk> OnChunkFinished)
-        {
-            this.OnChunkFinished = OnChunkFinished;
-            this.readyChunks = readyChunks;
-            HasStarted = true;
-            ThreadPool.QueueUserWorkItem((o) =>
-            {
-                try
-                {
-                    IsInOtherThread = true;
-                    InitializeWithMeshDataFromNativeArray(asyncResult);
-                    OnChunkDone();
-                }
-                catch (Exception x)
-                {
-                    MarchingCubeChunkHandler.channeledChunks.Remove(this);
-                    xs.Add(x);
-                    Console.WriteLine(x);
-                    //Debug.LogException(x);
-                }
-            });
-        }
-
         protected void StartParallel(TriangleChunkHeap heap)
         {
             HasStarted = true;
@@ -304,7 +281,7 @@ namespace MarchingCubes
             try
             {
                 IsInOtherThread = true;
-                InitializeWithMeshData(heap);
+                InitializeWithTriangleData(heap);
                 OnChunkDone();
             }
             catch (Exception x)
@@ -362,16 +339,16 @@ namespace MarchingCubes
 
         #endregion async chunk building
 
-        public virtual void InitializeWithMeshDataFromNativeArray(GpuAsyncRequestResult asyncResult)
+        public virtual void InitializeWithMeshData(MeshData meshData)
         {
             HasStarted = true;
+            NumTris = meshData.vertices.Length / 3;
+
             //neighbourLODs = chunkHandler.GetNeighbourLODSFrom(this);
             //careAboutNeighbourLODS = neighbourLODs.HasNeighbourWithHigherLOD(LODPower);
-            if (!asyncResult.IsEmpty)
+            if (!meshData.IsEmpty)
             {
-                NativeArray<TriangleBuilder> tris = asyncResult.requestResult.Value;
-                NumTris = tris.Length;
-                RebuildFromNativeArray(tris);
+                RebuildFromMeshData(meshData);
             }
             IsReady = true;
 
@@ -385,7 +362,7 @@ namespace MarchingCubes
             }
         }
 
-        public virtual void InitializeWithMeshData(TriangleChunkHeap tris)
+        public virtual void InitializeWithTriangleData(TriangleChunkHeap tris)
         {
             HasStarted = true;
             NumTris = tris.triCount;
@@ -534,22 +511,9 @@ namespace MarchingCubes
             }
         }
 
-        protected virtual void RebuildFromNativeArray(NativeArray<TriangleBuilder> ts)
+        protected virtual void RebuildFromMeshData(MeshData meshData)
         {
-            vertsLeft = VertexCount;
-
-            ResetArrayData();
-
-            int totalTreeCount = 0;
-            int usedTriCount = 0;
-            int triCount = NumTris;
-
-            for (int i = 0; i < triCount; ++i)
-            {
-                SetNeighbourAt(ts[i].x, ts[i].y, ts[i].z);
-
-                AddTriangleToMeshData(ts[i], ref usedTriCount, ref totalTreeCount);
-            }
+            SetMeshData(meshData);
         }
 
         protected virtual void RebuildFromTriangleArray(TriangleChunkHeap heap)
@@ -690,6 +654,11 @@ namespace MarchingCubes
             displayer.ApplyMesh(colorData, vertices, Material, UseCollider);
         }
 
+        protected virtual void SetMeshData(MeshData meshData)
+        {
+            MarchingCubeMeshDisplayer displayer = GetFittingMeshDisplayer();
+            displayer.ApplyMesh(meshData.colorData, meshData.vertices, Material, meshData.useCollider);
+        }
 
         protected void ApplyChangesToMesh()
         {

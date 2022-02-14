@@ -73,6 +73,31 @@ namespace MarchingCubes
             return numTris;
         }
 
+        public void BuildMeshFromPreparedCubes(ICompressedMarchingCubeChunk chunk, int numTris, out ComputeBuffer verts, out ComputeBuffer colors)
+        {
+            pipeline.ApplyBuildMeshDataPropertiesForChunk(chunk, numTris, out verts, out colors);
+
+            int numThreads = Mathf.CeilToInt(numTris / THREAD_GROUP_SIZE);
+
+            pipeline.buildMeshDataShader.Dispatch(0, numThreads, 1, 1);
+        }
+
+        public int ComputeMeshDataFromNoise(ICompressedMarchingCubeChunk chunk, out ComputeBuffer verts, out ComputeBuffer colors)
+        {
+            DispatchPrepareCubesFromNoise(chunk);
+            int numTris = ComputeBufferExtension.GetLengthOfAppendBuffer(pipeline.preparedTrisBuffer, pipeline.triCountBuffer);
+            if (numTris > 0)
+            {
+                BuildMeshFromPreparedCubes(chunk, numTris, out verts, out colors);
+            }
+            else
+            {
+                colors = null;
+                verts = null;
+            }
+            return numTris;
+        }
+
         public void DispatchPrepareCubesFromNoiseAround(ComputeShader rebuildShader, Vector3Int threadsPerAxis)
         {
             rebuildShader.SetBuffer(0, "points", pipeline.pointsBuffer);

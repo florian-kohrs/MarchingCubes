@@ -48,6 +48,48 @@ namespace MarchingCubes
         }
 
 
+        public MeshData DispatchAndGetChunkMeshData(ICompressedMarchingCubeChunk chunk, Action<ICompressedMarchingCubeChunk> SetChunkComponents, Action<ComputeBuffer> WorkOnNoise = null)
+        {
+            ChunkGenerationGPUData gpuData = pipelinePool.GetItemFromPool();
+            NoisePipeline noise = new NoisePipeline(gpuData, storedNoiseEdits);
+            ChunkPipeline chunkPipeline = new ChunkPipeline(gpuData, minDegreeBufferPool);
+
+            ComputeBuffer vertsBuffer;
+            ComputeBuffer colorBuffer;
+
+            ValidateChunkProperties(chunk);
+            noise.TryLoadOrGenerateNoise(chunk);
+            bool storeNoise = noise.WorkOnNoiseMap(chunk, WorkOnNoise);
+            int numTris = chunkPipeline.ComputeMeshDataFromNoise(chunk, out vertsBuffer, out colorBuffer);
+
+            Vector3[] verts;
+            Color32[] colors;
+
+            ///read data from gpu
+            if (numTris == 0)
+            {
+                verts = Array.Empty<Vector3>();
+                colors = Array.Empty<Color32>();
+            }
+            else
+            {
+                SetChunkComponents(chunk);
+                verts = new Vector3[numTris * 3];
+                colors = new Color32[numTris * 3];
+                vertsBuffer.GetData(verts);
+                colorBuffer.GetData(colors);
+                vertsBuffer.Dispose();
+                colorBuffer.Dispose();
+            }
+
+            if (storeNoise)
+            {
+                noise.StoreNoise(chunk);
+            }
+            pipelinePool.ReturnItemToPool(gpuData);
+            return new MeshData(verts,colors, chunk.UseCollider);
+        }
+
         //TODO: Inform about Mesh subset and mesh set vertex buffer
         //Subset may be used to only change parts of the mesh -> dont need multiple mesh displayers with submeshes?
         public TriangleChunkHeap DispatchAndGetShaderData(ICompressedMarchingCubeChunk chunk, Action<ICompressedMarchingCubeChunk> SetChunkComponents, Action<ComputeBuffer> WorkOnNoise = null)

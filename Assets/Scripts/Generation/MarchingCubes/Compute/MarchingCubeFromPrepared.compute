@@ -106,8 +106,6 @@ void MarchPrepared(uint3 id : SV_DispatchThreadID)
 
 	BiomVisualizationData biom = biomsViz[biomIndex];
 
-	float minDegree = 180;
-
 	int triangulationAtIndex[] = triangulation[cubeIndex];
 
 	// Create triangles for current cube configuration
@@ -134,7 +132,8 @@ void MarchPrepared(uint3 id : SV_DispatchThreadID)
 	float3 middlePoint = (tri.vertexA + tri.vertexB + tri.vertexC) / 3;
 	float angleFromCenter = 180 - (acos(dot(normal, normalize(middlePoint))) * rad);
 
-	if (storeMinDegrees && angleFromCenter < minDegree)
+	//TODO: Remove condition and see if its faster?
+	if (storeMinDegrees)
 	{
 		minDegreeAtCoord[index] = angleFromCenter;
 	}

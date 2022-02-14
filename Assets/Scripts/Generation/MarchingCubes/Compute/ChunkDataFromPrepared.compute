@@ -11,26 +11,12 @@ static const int WAFE_FRONT_SIZE = 32;
 
 static const float rad = 180 / PI;
 
-struct Triangle
-{
-	float3 vertexC;
-	float3 vertexB;
-	float3 vertexA;
-};
-
-struct ColorData
-{
-	uint colorAndSteepnessC;
-	uint colorAndSteepnessB;
-	uint colorAndSteepnessA;
-};
-
 RWStructuredBuffer<float> points;
 RWStructuredBuffer<int2> triangleLocations;
 StructuredBuffer<BiomVisualizationData> biomsViz;
 
-RWStructuredBuffer<Triangle> triangles;
-RWStructuredBuffer<Color> colors;
+RWStructuredBuffer<float3> verts;
+RWStructuredBuffer<uint> colors;
 
 int minSteepness;
 int maxSteepness;
@@ -100,15 +86,13 @@ void ChunkDataFromPrepared(uint3 id : SV_DispatchThreadID)
 	int3 biomEvaluationPos = GetBiomEvaluationPosition(pos);
 	uint biomIndex = GetClosestBiomIndex(biomEvaluationPos);
 
-	int index = indexFromCoord(id.x, id.y, id.z);
-
 	BiomVisualizationData biom = biomsViz[biomIndex];
 
 	float minDegree = 180;
 
 	int triangulationAtIndex[] = triangulation[cubeIndex];
 
-	// Create triangles for current cube configuration
+	// Create verts for current cube configuration
 	
 
 	// Get indices of corner points A and B for each of the three edges
@@ -122,13 +106,12 @@ void ChunkDataFromPrepared(uint3 id : SV_DispatchThreadID)
 	int a2 = cornerIndexAFromEdge[triangulationAtIndex[triIndex + 2]];
 	int b2 = cornerIndexBFromEdge[triangulationAtIndex[triIndex + 2]];
 
-	Triangle tri;
-	tri.vertexA = interpolateVerts(cubeCorners[a0], cubeCorners[b0]);
-	tri.vertexB = interpolateVerts(cubeCorners[a1], cubeCorners[b1]);
-	tri.vertexC = interpolateVerts(cubeCorners[a2], cubeCorners[b2]);
+	float3 vertexA = interpolateVerts(cubeCorners[a0], cubeCorners[b0]);
+	float3 vertexB = interpolateVerts(cubeCorners[a1], cubeCorners[b1]);
+	float3 vertexC = interpolateVerts(cubeCorners[a2], cubeCorners[b2]);
 
-	float3 normal = normalize(cross(tri.vertexB - tri.vertexA, tri.vertexC - tri.vertexA));
-	float3 middlePoint = (tri.vertexA + tri.vertexB + tri.vertexC) / 3;
+	float3 normal = normalize(cross(vertexB - vertexA, vertexC - vertexA));
+	float3 middlePoint = (vertexA + vertexB + vertexC) / 3;
 	float angleFromCenter = 180 - (acos(dot(normal, normalize(middlePoint))) * rad);
 
 	float invLerp = (angleFromCenter - minSteepness) / (maxSteepness - minSteepness);
@@ -146,11 +129,12 @@ void ChunkDataFromPrepared(uint3 id : SV_DispatchThreadID)
 
 	int finalColor = zipData((int)angleFromCenter, colorB, colorG, colorR);
 
-	ColorData color;
-	color.colorAndSteepnessA = finalColor;
-	color.colorAndSteepnessB = finalColor;
-	color.colorAndSteepnessC = finalColor;
+	int index = threadXID * 3;
+	colors[index] = finalColor;
+	colors[index+1] = finalColor;
+	colors[index+2] = finalColor;
 
-	colors[threadXID] = color;
-	triangles[threadXID] = tri;
+	verts[index] = vertexC;
+	verts[index+1] = vertexB;
+	verts[index+2] = vertexA;
 }

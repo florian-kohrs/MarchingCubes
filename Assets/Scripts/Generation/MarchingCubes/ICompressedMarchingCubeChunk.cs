@@ -55,9 +55,11 @@ namespace MarchingCubes
 
         void InitializeWithMeshDataParallel(TriangleChunkHeap triangleData, Action<ICompressedMarchingCubeChunk> OnChunkDone);
 
-        public void InitializeWithMeshDataParallelFromAsyncResult(GpuAsyncRequestResult asyncResult, Queue<ICompressedMarchingCubeChunk> readyChunks, Action<ICompressedMarchingCubeChunk> OnChunkFinished);
 
-        void InitializeWithMeshData(TriangleChunkHeap triangleData);
+        void InitializeWithTriangleData(TriangleChunkHeap triangleData);
+
+        void InitializeWithMeshData(MeshData meshData);
+
 
         void DestroyChunk();
 
