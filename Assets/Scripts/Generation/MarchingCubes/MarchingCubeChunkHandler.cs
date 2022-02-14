@@ -191,8 +191,8 @@ namespace MarchingCubes
 
             ICompressedMarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
             maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
-            //BuildRelevantChunksParallelBlockingAround(chunk);
-            BuildRelevantChunksParallelWithAsyncGpuAround(chunk);
+            BuildRelevantChunksParallelBlockingAround(chunk);
+            //BuildRelevantChunksParallelWithAsyncGpuAround(chunk);
 
             //int amount = 5;
             //for (int x = -amount; x <= amount; x++)

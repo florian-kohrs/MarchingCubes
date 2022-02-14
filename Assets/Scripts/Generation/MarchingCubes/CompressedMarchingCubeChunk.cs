@@ -33,7 +33,7 @@ namespace MarchingCubes
 
         protected ChunkLodCollider chunkSimpleCollider;
 
-        protected const int MAX_TRIANGLES_PER_MESH = 65000;
+        public const int MAX_TRIANGLES_PER_MESH = 65000;
 
         protected List<MarchingCubeMeshDisplayer> activeDisplayers = new List<MarchingCubeMeshDisplayer>();
 
@@ -79,7 +79,6 @@ namespace MarchingCubes
 
         //protected List<BaseMeshChild> children = new List<BaseMeshChild>();
         protected Vector3[] vertices;
-        protected int[] meshTriangles;
         protected Color32[] colorData;
 
         //protected bool isCompletlyAir;
@@ -343,7 +342,7 @@ namespace MarchingCubes
         protected void ApplyChangesToMesh(in MeshData d)
         {
             MarchingCubeMeshDisplayer displayer = GetFittingMeshDisplayer();
-            displayer.ApplyMesh(d.colorData, d.vertices, d.triangles, Material, d.useCollider);
+            displayer.ApplyMesh(d.colorData, d.vertices, Material, d.useCollider);
         }
 
         public virtual void SetChunkOnMainThread()
@@ -444,7 +443,6 @@ namespace MarchingCubes
         public void ResetChunk()
         {
             NumTris = 0;
-            meshTriangles = null;
             lodPower = MarchingCubeChunkHandler.DEACTIVATE_CHUNK_LOD;
             lod = (int)Mathf.Pow(2, lodPower);
             vertices = null;
@@ -579,10 +577,6 @@ namespace MarchingCubes
         {
             Triangle t = tri.tri;
 
-            meshTriangles[usedTriCount] = usedTriCount;
-            meshTriangles[usedTriCount + 1] = usedTriCount + 1;
-            meshTriangles[usedTriCount + 2] = usedTriCount + 2;
-
             colorData[usedTriCount] = tri.colorAndSteepness;
             colorData[usedTriCount + 1] = tri.colorAndSteepness;
             colorData[usedTriCount + 2] = tri.colorAndSteepness;
@@ -604,10 +598,6 @@ namespace MarchingCubes
         protected void AddTriangleToMeshData(in TriangleBuilder t, ref int usedTriCount, ref int totalTriCount)
         {
             Color32 c = t.color32;
-
-            meshTriangles[usedTriCount] = usedTriCount;
-            meshTriangles[usedTriCount + 1] = usedTriCount + 1;
-            meshTriangles[usedTriCount + 2] = usedTriCount + 2;
 
             colorData[usedTriCount] = c;
             colorData[usedTriCount + 1] = c;
@@ -697,7 +687,7 @@ namespace MarchingCubes
         protected virtual void SetCurrentMeshData()
         {
             MarchingCubeMeshDisplayer displayer = GetFittingMeshDisplayer();
-            displayer.ApplyMesh(colorData, vertices, meshTriangles, Material, UseCollider);
+            displayer.ApplyMesh(colorData, vertices, Material, UseCollider);
         }
 
 
@@ -705,12 +695,12 @@ namespace MarchingCubes
         {
             if (IsInOtherThread)
             {
-                data.Add(new MeshData(meshTriangles, vertices, colorData, UseCollider));
+                data.Add(new MeshData(vertices, colorData, UseCollider));
             }
             else
             {
                 SetCurrentMeshData();
-                vertsLeft -= meshTriangles.Length;
+                vertsLeft -= vertices.Length;
                 //if (trisLeft > 0)
                 {
                     ResetArrayData();
@@ -722,7 +712,6 @@ namespace MarchingCubes
         protected void ResetArrayData()
         {
             int size = Mathf.Min(vertsLeft, MAX_TRIANGLES_PER_MESH + 1);
-            meshTriangles = new int[size];
             vertices = new Vector3[size];
             colorData = new Color32[size];
         }
