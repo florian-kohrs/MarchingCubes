@@ -63,8 +63,6 @@ namespace MarchingCubes
             bool storeNoise = noise.WorkOnNoiseMap(chunk, WorkOnNoise);
             int numTris = chunkPipeline.ComputeCubesFromNoise(chunk, out triangleBuffer);
 
-            float[] noise2 = ComputeBufferExtension.ReadBuffer<float>(gpuData.pointsBuffer);
-
             TriangleBuilder[] tris;
 
             ///read data from gpu
