@@ -1,7 +1,7 @@
 ﻿#pragma kernel MarchPrepared
-#include "../Includes/MarchTables.compute"
-#include "../Includes/BiomVisualizationData.compute"
-#include "../Includes/Bioms.compute"
+#include "/Includes/MarchTables.compute"
+#include "/Includes/BiomVisualizationData.compute"
+#include "/Includes/Bioms.compute"
 #include "Assets/Scripts/ComputeIncludes/ZipData.compute"
 
 #define PI 3.14159265358979323846
