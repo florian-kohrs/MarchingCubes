@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -24,6 +25,18 @@ namespace MarchingCubes
         public bool HasChunk => hasCube != null && hasCube.chunk != null;
 
         public bool IsColliderActive => HasCollider && collider.sharedMesh != null;
+
+        protected static int[] flatShadedMeshTriangleArray;
+
+        static MarchingCubeMeshDisplayer()
+        {
+            int length = CompressedMarchingCubeChunk.MAX_TRIANGLES_PER_MESH + 1;
+            flatShadedMeshTriangleArray = new int[length];
+            for (int i = 0; i < length; i++)
+            {
+                flatShadedMeshTriangleArray[i] = i;
+            }
+        }
 
         protected MarchingCubeMeshDisplayer(IMarchingCubeChunk chunk, GameObject g, Transform t) : this(g, g.AddComponent<MeshFilter>(), g.AddComponent<MeshRenderer>(), new Mesh(), g.AddComponent<MeshCollider>())
         {
@@ -103,10 +116,15 @@ namespace MarchingCubes
             }
         }
 
-        public void ApplyMesh(Color32[] colorData, Vector3[] vertices, int[] meshTriangles, Material mat, bool useCollider = true)
+
+
+
+        public void ApplyMesh(Color32[] colorData, Vector3[] vertices, Material mat, bool useCollider = true)
         {
             mesh.vertices = vertices;
             mesh.colors32 = colorData;
+            int[] meshTriangles = new int[colorData.Length];
+            Array.Copy(flatShadedMeshTriangleArray, meshTriangles, meshTriangles.Length);
             mesh.triangles = meshTriangles;
             renderer.material = mat;
             mesh.RecalculateNormals();

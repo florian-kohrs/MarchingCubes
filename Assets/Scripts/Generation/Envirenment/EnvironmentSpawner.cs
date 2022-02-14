@@ -99,6 +99,8 @@ namespace MeshGPUInstanciation
             }
         } 
 
+
+        //TODO: Use prepare tri buffer to place environment. also do this async
         public void AddEnvironmentForOriginalChunk(IEnvironmentSurface chunk)
         {
             //float[] mindegs = ReadBuffer<float>(chunk.MinDegreeBuffer);

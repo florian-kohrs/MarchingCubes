@@ -150,7 +150,7 @@ namespace MarchingCubes
 
         protected override void RebuildFromTriangleArray(TriangleChunkHeap heap)
         {
-            trisLeft = VertexCount;
+            vertsLeft = VertexCount;
             ResetArrayData();
 
             int totalTreeCount = 0;
@@ -208,7 +208,7 @@ namespace MarchingCubes
             if (IsEmpty)
                 return;
 
-            trisLeft = VertexCount;
+            vertsLeft = VertexCount;
 
             ResetArrayData();
 
@@ -362,7 +362,6 @@ namespace MarchingCubes
                 Mathf.Min(voxelMinus, end.z + 1));
 
             //TODO: Remove to array from native array
-            //TODO: maybe add non empty chunks here already to new mesh?
             Action doStuff = () =>
             {
                 int removedCount = 0;

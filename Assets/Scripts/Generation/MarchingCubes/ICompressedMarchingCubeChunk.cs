@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Collections;
 using UnityEngine;
 
 namespace MarchingCubes
@@ -53,6 +54,8 @@ namespace MarchingCubes
         void InitializeWithMeshDataParallel(TriangleChunkHeap triangleData, Queue<ICompressedMarchingCubeChunk> readyChunks);
 
         void InitializeWithMeshDataParallel(TriangleChunkHeap triangleData, Action<ICompressedMarchingCubeChunk> OnChunkDone);
+
+        public void InitializeWithMeshDataParallelFromAsyncResult(GpuAsyncRequestResult asyncResult, Queue<ICompressedMarchingCubeChunk> readyChunks, Action<ICompressedMarchingCubeChunk> OnChunkFinished);
 
         void InitializeWithMeshData(TriangleChunkHeap triangleData);
 
