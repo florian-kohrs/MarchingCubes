@@ -27,6 +27,11 @@ RWStructuredBuffer<int2> triangleLocations;
 StructuredBuffer<BiomVisualizationData> biomsViz;
 RWStructuredBuffer<float> minDegreeAtCoord;
 
+//TODO: create mesh value here (do i even need to work on resulting data?)
+//RWStructuredBuffer<float3> vertexArray;
+//RWStructuredBuffer<int> colorArray;
+
+
 bool storeMinDegrees;
 
 int minSteepness;
