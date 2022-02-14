@@ -63,14 +63,14 @@ public static class ComputeBufferExtension
     //check speed on standalone version if this is going to be slow
     public static void ReadBufferAsync<T>(ComputeBuffer buffer, Action<NativeArray<T>> callback) where T : struct
     {
-        AsyncGPUReadback.Request(buffer, (r) => ReadFromGPUReadbackResult(r, callback));
+        AsyncGPUReadback.Request(buffer, (r) => callback(ReadFromGPUReadbackResult<T>(r)));
     }
 
-    private static void ReadFromGPUReadbackResult<T>(AsyncGPUReadbackRequest result, Action<NativeArray<T>> callBack) where T : struct
+    private static NativeArray<T> ReadFromGPUReadbackResult<T>(AsyncGPUReadbackRequest result) where T : struct
     {
-        NativeArray<T> array = result.GetData<T>();
-        callBack(array);
+        return result.GetData<T>();
     }
+
 
     public static T[] ReadBufferUntil<T>(ComputeBuffer buffer, int length)
     {
