@@ -1012,7 +1012,10 @@ namespace MarchingCubes
 
         protected void BuildChunkAsyncFromMeshData(ICompressedMarchingCubeChunk chunk, Action<ICompressedMarchingCubeChunk> onChunkDone)
         {
-            chunkGPURequest.DispatchAndGetChunkMeshDataAsync(chunk, SetChunkComponents, (data) => { chunk.InitializeWithMeshData(data); onChunkDone(chunk); });
+            chunkGPURequest.DispatchAndGetChunkMeshDataAsync(chunk, SetChunkComponents, (data) => 
+                { 
+                    chunk.InitializeWithMeshData(data, false); onChunkDone(chunk);  
+                });
         }
 
         protected void ExchangeChunkAsyncParallel(Vector3Int anchorPos, int lodPow, int sizePow, bool allowOveride, Action<ICompressedMarchingCubeChunk> onChunkDone)

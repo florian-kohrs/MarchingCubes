@@ -58,7 +58,7 @@ namespace MarchingCubes
 
         void InitializeWithTriangleData(TriangleChunkHeap triangleData);
 
-        void InitializeWithMeshData(MeshData meshData);
+        void InitializeWithMeshData(MeshData meshData, bool buildNeighbours);
 
 
         void DestroyChunk();
