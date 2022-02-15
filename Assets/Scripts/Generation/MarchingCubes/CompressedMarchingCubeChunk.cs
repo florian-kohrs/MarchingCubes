@@ -502,14 +502,26 @@ namespace MarchingCubes
             //    neighbourData = neighbourData >> 1;
             //}
 
-            HasNeighbourInDirection[0] = HasNeighbourInDirection[0] && (neighbourData&1) == 1;
-            HasNeighbourInDirection[1] = HasNeighbourInDirection[1] && (neighbourData&2) == 1;
-            HasNeighbourInDirection[2] = HasNeighbourInDirection[2] && (neighbourData&4) == 1;
-            HasNeighbourInDirection[3] = HasNeighbourInDirection[3] && (neighbourData&8) == 1;
-            HasNeighbourInDirection[4] = HasNeighbourInDirection[4] && (neighbourData&16) == 1;
-            HasNeighbourInDirection[5] = HasNeighbourInDirection[5] && (neighbourData&32) == 1;
-            HasNeighbourInDirection[6] = HasNeighbourInDirection[6] && (neighbourData&64) == 1;
-            HasNeighbourInDirection[7] = HasNeighbourInDirection[7] && (neighbourData&128) == 1;
+            if((neighbourData & 1) == 1)
+                HasNeighbourInDirection[0] = true;
+            else if((neighbourData & 2) == 1)
+                HasNeighbourInDirection[1] = true;
+
+            if ((neighbourData & 4) == 1)
+                HasNeighbourInDirection[2] = true;
+            else if ((neighbourData & 8) == 1)
+                HasNeighbourInDirection[3] = true;
+
+            if ((neighbourData & 16) == 1)
+                HasNeighbourInDirection[4] = true;
+            else if ((neighbourData & 32) == 1)
+                HasNeighbourInDirection[5] = true;
+
+            if ((neighbourData & 64) == 1)
+                HasNeighbourInDirection[6] = true;
+            else if ((neighbourData & 128) == 1)
+                HasNeighbourInDirection[7] = true;
+
         }
 
 
