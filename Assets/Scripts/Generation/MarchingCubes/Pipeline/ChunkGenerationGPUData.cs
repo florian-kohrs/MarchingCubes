@@ -77,23 +77,12 @@ namespace MarchingCubes
 
         public ComputeBuffer ApplyBuildTrianglesForChunkProperties(ICompressedMarchingCubeChunk chunk, int numTris)
         {
-            bool storeMinDegree = chunk.MinDegreeBuffer != null;
 
             ComputeBuffer trianglesBuffer = new ComputeBuffer(numTris, TriangleBuilder.SIZE_OF_TRI_BUILD);
             buildTrisShader.SetBuffer(0, "triangles", trianglesBuffer);
 
             ApplyBuildGenericTrianglesForChunkProperties(buildTrisShader, chunk, numTris);
-
-            buildTrisShader.SetBool("storeMinDegrees", storeMinDegree);
-
-            if (storeMinDegree)
-            {
-                buildTrisShader.SetBuffer(0, "minDegreeAtCoord", chunk.MinDegreeBuffer);
-            }
-            else
-            {
-                buildTrisShader.SetBuffer(0, "minDegreeAtCoord", ChunkGPUDataRequest.emptyMinDegreeBuffer);
-            }
+            
 
             return trianglesBuffer;
         }
@@ -111,6 +100,19 @@ namespace MarchingCubes
 
         protected void ApplyBuildGenericTrianglesForChunkProperties(ComputeShader forShader, ICompressedMarchingCubeChunk chunk, int numTris)
         {
+
+            bool storeMinDegree = chunk.MinDegreeBuffer != null;
+
+            forShader.SetBool("storeMinDegrees", storeMinDegree);
+
+            if (storeMinDegree)
+            {
+                forShader.SetBuffer(0, "minDegreeAtCoord", chunk.MinDegreeBuffer);
+            }
+            else
+            {
+                forShader.SetBuffer(0, "minDegreeAtCoord", ChunkGPUDataRequest.emptyMinDegreeBuffer);
+            }
 
             Vector4 anchor = VectorExtension.ToVector4(chunk.AnchorPos);
             int pointsPerAxis = chunk.PointsPerAxis;

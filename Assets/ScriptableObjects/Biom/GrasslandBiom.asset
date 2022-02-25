@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   biomName: GrassLand
   biom:
-    amplitude: 25
+    amplitude: 25.25
     lacunarity: 2
     persistence: 0.518
     frequency: 2.05
@@ -24,3 +24,6 @@ MonoBehaviour:
   visualizationData:
     steepBiomColor: {r: 0.30980393, g: 0.19607845, b: 0.14117648, a: 1}
     flatBiomColor: {r: 0.15440746, g: 0.5283019, b: 0.14702742, a: 1}
+  envirenmentData:
+    grassDensity: 0
+    treeDensity: 0

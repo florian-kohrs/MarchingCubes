@@ -1,5 +1,5 @@
 ﻿#pragma kernel MarchPrepareAround
-#include "../Includes/MarchTables.compute"
+#include "/Includes/MarchTables.compute"
 #include "Assets/Scripts/ComputeIncludes/ZipData.compute"
 
 #define PI 3.14159265358979323846
