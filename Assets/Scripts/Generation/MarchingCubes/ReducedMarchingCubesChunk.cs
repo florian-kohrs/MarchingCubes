@@ -191,8 +191,8 @@ namespace MarchingCubes
            
             MeshData result = ChunkHandler.DispatchRebuildAround(this, clickedIndex, startVec, endVec, marchSquare);
 
+            FreeAllMeshes();
             InitializeWithMeshData(result);
-            
         }
 
         protected Vector3Int GlobalPosToCubeIndex(Vector3 pos)
