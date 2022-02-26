@@ -592,6 +592,12 @@ namespace MarchingCubes
             return pointIndex;
         }
 
+        protected Vector3Int GlobalPosToCubeIndex(Vector3 pos)
+        {
+            pos = GlobalToLocalPosition(pos);
+            return new Vector3Int((int)pos.x, (int)pos.y, (int)pos.z);
+        }
+
         protected bool SmallerThanSurface(float f) => f < MarchingCubeChunkHandler.SURFACE_LEVEL;
         protected bool LargerThanSurface(float f) => f >= MarchingCubeChunkHandler.SURFACE_LEVEL;
 
@@ -600,8 +606,8 @@ namespace MarchingCubes
             System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
             watch.Start();
 
-            MarchingCubeEntity e = GetEntityFromRayHit(hit);
-            Vector3Int origin = e.origin;
+            Vector3Int origin = GlobalPosToCubeIndex(hit.point);
+            //var e = GetEntityFromRayHit(hit);
             int originX = origin.x;
             int originY = origin.y;
             int originZ = origin.z;
@@ -614,7 +620,7 @@ namespace MarchingCubes
             int length = neighbourDirs.Length;
 
             List<Tuple<MarchingCubeChunk, Vector3Int>> chunks = new List<Tuple<MarchingCubeChunk, Vector3Int>>();
-            chunks.Add(Tuple.Create<MarchingCubeChunk, Vector3Int>(this, origin));
+            chunks.Add(Tuple.Create(this, origin));
 
             CompressedMarchingCubeChunk chunk;
             for (int i = 0; i < length; i++)
@@ -663,6 +669,8 @@ namespace MarchingCubes
             rest /= lod;
             return GetEntityAt((int)rest.x, (int)rest.y, (int)rest.z);
         }
+
+        public Vector3 GlobalToLocalPosition(Vector3 v3) => v3 - AnchorPos;
 
         public MarchingCubeEntity GetEntityFromRayHit(RaycastHit hit)
         {
