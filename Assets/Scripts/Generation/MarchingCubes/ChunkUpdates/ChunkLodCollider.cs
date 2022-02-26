@@ -7,7 +7,7 @@ namespace MarchingCubes
     public class ChunkLodCollider : MonoBehaviour
     {
 
-        public ICompressedMarchingCubeChunk chunk;
+        public CompressedMarchingCubeChunk chunk;
 
         public SphereCollider coll;
 

@@ -11,13 +11,13 @@ namespace MarchingCubes
     //TODO: Dont use as Interactablechunk when destruction begun
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
     public class MarchingCubeChunk : CompressedMarchingCubeChunk,
-        IMarchingCubeChunk, IHasInteractableMarchingCubeChunk, ICubeNeighbourFinder
+        IHasInteractableMarchingCubeChunk, ICubeNeighbourFinder
     {
 
 
         public const int MAX_NOISE_VALUE  = 100;
 
-        public IMarchingCubeChunk GetChunk => this;
+        public MarchingCubeChunk GetChunk => this;
 
         public MarchingCubeEntity[,,] cubeEntities;
 
@@ -119,10 +119,10 @@ namespace MarchingCubes
 
         public MarchingCubeEntity GetEntityInNeighbourAt(Vector3Int outsidePos)
         {
-            ICompressedMarchingCubeChunk chunk;
+            CompressedMarchingCubeChunk chunk;
             if (chunkHandler.TryGetReadyChunkAt(AnchorPos + outsidePos, out chunk))
             {
-                if (chunk is IMarchingCubeChunk c)
+                if (chunk is MarchingCubeChunk c)
                 {
                     Vector3Int pos = outsidePos + AnchorPos - chunk.AnchorPos;
                     return c.GetEntityAt(pos);
@@ -613,10 +613,10 @@ namespace MarchingCubes
 
             int length = neighbourDirs.Length;
 
-            List<Tuple<IMarchingCubeChunk, Vector3Int>> chunks = new List<Tuple<IMarchingCubeChunk, Vector3Int>>();
-            chunks.Add(Tuple.Create<IMarchingCubeChunk, Vector3Int>(this, origin));
+            List<Tuple<MarchingCubeChunk, Vector3Int>> chunks = new List<Tuple<MarchingCubeChunk, Vector3Int>>();
+            chunks.Add(Tuple.Create<MarchingCubeChunk, Vector3Int>(this, origin));
 
-            ICompressedMarchingCubeChunk chunk;
+            CompressedMarchingCubeChunk chunk;
             for (int i = 0; i < length; i++)
             {
                 Vector3Int offset = ChunkSize * neighbourDirs[i];
@@ -625,7 +625,7 @@ namespace MarchingCubes
                 //!TODO: When requesting a nonexisting chunk instead of create -> edit request modified noise and only build that
                 if (ChunkHandler.TryGetReadyChunkAt(newChunkPos, out chunk))
                 {
-                    if (chunk is IMarchingCubeChunk threadedChunk)
+                    if (chunk is MarchingCubeChunk threadedChunk)
                     {
                         Vector3Int v3 = origin - offset;
                         chunks.Add(Tuple.Create(threadedChunk, v3));
@@ -640,7 +640,7 @@ namespace MarchingCubes
                     Vector3Int start;
                     Vector3Int end;
                     GetNoiseEditData(offset, editDistance, origin - offset, out start, out end);
-                    chunkHandler.CreateChunkWithNoiseEdit(newChunkPos, hit.point - newChunkPos, start,end, delta, editDistance, out ICompressedMarchingCubeChunk a);
+                    chunkHandler.CreateChunkWithNoiseEdit(newChunkPos, hit.point - newChunkPos, start,end, delta, editDistance, out CompressedMarchingCubeChunk a);
                 }
             }
 
@@ -648,7 +648,7 @@ namespace MarchingCubes
             for (int i = 0; i < count; i++)
             {
                 Vector3Int v3 = chunks[i].Item2;
-                IMarchingCubeChunk currentChunk = chunks[i].Item1;
+                MarchingCubeChunk currentChunk = chunks[i].Item1;
                 currentChunk.RebuildAround(hitDiff, editDistance, v3, delta);
             }
 

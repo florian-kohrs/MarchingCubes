@@ -29,7 +29,7 @@ namespace MarchingCubes
             return false;
         }
 
-        public bool TryLoadPoints(ICompressedMarchingCubeChunk chunk, out float[] loadedPoints)
+        public bool TryLoadPoints(CompressedMarchingCubeChunk chunk, out float[] loadedPoints)
         {
             return TryGetMipMapAt(chunk.AnchorPos, chunk.ChunkSizePower, out loadedPoints, out bool complete) && complete;
         }
@@ -39,7 +39,7 @@ namespace MarchingCubes
             return TryGetMipMapAt(anchor, sizePow, out noise, out isMipMapComplete) && isMipMapComplete;
         }
 
-        public void Store(Vector3Int anchorPos, IMarchingCubeChunk chunk, bool overrideNoise = false)
+        public void Store(Vector3Int anchorPos, MarchingCubeChunk chunk, bool overrideNoise = false)
         {
             if (!TryGetGroupItemAt(anchorPos, out StoredChunkEdits edits) || overrideNoise)
             {

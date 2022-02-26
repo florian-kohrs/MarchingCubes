@@ -62,7 +62,7 @@ namespace MarchingCubes
                 {
                     Transform currentHitObject = hit.collider.transform;
 
-                    IMarchingCubeChunk chunk = currentHitObject.GetComponent<IHasInteractableMarchingCubeChunk>()?.GetChunk;
+                    MarchingCubeChunk chunk = currentHitObject.GetComponent<IHasInteractableMarchingCubeChunk>()?.GetChunk;
 
                     if (chunk != null)
                     {
@@ -92,7 +92,7 @@ namespace MarchingCubes
                 {
                     Transform currentHitObject = hit.collider.transform;
 
-                    IMarchingCubeChunk chunk = currentHitObject.GetComponent<IHasInteractableMarchingCubeChunk>()?.GetChunk;
+                    MarchingCubeChunk chunk = currentHitObject.GetComponent<IHasInteractableMarchingCubeChunk>()?.GetChunk;
 
                     if (chunk != null)
                     {
@@ -118,7 +118,7 @@ namespace MarchingCubes
                 {
                     Transform currentHitObject = hit.collider.transform;
 
-                    IMarchingCubeChunk chunk = currentHitObject.GetComponent<IHasInteractableMarchingCubeChunk>()?.GetChunk;
+                    MarchingCubeChunk chunk = currentHitObject.GetComponent<IHasInteractableMarchingCubeChunk>()?.GetChunk;
 
                     if (chunk != null)
                     {

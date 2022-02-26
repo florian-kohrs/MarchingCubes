@@ -6,13 +6,13 @@ namespace MarchingCubes
 {
     public class ChunkNeighourTask
     {
-        public ChunkNeighourTask(ICompressedMarchingCubeChunk chunk, MeshData meshData)
+        public ChunkNeighourTask(CompressedMarchingCubeChunk chunk, MeshData meshData)
         {
             this.chunk = chunk;
             this.meshData = meshData;
         }
 
-        public ICompressedMarchingCubeChunk chunk;
+        public CompressedMarchingCubeChunk chunk;
 
         public MeshData meshData;
 

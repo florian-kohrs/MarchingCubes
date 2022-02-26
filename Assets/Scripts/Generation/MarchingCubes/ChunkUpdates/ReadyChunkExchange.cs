@@ -8,33 +8,33 @@ namespace MarchingCubes
     public class ReadyChunkExchange
     {
 
-        public ReadyChunkExchange(ICompressedMarchingCubeChunk old, List<ICompressedMarchingCubeChunk> chunks)
+        public ReadyChunkExchange(CompressedMarchingCubeChunk old, List<CompressedMarchingCubeChunk> chunks)
         {
-            this.old = new List<ICompressedMarchingCubeChunk>() { old };
+            this.old = new List<CompressedMarchingCubeChunk>() { old };
             this.chunks = chunks;
         }
 
-        public ReadyChunkExchange(List<ICompressedMarchingCubeChunk> old, ICompressedMarchingCubeChunk chunks)
+        public ReadyChunkExchange(List<CompressedMarchingCubeChunk> old, CompressedMarchingCubeChunk chunks)
         {
             this.old = old ;
-            this.chunks = new List<ICompressedMarchingCubeChunk>() { chunks };
+            this.chunks = new List<CompressedMarchingCubeChunk>() { chunks };
         }
 
-        public ReadyChunkExchange(ICompressedMarchingCubeChunk old, ICompressedMarchingCubeChunk chunks)
+        public ReadyChunkExchange(CompressedMarchingCubeChunk old, CompressedMarchingCubeChunk chunks)
         {
-            this.old = new List<ICompressedMarchingCubeChunk>() { old };
-            this.chunks = new List<ICompressedMarchingCubeChunk>() { chunks };
+            this.old = new List<CompressedMarchingCubeChunk>() { old };
+            this.chunks = new List<CompressedMarchingCubeChunk>() { chunks };
         }
 
-        public ReadyChunkExchange(List<ICompressedMarchingCubeChunk> old, List<ICompressedMarchingCubeChunk> chunks)
+        public ReadyChunkExchange(List<CompressedMarchingCubeChunk> old, List<CompressedMarchingCubeChunk> chunks)
         {
             this.old = old;
             this.chunks = chunks;
         }
 
-        public List<ICompressedMarchingCubeChunk> old;
+        public List<CompressedMarchingCubeChunk> old;
 
-        public List<ICompressedMarchingCubeChunk> chunks;
+        public List<CompressedMarchingCubeChunk> chunks;
 
     }
 }

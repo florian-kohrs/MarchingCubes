@@ -57,7 +57,7 @@ namespace MarchingCubes
             return triangles;
         }
 
-        public void ApplyDensityPropertiesForChunk(ICompressedMarchingCubeChunk chunk, bool tryLoadData = true)
+        public void ApplyDensityPropertiesForChunk(CompressedMarchingCubeChunk chunk, bool tryLoadData = true)
         {
             Vector4 anchor = VectorExtension.ToVector4(chunk.AnchorPos);
             int pointsPerAxis = chunk.PointsPerAxis;
@@ -69,13 +69,13 @@ namespace MarchingCubes
             densityGeneratorShader.SetBool("tryLoadData", tryLoadData);
         }
 
-        public void ApplyPrepareTrianglesForChunk(ICompressedMarchingCubeChunk chunk)
+        public void ApplyPrepareTrianglesForChunk(CompressedMarchingCubeChunk chunk)
         {
             prepareTrisShader.SetInt("numPointsPerAxis", chunk.PointsPerAxis);
             preparedTrisBuffer.SetCounterValue(0);
         }
 
-        public ComputeBuffer ApplyBuildTrianglesForChunkProperties(ICompressedMarchingCubeChunk chunk, int numTris)
+        public ComputeBuffer ApplyBuildTrianglesForChunkProperties(CompressedMarchingCubeChunk chunk, int numTris)
         {
 
             ComputeBuffer trianglesBuffer = new ComputeBuffer(numTris, TriangleBuilder.SIZE_OF_TRI_BUILD);
@@ -87,7 +87,7 @@ namespace MarchingCubes
             return trianglesBuffer;
         }
 
-        public void ApplyBuildMeshDataPropertiesForChunk(ICompressedMarchingCubeChunk chunk, int numTris, out ComputeBuffer verts, out ComputeBuffer colors)
+        public void ApplyBuildMeshDataPropertiesForChunk(CompressedMarchingCubeChunk chunk, int numTris, out ComputeBuffer verts, out ComputeBuffer colors)
         {
             verts = new ComputeBuffer(numTris * 3, sizeof(float) * 3);
             colors = new ComputeBuffer(numTris * 3, sizeof(uint));
@@ -98,7 +98,7 @@ namespace MarchingCubes
             ApplyBuildGenericTrianglesForChunkProperties(buildMeshDataShader, chunk, numTris);
         }
 
-        protected void ApplyBuildGenericTrianglesForChunkProperties(ComputeShader forShader, ICompressedMarchingCubeChunk chunk, int numTris)
+        protected void ApplyBuildGenericTrianglesForChunkProperties(ComputeShader forShader, CompressedMarchingCubeChunk chunk, int numTris)
         {
 
             bool storeMinDegree = chunk.MinDegreeBuffer != null;

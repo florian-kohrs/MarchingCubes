@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public class ChunkGroupTreeNode : GenericTreeNode<ICompressedMarchingCubeChunk, IChunkGroupOrganizer<ICompressedMarchingCubeChunk>, ChunkGroupTreeLeaf>, IChunkGroupParent<ChunkGroupTreeLeaf>
+    public class ChunkGroupTreeNode : GenericTreeNode<CompressedMarchingCubeChunk, IChunkGroupOrganizer<CompressedMarchingCubeChunk>, ChunkGroupTreeLeaf>, IChunkGroupParent<ChunkGroupTreeLeaf>
     {
 
         public ChunkGroupTreeNode(
@@ -29,11 +29,11 @@ namespace MarchingCubes
         }
 
 
-        public void PrepareBranchDestruction(List<ICompressedMarchingCubeChunk> allLeafs)
+        public void PrepareBranchDestruction(List<CompressedMarchingCubeChunk> allLeafs)
         {
             for (int i = 0; i < 8 ; i++)
             {
-                IChunkGroupOrganizer<ICompressedMarchingCubeChunk> child = children[i];
+                IChunkGroupOrganizer<CompressedMarchingCubeChunk> child = children[i];
                 if (child == null)
                     continue;
 
@@ -50,7 +50,7 @@ namespace MarchingCubes
             }
         }
 
-        public void RemoveChildAtIndex(int index, ICompressedMarchingCubeChunk chunk)
+        public void RemoveChildAtIndex(int index, CompressedMarchingCubeChunk chunk)
         {
             if(children[index] != null 
                 && children[index].IsLeaf 
@@ -75,12 +75,12 @@ namespace MarchingCubes
             }
         }
 
-        public override IChunkGroupOrganizer<ICompressedMarchingCubeChunk> GetLeaf(ICompressedMarchingCubeChunk leaf, int index, int[] anchor, int[] relAnchor, int sizePow)
+        public override IChunkGroupOrganizer<CompressedMarchingCubeChunk> GetLeaf(CompressedMarchingCubeChunk leaf, int index, int[] anchor, int[] relAnchor, int sizePow)
         {
             return new ChunkGroupTreeLeaf(this, leaf, index, anchor, relAnchor, sizePow);
         }
 
-        public override IChunkGroupOrganizer<ICompressedMarchingCubeChunk> GetNode(int[] anchor, int[] relAnchor, int sizePow)
+        public override IChunkGroupOrganizer<CompressedMarchingCubeChunk> GetNode(int[] anchor, int[] relAnchor, int sizePow)
         {
             return new ChunkGroupTreeNode(anchor, relAnchor, sizePow);
         }

@@ -22,7 +22,7 @@ namespace MarchingCubes
         protected BufferPool minDegreeBufferPool;
 
 
-        public void PrepareChunkToStoreMinDegreesIfNeeded(ICompressedMarchingCubeChunk chunk)
+        public void PrepareChunkToStoreMinDegreesIfNeeded(CompressedMarchingCubeChunk chunk)
         {
             bool storeMinDegree = chunk.LOD <= 1 && !chunk.IsReady;
             if (storeMinDegree)
@@ -33,7 +33,7 @@ namespace MarchingCubes
         }
 
 
-        public void DispatchPrepareCubesFromNoise(ICompressedMarchingCubeChunk chunk)
+        public void DispatchPrepareCubesFromNoise(CompressedMarchingCubeChunk chunk)
         {
             pipeline.ApplyPrepareTrianglesForChunk(chunk);
 
@@ -45,7 +45,7 @@ namespace MarchingCubes
         }
 
 
-        public ComputeBuffer BuildPreparedCubes(ICompressedMarchingCubeChunk chunk, int numTris)
+        public ComputeBuffer BuildPreparedCubes(CompressedMarchingCubeChunk chunk, int numTris)
         {
             PrepareChunkToStoreMinDegreesIfNeeded(chunk);
 
@@ -58,7 +58,7 @@ namespace MarchingCubes
             return trianglesBuffer;
         }
 
-        public int ComputeCubesFromNoise(ICompressedMarchingCubeChunk chunk, out ComputeBuffer triangleBuffer)
+        public int ComputeCubesFromNoise(CompressedMarchingCubeChunk chunk, out ComputeBuffer triangleBuffer)
         {
             DispatchPrepareCubesFromNoise(chunk);
             int numTris = ComputeBufferExtension.GetLengthOfAppendBuffer(pipeline.preparedTrisBuffer, pipeline.triCountBuffer);
@@ -73,7 +73,7 @@ namespace MarchingCubes
             return numTris;
         }
 
-        public void BuildMeshFromPreparedCubes(ICompressedMarchingCubeChunk chunk, int numTris, out ComputeBuffer verts, out ComputeBuffer colors)
+        public void BuildMeshFromPreparedCubes(CompressedMarchingCubeChunk chunk, int numTris, out ComputeBuffer verts, out ComputeBuffer colors)
         {
             pipeline.ApplyBuildMeshDataPropertiesForChunk(chunk, numTris, out verts, out colors);
 
@@ -82,7 +82,7 @@ namespace MarchingCubes
             pipeline.buildMeshDataShader.Dispatch(0, numThreads, 1, 1);
         }
 
-        public int ComputeMeshDataFromNoise(ICompressedMarchingCubeChunk chunk, out ComputeBuffer verts, out ComputeBuffer colors)
+        public int ComputeMeshDataFromNoise(CompressedMarchingCubeChunk chunk, out ComputeBuffer verts, out ComputeBuffer colors)
         {
             DispatchPrepareCubesFromNoise(chunk);
             int numTris = ComputeBufferExtension.GetLengthOfAppendBuffer(pipeline.preparedTrisBuffer, pipeline.triCountBuffer);
@@ -107,7 +107,7 @@ namespace MarchingCubes
             rebuildShader.Dispatch(0, threadsPerAxis.x, threadsPerAxis.y, threadsPerAxis.z);
         }
 
-        public int ComputeCubesFromNoiseAround(ICompressedMarchingCubeChunk chunk, ComputeShader rebuildShader, Vector3Int threadsPerAxis, out ComputeBuffer triangleBuffer)
+        public int ComputeCubesFromNoiseAround(CompressedMarchingCubeChunk chunk, ComputeShader rebuildShader, Vector3Int threadsPerAxis, out ComputeBuffer triangleBuffer)
         {
             DispatchPrepareCubesFromNoiseAround(rebuildShader, threadsPerAxis);
             int numTris = ComputeBufferExtension.GetLengthOfAppendBuffer(pipeline.preparedTrisBuffer, pipeline.triCountBuffer);

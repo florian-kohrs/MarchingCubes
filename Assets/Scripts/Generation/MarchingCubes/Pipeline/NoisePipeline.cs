@@ -20,20 +20,20 @@ namespace MarchingCubes
 
         public StorageGroupMesh storageGroup;
 
-        public void StoreNoise(ICompressedMarchingCubeChunk chunk)
+        public void StoreNoise(CompressedMarchingCubeChunk chunk)
         {
             int pointsPerAxis = chunk.PointsPerAxis;
             int pointsVolume = pointsPerAxis * pointsPerAxis * pointsPerAxis;
             float[] pointsArray = new float[pointsVolume];
             pipeline.pointsBuffer.GetData(pointsArray);
-            if (chunk is IMarchingCubeChunk c)
+            if (chunk is MarchingCubeChunk c)
             {
                 c.Points = pointsArray;
-                storageGroup.Store(chunk.AnchorPos, chunk as IMarchingCubeChunk, true);
+                storageGroup.Store(chunk.AnchorPos, chunk as MarchingCubeChunk, true);
             }
         }
 
-        public float[] GenerateAndGetNoiseForChunk(ICompressedMarchingCubeChunk chunk)
+        public float[] GenerateAndGetNoiseForChunk(CompressedMarchingCubeChunk chunk)
         {
             float[] result;
             int pointsPerAxis = chunk.PointsPerAxis;
@@ -44,7 +44,7 @@ namespace MarchingCubes
         }
 
 
-        public float[] RequestNoiseForChunk(ICompressedMarchingCubeChunk chunk)
+        public float[] RequestNoiseForChunk(CompressedMarchingCubeChunk chunk)
         {
             float[] result;
             if (!storageGroup.TryLoadNoise(chunk.AnchorPos, chunk.ChunkSizePower, out result, out bool _))
@@ -54,7 +54,7 @@ namespace MarchingCubes
             return result;
         }
 
-        public void TryLoadOrGenerateNoise(ICompressedMarchingCubeChunk chunk)
+        public void TryLoadOrGenerateNoise(CompressedMarchingCubeChunk chunk)
         {
             bool hasStoredData = false;
             bool isMipMapComplete = false;
@@ -78,19 +78,19 @@ namespace MarchingCubes
             }
         }
 
-        protected void DispatchNoiseForChunk(ICompressedMarchingCubeChunk chunk, bool hasStoredData)
+        protected void DispatchNoiseForChunk(CompressedMarchingCubeChunk chunk, bool hasStoredData)
         {
             int groupsPerAxis = Mathf.CeilToInt(chunk.PointsPerAxis / THREAD_GROUP_SIZE_PER_AXIS);
             pipeline.ApplyDensityPropertiesForChunk(chunk, hasStoredData);
             pipeline.densityGeneratorShader.Dispatch(0, groupsPerAxis, groupsPerAxis, groupsPerAxis);
         }
 
-        public bool WorkOnNoiseMap(ICompressedMarchingCubeChunk chunk, Action<ComputeBuffer> a)
+        public bool WorkOnNoiseMap(CompressedMarchingCubeChunk chunk, Action<ComputeBuffer> a)
         {
             bool storeNoise = false;
             if (a != null)
             {
-                if (!(chunk is IMarchingCubeChunk))
+                if (!(chunk is MarchingCubeChunk))
                 {
                     throw new ArgumentException("Chunk has to be storeable to be able to store requested noise!");
                 }

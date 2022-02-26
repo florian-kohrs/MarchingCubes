@@ -8,7 +8,7 @@ using UnityEngine;
 namespace MarchingCubes
 {
 
-    public class CompressedMarchingCubeChunk : ICompressedMarchingCubeChunk
+    public class CompressedMarchingCubeChunk : ISizeManager, IEnvironmentSurface
     {
 
         //TODO: Check this: Graphics.DrawProceduralIndirect
@@ -65,7 +65,7 @@ namespace MarchingCubes
         protected Vector3Int chunkCenterPosition;
 
 
-        public IMarchingCubeChunkHandler chunkHandler;
+        public MarchingCubeChunkHandler chunkHandler;
 
         /// <summary>
         /// stores chunkEntities based on their position as index
@@ -85,11 +85,11 @@ namespace MarchingCubes
 
         private Vector3Int anchorPos;
 
-        int ICompressedMarchingCubeChunk.PointsPerAxis => pointsPerAxis;
+        public int PointsPerAxis => pointsPerAxis;
 
-        protected Queue<ICompressedMarchingCubeChunk> readyChunks;
+        protected Queue<CompressedMarchingCubeChunk> readyChunks;
 
-        protected Action<ICompressedMarchingCubeChunk> OnChunkFinished;
+        protected Action<CompressedMarchingCubeChunk> OnChunkFinished;
 
         protected List<MeshData> data = new List<MeshData>();
 
@@ -119,8 +119,6 @@ namespace MarchingCubes
         public bool IsInOtherThread { get; set; }
 
         public ChunkGroupTreeLeaf Leaf { get; set; }
-
-        protected int PointsPerAxis => pointsPerAxis;
 
         public Vector3Int CenterPos => chunkCenterPosition;
 
@@ -196,7 +194,7 @@ namespace MarchingCubes
         }
 
 
-        public IMarchingCubeChunkHandler ChunkHandler
+        public MarchingCubeChunkHandler ChunkHandler
         {
             protected get
             {
@@ -258,13 +256,13 @@ namespace MarchingCubes
 
         #region async chunk building
 
-        public void InitializeWithTriangleDataParallel(TriangleChunkHeap heap, Queue<ICompressedMarchingCubeChunk> readyChunks)
+        public void InitializeWithTriangleDataParallel(TriangleChunkHeap heap, Queue<CompressedMarchingCubeChunk> readyChunks)
         {
             this.readyChunks = readyChunks;
             StartParallel(heap);
         }
 
-        public void InitializeWithTriangleDataParallel(TriangleChunkHeap heap, Action<ICompressedMarchingCubeChunk> OnChunkFinished)
+        public void InitializeWithTriangleDataParallel(TriangleChunkHeap heap, Action<CompressedMarchingCubeChunk> OnChunkFinished)
         {
             this.OnChunkFinished = OnChunkFinished;
             StartParallel(heap);
@@ -652,7 +650,7 @@ namespace MarchingCubes
         {
             if (UseCollider)
             {
-                return GetMeshInteractableDisplayer((IMarchingCubeChunk)this);
+                return GetMeshInteractableDisplayer((MarchingCubeChunk)this);
             }
             else
             {
@@ -660,7 +658,7 @@ namespace MarchingCubes
             }
         }
 
-        protected MarchingCubeMeshDisplayer GetMeshInteractableDisplayer(IMarchingCubeChunk interactable)
+        protected MarchingCubeMeshDisplayer GetMeshInteractableDisplayer(MarchingCubeChunk interactable)
         {
             if (freeDisplayer != null)
             {

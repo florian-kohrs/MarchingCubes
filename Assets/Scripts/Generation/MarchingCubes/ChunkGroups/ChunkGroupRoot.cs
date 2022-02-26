@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public class ChunkGroupRoot : GenericTreeRoot<ICompressedMarchingCubeChunk, ChunkGroupTreeLeaf, IChunkGroupOrganizer<ICompressedMarchingCubeChunk>>, IChunkGroupParent<ChunkGroupTreeLeaf>
+    public class ChunkGroupRoot : GenericTreeRoot<CompressedMarchingCubeChunk, ChunkGroupTreeLeaf, IChunkGroupOrganizer<CompressedMarchingCubeChunk>>, IChunkGroupParent<ChunkGroupTreeLeaf>
     {
 
         public ChunkGroupRoot(int[] coord, int chunkGroupSize) : base(coord, chunkGroupSize)
@@ -15,22 +15,22 @@ namespace MarchingCubes
 
         public override int SizePower => MarchingCubeChunkHandler.CHUNK_GROUP_SIZE_POWER;
         
-        public void PrepareBranchDestruction(List<ICompressedMarchingCubeChunk> allLeafs)
+        public void PrepareBranchDestruction(List<CompressedMarchingCubeChunk> allLeafs)
         {
             throw new System.NotImplementedException();
         }
 
-        public override IChunkGroupOrganizer<ICompressedMarchingCubeChunk> GetLeaf(ICompressedMarchingCubeChunk leaf, int index, int[] anchor, int[] relAnchor, int sizePow)
+        public override IChunkGroupOrganizer<CompressedMarchingCubeChunk> GetLeaf(CompressedMarchingCubeChunk leaf, int index, int[] anchor, int[] relAnchor, int sizePow)
         {
             return new ChunkGroupTreeLeaf(this, leaf, index, anchor, relAnchor, sizePow);
         }
 
-        public override IChunkGroupOrganizer<ICompressedMarchingCubeChunk> GetNode(int[] anchor, int[] relAnchor, int sizePow)
+        public override IChunkGroupOrganizer<CompressedMarchingCubeChunk> GetNode(int[] anchor, int[] relAnchor, int sizePow)
         {
             return new ChunkGroupTreeNode(anchor, relAnchor, sizePow);
         }
 
-        public void RemoveChildAtIndex(int index, ICompressedMarchingCubeChunk chunk)
+        public void RemoveChildAtIndex(int index, CompressedMarchingCubeChunk chunk)
         {
             if(child.IsLeaf && child is ChunkGroupTreeLeaf leaf && leaf.leaf == chunk)
             {

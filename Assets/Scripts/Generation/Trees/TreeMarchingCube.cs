@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-//public class TreeMarchingCube : IMarchingCubeChunkHandler
+//public class TreeMarchingCube : MarchingCubeChunkHandler
 //{
 
 //    public TreeMarchingCube(Transform transform, Dictionary<Vector3Int, float> density)

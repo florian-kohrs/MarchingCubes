@@ -10,7 +10,7 @@ namespace MarchingCubes
 
         private void OnTriggerExit(Collider other)
         {
-            ICompressedMarchingCubeChunk chunk = other.GetComponent<ChunkLodCollider>()?.chunk;
+            CompressedMarchingCubeChunk chunk = other.GetComponent<ChunkLodCollider>()?.chunk;
             if (chunk != null)
             {
                 chunk.TargetLODPower = Mathf.Max(chunk.TargetLODPower, lod);

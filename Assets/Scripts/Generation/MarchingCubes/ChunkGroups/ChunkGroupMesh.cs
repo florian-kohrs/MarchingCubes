@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public class ChunkGroupMesh : GroupMesh<ChunkGroupRoot, ICompressedMarchingCubeChunk, ChunkGroupTreeLeaf, IChunkGroupOrganizer<ICompressedMarchingCubeChunk>>
+    public class ChunkGroupMesh : GroupMesh<ChunkGroupRoot, CompressedMarchingCubeChunk, ChunkGroupTreeLeaf, IChunkGroupOrganizer<CompressedMarchingCubeChunk>>
     {
 
         public ChunkGroupMesh(int groupSize) : base(groupSize) { }
@@ -16,14 +16,14 @@ namespace MarchingCubes
         }
 
 
-        public bool TryGetReadyChunkAt(Vector3Int p, out ICompressedMarchingCubeChunk chunk)
+        public bool TryGetReadyChunkAt(Vector3Int p, out CompressedMarchingCubeChunk chunk)
         {
             return TryGetGroupItemAt(p, out chunk) && chunk.IsReady;
         }
 
         public bool HasChunkStartedAt(Vector3Int p)
         {
-            return TryGetGroupItemAt(p, out ICompressedMarchingCubeChunk chunk) && chunk.HasStarted;
+            return TryGetGroupItemAt(p, out CompressedMarchingCubeChunk chunk) && chunk.HasStarted;
         }
 
 

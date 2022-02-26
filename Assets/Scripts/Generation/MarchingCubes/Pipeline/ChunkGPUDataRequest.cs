@@ -31,13 +31,13 @@ namespace MarchingCubes
         public BufferPool minDegreeBufferPool;
 
       
-        public void ValidateChunkProperties(ICompressedMarchingCubeChunk chunk)
+        public void ValidateChunkProperties(CompressedMarchingCubeChunk chunk)
         {
             if (chunk.ChunkSize % chunk.LOD != 0)
                 throw new Exception("Lod must be divisor of chunksize");
         }
 
-        public float[] RequestNoiseForChunk(ICompressedMarchingCubeChunk chunk)
+        public float[] RequestNoiseForChunk(CompressedMarchingCubeChunk chunk)
         {
             ChunkGenerationGPUData gpuData = pipelinePool.GetItemFromPool();
             NoisePipeline noise = new NoisePipeline(gpuData, storedNoiseEdits);
@@ -48,7 +48,7 @@ namespace MarchingCubes
         }
 
 
-        public MeshData DispatchAndGetChunkMeshData(ICompressedMarchingCubeChunk chunk, Action<ICompressedMarchingCubeChunk> SetChunkComponents, Action<ComputeBuffer> WorkOnNoise = null)
+        public MeshData DispatchAndGetChunkMeshData(CompressedMarchingCubeChunk chunk, Action<CompressedMarchingCubeChunk> SetChunkComponents, Action<ComputeBuffer> WorkOnNoise = null)
         {
             ChunkGenerationGPUData gpuData = pipelinePool.GetItemFromPool();
             NoisePipeline noise = new NoisePipeline(gpuData, storedNoiseEdits);
@@ -90,7 +90,7 @@ namespace MarchingCubes
             return new MeshData(verts, colors, chunk.UseCollider);
         }
 
-        public void DispatchAndGetChunkMeshDataAsync(ICompressedMarchingCubeChunk chunk, Action<ICompressedMarchingCubeChunk> SetChunkComponents, Action<MeshData> onMeshDataDone)
+        public void DispatchAndGetChunkMeshDataAsync(CompressedMarchingCubeChunk chunk, Action<CompressedMarchingCubeChunk> SetChunkComponents, Action<MeshData> onMeshDataDone)
         {
 
             ChunkGenerationGPUData gpuData = pipelinePool.GetItemFromPool();
@@ -133,7 +133,7 @@ namespace MarchingCubes
 
         //TODO: Inform about Mesh subset and mesh set vertex buffer
         //Subset may be used to only change parts of the mesh -> dont need multiple mesh displayers with submeshes?
-        public TriangleChunkHeap DispatchAndGetShaderData(ICompressedMarchingCubeChunk chunk, Action<ICompressedMarchingCubeChunk> SetChunkComponents, Action<ComputeBuffer> WorkOnNoise = null)
+        public TriangleChunkHeap DispatchAndGetShaderData(CompressedMarchingCubeChunk chunk, Action<CompressedMarchingCubeChunk> SetChunkComponents, Action<ComputeBuffer> WorkOnNoise = null)
         {
             ChunkGenerationGPUData gpuData = pipelinePool.GetItemFromPool();
             NoisePipeline noise = new NoisePipeline(gpuData, storedNoiseEdits);
@@ -169,7 +169,7 @@ namespace MarchingCubes
             return new TriangleChunkHeap(tris, 0, numTris);
         }
 
-        public TriangleBuilder[] DispatchRebuildAround(IMarchingCubeChunk chunk, ComputeShader rebuildShader, Action DoStuffBeforeReadback, Vector3Int threadsPerAxis)
+        public TriangleBuilder[] DispatchRebuildAround(MarchingCubeChunk chunk, ComputeShader rebuildShader, Action DoStuffBeforeReadback, Vector3Int threadsPerAxis)
         {
             ChunkGenerationGPUData gpuData = pipelinePool.GetItemFromPool();
             gpuData.pointsBuffer.SetData(chunk.Points);
@@ -198,7 +198,7 @@ namespace MarchingCubes
             return tris;
         }
 
-        public void DispatchAndGetShaderDataAsync(ICompressedMarchingCubeChunk chunk, Action<ICompressedMarchingCubeChunk> SetChunkComponents, Action<TriangleChunkHeap> OnDataDone)
+        public void DispatchAndGetShaderDataAsync(CompressedMarchingCubeChunk chunk, Action<CompressedMarchingCubeChunk> SetChunkComponents, Action<TriangleChunkHeap> OnDataDone)
         {
             ChunkGenerationGPUData gpuData = pipelinePool.GetItemFromPool();
             NoisePipeline noise = new NoisePipeline(gpuData, storedNoiseEdits);
