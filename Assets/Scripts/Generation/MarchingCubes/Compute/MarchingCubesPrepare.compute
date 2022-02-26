@@ -1,14 +1,5 @@
 ﻿#pragma kernel MarchPrepare
-#include "/Includes/MarchTables.compute"
-#include "Assets/Scripts/ComputeIncludes/ZipData.compute"
-
-#define PI 3.14159265358979323846
-#define SURFACE_LEVEL 0
-
-static const int numThreads = 4;
-
-AppendStructuredBuffer<int2> triangleLocations;
-RWStructuredBuffer<float> points;
+#include "/Includes/BasePrepareCubes.compute"
 
 int numPointsPerAxis;
 

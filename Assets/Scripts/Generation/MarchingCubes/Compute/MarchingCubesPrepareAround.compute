@@ -1,18 +1,9 @@
 ﻿#pragma kernel MarchPrepareAround
-#include "/Includes/MarchTables.compute"
-#include "Assets/Scripts/ComputeIncludes/ZipData.compute"
-
-#define PI 3.14159265358979323846
-#define SURFACE_LEVEL 0
+#include "/Includes/BasePrepareCubes.compute"
 
 #define DEFAULT_NUM_POINTS_PER_AXIS 33
 
-static const int numThreads = 4;
-
 static const int SQR_NUM_POINTS_PER_AXIS = DEFAULT_NUM_POINTS_PER_AXIS * DEFAULT_NUM_POINTS_PER_AXIS;
-
-AppendStructuredBuffer<int2> triangleLocations;
-RWStructuredBuffer<float> points;
 
 float3 start;
 float3 editPoint;

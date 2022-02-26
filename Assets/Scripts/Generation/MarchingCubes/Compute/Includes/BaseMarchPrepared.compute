@@ -1,11 +1,6 @@
-﻿#include "/Includes/MarchTables.compute" 
+﻿#include "/BaseMarchingCubes.compute" 
 #include "/Includes/BiomVisualizationData.compute"
 #include "/Includes/Bioms.compute"
-#include "Assets/Scripts/ComputeIncludes/ZipData.compute"
-
-#define PI 3.14159265358979323846
-#define SURFACE_LEVEL 0
-
 
 struct Triangle
 {
@@ -20,9 +15,7 @@ struct Triangle
 static const int WAFE_FRONT_SIZE = 32;
 static const float rad = 180 / PI;
 
-
 RWStructuredBuffer<int2> triangleLocations;
-RWStructuredBuffer<float> points;
 StructuredBuffer<BiomVisualizationData> biomsViz;
 RWStructuredBuffer<float> minDegreeAtCoord;
 

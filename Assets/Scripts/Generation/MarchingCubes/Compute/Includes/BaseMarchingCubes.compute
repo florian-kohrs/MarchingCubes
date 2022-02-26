@@ -1,0 +1,7 @@
+﻿#include "/MarchTables.compute" 
+#include "Assets/Scripts/ComputeIncludes/ZipData.compute"
+
+#define PI 3.14159265358979323846
+#define SURFACE_LEVEL 0
+
+RWStructuredBuffer<float> points;
