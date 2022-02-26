@@ -5,6 +5,7 @@ namespace MarchingCubes
 {
     public interface IHasInteractableMarchingCubeChunk : IBlockPlaceOrientator
     {
-        MarchingCubeChunk GetChunk { get; }
+        ReducedMarchingCubesChunk GetChunk { get; }
+
     }
 }

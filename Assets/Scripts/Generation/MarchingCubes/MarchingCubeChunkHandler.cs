@@ -106,7 +106,7 @@ namespace MarchingCubes
         public AnimationCurve chunkSizePowerForDistances;
 
 
-        //public Dictionary<Vector3Int, MarchingCubeChunk> Chunks => chunks;
+        //public Dictionary<Vector3Int, ReducedMarchingCubesChunk> Chunks => chunks;
 
         //protected HashSet<BaseMeshChild> inUseDisplayer = new HashSet<BaseMeshChild>();
 
@@ -700,7 +700,7 @@ namespace MarchingCubes
         {
             if (lodPower <= DEFAULT_MIN_CHUNK_LOD_POWER)
             {
-                MarchingCubeChunk chunk = new MarchingCubeChunk();
+                ReducedMarchingCubesChunk chunk = new ReducedMarchingCubesChunk();
                 //chunk.rebuildShader = rebuildShader; 
                 //chunk.rebuildTriCounter = triCountBuffer;
                 //chunk.rebuildTriResult = triangleBuffer;
@@ -743,7 +743,7 @@ namespace MarchingCubes
         public bool TryGetReadyChunkAt(Vector3Int p, out CompressedMarchingCubeChunk chunk) => chunkGroup.TryGetReadyChunkAt(p, out chunk);
 
 
-        //public MarchingCubeChunkNeighbourLODs GetNeighbourLODSFrom(MarchingCubeChunk chunk)
+        //public MarchingCubeChunkNeighbourLODs GetNeighbourLODSFrom(ReducedMarchingCubesChunk chunk)
         //{
         //    MarchingCubeChunkNeighbourLODs result = new MarchingCubeChunkNeighbourLODs();
         //    Vector3Int[] coords = VectorExtension.GetAllAdjacentDirections;
@@ -830,7 +830,7 @@ namespace MarchingCubes
         }
     
 
-        public void SetEditedNoiseAtPosition(MarchingCubeChunk chunk, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance)
+        public void SetEditedNoiseAtPosition(ReducedMarchingCubesChunk chunk, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance)
         {
             //propably remove edit noise shader :/
 
@@ -1014,7 +1014,7 @@ namespace MarchingCubes
         {
             chunkGPURequest.DispatchAndGetChunkMeshDataAsync(chunk, SetChunkComponents, (data) => 
                 { 
-                    chunk.InitializeWithMeshData(data, false); onChunkDone(chunk);  
+                    chunk.InitializeWithMeshData(data); onChunkDone(chunk);  
                 });
         }
 
@@ -1137,14 +1137,14 @@ namespace MarchingCubes
             return displayerPool.GetItemFromPoolFor(null);
         }
 
-        public MarchingCubeMeshDisplayer GetNextInteractableMeshDisplayer(MarchingCubeChunk chunk)
+        public MarchingCubeMeshDisplayer GetNextInteractableMeshDisplayer(ReducedMarchingCubesChunk chunk)
         {
             return interactableDisplayerPool.GetItemFromPoolFor(chunk);
         }
 
         protected void SetDisplayerOfChunk(CompressedMarchingCubeChunk c)
         {
-            if (c is MarchingCubeChunk interactableChunk)
+            if (c is ReducedMarchingCubesChunk interactableChunk)
             {
                 interactableChunk.AddDisplayer(GetNextInteractableMeshDisplayer(interactableChunk));
             }
@@ -1303,7 +1303,7 @@ namespace MarchingCubes
             //environmentSpawner.AddEnvironmentForOriginalChunk(environmentChunk);
         }
 
-        public void Store(Vector3Int anchorPos, MarchingCubeChunk chunk, bool overrideNoise = false) => storageGroup.Store(anchorPos, chunk, overrideNoise);
+        public void Store(Vector3Int anchorPos, ReducedMarchingCubesChunk chunk, bool overrideNoise = false) => storageGroup.Store(anchorPos, chunk, overrideNoise);
 
         public bool TryLoadPoints(CompressedMarchingCubeChunk marchingCubeChunk, out float[] loadedPoints) => storageGroup.TryLoadPoints(marchingCubeChunk,out loadedPoints);
 
@@ -1312,7 +1312,7 @@ namespace MarchingCubes
             return chunkGPURequest.RequestNoiseForChunk(chunk);
         }
 
-        public TriangleBuilder[] DispatchRebuildAround(MarchingCubeChunk chunk, Action removeCubes, Vector3Int clickedIndex, Vector3 startVec, Vector3 endVec, float marchSquare)
+        public MeshData DispatchRebuildAround(ReducedMarchingCubesChunk chunk, Vector3Int clickedIndex, Vector3 startVec, Vector3 endVec, float marchSquare)
         {
             prepareAroundShader.SetVector("editPoint", new Vector4(clickedIndex.x, clickedIndex.y, clickedIndex.z, 0));
             prepareAroundShader.SetVector("start", startVec);
@@ -1329,7 +1329,7 @@ namespace MarchingCubes
                Mathf.CeilToInt((1 + (endVec.z - startVec.z)) / REBUILD_SHADER_THREAD_GROUP_SIZE)
                );
 
-            return chunkGPURequest.DispatchRebuildAround(chunk, prepareAroundShader, removeCubes, threadsPerAxis);
+            return chunkGPURequest.DispatchAndGetChunkMeshData(chunk, null);
         }
 
     }

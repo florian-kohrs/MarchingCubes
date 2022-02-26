@@ -55,31 +55,31 @@ namespace MarchingCubes
             }
             if (Input.GetMouseButtonDown(2))
             {
-                RaycastHit hit;
-                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-                Debug.DrawRay(ray.origin, ray.direction * 10, Color.red, 0.1f);
-                if (Physics.Raycast(ray, out hit, 2000, layer))
-                {
-                    Transform currentHitObject = hit.collider.transform;
+                //RaycastHit hit;
+                //Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                //Debug.DrawRay(ray.origin, ray.direction * 10, Color.red, 0.1f);
+                //if (Physics.Raycast(ray, out hit, 2000, layer))
+                //{
+                //    Transform currentHitObject = hit.collider.transform;
 
-                    MarchingCubeChunk chunk = currentHitObject.GetComponent<IHasInteractableMarchingCubeChunk>()?.GetChunk;
+                //    ReducedMarchingCubesChunk chunk = currentHitObject.GetComponent<IHasInteractableMarchingCubeChunk>()?.GetChunk;
 
-                    if (chunk != null)
-                    {
-                        if (clickCount == 0)
-                        {
-                            firstTriIndex = chunk.GetTriangleFromRayHit(hit);
-                        }
-                        else
-                        {
-                            secondTriIndex = chunk.GetTriangleFromRayHit(hit);
+                //    if (chunk != null)
+                //    {
+                //        if (clickCount == 0)
+                //        {
+                //            firstTriIndex = chunk.GetTriangleFromRayHit(hit);
+                //        }
+                //        else
+                //        {
+                //            secondTriIndex = chunk.GetTriangleFromRayHit(hit);
 
-                            BuildPath(firstTriIndex, secondTriIndex);
-                        }
-                        clickCount++;
-                        clickCount = clickCount % 2;
-                    }
-                }
+                //            BuildPath(firstTriIndex, secondTriIndex);
+                //        }
+                //        clickCount++;
+                //        clickCount = clickCount % 2;
+                //    }
+                //}
 
             }
             else if (Input.GetMouseButtonDown(1))
@@ -92,7 +92,7 @@ namespace MarchingCubes
                 {
                     Transform currentHitObject = hit.collider.transform;
 
-                    MarchingCubeChunk chunk = currentHitObject.GetComponent<IHasInteractableMarchingCubeChunk>()?.GetChunk;
+                    ReducedMarchingCubesChunk chunk = currentHitObject.GetComponent<IHasInteractableMarchingCubeChunk>()?.GetChunk;
 
                     if (chunk != null)
                     {
@@ -118,7 +118,7 @@ namespace MarchingCubes
                 {
                     Transform currentHitObject = hit.collider.transform;
 
-                    MarchingCubeChunk chunk = currentHitObject.GetComponent<IHasInteractableMarchingCubeChunk>()?.GetChunk;
+                    ReducedMarchingCubesChunk chunk = currentHitObject.GetComponent<IHasInteractableMarchingCubeChunk>()?.GetChunk;
 
                     if (chunk != null)
                     {

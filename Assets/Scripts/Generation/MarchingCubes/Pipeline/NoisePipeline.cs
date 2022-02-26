@@ -26,10 +26,10 @@ namespace MarchingCubes
             int pointsVolume = pointsPerAxis * pointsPerAxis * pointsPerAxis;
             float[] pointsArray = new float[pointsVolume];
             pipeline.pointsBuffer.GetData(pointsArray);
-            if (chunk is MarchingCubeChunk c)
+            if (chunk is ReducedMarchingCubesChunk c)
             {
                 c.Points = pointsArray;
-                storageGroup.Store(chunk.AnchorPos, chunk as MarchingCubeChunk, true);
+                storageGroup.Store(chunk.AnchorPos, chunk as ReducedMarchingCubesChunk, true);
             }
         }
 
@@ -90,7 +90,7 @@ namespace MarchingCubes
             bool storeNoise = false;
             if (a != null)
             {
-                if (!(chunk is MarchingCubeChunk))
+                if (!(chunk is ReducedMarchingCubesChunk))
                 {
                     throw new ArgumentException("Chunk has to be storeable to be able to store requested noise!");
                 }

@@ -38,10 +38,10 @@ namespace MarchingCubes
             }
         }
 
-        protected MarchingCubeMeshDisplayer(MarchingCubeChunk chunk, GameObject g, Transform t) : this(g, g.AddComponent<MeshFilter>(), g.AddComponent<MeshRenderer>(), new Mesh(), g.AddComponent<MeshCollider>())
+        protected MarchingCubeMeshDisplayer(ReducedMarchingCubesChunk chunk, GameObject g, Transform t) : this(g, g.AddComponent<MeshFilter>(), g.AddComponent<MeshRenderer>(), new Mesh(), g.AddComponent<MeshCollider>())
         {
             g.transform.SetParent(t, false);
-            if (chunk is MarchingCubeChunk interactable)
+            if (chunk is ReducedMarchingCubesChunk interactable)
             {
                 hasCube = g.AddComponent<HasMarchingCube>();
                 hasCube.chunk = chunk;
@@ -54,7 +54,7 @@ namespace MarchingCubes
             g.transform.SetParent(t, false);
         }
 
-        public MarchingCubeMeshDisplayer(MarchingCubeChunk chunk, Transform t) : this(chunk, new GameObject(/*$"{chunk.AnchorPos.x},{chunk.AnchorPos.y},{chunk.AnchorPos.z} "*/),t) { }
+        public MarchingCubeMeshDisplayer(ReducedMarchingCubesChunk chunk, Transform t) : this(chunk, new GameObject(/*$"{chunk.AnchorPos.x},{chunk.AnchorPos.y},{chunk.AnchorPos.z} "*/),t) { }
 
         public MarchingCubeMeshDisplayer(Transform t, bool useCollider) : this(new GameObject(),t) 
         { 
@@ -108,7 +108,7 @@ namespace MarchingCubes
             return hasCube;
         }
 
-        public void SetInteractableChunk(MarchingCubeChunk chunk)
+        public void SetInteractableChunk(ReducedMarchingCubesChunk chunk)
         {
             if (chunk != null)
             {

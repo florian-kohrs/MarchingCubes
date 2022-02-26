@@ -73,7 +73,7 @@ namespace MarchingCubes
             }
             else
             {
-                SetChunkComponents(chunk);
+                SetChunkComponents?.Invoke(chunk);
                 verts = new Vector3[numTris * 3];
                 colors = new Color32[numTris * 3];
                 vertsBuffer.GetData(verts);
@@ -169,7 +169,7 @@ namespace MarchingCubes
             return new TriangleChunkHeap(tris, 0, numTris);
         }
 
-        public TriangleBuilder[] DispatchRebuildAround(MarchingCubeChunk chunk, ComputeShader rebuildShader, Action DoStuffBeforeReadback, Vector3Int threadsPerAxis)
+        public TriangleBuilder[] DispatchRebuildAround(ReducedMarchingCubesChunk chunk, ComputeShader rebuildShader, Action DoStuffBeforeReadback, Vector3Int threadsPerAxis)
         {
             ChunkGenerationGPUData gpuData = pipelinePool.GetItemFromPool();
             gpuData.pointsBuffer.SetData(chunk.Points);

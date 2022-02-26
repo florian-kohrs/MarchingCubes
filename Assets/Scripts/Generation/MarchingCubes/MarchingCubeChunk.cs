@@ -10,56 +10,21 @@ namespace MarchingCubes
 
     //TODO: Dont use as Interactablechunk when destruction begun
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
-    public class MarchingCubeChunk : CompressedMarchingCubeChunk,
-        IHasInteractableMarchingCubeChunk, ICubeNeighbourFinder
+    public class MarchingCubesChunk : ReducedMarchingCubesChunk, ICubeNeighbourFinder
     {
 
-
-        public const int MAX_NOISE_VALUE  = 100;
-
-        public MarchingCubeChunk GetChunk => this;
 
         public MarchingCubeEntity[,,] cubeEntities;
 
         public HashSet<MarchingCubeEntity> entities = new HashSet<MarchingCubeEntity>();
 
-        //TODO: pool theese arrays
-        protected float[] points;
-
-        public bool HasPoints => points != null;
-
-        public float[] Points
-        {
-            get
-            {
-                if (points == null)
-                {
-                    points = chunkHandler.RequestNoiseForChunk(this);
-                }
-                return points;
-            }
-            set
-            {
-                points = value;
-            }
-        }
-
-        protected override void OnChunkReset()
-        {
-            points = null;
-        }
-
+       
+       
 
         //TODO: Add for each cube entitiy index in mesh and increase next index by entitiy cube count and try to use this when rebuilding mesh
         //TODO: Build from consume buffer
 
-        public override bool UseCollider => true;
-
-        protected void StoreChunkState()
-        {
-            chunkHandler.Store(AnchorPos, this);
-        }
-
+       
         public MarchingCubeEntity GetEntityAt(Vector3Int v3)
         {
             return GetEntityAt(v3.x, v3.y, v3.z);
@@ -122,7 +87,7 @@ namespace MarchingCubes
             CompressedMarchingCubeChunk chunk;
             if (chunkHandler.TryGetReadyChunkAt(AnchorPos + outsidePos, out chunk))
             {
-                if (chunk is MarchingCubeChunk c)
+                if (chunk is MarchingCubesChunk c)
                 {
                     Vector3Int pos = outsidePos + AnchorPos - chunk.AnchorPos;
                     return c.GetEntityAt(pos);
@@ -131,12 +96,11 @@ namespace MarchingCubes
             return null;
         }
 
-
-        protected virtual void ResetAll()
+        protected override void ResetAll()
         {
-            FreeAllMeshes();
+            base.ResetAll();
+            entities.Clear();
             cubeEntities = null;
-            NumTris = 0;
         }
 
         protected MarchingCubeEntity CreateAndAddEntityAt(int x, int y, int z, int triangulationIndex)
@@ -230,199 +194,8 @@ namespace MarchingCubes
 
         }
 
-        protected static object rebuildListLock = new object();
-
-
-        protected void GetNoiseEditData(Vector3 offset, int radius, Vector3Int clickedIndex, out Vector3Int start, out Vector3Int end)
-        {
-            int ppMinus = pointsPerAxis - 1;
-
-            start = new Vector3Int(
-                Mathf.Max(0, clickedIndex.x - radius),
-                Mathf.Max(0, clickedIndex.y - radius),
-                Mathf.Max(0, clickedIndex.z - radius));
-
-            end = new Vector3Int(
-                Mathf.Min(ppMinus, clickedIndex.x + radius + 1),
-                Mathf.Min(ppMinus, clickedIndex.y + radius + 1),
-                Mathf.Min(ppMinus, clickedIndex.z + radius + 1));
-        }
-
-        //TODO: When editing chunk that spawns new chunk build neighbours of new chunk if existing
-        public void RebuildAround(Vector3 offset, int radius, Vector3Int clickedIndex, float delta)
-        {
-
-
-            ///define loop ranges
-            Vector3Int start;
-            Vector3Int end;
-            GetNoiseEditData(offset, radius, VectorExtension.ToVector3Int(clickedIndex - offset), out start, out end);
-
-            bool rebuildChunk;
-            if (!HasPoints)
-            {
-                ChunkHandler.RequestNoiseForChunk(this);
-            }
-            rebuildChunk = EditPointsOnCPU(start, end, clickedIndex + offset, radius, delta);
-
-            //else
-            //{
-            //    rebuildChunk = true;
-            //    ChunkHandler.SetEditedNoiseAtPosition(this, clickedIndex + offset, start,end,delta,radius);
-            //}
-
-            if (rebuildChunk)
-            {
-                if (cubeEntities == null)
-                {
-                    cubeEntities = new MarchingCubeEntity[ChunkSize, ChunkSize, ChunkSize];
-                }
-                //System.Diagnostics.Stopwatch w = new System.Diagnostics.Stopwatch();
-                //w.Start();
-                StoreChunkState();
-                RebuildFromNoiseAroundOnGPU(start, end, clickedIndex, radius);
-                //RebuildFromNoiseAround(start, end, clickedIndex, radius);
-                //w.Stop();
-                //Debug.Log("Time for rebuild only: " + w.Elapsed.TotalMilliseconds);
-            }
-        }
-
-        protected bool EditPointsOnCPU(Vector3Int start, Vector3Int end, Vector3 clickPosition, float editDistance, float delta)
-        {
-            bool result = false;
-
-            int startX = start.x;
-            int startY = start.y;
-            int startZ = start.z;
-
-            int endX = end.x;
-            int endY = end.y;
-            int endZ = end.z;
-
-            float clickPosX = clickPosition.x;
-            float clickPosY = clickPosition.y;
-            float clickPosZ = clickPosition.z;
-
-            float sqrEdit = editDistance * editDistance;
-
-            float distanceX = startX - clickPosX;
-
-            for (int x = startX; x <= endX; x++)
-            {
-                float distanceY = startY - clickPosY;
-                for (int y = startY; y <= endY; y++)
-                {
-                    float distanceZ = startZ - clickPosZ;
-                    for (int z = startZ; z <= endZ; z++)
-                    {
-                        float sqrDistance = distanceX * distanceX + distanceY * distanceY + distanceZ * distanceZ;
-
-                        if (sqrDistance < sqrEdit)
-                        {
-                            float dis = Mathf.Sqrt(sqrDistance);
-                            float factor = 1 - (dis / editDistance);
-                            float diff = factor * delta;
-                            int index = PointIndexFromCoord(x, y, z);
-                            float point = Points[index];
-                            float value = point;
-
-                            if (factor > 0 && ((value != -MAX_NOISE_VALUE || diff >= 0)
-                                && (value != MAX_NOISE_VALUE || diff < 0)))
-                            {
-                                result = true;
-                                value += diff;
-                                value = Mathf.Clamp(value, -MAX_NOISE_VALUE, MAX_NOISE_VALUE);
-                                point = value;
-                                points[index] = point;
-                            }
-                        }
-                        distanceZ++;
-                    }
-                    distanceY++;
-                }
-                distanceX++;
-            }
-            return result;
-        }
-
-        protected void RebuildFromNoiseAroundOnGPU(Vector3Int start, Vector3Int end, Vector3Int clickedIndex, float radius)
-        {
-            float marchDistance = Vector3.one.magnitude + radius + 1;
-            float marchSquare = marchDistance * marchDistance;
-            int voxelMinus = chunkSize - 1;
-
-            Vector3 startVec = new Vector3(
-                Mathf.Max(0, start.x - 1),
-                Mathf.Max(0, start.y - 1),
-                Mathf.Max(0, start.z - 1));
-
-            Vector3 endVec = new Vector3(
-                Mathf.Min(voxelMinus, end.x + 1),
-                Mathf.Min(voxelMinus, end.y + 1),
-                Mathf.Min(voxelMinus, end.z + 1));
-
-            //TODO: Remove to array from native array
-            Action doStuff = () =>
-            {
-                int removedCount = 0;
-                int startX = (int)startVec.x;
-                int startY = (int)startVec.y;
-                int startZ = (int)startVec.z;
-
-                int editPointY = clickedIndex.y;
-                int editPointZ = clickedIndex.z;
-
-                int endX = (int)endVec.x;
-                int endY = (int)endVec.y;
-                int endZ = (int)endVec.z;
-
-                float distanceX = startX - clickedIndex.x;
-                float xx = distanceX * distanceX;
-                for (int x = startX; x <= endX; x++)
-                {
-                    float distanceY = startY - editPointY;
-                    float yy = distanceY * distanceY;
-                    for (int y = startY; y <= endY; y++)
-                    {
-                        float distanceZ = startZ - editPointZ;
-                        float zz = distanceZ * distanceZ;
-                        for (int z = startZ; z <= endZ; z++)
-                        {
-                            float sqrDis = xx + yy + zz;
-                            if (sqrDis <= marchSquare)
-                            {
-                                MarchingCubeEntity cube;
-                                if (TryGetEntityAt(x, y, z, out cube))
-                                {
-                                    removedCount+= cube.triangles.Length;
-                                    NumTris -= cube.triangles.Length;
-                                    RemoveEntityAt(x, y, z, cube);
-                                }
-                            }
-                            distanceZ++;
-                            zz = distanceZ * distanceZ;
-                        }
-                        distanceY++;
-                        yy = distanceY * distanceY;
-                    }
-                    distanceX++;
-                    xx = distanceX * distanceX;
-                }
-            };
-
-            TriangleBuilder[] ts = ChunkHandler.DispatchRebuildAround(this, doStuff, clickedIndex, startVec, endVec, marchSquare);
-
-            NumTris += ts.Length;
-            AddFromTriangleArray(ts);
-
-            if (!IsEmpty)
-            {
-                SetSimpleCollider();
-            }
-
-            RebuildMesh();
-        }
-
+       
+     
         protected void RebuildFromNoiseAround(Vector3Int start, Vector3Int end, Vector3Int clickedIndex, float radius)
         {
             float marchDistance = Vector3.one.magnitude + radius + 1;
@@ -592,75 +365,7 @@ namespace MarchingCubes
             return pointIndex;
         }
 
-        protected Vector3Int GlobalPosToCubeIndex(Vector3 pos)
-        {
-            pos = GlobalToLocalPosition(pos);
-            return new Vector3Int((int)pos.x, (int)pos.y, (int)pos.z);
-        }
-
-        protected bool SmallerThanSurface(float f) => f < MarchingCubeChunkHandler.SURFACE_LEVEL;
-        protected bool LargerThanSurface(float f) => f >= MarchingCubeChunkHandler.SURFACE_LEVEL;
-
-        public void EditPointsAroundRayHit(float delta, RaycastHit hit, int editDistance)
-        {
-            System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
-            watch.Start();
-
-            Vector3Int origin = GlobalPosToCubeIndex(hit.point);
-            //var e = GetEntityFromRayHit(hit);
-            int originX = origin.x;
-            int originY = origin.y;
-            int originZ = origin.z;
-
-            Vector3 globalOrigin = origin + AnchorPos;
-            Vector3 hitDiff = hit.point - globalOrigin;
-
-            Vector3Int[] neighbourDirs = NeighbourDirections(originX, originY, originZ, editDistance + 1);
-
-            int length = neighbourDirs.Length;
-
-            List<Tuple<MarchingCubeChunk, Vector3Int>> chunks = new List<Tuple<MarchingCubeChunk, Vector3Int>>();
-            chunks.Add(Tuple.Create(this, origin));
-
-            CompressedMarchingCubeChunk chunk;
-            for (int i = 0; i < length; i++)
-            {
-                Vector3Int offset = ChunkSize * neighbourDirs[i];
-                Vector3Int newChunkPos = AnchorPos + offset;
-                //TODO: Get empty chunk first, only request actual noise when noise values change
-                //!TODO: When requesting a nonexisting chunk instead of create -> edit request modified noise and only build that
-                if (ChunkHandler.TryGetReadyChunkAt(newChunkPos, out chunk))
-                {
-                    if (chunk is MarchingCubeChunk threadedChunk)
-                    {
-                        Vector3Int v3 = origin - offset;
-                        chunks.Add(Tuple.Create(threadedChunk, v3));
-                    }
-                    else
-                    {
-                        Debug.LogWarning("Editing of compressed marchingcube chunks is not supported!");
-                    }
-                }
-                else
-                {
-                    Vector3Int start;
-                    Vector3Int end;
-                    GetNoiseEditData(offset, editDistance, origin - offset, out start, out end);
-                    chunkHandler.CreateChunkWithNoiseEdit(newChunkPos, hit.point - newChunkPos, start,end, delta, editDistance, out CompressedMarchingCubeChunk a);
-                }
-            }
-
-            int count = chunks.Count;
-            for (int i = 0; i < count; i++)
-            {
-                Vector3Int v3 = chunks[i].Item2;
-                MarchingCubeChunk currentChunk = chunks[i].Item1;
-                currentChunk.RebuildAround(hitDiff, editDistance, v3, delta);
-            }
-
-            watch.Stop();
-            Debug.Log($"Time to rebuild {count} chunks: {watch.Elapsed.TotalMilliseconds} ms.");
-        }
+       
 
 
         public MarchingCubeEntity GetClosestEntity(Vector3 v3)
@@ -670,23 +375,11 @@ namespace MarchingCubes
             return GetEntityAt((int)rest.x, (int)rest.y, (int)rest.z);
         }
 
-        public Vector3 GlobalToLocalPosition(Vector3 v3) => v3 - AnchorPos;
-
         public MarchingCubeEntity GetEntityFromRayHit(RaycastHit hit)
         {
             return GetClosestEntity(hit.point);
         }
 
-        public Vector3 NormalFromRay(RaycastHit hit)
-        {
-            return GetTriangleFromRayHit(hit).Normal;
-        }
-
-        public void StoreChunk(StoredChunkEdits storage)
-        {
-            storage.noise = Points; 
-            //storage.originalCubePositions = GetCurrentCubePositions();
-        }
 
         protected Vector3Int[] GetCurrentCubePositions()
         {

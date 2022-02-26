@@ -39,7 +39,7 @@ namespace MarchingCubes
             return TryGetMipMapAt(anchor, sizePow, out noise, out isMipMapComplete) && isMipMapComplete;
         }
 
-        public void Store(Vector3Int anchorPos, MarchingCubeChunk chunk, bool overrideNoise = false)
+        public void Store(Vector3Int anchorPos, ReducedMarchingCubesChunk chunk, bool overrideNoise = false)
         {
             if (!TryGetGroupItemAt(anchorPos, out StoredChunkEdits edits) || overrideNoise)
             {

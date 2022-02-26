@@ -299,7 +299,7 @@ namespace MarchingCubes
                     readyChunks.Enqueue(this);
                 }
             }
-            if(OnChunkFinished != null)
+            if (OnChunkFinished != null)
             {
                 OnChunkFinished(this);
                 OnChunkFinished = null;
@@ -337,18 +337,15 @@ namespace MarchingCubes
 
         #endregion async chunk building
 
-        public virtual void InitializeWithMeshData(MeshData meshData, bool buildNeighbours)
+        public virtual void InitializeWithMeshData(MeshData meshData)
         {
             HasStarted = true;
             if (!meshData.IsEmpty)
             {
                 NumTris = meshData.vertices.Length / 3;
                 RebuildFromMeshData(meshData);
-                if(buildNeighbours)
-                {
-                    SetNeighoursFromMeshData(meshData);
-                }
             }
+            //TODO: ELSE{PrepareDestroy? give displayers back?}
             IsReady = true;
 
             if (ShouldBuildEnvironment)
@@ -358,18 +355,6 @@ namespace MarchingCubes
                     StartEnvironmentPipeline();
                     CleanUpOnMainThread();
                 }
-            }
-        }
-
-
-        //TODO: have a bunch of threads checking a list of mesh data to compute neighbour chunks for given mesh data
-        protected void SetNeighoursFromMeshData(MeshData data)
-        {
-            Color32[] cs = data.colorData;
-            int length = VertexCount;
-            for (int i = 0; i < length; i++)
-            {
-                SetNeighbourAt(cs[i].a);
             }
         }
 
@@ -650,7 +635,7 @@ namespace MarchingCubes
         {
             if (UseCollider)
             {
-                return GetMeshInteractableDisplayer((MarchingCubeChunk)this);
+                return GetMeshInteractableDisplayer((ReducedMarchingCubesChunk)this);
             }
             else
             {
@@ -658,7 +643,7 @@ namespace MarchingCubes
             }
         }
 
-        protected MarchingCubeMeshDisplayer GetMeshInteractableDisplayer(MarchingCubeChunk interactable)
+        protected MarchingCubeMeshDisplayer GetMeshInteractableDisplayer(ReducedMarchingCubesChunk interactable)
         {
             if (freeDisplayer != null)
             {
