@@ -662,7 +662,6 @@ namespace MarchingCubes
 
         protected CompressedMarchingCubeChunk GetChunkObjectAt(CompressedMarchingCubeChunk chunk, Vector3Int position, int lodPower, int chunkSizePower, bool allowOverride)
         {
-            ///Pot racecondition
             ChunkGroupRoot chunkGroupRoot = chunkGroup.GetOrCreateGroupAtGlobalPosition(position);
             chunk.ChunkHandler = this;
             chunk.ChunkSizePower = chunkSizePower;
@@ -684,8 +683,6 @@ namespace MarchingCubes
                 chunk.ChunkHandler = this;
                 chunk.ChunkSizePower = CHUNK_GROUP_SIZE_POWER;
                 chunk.ChunkUpdater = worldUpdater;
-                //chunk.Material = chunkMaterial;
-                //chunk.SurfaceLevel = surfaceLevel;
                 chunk.LODPower = MAX_CHUNK_LOD_POWER + 1;
 
                 chunk.IsSpawner = true;
@@ -701,10 +698,6 @@ namespace MarchingCubes
             if (lodPower <= DEFAULT_MIN_CHUNK_LOD_POWER)
             {
                 ReducedMarchingCubesChunk chunk = new ReducedMarchingCubesChunk();
-                //chunk.rebuildShader = rebuildShader; 
-                //chunk.rebuildTriCounter = triCountBuffer;
-                //chunk.rebuildTriResult = triangleBuffer;
-                //chunk.rebuildNoiseBuffer = pointsBuffer;
                 return GetChunkObjectAt(chunk, position, lodPower, chunkSizePower, allowOverride);
             }
             else
@@ -719,26 +712,6 @@ namespace MarchingCubes
             SetLODColliderOfChunk(chunk);
         }
 
-        //protected bool HasChunkAtPosition(Vector3Int v3)
-        //{
-        //    CompressedMarchingCubeChunk _;
-        //    return TryGetChunkAtPosition(v3, out _);
-        //}
-
-        //public bool TryGetChunkAtPosition(Vector3Int p, out CompressedMarchingCubeChunk chunk)
-        //{
-        //    Vector3Int coord = PositionToChunkGroupCoord(p);
-        //    IChunkGroupRoot chunkGroup;
-        //    chunk = null;
-        //    if (chunkGroups.TryGetValue(coord, out chunkGroup))
-        //    {
-        //        if (/*chunkGroup.HasChild && */chunkGroup.TryGetLeafAtGlobalPosition(p, out chunk))
-        //        {
-        //            return true;
-        //        }
-        //    }
-        //    return chunk != null;
-        //}
 
         public bool TryGetReadyChunkAt(Vector3Int p, out CompressedMarchingCubeChunk chunk) => chunkGroup.TryGetReadyChunkAt(p, out chunk);
 
