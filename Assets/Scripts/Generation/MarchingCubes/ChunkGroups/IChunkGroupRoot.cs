@@ -19,7 +19,7 @@ namespace MarchingCubes
 
         public bool TrySetChild(T leaf);
 
-        bool TryGetLeafAtGlobalPosition(Vector3Int pos, out T chunk);
+        bool TryGetLeafAtGlobalPosition(int[] pos, out T chunk);
 
 
         bool HasChild { get; }
@@ -28,7 +28,6 @@ namespace MarchingCubes
 
         bool RemoveChunkAtGlobalPosition(int[] pos);
 
-        bool RemoveChunkAtGlobalPosition(Vector3Int pos);
 
     }
 }

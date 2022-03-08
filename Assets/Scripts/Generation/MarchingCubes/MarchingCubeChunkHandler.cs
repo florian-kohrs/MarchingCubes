@@ -160,7 +160,6 @@ namespace MarchingCubes
 
         protected BinaryHeap<float, Vector3Int> closestNeighbours = new BinaryHeap<float, Vector3Int>(float.MinValue, float.MaxValue, 200);
 
-
         //TODO:GPU instancing from script generated meshes and add simple colliders as game objects
 
         //TODO: Changing lods on rapid moving character not really working. also mesh vertices error thrown sometimes
@@ -222,7 +221,7 @@ namespace MarchingCubes
             while (repeat)
             {
                 List<Exception> x = CompressedMarchingCubeChunk.xs;
-                Vector3Int next;
+                Vector3 next;
                 bool isNextInProgress;
 
 
@@ -242,7 +241,7 @@ namespace MarchingCubes
                     do
                     {
                         next = closestNeighbours.Dequeue();
-                        isNextInProgress = chunkGroup.HasChunkStartedAt(next);
+                        isNextInProgress = chunkGroup.HasChunkStartedAt(VectorExtension.ToArray(next));
                     } while (isNextInProgress && closestNeighbours.size > 0);
 
                     if (!isNextInProgress)
@@ -315,7 +314,7 @@ namespace MarchingCubes
                 do
                 {
                     next = closestNeighbours.Dequeue();
-                    isNextInProgress = chunkGroup.HasChunkStartedAt(next);
+                    isNextInProgress = chunkGroup.HasChunkStartedAt(VectorExtension.ToArray(next));
                 } while (isNextInProgress && closestNeighbours.size > 0);
 
 
@@ -380,7 +379,7 @@ namespace MarchingCubes
                 do
                 {
                     next = closestNeighbours.Dequeue();
-                    isNextInProgress = chunkGroup.HasChunkStartedAt(next);
+                    isNextInProgress = chunkGroup.HasChunkStartedAt(VectorExtension.ToArray(next));
                 } while (isNextInProgress && closestNeighbours.size > 0);
 
 
@@ -439,7 +438,7 @@ namespace MarchingCubes
                 do
                 {
                     next = closestNeighbours.Dequeue();
-                    isNextInProgress = chunkGroup.HasChunkStartedAt(next);
+                    isNextInProgress = chunkGroup.HasChunkStartedAt(VectorExtension.ToArray(next));
                 } while (isNextInProgress && closestNeighbours.size > 0);
 
                 if (!isNextInProgress)
@@ -471,26 +470,30 @@ namespace MarchingCubes
             }
             else
             {
-                Vector3Int v3;
-                bool[] dirs = chunk.HasNeighbourInDirection;
-                int count = dirs.Length;
-                for (int i = 0; i < count; ++i)
+                BuildNeighbourChunks(chunk.HasNeighbourInDirection, chunk.ChunkSize, chunk.CenterPos);
+            }
+        }
+
+        public void BuildNeighbourChunks(bool[] dirs, int chunkSize, Vector3Int centerPos)
+        {
+            Vector3Int v3;
+            int count = dirs.Length;
+            for (int i = 0; i < count; ++i)
+            {
+                if (!dirs[i])
+                    continue;
+
+                v3 = VectorExtension.GetDirectionFromIndex(i) * (chunkSize + 1) + centerPos;
+                float sqrDist = (startPos - v3).sqrMagnitude;
+
+                if (sqrDist <= buildAroundSqrDistance
+                    && !chunkGroup.HasGroupItemAt(VectorExtension.ToArray(v3)))
                 {
-                    if (!dirs[i])
-                        continue;
-
-                    v3 = VectorExtension.GetDirectionFromIndex(i) * (chunk.ChunkSize + 1) + chunk.CenterPos;
-                    float sqrDist = (startPos - v3).sqrMagnitude;
-
-                    if (sqrDist <= buildAroundSqrDistance
-                        && !chunkGroup.HasGroupItemAt(v3))
-                    {
-                        closestNeighbours.Enqueue(sqrDist, v3);
-                    }
-                    else
-                    {
-                        BuildEmptyChunkAt(v3);
-                    }
+                    closestNeighbours.Enqueue(sqrDist, v3);
+                }
+                else
+                {
+                    BuildEmptyChunkAt(v3);
                 }
             }
         }
@@ -574,7 +577,7 @@ namespace MarchingCubes
 
         public bool TryGetOrCreateChunkAt(Vector3Int p, out CompressedMarchingCubeChunk chunk)
         {
-            if (!chunkGroup.TryGetGroupItemAt(p, out chunk))
+            if (!chunkGroup.TryGetGroupItemAt(VectorExtension.ToArray(p), out chunk))
             {
                 chunk = CreateChunkWithProperties(p, 0, DEFAULT_CHUNK_SIZE_POWER, false);
             }
@@ -598,7 +601,7 @@ namespace MarchingCubes
         /// <returns></returns>
         public void CreateChunkWithNoiseEdit(Vector3Int p, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance, out CompressedMarchingCubeChunk chunk)
         {
-            bool hasChunkAtPosition = chunkGroup.TryGetGroupItemAt(p, out chunk);
+            bool hasChunkAtPosition = chunkGroup.TryGetGroupItemAt(VectorExtension.ToArray(p), out chunk);
 
             if (!hasChunkAtPosition || !chunk.HasStarted)
             {
@@ -663,7 +666,7 @@ namespace MarchingCubes
         protected CompressedMarchingCubeChunk GetChunkObjectAt(CompressedMarchingCubeChunk chunk, Vector3Int position, int lodPower, int chunkSizePower, bool allowOverride)
         {
             ///Pot racecondition
-            ChunkGroupRoot chunkGroupRoot = chunkGroup.GetOrCreateGroupAtGlobalPosition(position);
+            ChunkGroupRoot chunkGroupRoot = chunkGroup.GetOrCreateGroupAtGlobalPosition(VectorExtension.ToArray(position));
             chunk.ChunkHandler = this;
             chunk.ChunkSizePower = chunkSizePower;
             chunk.ChunkUpdater = worldUpdater;
@@ -677,8 +680,9 @@ namespace MarchingCubes
 
         public void BuildEmptyChunkAt(Vector3Int pos)
         {
-            ChunkGroupRoot chunkGroupRoot = chunkGroup.GetOrCreateGroupAtGlobalPosition(pos);
-            if (!chunkGroupRoot.HasLeafAtGlobalPosition(pos))
+            int[] posArray = VectorExtension.ToArray(pos);
+            ChunkGroupRoot chunkGroupRoot = chunkGroup.GetOrCreateGroupAtGlobalPosition(posArray);
+            if (!chunkGroupRoot.HasLeafAtGlobalPosition(posArray))
             {
                 CompressedMarchingCubeChunk chunk = new CompressedMarchingCubeChunk();
                 chunk.ChunkHandler = this;
@@ -740,7 +744,7 @@ namespace MarchingCubes
         //    return chunk != null;
         //}
 
-        public bool TryGetReadyChunkAt(Vector3Int p, out CompressedMarchingCubeChunk chunk) => chunkGroup.TryGetReadyChunkAt(p, out chunk);
+        public bool TryGetReadyChunkAt(Vector3Int p, out CompressedMarchingCubeChunk chunk) => chunkGroup.TryGetReadyChunkAt(VectorExtension.ToArray(p), out chunk);
 
 
         //public MarchingCubeChunkNeighbourLODs GetNeighbourLODSFrom(ReducedMarchingCubesChunk chunk)

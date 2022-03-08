@@ -41,7 +41,7 @@ namespace MarchingCubes
 
         public void Store(Vector3Int anchorPos, ReducedMarchingCubesChunk chunk, bool overrideNoise = false)
         {
-            if (!TryGetGroupItemAt(anchorPos, out StoredChunkEdits edits) || overrideNoise)
+            if (!TryGetGroupItemAt(VectorExtension.ToArray(anchorPos), out StoredChunkEdits edits) || overrideNoise)
             {
                 edits = new StoredChunkEdits();
                 StorageTreeRoot r = GetOrCreateGroupAtCoordinate(PositionToGroupCoord(anchorPos));

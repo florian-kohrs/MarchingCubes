@@ -16,12 +16,12 @@ namespace MarchingCubes
         }
 
 
-        public bool TryGetReadyChunkAt(Vector3Int p, out CompressedMarchingCubeChunk chunk)
+        public bool TryGetReadyChunkAt(int[] p, out CompressedMarchingCubeChunk chunk)
         {
             return TryGetGroupItemAt(p, out chunk) && chunk.IsReady;
         }
 
-        public bool HasChunkStartedAt(Vector3Int p)
+        public bool HasChunkStartedAt(int[] p)
         {
             return TryGetGroupItemAt(p, out CompressedMarchingCubeChunk chunk) && chunk.HasStarted;
         }

@@ -36,6 +36,11 @@ public static class VectorExtension
         return new int[] { v3.x, v3.y, v3.z };
     }
 
+    public static int[] ToArray(Vector3 v3)
+    {
+        return new int[] { (int)v3.x, (int)v3.y, (int)v3.z };
+    }
+
     private static float TowardsAngle(float from, float to, float speed)
     {
         float deltaEuler = from - to;
