@@ -401,23 +401,34 @@ public static class VectorExtension
             return 5;
     }
 
+    public static Vector3Int[] DirectionFromIndex = new Vector3Int[]
+    {
+        new Vector3Int(1, 0, 0),
+        new Vector3Int(-1, 0, 0),
+        new Vector3Int(0, 1, 0),
+        new Vector3Int(0, -1, 0),
+        new Vector3Int(0, 0, 1),
+        new Vector3Int(0, 0, -1)
+    };
+
     public static Vector3Int GetDirectionFromIndex(int index)
     {
-        switch (index)
-        {
-            case 0:
-                return new Vector3Int(1, 0, 0);
-            case 1:
-                return new Vector3Int(-1, 0, 0);
-            case 2:
-                return new Vector3Int(0, 1, 0);
-            case 3:
-                return new Vector3Int(0, -1, 0);
-            case 4:
-                return new Vector3Int(0, 0, 1);
-            default:
-                return new Vector3Int(0, 0, -1);
-        }
+        return DirectionFromIndex[index];
+        //switch (index)
+        //{
+        //    case 0:
+        //        return new Vector3Int(1, 0, 0);
+        //    case 1:
+        //        return new Vector3Int(-1, 0, 0);
+        //    case 2:
+        //        return new Vector3Int(0, 1, 0);
+        //    case 3:
+        //        return new Vector3Int(0, -1, 0);
+        //    case 4:
+        //        return new Vector3Int(0, 0, 1);
+        //    default:
+        //        return new Vector3Int(0, 0, -1);
+        //}
     }
 
     public static Vector3Int[] GetAllSurroundingFields(this Vector3Int v3)

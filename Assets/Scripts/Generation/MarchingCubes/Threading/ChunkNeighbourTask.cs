@@ -20,7 +20,9 @@ namespace MarchingCubes
 
         public MeshData meshData;
 
-        public bool[] HasNeighbourInDirection { get; private set; } = new bool[6];
+        protected bool[] hasNeighbourInDirection { get; private set; } = new bool[6];
+
+        public bool[] HasNeighbourInDirection => hasNeighbourInDirection;
 
         protected int maxEntityIndexPerAxis;
 
@@ -30,17 +32,20 @@ namespace MarchingCubes
             CheckIfNeighboursExistAlready();
         }
 
-        protected void NeighbourSearch()
+        public void NeighbourSearch()
         {
             int length = meshData.vertices.Length;
-            Vector3 coord;
-            Vector3 offset = chunk.AnchorPos;
+            float xOffset = chunk.AnchorPos.x;
+            float yOffset = chunk.AnchorPos.y;
+            float zOffset = chunk.AnchorPos.z;
             int size = chunk.LOD;
 
             for (int i = 0; i < length; i+=3)
             {
-                coord = (meshData.vertices[i] - offset) / size;
-                SetNeighbourAt(coord.x, coord.y, coord.z);
+                SetNeighbourAt(
+                    (meshData.vertices[i].x - xOffset) / size, 
+                    (meshData.vertices[i].y - yOffset) / size, 
+                    (meshData.vertices[i].z - zOffset) / size);
             }
         }
 
@@ -48,30 +53,30 @@ namespace MarchingCubes
         {
             if (x == 0)
             {
-                HasNeighbourInDirection[1] = true;
+                hasNeighbourInDirection[1] = true;
 
             }
             else if (x == maxEntityIndexPerAxis)
             {
-                HasNeighbourInDirection[0] = true;
+                hasNeighbourInDirection[0] = true;
             }
 
             if (y == 0)
             {
-                HasNeighbourInDirection[3] = true;
+                hasNeighbourInDirection[3] = true;
             }
             else if (y == maxEntityIndexPerAxis)
             {
-                HasNeighbourInDirection[2] = true;
+                hasNeighbourInDirection[2] = true;
             }
 
             if (z == 0)
             {
-                HasNeighbourInDirection[5] = true;
+                hasNeighbourInDirection[5] = true;
             }
             else if (z == maxEntityIndexPerAxis)
             {
-                HasNeighbourInDirection[4] = true;
+                hasNeighbourInDirection[4] = true;
             }
         }
 
@@ -80,10 +85,10 @@ namespace MarchingCubes
             Vector3Int v3;
             for (int i = 0; i < 6; i++)
             {
-                if(HasNeighbourInDirection[i])
+                if(hasNeighbourInDirection[i])
                 {
                     v3 = VectorExtension.GetDirectionFromIndex(i) * (chunk.ChunkSize + 1) + chunk.CenterPos;
-                    HasNeighbourInDirection[i] = !chunkGroup.HasChunkStartedAt(VectorExtension.ToArray(v3));
+                    hasNeighbourInDirection[i] = !chunkGroup.HasChunkStartedAt(VectorExtension.ToArray(v3));
                 }
             }
         }

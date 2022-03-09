@@ -1,5 +1,7 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 
 namespace MarchingCubes
@@ -16,15 +18,27 @@ namespace MarchingCubes
 
         protected ChunkNeighbourTask currentTask;
 
-        public void Loop()
+        public void WaitForTasksAndExecute()
         {
-            while(threadHandler.HasTasks)
+            try
             {
-                if(threadHandler.TryGetTask(out currentTask))
+                while (!threadHandler.InitializationDone)
                 {
-                    currentTask.FindNeighbours();
-                    threadHandler.OnTaskDone(currentTask);
+                    if (threadHandler.TryGetTask(out currentTask))
+                    {
+                        currentTask.FindNeighbours();
+                        threadHandler.OnTaskDone(currentTask);
+                    }
+                    else
+                    {
+                        Thread.Sleep(1);
+                    }
                 }
+                currentTask = null;
+            }
+            catch (Exception x)
+            {
+
             }
         }
 

@@ -133,7 +133,7 @@ namespace MarchingCubes
 
         //TODO: Inform about Mesh subset and mesh set vertex buffer
         //Subset may be used to only change parts of the mesh -> dont need multiple mesh displayers with submeshes?
-        public TriangleChunkHeap DispatchAndGetShaderData(CompressedMarchingCubeChunk chunk, Action<CompressedMarchingCubeChunk> SetChunkComponents, Action<ComputeBuffer> WorkOnNoise = null)
+        public TriangleChunkHeap DispatchAndGetTriangleData(CompressedMarchingCubeChunk chunk, Action<CompressedMarchingCubeChunk> SetChunkComponents, Action<ComputeBuffer> WorkOnNoise = null)
         {
             ChunkGenerationGPUData gpuData = pipelinePool.GetItemFromPool();
             NoisePipeline noise = new NoisePipeline(gpuData, storedNoiseEdits);
@@ -198,7 +198,7 @@ namespace MarchingCubes
             return tris;
         }
 
-        public void DispatchAndGetShaderDataAsync(CompressedMarchingCubeChunk chunk, Action<CompressedMarchingCubeChunk> SetChunkComponents, Action<TriangleChunkHeap> OnDataDone)
+        public void DispatchAndGetTriangleDataAsync(CompressedMarchingCubeChunk chunk, Action<CompressedMarchingCubeChunk> SetChunkComponents, Action<TriangleChunkHeap> OnDataDone)
         {
             ChunkGenerationGPUData gpuData = pipelinePool.GetItemFromPool();
             NoisePipeline noise = new NoisePipeline(gpuData, storedNoiseEdits);
