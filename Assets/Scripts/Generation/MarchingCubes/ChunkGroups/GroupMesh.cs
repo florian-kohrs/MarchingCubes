@@ -22,7 +22,7 @@ namespace MarchingCubes
         protected abstract Key CreateKey(Vector3Int coord);
 
         public bool TryGetGroupItemAt
-            (Vector3Int pos, out T result)
+            (int[] pos, out T result)
         {
             Vector3Int coord = PositionToGroupCoord(pos);
             if (storageGroups.TryGetValue(coord, out Key group))
@@ -43,12 +43,12 @@ namespace MarchingCubes
             return group;
         }
 
-        public bool HasGroupItemAt(Vector3Int p)
+        public bool HasGroupItemAt(int[] p)
         {
             return TryGetGroupItemAt(p, out T _);
         }
 
-        public Key GetOrCreateGroupAtGlobalPosition(Vector3 pos)
+        public Key GetOrCreateGroupAtGlobalPosition(int[] pos)
         {
             return GetOrCreateGroupAtCoordinate(PositionToGroupCoord(pos));
         }
@@ -76,9 +76,9 @@ namespace MarchingCubes
             return coord * GROUP_SIZE;
         }
 
-        protected Vector3Int PositionToGroupCoord(Vector3 pos)
+        protected Vector3Int PositionToGroupCoord(int[] pos)
         {
-            return PositionToGroupCoord(pos.x, pos.y, pos.z);
+            return PositionToGroupCoord(pos[0], pos[1], pos[2]);
         }
 
         protected Vector3Int PositionToGroupCoord(Vector3Int pos)

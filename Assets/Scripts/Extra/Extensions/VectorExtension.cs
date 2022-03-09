@@ -31,6 +31,16 @@ public static class VectorExtension
         return new Vector3(v.x * f, v.y * f, v.z * f);
     }
 
+    public static int[] ToArray(Vector3Int v3)
+    {
+        return new int[] { v3.x, v3.y, v3.z };
+    }
+
+    public static int[] ToArray(Vector3 v3)
+    {
+        return new int[] { (int)v3.x, (int)v3.y, (int)v3.z };
+    }
+
     private static float TowardsAngle(float from, float to, float speed)
     {
         float deltaEuler = from - to;
@@ -391,23 +401,34 @@ public static class VectorExtension
             return 5;
     }
 
+    public static Vector3Int[] DirectionFromIndex = new Vector3Int[]
+    {
+        new Vector3Int(1, 0, 0),
+        new Vector3Int(-1, 0, 0),
+        new Vector3Int(0, 1, 0),
+        new Vector3Int(0, -1, 0),
+        new Vector3Int(0, 0, 1),
+        new Vector3Int(0, 0, -1)
+    };
+
     public static Vector3Int GetDirectionFromIndex(int index)
     {
-        switch (index)
-        {
-            case 0:
-                return new Vector3Int(1, 0, 0);
-            case 1:
-                return new Vector3Int(-1, 0, 0);
-            case 2:
-                return new Vector3Int(0, 1, 0);
-            case 3:
-                return new Vector3Int(0, -1, 0);
-            case 4:
-                return new Vector3Int(0, 0, 1);
-            default:
-                return new Vector3Int(0, 0, -1);
-        }
+        return DirectionFromIndex[index];
+        //switch (index)
+        //{
+        //    case 0:
+        //        return new Vector3Int(1, 0, 0);
+        //    case 1:
+        //        return new Vector3Int(-1, 0, 0);
+        //    case 2:
+        //        return new Vector3Int(0, 1, 0);
+        //    case 3:
+        //        return new Vector3Int(0, -1, 0);
+        //    case 4:
+        //        return new Vector3Int(0, 0, 1);
+        //    default:
+        //        return new Vector3Int(0, 0, -1);
+        //}
     }
 
     public static Vector3Int[] GetAllSurroundingFields(this Vector3Int v3)

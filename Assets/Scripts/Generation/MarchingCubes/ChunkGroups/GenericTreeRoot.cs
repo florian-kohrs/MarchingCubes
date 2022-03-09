@@ -90,17 +90,17 @@ namespace MarchingCubes
             return result;
         }
 
-        public bool TryGetLeafAtGlobalPosition(Vector3Int pos, out T chunk)
+        public bool TryGetLeafAtGlobalPosition(int[] pos, out T chunk)
         {
             if(child == null)
             {
                 chunk = default;
                 return false;
             }
-            return child.TryGetLeafAtLocalPosition(new int[] { pos.x, pos.y, pos.z }, out chunk);
+            return child.TryGetLeafAtLocalPosition(pos, out chunk);
         }
 
-        public bool HasLeafAtGlobalPosition(Vector3Int pos)
+        public bool HasLeafAtGlobalPosition(int[] pos)
         {
             return TryGetLeafAtGlobalPosition(pos, out T _);
         }

@@ -55,6 +55,8 @@ namespace MarchingCubes
 
         protected int maxEntityIndexPerAxis;
 
+        public int MaxEntitiesIndexPerAxis => maxEntityIndexPerAxis;
+
         protected int pointsPerAxis;
 
         protected int sqrPointsPerAxis;
