@@ -22,17 +22,6 @@ namespace MarchingCubes
         protected BufferPool minDegreeBufferPool;
 
 
-        public void PrepareChunkToStoreMinDegreesIfNeeded(CompressedMarchingCubeChunk chunk)
-        {
-            bool storeMinDegree = chunk.LOD <= 1 && !chunk.IsReady;
-            if (storeMinDegree)
-            {
-                ComputeBuffer minDegreeBuffer = minDegreeBufferPool.GetBufferForShaders();
-                chunk.MinDegreeBuffer = minDegreeBuffer;
-            }
-        }
-
-
         public void DispatchPrepareCubesFromNoise(CompressedMarchingCubeChunk chunk)
         {
             pipeline.ApplyPrepareTrianglesForChunk(chunk);
@@ -44,34 +33,6 @@ namespace MarchingCubes
             pipeline.prepareTrisShader.Dispatch(0, numThreadsPerAxis, numThreadsPerAxis, numThreadsPerAxis);
         }
 
-
-        public ComputeBuffer BuildPreparedCubes(CompressedMarchingCubeChunk chunk, int numTris)
-        {
-            PrepareChunkToStoreMinDegreesIfNeeded(chunk);
-
-            ComputeBuffer trianglesBuffer = pipeline.ApplyBuildTrianglesForChunkProperties(chunk, numTris);
-
-            int numThreads = Mathf.CeilToInt(numTris / THREAD_GROUP_SIZE);
-
-            pipeline.buildTrisShader.Dispatch(0, numThreads, 1, 1);
-
-            return trianglesBuffer;
-        }
-
-        public int ComputeCubesFromNoise(CompressedMarchingCubeChunk chunk, out ComputeBuffer triangleBuffer)
-        {
-            DispatchPrepareCubesFromNoise(chunk);
-            int numTris = ComputeBufferExtension.GetLengthOfAppendBuffer(pipeline.preparedTrisBuffer, pipeline.triCountBuffer);
-            if (numTris > 0)
-            {
-                triangleBuffer = BuildPreparedCubes(chunk, numTris);
-            }
-            else
-            {
-                triangleBuffer = null;
-            }
-            return numTris;
-        }
 
         public void BuildMeshFromPreparedCubes(CompressedMarchingCubeChunk chunk, int numTris, out ComputeBuffer verts, out ComputeBuffer colors)
         {
@@ -107,20 +68,6 @@ namespace MarchingCubes
             rebuildShader.Dispatch(0, threadsPerAxis.x, threadsPerAxis.y, threadsPerAxis.z);
         }
 
-        public int ComputeCubesFromNoiseAround(CompressedMarchingCubeChunk chunk, ComputeShader rebuildShader, Vector3Int threadsPerAxis, out ComputeBuffer triangleBuffer)
-        {
-            DispatchPrepareCubesFromNoiseAround(rebuildShader, threadsPerAxis);
-            int numTris = ComputeBufferExtension.GetLengthOfAppendBuffer(pipeline.preparedTrisBuffer, pipeline.triCountBuffer);
-            if (numTris > 0)
-            {
-                triangleBuffer = BuildPreparedCubes(chunk, numTris);
-            }
-            else
-            {
-                triangleBuffer = null;
-            }
-            return numTris;
-        }
 
     }
 }

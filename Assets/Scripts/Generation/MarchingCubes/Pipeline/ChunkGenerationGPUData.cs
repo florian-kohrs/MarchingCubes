@@ -32,7 +32,6 @@ namespace MarchingCubes
 
         public ComputeShader densityGeneratorShader;
         public ComputeShader prepareTrisShader;
-        public ComputeShader buildTrisShader;
 
         public ComputeShader buildMeshDataShader;
 
@@ -47,15 +46,8 @@ namespace MarchingCubes
             ApplyDensityProperties();
             ApplyPrepareTrisProperties();
             ApplyTriBuilderProperties(buildMeshDataShader);
-            ApplyTriBuilderProperties(buildTrisShader);
         }
 
-        public ComputeBuffer ApplyTriangleBuffer(int numPoints)
-        {
-            ComputeBuffer triangles = new ComputeBuffer(numPoints, TriangleBuilder.SIZE_OF_TRI_BUILD);
-            buildTrisShader.SetBuffer(0, "triangles", triangles);
-            return triangles;
-        }
 
         public void ApplyDensityPropertiesForChunk(CompressedMarchingCubeChunk chunk, bool tryLoadData = true)
         {
@@ -73,18 +65,6 @@ namespace MarchingCubes
         {
             prepareTrisShader.SetInt("numPointsPerAxis", chunk.PointsPerAxis);
             preparedTrisBuffer.SetCounterValue(0);
-        }
-
-        public ComputeBuffer ApplyBuildTrianglesForChunkProperties(CompressedMarchingCubeChunk chunk, int numTris)
-        {
-
-            ComputeBuffer trianglesBuffer = new ComputeBuffer(numTris, TriangleBuilder.SIZE_OF_TRI_BUILD);
-            buildTrisShader.SetBuffer(0, "triangles", trianglesBuffer);
-
-            ApplyBuildGenericTrianglesForChunkProperties(buildTrisShader, chunk, numTris);
-            
-
-            return trianglesBuffer;
         }
 
         public void ApplyBuildMeshDataPropertiesForChunk(CompressedMarchingCubeChunk chunk, int numTris, out ComputeBuffer verts, out ComputeBuffer colors)

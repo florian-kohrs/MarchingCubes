@@ -87,8 +87,6 @@ namespace MarchingCubes
 
         public ComputeShader cubesPrepare;
 
-        public ComputeShader buildPreparedCubes;
-
         public ComputeShader noiseEditShader;
 
 
@@ -723,62 +721,12 @@ namespace MarchingCubes
         //}
 
 
-        protected void BuildChunkAsync(CompressedMarchingCubeChunk chunk, Action<CompressedMarchingCubeChunk> onChunkDone)
-        {
-            chunkGPURequest.DispatchAndGetTriangleDataAsync(chunk, SetChunkComponents, (ts) =>
-            {
-                //chunk.InitializeWithMeshDataParallel(ts, readyParallelChunks);
-                chunk.InitializeWithTriangleData(ts);
-                onChunkDone(chunk);
-            });
-        }
-
         protected MeshData BuildChunkMeshData(CompressedMarchingCubeChunk chunk, Action<ComputeBuffer> WorkOnNoise = null)
         {
             channeledChunks.Add(chunk);
             MeshData data = chunkGPURequest.DispatchAndGetChunkMeshData(chunk, SetChunkComponents, WorkOnNoise);
             chunk.InitializeWithMeshData(data);
             return data;
-        }
-
-        protected void BuildChunkAsyncParallel(CompressedMarchingCubeChunk chunk, Action<CompressedMarchingCubeChunk> onChunkDone)
-        {
-            channeledChunks.Add(chunk);
-            chunkGPURequest.DispatchAndGetTriangleDataAsync(chunk, SetChunkComponents, (ts) =>
-            {
-                chunk.InitializeWithTriangleDataParallel(ts, (c) =>
-                {
-                    onChunkDone(c);
-                });
-            });
-        }
-
-        protected void OnChunkDataDone(TriangleChunkHeap chunkHeap)
-        {
-            if(chunkHeap.triCount == 0)
-            {
-                if(!hasFoundInitialChunk)
-                {
-                    lastChunkWasAir = true;
-                    //DetermineIfChunkIsAir(noiseBuffer);
-                }
-            }
-        }
-
-
-        public void SetEditedNoiseAtPosition(ReducedMarchingCubesChunk chunk, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance)
-        {
-            //propably remove edit noise shader :/
-
-            //int pointsPerAxis = chunk.PointsPerAxis;
-            //float[] result = new float[pointsPerAxis * pointsPerAxis * pointsPerAxis];
-            //ComputeBuffer pointsBuffer = pointsBufferPool.GetItemFromPool();
-            //GenerateNoise(pointsBuffer, chunk.ChunkSizePower, pointsPerAxis, chunk.LOD, chunk.AnchorPos);
-            //ApplyNoiseEditing(pointsPerAxis, editPoint, start, end, delta, maxDistance);
-            //pointsBuffer.GetData(result, 0, 0, result.Length);
-            //pointsBufferPool.ReturnItemToPool(pointsBuffer);
-            //chunk.Points = result;
-            //storageGroup.Store(chunk.AnchorPos, chunk);
         }
 
         private void ApplyNoiseEditing(ComputeBuffer noiseBuffer, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance)
@@ -807,62 +755,12 @@ namespace MarchingCubes
             {
                 BuildChunkAsyncFromMeshData(chunks[i], callbackPerChunk);
             }
-            //trianglesToBuild.SetCounterValue(0);
-            //int chunkLength = chunks.Length;
-            //for (int i = 0; i < chunkLength; i++)
-            //{
-            //    CompressedMarchingCubeChunk c = chunks[i];
-            //    GenerateNoise(c.ChunkSizePower, c.PointsPerAxis, c.LOD, c.AnchorPos);
-            //    AccumulateCubesFromNoise(c, i);
-            //}
-            //int[] triCounts = new int[chunkLength];
-
-            //for (int i = 0; i < chunkLength; i++)
-            //{
-            //    //TODO:check if this reduces wait time from gpu
-            //    SetDisplayerOfChunk(chunks[i]);
-            //    simpleChunkColliderPool.GetItemFromPoolFor(chunks[i]);
-            //}
-
-            //triCountBuffer.GetData(triCounts, 0, 0, chunkLength);
-            //TriangleChunkHeap[] result = new TriangleChunkHeap[chunkLength];
-            //TriangleBuilder[] allTris = new TriangleBuilder[triCounts[triCounts.Length - 1]];
-            //triangleBuffer.GetData(allTris, 0, 0, allTris.Length);
-            //int last = 0;
-            //for (int i = 0; i < chunkLength; i++)
-            //{
-            //    int current = triCounts[i];
-            //    int length = current - last;
-            //    result[i] = new TriangleChunkHeap(allTris, last, length);
-            //    last = current;
-
-            //    if (length == 0)
-            //    {
-            //        chunks[i].FreeSimpleChunkCollider();
-            //    }
-            //}
-            //return result;
-        }
-
-        protected void ValidateChunkProperties(CompressedMarchingCubeChunk chunk)
-        {
-            if (chunk.ChunkSize % chunk.LOD != 0)
-                throw new Exception("Lod must be divisor of chunksize");
         }
 
         protected void SetLODColliderOfChunk(CompressedMarchingCubeChunk chunk)
         {
             simpleChunkColliderPool.GetItemFromPoolFor(chunk);
         }
-
-
-        protected void DetermineIfChunkIsAir(ComputeBuffer pointsBuffer)
-        {
-            pointsArray = new float[1];
-            pointsBuffer.GetData(pointsArray);
-            lastChunkWasAir = pointsArray[0] < SURFACE_LEVEL;
-        }
-
 
         //public int ComputeCubesFromNoise(CompressedMarchingCubeChunk chunk, int lod, bool resetCounter = true)
         //{
@@ -917,12 +815,6 @@ namespace MarchingCubes
             }
         }
 
-        protected CompressedMarchingCubeChunk ExchangeSingleChunkParallel(CompressedMarchingCubeChunk from, Vector3Int anchorPos, int lodPow, int sizePow, bool allowOveride)
-        {
-            from.PrepareDestruction();
-            return ExchangeChunkParallel(anchorPos, lodPow, sizePow, allowOveride, (c) => { FinishParallelChunk(from, c); });
-        }
-
         protected void ExchangeSingleChunkAsyncParallel(CompressedMarchingCubeChunk from, Vector3Int anchorPos, int lodPow, int sizePow, bool allowOveride)
         {
             from.PrepareDestruction();
@@ -936,14 +828,6 @@ namespace MarchingCubes
             {
                 worldUpdater.readyExchangeChunks.Push(new ReadyChunkExchange(from, newChunk));
             }
-        }
-
-
-        protected CompressedMarchingCubeChunk ExchangeChunkParallel(Vector3Int anchorPos, int lodPow, int sizePow, bool allowOveride, Action<CompressedMarchingCubeChunk> onChunkDone)
-        {
-            CompressedMarchingCubeChunk newChunk = GetThreadedChunkObjectAt(anchorPos, lodPow, sizePow, allowOveride);
-            newChunk.InitializeWithTriangleDataParallel(chunkGPURequest.DispatchAndGetTriangleData(newChunk, SetChunkComponents), onChunkDone);
-            return newChunk;
         }
 
         protected void BuildChunkAsyncFromMeshData(CompressedMarchingCubeChunk chunk, Action<CompressedMarchingCubeChunk, MeshData> onChunkDone)
@@ -961,7 +845,6 @@ namespace MarchingCubes
         {
             CompressedMarchingCubeChunk newChunk = GetThreadedChunkObjectAt(anchorPos, lodPow, sizePow, allowOveride);
             BuildChunkAsyncFromMeshData(newChunk, onChunkDone);
-            //BuildChunkAsyncParallel(newChunk, onChunkDone);
         }
 
         private void SplitChunkAndIncreaseLod(CompressedMarchingCubeChunk chunk, int toLodPower, int newSizePow)
@@ -1158,7 +1041,7 @@ namespace MarchingCubes
         protected void CreatePools()
         {
             chunkPipelinePool = new ChunkGenerationPipelinePool(CreateChunkPipeline);
-            minDegreesAtCoordBufferPool = new BufferPool(CreateMinDegreeBuffer, "minDegreeAtCoord", buildPreparedCubes);
+            minDegreesAtCoordBufferPool = new BufferPool(CreateMinDegreeBuffer);
 
             simpleChunkColliderPool = new SimpleChunkColliderPool(colliderParent);
             displayerPool = new MeshDisplayerPool(transform);
@@ -1173,7 +1056,6 @@ namespace MarchingCubes
 
             result.densityGeneratorShader = Instantiate(densityShader);
             result.prepareTrisShader = Instantiate(cubesPrepare);
-            result.buildTrisShader = Instantiate(buildPreparedCubes);
             result.buildMeshDataShader = Instantiate(chunkMeshDataShader);
 
             result.triCountBuffer = CreateCopyCountBuffer();
