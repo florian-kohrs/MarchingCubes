@@ -1,5 +1,4 @@
-﻿using PathFinding;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -10,14 +9,6 @@ namespace MarchingCubes
 
         int pointDelta = -100;
 
-        protected PathTriangle firstTriIndex;
-        protected PathTriangle secondTriIndex;
-        protected int clickCount = 0;
-        MarchingCubeEntity e;
-        protected IList<PathTriangle> ps;
-        protected PathTriangle p;
-
-
         public MarchingCubeChunkHandler h;
 
         private void Start()
@@ -26,23 +17,23 @@ namespace MarchingCubes
             layer = ~layer;
         }
 
-        private void OnDrawGizmos()
-        {
-            if (ps != null)
-            {
-                foreach (PathTriangle p in ps)
-                {
-                    if (p != null)
-                    {
-                        Gizmos.DrawSphere(p.MiddlePoint, 0.4f);
-                    }
-                }
-            }
-            if(p != null)
-            {
-                Gizmos.DrawCube(p.MiddlePoint, Vector3.one * 0.4f);
-            }
-        }
+        //private void OnDrawGizmos()
+        //{
+        //    if (ps != null)
+        //    {
+        //        foreach (PathTriangle p in ps)
+        //        {
+        //            if (p != null)
+        //            {
+        //                Gizmos.DrawSphere(p.MiddlePoint, 0.4f);
+        //            }
+        //        }
+        //    }
+        //    if(p != null)
+        //    {
+        //        Gizmos.DrawCube(p.MiddlePoint, Vector3.one * 0.4f);
+        //    }
+        //}
 
         int layer;
 
@@ -126,11 +117,6 @@ namespace MarchingCubes
                     }
                 }
             }
-        }
-
-        public void BuildPath(PathTriangle from, PathTriangle to)
-        {
-            ps = MarchingCubesPathfinder.FindPath(from, to, PathAccuracy.NotSoGoodAnymore);
         }
 
     }

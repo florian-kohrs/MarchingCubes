@@ -69,16 +69,6 @@ namespace MarchingCubes
 
         public MarchingCubeChunkHandler chunkHandler;
 
-        /// <summary>
-        /// stores chunkEntities based on their position as index
-        /// </summary>
-        protected Dictionary<int, MarchingCubeEntity> neighbourChunksGlue = new Dictionary<int, MarchingCubeEntity>();
-
-        /// <summary>
-        /// stores for each direction of the neighbour all cubes
-        /// </summary>
-        protected Dictionary<int, List<MarchingCubeEntity>> cubesForNeighbourInDirection = new Dictionary<int, List<MarchingCubeEntity>>();
-
         //protected List<BaseMeshChild> children = new List<BaseMeshChild>();
         protected Vector3[] vertices;
         protected Color32[] colorData;
@@ -118,8 +108,6 @@ namespace MarchingCubes
 
         public bool IsSpawner { get; set; }
 
-        public bool IsInOtherThread { get; set; }
-
         public ChunkGroupTreeLeaf Leaf { get; set; }
 
         public Vector3Int CenterPos => chunkCenterPosition;
@@ -135,7 +123,9 @@ namespace MarchingCubes
 
         protected bool ShouldBuildEnvironment => minDegreeBuffer != null;
 
-        protected TriangleChunkHeap triangleHeap;
+        public Maybe<MeshData> MeshData => meshData;
+
+        protected Maybe<MeshData> meshData;
 
         public int LOD
         {
@@ -239,7 +229,6 @@ namespace MarchingCubes
 
         public bool BuildDetailedEnvironment => LOD == 1;
 
-        public TriangleChunkHeap ChunkHeap => triangleHeap;
 
 
         #endregion properties
@@ -256,92 +245,21 @@ namespace MarchingCubes
 
         #endregion
 
-        #region async chunk building
-
-        public void InitializeWithTriangleDataParallel(TriangleChunkHeap heap, Queue<CompressedMarchingCubeChunk> readyChunks)
+        public virtual void BuildEnvironmentForChunk()
         {
-            this.readyChunks = readyChunks;
-            StartParallel(heap);
-        }
-
-        public void InitializeWithTriangleDataParallel(TriangleChunkHeap heap, Action<CompressedMarchingCubeChunk> OnChunkFinished)
-        {
-            this.OnChunkFinished = OnChunkFinished;
-            StartParallel(heap);
-        }
-
-        protected void StartParallel(TriangleChunkHeap heap)
-        {
-            HasStarted = true;
-            ThreadPool.QueueUserWorkItem((o) => RequestChunk(heap));
-        }
-
-        protected void RequestChunk(TriangleChunkHeap heap)
-        {
-            try
-            {
-                IsInOtherThread = true;
-                InitializeWithTriangleData(heap);
-                OnChunkDone();
-            }
-            catch (Exception x)
-            {
-                xs.Add(x);
-                Console.WriteLine(x);
-                //Debug.LogException(x);
-            }
-        }
-
-        protected void OnChunkDone()
-        {
-            if (readyChunks != null)
-            {
-                lock (listLock)
-                {
-                    readyChunks.Enqueue(this);
-                }
-            }
-            if (OnChunkFinished != null)
-            {
-                OnChunkFinished(this);
-                OnChunkFinished = null;
-            }
-        }
-
-        public void BuildAllMeshes()
-        {
-            for (int i = 0; i < data.Count; ++i)
-            {
-                ApplyChangesToMesh(data[i]);
-            }
-        }
-
-        protected void ApplyChangesToMesh(in MeshData d)
-        {
-            MarchingCubeMeshDisplayer displayer = GetFittingMeshDisplayer();
-            displayer.ApplyMesh(d.colorData, d.vertices, Material, d.useCollider);
-        }
-
-        public virtual void SetChunkOnMainThread()
-        {
-            IsInOtherThread = false;
-            if (!IsEmpty)
-            {
-                BuildAllMeshes();
-            }
-
             if (ShouldBuildEnvironment)
             {
                 StartEnvironmentPipeline();
             }
-            CleanUpOnMainThread();
         }
 
-        #endregion async chunk building
-
+     
         public virtual void InitializeWithMeshData(MeshData meshData)
         {
             HasStarted = true;
+            this.meshData = new Maybe<MeshData>();
+            this.meshData.Value = meshData;
+
             if (!meshData.IsEmpty)
             {
                 NumTris = meshData.vertices.Length / 3;
@@ -352,40 +270,12 @@ namespace MarchingCubes
 
             if (ShouldBuildEnvironment)
             {
-                if (!IsInOtherThread)
-                {
-                    StartEnvironmentPipeline();
-                    CleanUpOnMainThread();
-                }
+                StartEnvironmentPipeline();
             }
         }
 
-        public virtual void InitializeWithTriangleData(TriangleChunkHeap tris)
+        protected void ReturnMinDegreeBuffer()
         {
-            HasStarted = true;
-            NumTris = tris.triCount;
-
-            //neighbourLODs = chunkHandler.GetNeighbourLODSFrom(this);
-            //careAboutNeighbourLODS = neighbourLODs.HasNeighbourWithHigherLOD(LODPower);
-            if (!IsEmpty)
-            {
-                RebuildFromTriangleArray(tris);
-            }
-            IsReady = true;
-
-            if (ShouldBuildEnvironment)
-            {
-                if (!IsInOtherThread)
-                {
-                    StartEnvironmentPipeline();
-                    CleanUpOnMainThread();
-                }
-            }
-        }
-
-        protected void CleanUpOnMainThread()
-        {
-            triangleHeap = null;
             if (ShouldBuildEnvironment)
             {
                 chunkHandler.ReturnMinDegreeBuffer(minDegreeBuffer);
@@ -399,10 +289,9 @@ namespace MarchingCubes
                 return;
 
             SetBoundsOfChunk();
-            if (!IsInOtherThread)
-            {
-                ChunkHandler.StartEnvironmentPipelineForChunk(this);
-            }
+            ChunkHandler.StartEnvironmentPipelineForChunk(this);
+            ReturnMinDegreeBuffer();
+
         }
 
 
@@ -431,7 +320,7 @@ namespace MarchingCubes
         {
             FreeAllMeshes();
             PrepareDestruction();
-            CleanUpOnMainThread();
+            ReturnMinDegreeBuffer();
         }
 
   
@@ -545,72 +434,6 @@ namespace MarchingCubes
             SetMeshData(meshData);
         }
 
-        protected virtual void RebuildFromTriangleArray(TriangleChunkHeap heap)
-        {
-            vertsLeft = VertexCount;
-
-            ResetArrayData();
-
-            int totalTreeCount = 0;
-            int usedTriCount = 0;
-
-            TriangleBuilder[] ts = heap.tris;
-            int endIndex = heap.startIndex + heap.triCount;
-            for (int i = heap.startIndex; i < endIndex; ++i)
-            {
-                SetNeighbourAt(ts[i].x, ts[i].y, ts[i].z);
-
-                AddTriangleToMeshData(in ts[i], ref usedTriCount, ref totalTreeCount);
-            }
-        }
-
-        #region build mesh from triangles
-
-        protected void AddTriangleToMeshData(PathTriangle tri, ref int usedTriCount, ref int totalTriCount)
-        {
-            Triangle t = tri.tri;
-
-            colorData[usedTriCount] = tri.colorAndSteepness;
-            colorData[usedTriCount + 1] = tri.colorAndSteepness;
-            colorData[usedTriCount + 2] = tri.colorAndSteepness;
-
-            vertices[usedTriCount] = t.a;
-            vertices[usedTriCount + 1] = t.b;
-            vertices[usedTriCount + 2] = t.c;
-
-
-            usedTriCount += 3;
-            totalTriCount++;
-            if (usedTriCount >= MAX_TRIANGLES_PER_MESH || usedTriCount >= vertsLeft)
-            {
-                ApplyChangesToMesh();
-                usedTriCount = 0;
-            }
-        }
-
-        protected void AddTriangleToMeshData(in TriangleBuilder t, ref int usedTriCount, ref int totalTriCount)
-        {
-            Color32 c = t.color32;
-
-            colorData[usedTriCount] = c;
-            colorData[usedTriCount + 1] = c;
-            colorData[usedTriCount + 2] = c;
-
-            vertices[usedTriCount] = t.tri.a;
-            vertices[usedTriCount + 1] = t.tri.b;
-            vertices[usedTriCount + 2] = t.tri.c;
-
-            usedTriCount += 3;
-            totalTriCount++;
-            if (usedTriCount >= MAX_TRIANGLES_PER_MESH || usedTriCount >= vertsLeft)
-            {
-                ApplyChangesToMesh();
-                usedTriCount = 0;
-            }
-        }
-
-        #endregion
-
         public void AddDisplayer(MarchingCubeMeshDisplayer b)
         {
             freeDisplayer = b;
@@ -676,42 +499,10 @@ namespace MarchingCubes
         }
 
 
-
-        protected virtual void SetCurrentMeshData()
-        {
-            MarchingCubeMeshDisplayer displayer = GetFittingMeshDisplayer();
-            displayer.ApplyMesh(colorData, vertices, Material, UseCollider);
-        }
-
         protected virtual void SetMeshData(MeshData meshData)
         {
             MarchingCubeMeshDisplayer displayer = GetFittingMeshDisplayer();
             displayer.ApplyMesh(meshData.colorData, meshData.vertices, Material, meshData.useCollider);
-        }
-
-        protected void ApplyChangesToMesh()
-        {
-            if (IsInOtherThread)
-            {
-                data.Add(new MeshData(vertices, colorData, UseCollider));
-            }
-            else
-            {
-                SetCurrentMeshData();
-                vertsLeft -= vertices.Length;
-                //if (trisLeft > 0)
-                {
-                    ResetArrayData();
-                }
-            }
-        }
-
-
-        protected void ResetArrayData()
-        {
-            int size = Mathf.Min(vertsLeft, MAX_TRIANGLES_PER_MESH + 1);
-            vertices = new Vector3[size];
-            colorData = new Color32[size];
         }
 
         #region chunk queries

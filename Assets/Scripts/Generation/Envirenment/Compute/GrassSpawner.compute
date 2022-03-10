@@ -20,7 +20,6 @@ StructuredBuffer<Triangle> meshTriangles;
 float3 offset;
 float boundsHeight;
 uint length;
-uint startIndex;
 
 
 int3 anchorPosition;
@@ -123,7 +122,6 @@ void GrassSpawner(uint3 id : SV_DispatchThreadID)
     if(id.x >= length)
         return;
 
-    id.x += startIndex;
     Triangle t = meshTriangles[id.x];
     int3 cubeIndex = unzipData3(t.cubeData);
     int index = indexFromCoord(cubeIndex.x, cubeIndex.y, cubeIndex.z);

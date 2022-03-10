@@ -134,7 +134,7 @@ namespace MarchingCubes
                     }
                     else
                     {
-                        chunk[i].SetChunkOnMainThread();
+                        chunk[i].BuildEnvironmentForChunk();
                     }
                 }
                

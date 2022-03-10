@@ -18,8 +18,6 @@ namespace MarchingCubes
 
         protected Queue<ChunkNeighbourTask> waitingTasks = new Queue<ChunkNeighbourTask>();
 
-        protected List<ChunkNeighbourThread> threads = new List<ChunkNeighbourThread>();
-
         public MarchingCubeChunkHandler handler;
 
         //protected List<WorkGroups> workGroups;
@@ -43,28 +41,6 @@ namespace MarchingCubes
             !HasWaitingTasks &&
             !HasActiveTasks && 
             handler.NoWorkOnMainThread;
-
-        public void MaxOutRunningThreads()
-        {
-            int startThreadsAmount = System.Environment.ProcessorCount * 2;
-            for (int i = 0; i < startThreadsAmount; i++)
-            {
-                StartThread();
-            }
-        }
-
-        protected ChunkNeighbourThread GetNewThread()
-        {
-            ChunkNeighbourThread newNeighbourThread = new ChunkNeighbourThread(this);
-            threads.Add(newNeighbourThread);
-            return newNeighbourThread;
-        }
-
-        protected void StartThread()
-        {
-            ChunkNeighbourThread thread = GetNewThread();
-            ThreadPool.QueueUserWorkItem((o) => thread.WaitForTasksAndExecute());
-        }
 
         public void OnTaskDone(ChunkNeighbourTask task)
         {
