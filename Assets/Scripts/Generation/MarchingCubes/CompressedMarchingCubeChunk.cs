@@ -13,10 +13,10 @@ namespace MarchingCubes
 
         //TODO: Check this: Graphics.DrawProceduralIndirect
 
-        //~CompressedMarchingCubeChunk()
-        //{
-        //    Debug.Log("Destroyed chunk");
-        //}
+        ~CompressedMarchingCubeChunk()
+        {
+            Debug.Log("Destroyed chunk");
+        }
 
         #region static fields
 
@@ -265,6 +265,12 @@ namespace MarchingCubes
                 NumTris = meshData.vertices.Length / 3;
                 RebuildFromMeshData(meshData);
             }
+
+            if(meshData.IsEmpty && !IsSpawner)
+            {
+                DestroyChunk();
+            }
+
             //TODO: ELSE{PrepareDestroy? give displayers back?}
             IsReady = true;
 

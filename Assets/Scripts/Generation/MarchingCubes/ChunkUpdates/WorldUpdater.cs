@@ -115,9 +115,15 @@ namespace MarchingCubes
                 {
                     change = readyExchangeChunks.Pop();
                 }
+                
                 List<CompressedMarchingCubeChunk> chunk = change.chunks;
                 List<CompressedMarchingCubeChunk> olds = change.old;
                 
+                if(olds.Count == 0)
+                {
+                    continue;
+                }
+
                 if (olds[0].IsSpawner)
                 {
                     chunkHandler.SpawnEmptyChunksAround(chunk[0]);

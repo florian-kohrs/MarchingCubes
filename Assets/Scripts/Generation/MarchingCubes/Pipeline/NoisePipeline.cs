@@ -47,7 +47,7 @@ namespace MarchingCubes
         public float[] RequestNoiseForChunk(CompressedMarchingCubeChunk chunk)
         {
             float[] result;
-            if (!storageGroup.TryLoadNoise(chunk.AnchorPos, chunk.ChunkSizePower, out result, out bool _))
+            if (!storageGroup.TryLoadCompleteNoise(chunk.AnchorPos, chunk.ChunkSizePower, out result, out bool _))
             {
                 result = GenerateAndGetNoiseForChunk(chunk);
             }
@@ -62,7 +62,7 @@ namespace MarchingCubes
             float[] storedNoiseData = null;
             if (sizePow <= MarchingCubeChunkHandler.STORAGE_GROUP_SIZE_POWER)
             {
-                hasStoredData = storageGroup.TryLoadNoise(chunk.AnchorPos, sizePow, out storedNoiseData, out isMipMapComplete);
+                hasStoredData = storageGroup.TryGetMipMapAt(chunk.AnchorPos, sizePow, out storedNoiseData, out isMipMapComplete);
                 if (hasStoredData && (!isMipMapComplete))
                 {
                     pipeline.savedPointsBuffer.SetData(storedNoiseData);

@@ -34,7 +34,7 @@ namespace MarchingCubes
             return TryGetMipMapAt(chunk.AnchorPos, chunk.ChunkSizePower, out loadedPoints, out bool complete) && complete;
         }
 
-        public bool TryLoadNoise(Vector3Int anchor, int sizePow, out float[] noise, out bool isMipMapComplete)
+        public bool TryLoadCompleteNoise(Vector3Int anchor, int sizePow, out float[] noise, out bool isMipMapComplete)
         {
             return TryGetMipMapAt(anchor, sizePow, out noise, out isMipMapComplete) && isMipMapComplete;
         }

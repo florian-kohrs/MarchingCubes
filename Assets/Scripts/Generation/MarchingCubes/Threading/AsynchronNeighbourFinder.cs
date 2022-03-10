@@ -37,6 +37,8 @@ namespace MarchingCubes
 
         public bool HasActiveTasks => activeTasks > 0;
 
+        protected object mutex = new object();
+
         public bool InitializationDone =>
             !HasWaitingTasks &&
             !HasActiveTasks && 
@@ -44,8 +46,11 @@ namespace MarchingCubes
 
         public void OnTaskDone(ChunkNeighbourTask task)
         {
-            activeTasks--;
-            activeTask.Remove(task);
+            lock (mutex)
+            {
+                activeTasks--;
+                //activeTask.Remove(task);
+            }
             handler.AddFinishedTask(task);
         }
 
@@ -56,11 +61,17 @@ namespace MarchingCubes
             {
                 try
                 {
-                    activeTask.Add(task);
-                    activeTasks++; task.FindNeighbours(); OnTaskDone(task);
-                }catch(Exception x)
+                    lock (mutex)
+                    {
+                        //activeTask.Add(task);
+                        activeTasks++;
+                    }
+                    task.FindNeighbours(); 
+                    OnTaskDone(task);
+                }
+                catch(Exception x)
                 {
-
+                    CompressedMarchingCubeChunk.xs.Add(x);
                 }
             });
             //lock(locker)
