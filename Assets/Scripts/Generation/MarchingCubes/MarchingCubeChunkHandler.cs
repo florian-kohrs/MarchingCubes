@@ -79,8 +79,6 @@ namespace MarchingCubes
 
         public NoiseData noiseData;
 
-        public ComputeShader prepareAroundShader;
-
         public ComputeShader densityShader;
 
         public ComputeShader chunkMeshDataShader;
@@ -229,8 +227,8 @@ namespace MarchingCubes
             //maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
             //BuildRelevantChunksParallelBlockingAround(chunk);
 
-            //CreatePlanetWithAsyncGPU();
-            CreatePlanetFromMeshData();
+            CreatePlanetWithAsyncGPU();
+            //CreatePlanetFromMeshData();
 
             //BuildRelevantChunksParallelWithAsyncGpuAround(chunk);
 
@@ -1135,21 +1133,6 @@ namespace MarchingCubes
 
         public MeshData DispatchRebuildAround(ReducedMarchingCubesChunk chunk, Vector3Int clickedIndex, Vector3 startVec, Vector3 endVec, float marchSquare)
         {
-            prepareAroundShader.SetVector("editPoint", new Vector4(clickedIndex.x, clickedIndex.y, clickedIndex.z, 0));
-            prepareAroundShader.SetVector("start", startVec);
-            prepareAroundShader.SetVector("end", endVec);
-            prepareAroundShader.SetVector("anchor", VectorExtension.ToVector4(chunk.AnchorPos));
-            prepareAroundShader.SetInt("numPointsPerAxis", chunk.PointsPerAxis);
-            prepareAroundShader.SetFloat("spacing", 1);
-            prepareAroundShader.SetFloat("sqrRebuildRadius", marchSquare);
-
-
-            Vector3Int threadsPerAxis = new Vector3Int(
-               Mathf.CeilToInt((1 + (endVec.x - startVec.x)) / REBUILD_SHADER_THREAD_GROUP_SIZE),
-               Mathf.CeilToInt((1 + (endVec.y - startVec.y)) / REBUILD_SHADER_THREAD_GROUP_SIZE),
-               Mathf.CeilToInt((1 + (endVec.z - startVec.z)) / REBUILD_SHADER_THREAD_GROUP_SIZE)
-               );
-
             return chunkGPURequest.DispatchAndGetChunkMeshData(chunk, null);
         }
 
