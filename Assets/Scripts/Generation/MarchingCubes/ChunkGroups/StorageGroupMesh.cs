@@ -41,7 +41,8 @@ namespace MarchingCubes
 
         public void Store(Vector3Int anchorPos, ReducedMarchingCubesChunk chunk, bool overrideNoise = false)
         {
-            if (!TryGetGroupItemAt(VectorExtension.ToArray(anchorPos), out StoredChunkEdits edits) || overrideNoise)
+            StoredChunkEdits edits;
+            if (!TryGetGroupItemAt(VectorExtension.ToArray(anchorPos), out edits) || overrideNoise)
             {
                 edits = new StoredChunkEdits();
                 StorageTreeRoot r = GetOrCreateGroupAtCoordinate(PositionToGroupCoord(anchorPos));
@@ -52,10 +53,12 @@ namespace MarchingCubes
                 //call all instantiableData from chunk that need to be stored
                 //(everything not depending on triangles only, e.g trees )
             }
+            //Remove later
             if (edits.noise != chunk.Points)
             {
                 throw new Exception();
             }
+            chunk.storageLeaf = edits.leaf;
         }
 
 

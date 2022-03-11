@@ -1,6 +1,7 @@
 ﻿#pragma kernel NoiseDensity
 
 #include "/Includes/Bioms.compute"
+#include "/Includes/BaseMarchingCubes.compute"
 
 #define MIP_MAP_SIZE 33
 #define MIP_MAP_SIZE_SQR 33 * 33
@@ -15,11 +16,9 @@ int octaves;
 
 
 //Envirenment settings
-RWStructuredBuffer<float> points;
 StructuredBuffer<float> savedPoints;
 
 bool tryLoadData;
-int numPointsPerAxis;
 float3 anchor;
 float3 offset;
 float spacing;

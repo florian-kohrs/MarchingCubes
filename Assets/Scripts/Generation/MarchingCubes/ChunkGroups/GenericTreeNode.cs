@@ -95,7 +95,7 @@ namespace MarchingCubes
             return child.GetChunkAtLocalPosition(pos);
         }
 
-        public override void SetChunkAtLocalPosition(int[] relativePosition, T chunk, bool allowOverride)
+        public override void SetLeafAtLocalPosition(int[] relativePosition, T chunk, bool allowOverride)
         {
             relativePosition[0] -= groupRelativeAnchorPosition[0];
             relativePosition[1] -= groupRelativeAnchorPosition[1];
@@ -112,7 +112,7 @@ namespace MarchingCubes
             else
             {
                 Node child = GetOrCreateChildAt(childIndex, relativePosition, allowOverride);
-                child.SetChunkAtLocalPosition(relativePosition, chunk, allowOverride);
+                child.SetLeafAtLocalPosition(relativePosition, chunk, allowOverride);
             }
         }
 

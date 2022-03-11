@@ -48,7 +48,7 @@ namespace MarchingCubes
             return leaf;
         }
 
-        public override void SetChunkAtLocalPosition(int[] pos, T chunk, bool allowOverride)
+        public override void SetLeafAtLocalPosition(int[] pos, T chunk, bool allowOverride)
         {
         }
 

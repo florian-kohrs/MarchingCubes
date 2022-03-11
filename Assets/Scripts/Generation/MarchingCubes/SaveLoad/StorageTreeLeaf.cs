@@ -11,8 +11,10 @@ namespace MarchingCubes
 
         public StorageTreeLeaf() { }
 
-        public StorageTreeLeaf(StoredChunkEdits leaf, int index, int[] relativeAnchorPoint, int[] anchorPoint, int sizePower) : base(leaf, index, relativeAnchorPoint, anchorPoint, sizePower)
+        public StorageTreeLeaf(IStorageGroupOrganizer<StoredChunkEdits> parent, StoredChunkEdits leaf, int index, int[] relativeAnchorPoint, int[] anchorPoint, int sizePower) : base(leaf, index, relativeAnchorPoint, anchorPoint, sizePower)
         {
+            leaf.leaf = this;
+            this.parent = parent;
         }
 
         //TODO: Maybe store for each chunk num of tris -> dont have to read from gpu
@@ -27,11 +29,17 @@ namespace MarchingCubes
 
         public bool IsMipMapComplete => true;
 
+        public IStorageGroupOrganizer<StoredChunkEdits> parent;
+
+        public override void SetLeafAtLocalPosition(int[] pos, StoredChunkEdits chunk, bool allowOverride)
+        {
+            chunk.leaf = this;
+        }
+
         public override bool RemoveLeafAtLocalPosition(int[] pos)
         {
             return false;
         }
-
 
         public bool TryGetNodeWithSizePower(int[] relativePosition, int sizePow, out IStorageGroupOrganizer<StoredChunkEdits> child)
         {
@@ -45,11 +53,16 @@ namespace MarchingCubes
 
 
         public bool TryGetMipMapOfChunkSizePower(int[] relativePosition, int sizePow, out float[] storedNoise, out bool isMipMapComplete)
-
         {
             storedNoise = NoiseMap;
             isMipMapComplete = true;
             return true;
+        }
+
+        public void RemoveMipMapInHirachy()
+        {
+            if(parent != null)
+                parent.RemoveMipMapInHirachy();
         }
 
     }

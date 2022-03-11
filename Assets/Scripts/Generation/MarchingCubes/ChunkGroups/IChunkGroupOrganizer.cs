@@ -9,7 +9,7 @@ namespace MarchingCubes
 
         T GetChunkAtLocalPosition(int[] pos);
 
-        void SetChunkAtLocalPosition(int[] pos, T chunk, bool allowOverride);
+        void SetLeafAtLocalPosition(int[] pos, T chunk, bool allowOverride);
 
         int[] GroupRelativeAnchorPosition { get; }
 

@@ -21,5 +21,7 @@ namespace MarchingCubes
 
         int DirectNonNullChildren { get; }
 
+        void RemoveMipMapInHirachy();
+
     }
 }

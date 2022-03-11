@@ -253,9 +253,9 @@ namespace MarchingCubes
             {
                 Time.timeScale = 1;
                 mainCam.enabled = true;
-                BuildNeighbourChunks(new bool[] { true, true, true, true, true, true }, chunk.ChunkSize, chunk.CenterPos);
+                //BuildNeighbourChunks(new bool[] { true, true, true, true, true, true }, chunk.ChunkSize, chunk.CenterPos);
 
-                StartCoroutine(WaitTillAsynGenerationDone());
+                //StartCoroutine(WaitTillAsynGenerationDone());
             });
         }
 

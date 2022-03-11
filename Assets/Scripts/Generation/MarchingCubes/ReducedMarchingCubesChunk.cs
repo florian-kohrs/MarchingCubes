@@ -18,13 +18,11 @@ namespace MarchingCubes
 
         public ReducedMarchingCubesChunk GetChunk => this;
 
-
+        public StorageTreeLeaf storageLeaf;
 
         protected float[] points;
 
         public bool HasPoints => points != null;
-
-
 
         public float[] Points
         {
@@ -105,6 +103,7 @@ namespace MarchingCubes
                 //System.Diagnostics.Stopwatch w = new System.Diagnostics.Stopwatch();
                 //w.Start();
                 StoreChunkState();
+                storageLeaf.RemoveMipMapInHirachy();
                 RebuildFromNoiseAroundOnGPU(start, end, clickedIndex, radius);
                 //RebuildFromNoiseAround(start, end, clickedIndex, radius);
                 //w.Stop();

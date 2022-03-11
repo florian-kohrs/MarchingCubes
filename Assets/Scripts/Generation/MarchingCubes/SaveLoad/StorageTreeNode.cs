@@ -22,10 +22,12 @@ namespace MarchingCubes
         public StorageTreeNode() { }
 
         public StorageTreeNode(
-           int[] anchorPosition,
-           int[] relativeAnchorPosition,
-           int sizePower) : base(anchorPosition, relativeAnchorPosition, sizePower)
+            IStorageGroupOrganizer<StoredChunkEdits> parent,
+            int[] anchorPosition,
+            int[] relativeAnchorPosition,
+            int sizePower) : base(anchorPosition, relativeAnchorPosition, sizePower)
         {
+            this.parent = parent;
         }
 
         //mark dirty when childs noise changes
@@ -33,8 +35,19 @@ namespace MarchingCubes
 
         protected bool isMipMapComplete;
 
+        protected IStorageGroupOrganizer<StoredChunkEdits> parent;
 
         protected static float[] mipmapTemplate = new float[MIPMAP_SIZE].Fill(NON_SET_NOISE_VALUE);
+
+
+        public void RemoveMipMapInHirachy()
+        {
+            mipmap = null;
+            if (parent != null)
+            {
+                parent.RemoveMipMapInHirachy();
+            }
+        }
 
         protected StoredChunkEdits Mipmap
         {
@@ -176,7 +189,7 @@ namespace MarchingCubes
 
         public override IStorageGroupOrganizer<StoredChunkEdits> GetLeaf(StoredChunkEdits leaf, int index, int[] anchor, int[] relAnchor, int sizePow)
         {
-            return new StorageTreeLeaf(leaf, index, anchor, relAnchor,sizePow);
+            return new StorageTreeLeaf(this,leaf, index, anchor, relAnchor,sizePow);
         }
 
         public override IStorageGroupOrganizer<StoredChunkEdits>[] GetLeafs()
@@ -186,7 +199,7 @@ namespace MarchingCubes
 
         public override IStorageGroupOrganizer<StoredChunkEdits> GetNode(int[] anchor, int[] relAnchor, int sizePow)
         {
-            return new StorageTreeNode(anchor, relAnchor, sizePow);
+            return new StorageTreeNode(this, anchor, relAnchor, sizePow);
         }
 
         public bool TryGetNodeWithSizePower(int[] relativePosition, int sizePow, out IStorageGroupOrganizer<StoredChunkEdits> child)

@@ -53,12 +53,12 @@ namespace MarchingCubes
 
         public override IStorageGroupOrganizer<StoredChunkEdits> GetLeaf(StoredChunkEdits leaf, int index, int[] anchor, int[] relAnchor, int sizePow)
         {
-            return new StorageTreeLeaf(leaf, index, anchor, relAnchor, sizePow);
+            return new StorageTreeLeaf(null, leaf, index, anchor, relAnchor, sizePow);
         }
 
         public override IStorageGroupOrganizer<StoredChunkEdits> GetNode(int[] anchor, int[] relAnchor, int sizePow)
         {
-            return new StorageTreeNode(anchor, relAnchor, sizePow);
+            return new StorageTreeNode(null, anchor, relAnchor, sizePow);
         }
 
 

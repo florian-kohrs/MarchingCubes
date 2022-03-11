@@ -14,6 +14,9 @@ namespace MarchingCubes
         //[Save]
         //public Dictionary<int, float> editedPoints = new Dictionary<int, float>();
 
+        public StoredChunkEdits() { }
+
+        public StorageTreeLeaf leaf;
 
         public float[] noise;
 

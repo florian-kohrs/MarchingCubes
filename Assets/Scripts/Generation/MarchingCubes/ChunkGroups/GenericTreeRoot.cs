@@ -77,7 +77,7 @@ namespace MarchingCubes
             {
                 child = GetNode(GroupAnchorPosition, GroupAnchorPosition, SizePower);
             }
-            child.SetChunkAtLocalPosition(pos, leaf, allowOverride);
+            child.SetLeafAtLocalPosition(pos, leaf, allowOverride);
         }
 
         public bool TrySetChild(T leaf)
