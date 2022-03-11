@@ -79,6 +79,8 @@ namespace MarchingCubes
 
         public int PointsPerAxis => pointsPerAxis;
 
+        public int NoisePointsPerAxis => ((pointsPerAxis - 1) * PointSpacing) + 1;
+
         protected Queue<CompressedMarchingCubeChunk> readyChunks;
 
         protected Action<CompressedMarchingCubeChunk> OnChunkFinished;
@@ -229,6 +231,7 @@ namespace MarchingCubes
 
         public bool BuildDetailedEnvironment => LOD == 1;
 
+        public int PointSpacing { get; set; } = 1;
 
 
         #endregion properties

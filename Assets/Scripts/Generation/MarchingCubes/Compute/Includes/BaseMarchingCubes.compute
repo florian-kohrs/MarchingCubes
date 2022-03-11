@@ -5,3 +5,8 @@
 #define SURFACE_LEVEL 0
 
 RWStructuredBuffer<float> points;
+
+int numPointsPerAxis;
+
+
+int pointSpacing;

@@ -110,8 +110,6 @@ namespace MarchingCubes
 
         public int totalTriBuild;
 
-        float[] pointsArray;
-
         public WorldUpdater worldUpdater;
 
         public Transform colliderParent;

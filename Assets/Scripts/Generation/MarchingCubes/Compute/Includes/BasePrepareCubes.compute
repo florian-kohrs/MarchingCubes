@@ -1,6 +1,0 @@
-﻿#include "/BaseMarchingCubes.compute" 
-
-
-AppendStructuredBuffer<int2> triangleLocations;
-
-static const int numThreads = 4;

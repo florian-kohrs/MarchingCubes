@@ -70,6 +70,12 @@ namespace MarchingCubes
             }
             if (isMipMapComplete)
             {
+                int pointSpacing = (int)Mathf.Pow(2, chunk.LODPower - (chunk.ChunkSizePower - MarchingCubeChunkHandler.DEFAULT_CHUNK_SIZE_POWER));
+                if(pointSpacing != 1)
+                {
+                    pointSpacing = 2;
+                }
+                chunk.PointSpacing = pointSpacing;
                 pipeline.pointsBuffer.SetData(storedNoiseData);
             }
             else

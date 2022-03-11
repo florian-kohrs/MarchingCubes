@@ -1,11 +1,15 @@
 ﻿#pragma kernel MarchPrepare
-#include "/Includes/BasePrepareCubes.compute"
+#include "/Includes/BaseMarchingCubes.compute" 
 
-int numPointsPerAxis;
+static const int numThreads = 4;
+
+AppendStructuredBuffer<int2> triangleLocations;
+
+
 
 int indexFromCoord(int x, int y, int z)
 {
-	return z * numPointsPerAxis * numPointsPerAxis + y * numPointsPerAxis + x;
+	return (z * numPointsPerAxis * numPointsPerAxis + y * numPointsPerAxis + x) * pointSpacing;
 }
 
 
@@ -18,7 +22,6 @@ float GetHeightDataFrom(int x, int y, int z)
 [numthreads(numThreads, numThreads, numThreads)]
 void MarchPrepare(uint3 id : SV_DispatchThreadID)
 {
-
 	int cubeIndex = 0;
 
 	cubeIndex |= (GetHeightDataFrom(id.x, id.y, id.z) < SURFACE_LEVEL) * 1;
