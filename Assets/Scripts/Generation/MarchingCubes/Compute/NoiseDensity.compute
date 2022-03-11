@@ -46,17 +46,17 @@ void NoiseDensity(int3 id : SV_DispatchThreadID)
 
     //TODO: Maybe do normalize and scale to radius for biom selection
      
-    //if (tryLoadData) 
-    //{
-    //    int savedPointsSpacing = (uint)(MIP_MAP_SIZE - 1) / (numPointsPerAxis - 1);
-    //    int savedPointIndex = indexFromMipMap(savedPointsSpacing * id.x, savedPointsSpacing * id.y, savedPointsSpacing * id.z);
-    //    float storedNoise = savedPoints[savedPointIndex];
-    //    if (storedNoise > -9999)
-    //    {
-    //        points[index] = storedNoise;
-    //        return;
-    //    }
-    //}
+    if (tryLoadData) 
+    {
+        int savedPointsSpacing = (uint)(MIP_MAP_SIZE - 1) / (numPointsPerAxis - 1);
+        int savedPointIndex = indexFromMipMap(savedPointsSpacing * id.x, savedPointsSpacing * id.y, savedPointsSpacing * id.z);
+        float storedNoise = savedPoints[savedPointIndex];
+        if (storedNoise > -9999)
+        {
+            points[index] = storedNoise;
+            return;
+        }
+    }
 
     float3 pos = anchor + id * spacing;
     int3 biomEvaluationPos = GetBiomEvaluationPosition(pos);

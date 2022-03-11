@@ -29,6 +29,8 @@ float spacing;
 int numPointsPerAxis;
 uint length;
 
+//uint pointSpacing;
+
 bool storeMinDegrees;
 
 float3 interpolateVerts(float4 v1, float4 v2)
@@ -55,7 +57,7 @@ float4 GetHeightDataFrom(int x, int y, int z)
 	float3 f3 = float3(x, y, z);
 	int index = indexFromCoord(x, y, z);
 
-	return float4(anchor + f3 * spacing, points[index]);
+	return float4(anchor + f3 * spacing, points[index/* * pointSpacing*/]);
 }
 
 

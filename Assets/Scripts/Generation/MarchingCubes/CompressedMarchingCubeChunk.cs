@@ -13,10 +13,10 @@ namespace MarchingCubes
 
         //TODO: Check this: Graphics.DrawProceduralIndirect
 
-        ~CompressedMarchingCubeChunk()
-        {
-            Debug.Log("Destroyed chunk");
-        }
+        //~CompressedMarchingCubeChunk()
+        //{
+        //    Debug.Log("Destroyed chunk");
+        //}
 
         #region static fields
 

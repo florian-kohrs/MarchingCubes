@@ -63,6 +63,9 @@ namespace MarchingCubes
 
         public void ApplyPrepareTrianglesForChunk(CompressedMarchingCubeChunk chunk)
         {
+            int pointSpacing = (int)Mathf.Pow(2,chunk.LODPower - (chunk.ChunkSizePower - MarchingCubeChunkHandler.DEFAULT_CHUNK_SIZE_POWER));
+            //prepareTrisShader.SetInt("pointSpacing", chunk.PointsPerAxis);
+
             prepareTrisShader.SetInt("numPointsPerAxis", chunk.PointsPerAxis);
             preparedTrisBuffer.SetCounterValue(0);
         }
