@@ -1650,7 +1650,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   useGravity: 0
   planet: {fileID: 1125545287}
-  maxSpeed: 2001
+  maxSpeed: 2000
   acceleration: 10
   jumpPower: 60
   airTime: 0

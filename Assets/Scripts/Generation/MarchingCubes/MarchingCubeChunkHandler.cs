@@ -38,6 +38,8 @@ namespace MarchingCubes
 
         public const int STORAGE_GROUP_SIZE_POWER = 7;
 
+        public const int STORAGE_GROUP_UNTIL_LOD = STORAGE_GROUP_SIZE_POWER - DEFAULT_CHUNK_SIZE_POWER;
+
         public const int CHUNK_GROUP_SIZE = 1024;
 
         public const int CHUNK_GROUP_SIZE_POWER = 10;
@@ -253,9 +255,9 @@ namespace MarchingCubes
             {
                 Time.timeScale = 1;
                 mainCam.enabled = true;
-                //BuildNeighbourChunks(new bool[] { true, true, true, true, true, true }, chunk.ChunkSize, chunk.CenterPos);
+                BuildNeighbourChunks(new bool[] { true, true, true, true, true, true }, chunk.ChunkSize, chunk.CenterPos);
 
-                //StartCoroutine(WaitTillAsynGenerationDone());
+                StartCoroutine(WaitTillAsynGenerationDone());
             });
         }
 

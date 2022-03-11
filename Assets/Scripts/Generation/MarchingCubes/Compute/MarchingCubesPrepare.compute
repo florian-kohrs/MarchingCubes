@@ -22,6 +22,10 @@ float GetHeightDataFrom(int x, int y, int z)
 [numthreads(numThreads, numThreads, numThreads)]
 void MarchPrepare(uint3 id : SV_DispatchThreadID)
 {
+	int numMinus = numPointsPerAxis - 1;
+	if (id.x >= numMinus || id.y >= numMinus || id.z >= numMinus)
+		return;
+
 	int cubeIndex = 0;
 
 	cubeIndex |= (GetHeightDataFrom(id.x, id.y, id.z) < SURFACE_LEVEL) * 1;

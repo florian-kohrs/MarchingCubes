@@ -60,7 +60,7 @@ namespace MarchingCubes
             bool isMipMapComplete = false;
             int sizePow = chunk.ChunkSizePower;
             float[] storedNoiseData = null;
-            if (sizePow <= MarchingCubeChunkHandler.STORAGE_GROUP_SIZE_POWER)
+            if (chunk.LODPower <= MarchingCubeChunkHandler.STORAGE_GROUP_UNTIL_LOD && sizePow <= MarchingCubeChunkHandler.STORAGE_GROUP_SIZE_POWER)
             {
                 hasStoredData = storageGroup.TryGetMipMapAt(chunk.AnchorPos, sizePow, out storedNoiseData, out isMipMapComplete);
                 if (hasStoredData && (!isMipMapComplete))
@@ -71,10 +71,7 @@ namespace MarchingCubes
             if (isMipMapComplete)
             {
                 int pointSpacing = (int)Mathf.Pow(2, chunk.LODPower - (chunk.ChunkSizePower - MarchingCubeChunkHandler.DEFAULT_CHUNK_SIZE_POWER));
-                if(pointSpacing != 1)
-                {
-                    pointSpacing = 2;
-                }
+
                 chunk.PointSpacing = pointSpacing;
                 pipeline.pointsBuffer.SetData(storedNoiseData);
             }
@@ -89,6 +86,8 @@ namespace MarchingCubes
             int groupsPerAxis = Mathf.CeilToInt(chunk.PointsPerAxis / THREAD_GROUP_SIZE_PER_AXIS);
             pipeline.ApplyDensityPropertiesForChunk(chunk, hasStoredData);
             pipeline.densityGeneratorShader.Dispatch(0, groupsPerAxis, groupsPerAxis, groupsPerAxis);
+            float[] noise = new float[chunk.PointsPerAxis * chunk.PointsPerAxis * chunk.PointsPerAxis];
+            pipeline.pointsBuffer.GetData(noise);
         }
 
         public bool WorkOnNoiseMap(CompressedMarchingCubeChunk chunk, Action<ComputeBuffer> a)
