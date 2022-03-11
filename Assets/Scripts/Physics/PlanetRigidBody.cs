@@ -6,6 +6,8 @@ using UnityEngine;
 public class PlanetRigidBody : MonoBehaviour
 {
 
+    public bool useGravity = true;
+
     public Transform planet;
 
     public float maxSpeed = 5;
@@ -104,6 +106,9 @@ public class PlanetRigidBody : MonoBehaviour
 
     protected float GetFrameGravityPull()
     {
+        if (!useGravity)
+            return 0;
+
         fallSpeed = GetCurrentGravityPull();
 
         float fallSpeedDelta = fallSpeed - lastFallSpeed;

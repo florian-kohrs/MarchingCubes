@@ -249,16 +249,12 @@ namespace MarchingCubes
 
         protected void CreatePlanetWithAsyncGPU()
         {
-            FindNonEmptyChunkAroundAsync(startPos, (chunk, data) =>
+            FindNonEmptyChunkAroundAsync(startPos, (chunk) =>
             {
-                //neighbourFinder.MaxOutRunningThreads();
-                //ChunkNeighbourTask task = new ChunkNeighbourTask(chunk, data);
-                //task.FindNeighbours();
-                //BuildNeighbourChunks(task);
-
+                Time.timeScale = 1;
+                mainCam.enabled = true;
                 BuildNeighbourChunks(new bool[] { true, true, true, true, true, true }, chunk.ChunkSize, chunk.CenterPos);
 
-                //BuildRelevantChunksWithAsyncGpuAround();
                 StartCoroutine(WaitTillAsynGenerationDone());
             });
         }
@@ -274,6 +270,22 @@ namespace MarchingCubes
         }
 
         Camera mainCam;
+
+
+        protected IEnumerator CreateEmptyChunks()
+        {
+            while (finishedNeighbourTasks.Count > 0)
+            {
+                ChunkNeighbourTask task = GetFinishedTask();
+                BuildSpawnersAround(task);
+            }
+
+            yield return new WaitForSeconds(0.1f);
+            //maybe dont create empty but check if normal chunk should be build.
+            //since no new chunks are searched for increasing lod a small connection
+            //to neighbour chunk may be missed resulting in hole in mesh
+            yield return CreateEmptyChunks();
+        }
 
         protected IEnumerator WaitTillAsynGenerationDone()
         {
@@ -324,44 +336,12 @@ namespace MarchingCubes
                         Debug.Log("Aborted");
                     }
                     Debug.Log("Total triangles: " + totalTriBuild);
-
+                    StartCoroutine(CreateEmptyChunks());
                 }
                 yield return null;
             }
         }
 
-        public void BuildRelevantChunksWithAsyncGpuAround(CompressedMarchingCubeChunk chunk)
-        {
-            mainCam.enabled = false;
-            Time.timeScale = 0;
-
-
-            bool[] dirs = chunk.HasNeighbourInDirection;
-            int count = dirs.Length;
-            for (int i = 0; i < count; ++i)
-            {
-                if (!dirs[i])
-                    continue;
-
-
-                Vector3Int v3 = VectorExtension.DirectionFromIndex[i] * (chunk.ChunkSize + 1) + chunk.CenterPos;
-                closestNeighbours.Enqueue(0, v3);
-                ///for initial neighbours build additional chunks to not just wait for first thread to be done
-                ///seems to worsen performance?
-                //v3 = 2 * VectorExtension.DirectionFromIndex[i] * (chunk.ChunkSize + 1) + chunk.CenterPos;
-                //closestNeighbours.Enqueue(0, v3);
-
-                //v3 = 3 * VectorExtension.DirectionFromIndex[i] * (chunk.ChunkSize + 1) + chunk.CenterPos;
-                //closestNeighbours.Enqueue(0, v3);
-            }
-            if (closestNeighbours.size > 0)
-            {
-                BuildRelevantChunksWithAsyncGpuAround();
-                StartCoroutine(WaitTillAsynGenerationDone());
-            }
-
-            // Debug.Log($"Number of chunks: {ChunkGroups.Count}");
-        }
 
         //Todo: try do this work on compute shader already
         private void BuildRelevantChunksWithAsyncGpuAround()
@@ -385,10 +365,10 @@ namespace MarchingCubes
             }
         }
 
-        protected void FindNeighbourOfChunk(CompressedMarchingCubeChunk c, MeshData meshData)
+        public void FindNeighbourOfChunk(CompressedMarchingCubeChunk c)
         {
-            if(!meshData.IsEmpty)
-                neighbourFinder.AddTask(new ChunkNeighbourTask(c, meshData));
+            if(!c.MeshData.IsEmpty)
+                neighbourFinder.AddTask(new ChunkNeighbourTask(c, c.MeshData));
         }
 
 
@@ -448,7 +428,7 @@ namespace MarchingCubes
                 if (!isNextInProgress)
                 {
                     chunk = CreateChunkAt(next, out data);
-                    FindNeighbourOfChunk(chunk, data);
+                    FindNeighbourOfChunk(chunk);
                 }
                 if (totalTriBuild < maxTrianglesLeft)
                 {
@@ -471,6 +451,8 @@ namespace MarchingCubes
 
         public void BuildNeighbourChunks(bool[] dirs, int chunkSize, Vector3Int centerPos)
         {
+            Time.timeScale = 0;
+            mainCam.enabled = false;
             Vector3Int v3;
             int count = dirs.Length;
             for (int i = 0; i < count; ++i)
@@ -490,6 +472,25 @@ namespace MarchingCubes
                 {
                     BuildEmptyChunkAt(v3);
                 }
+            }
+        }
+
+        public void BuildSpawnersAround(ChunkNeighbourTask task)
+        {
+            BuildSpawnersAround(task.HasNeighbourInDirection, task.chunk.ChunkSize, task.chunk.CenterPos);
+        }
+
+        public void BuildSpawnersAround(bool[] dirs, int chunkSize, Vector3Int centerPos)
+        {
+            Vector3Int v3;
+            int count = dirs.Length;
+            for (int i = 0; i < count; ++i)
+            {
+                if (!dirs[i])
+                    continue;
+
+                v3 = VectorExtension.DirectionFromIndex[i] * (chunkSize + 1) + centerPos;
+                BuildEmptyChunkAt(v3);
             }
         }
 
@@ -523,23 +524,23 @@ namespace MarchingCubes
             return chunk;
         }
 
-        protected void FindNonEmptyChunkAroundAsync(Vector3 pos, Action<CompressedMarchingCubeChunk, MeshData> callback)
+        protected void FindNonEmptyChunkAroundAsync(Vector3 pos, Action<CompressedMarchingCubeChunk> callback)
         {
             Time.timeScale = 0;
             mainCam.enabled = false;
             FindNonEmptyChunkAroundAsync(pos, callback, 0);
         }
 
-        protected void FindNonEmptyChunkAroundAsync(Vector3 pos, Action<CompressedMarchingCubeChunk, MeshData> callback, int tryCount)
+        protected void FindNonEmptyChunkAroundAsync(Vector3 pos, Action<CompressedMarchingCubeChunk> callback, int tryCount)
         {
             //TODO:Remove trycount later
             if (tryCount++ >= 100)
                 return;
 
-            CreateChunkWithAsyncGPUReadback(pos, (c, meshData) => CheckChunk(c, meshData, callback, tryCount, ref pos));
+            CreateChunkWithAsyncGPUReadback(pos, (c) => CheckChunk(c, callback, tryCount, ref pos));
         }
 
-        protected void CheckChunk(CompressedMarchingCubeChunk chunk, MeshData meshData, Action<CompressedMarchingCubeChunk, MeshData> callback, int tryCount, ref Vector3 pos)
+        protected void CheckChunk(CompressedMarchingCubeChunk chunk, Action<CompressedMarchingCubeChunk> callback, int tryCount, ref Vector3 pos)
         {
             if (chunk.IsEmpty)
             {
@@ -557,7 +558,7 @@ namespace MarchingCubes
             else
             {
                 hasFoundInitialChunk = true;
-                callback(chunk, meshData);
+                callback(chunk);
             }
         }
 
@@ -619,13 +620,13 @@ namespace MarchingCubes
             return chunk;
         }
 
-        protected void CreateChunkWithAsyncGPUReadback(Vector3 pos, Action<CompressedMarchingCubeChunk, MeshData> callback, bool allowOverride = false)
+        protected void CreateChunkWithAsyncGPUReadback(Vector3 pos, Action<CompressedMarchingCubeChunk> callback, bool allowOverride = false)
         {
             GetSizeAndLodPowerForChunkPosition(pos, out int chunkSizePower, out int lodPower);
             CreateChunkWithPropertiesAsync(VectorExtension.ToVector3Int(pos), lodPower, chunkSizePower, allowOverride, callback);
         }
 
-        protected void CreateChunkWithPropertiesAsync(Vector3Int pos, int lodPower, int chunkSizePower, bool allowOverride, Action<CompressedMarchingCubeChunk, MeshData> callback, Action WorkOnNoise = null)
+        protected void CreateChunkWithPropertiesAsync(Vector3Int pos, int lodPower, int chunkSizePower, bool allowOverride, Action<CompressedMarchingCubeChunk> callback, Action WorkOnNoise = null)
         {
             CompressedMarchingCubeChunk chunk = GetThreadedChunkObjectAt(pos, lodPower, chunkSizePower, allowOverride);
             BuildChunkAsyncFromMeshData(chunk, callback);
@@ -745,7 +746,7 @@ namespace MarchingCubes
 
 
         //TODO: Maybe pool theese for fewer pipeline instances
-        protected void DispatchMultipleChunks(CompressedMarchingCubeChunk[] chunks, Action<CompressedMarchingCubeChunk, MeshData> callbackPerChunk)
+        protected void DispatchMultipleChunks(CompressedMarchingCubeChunk[] chunks, Action<CompressedMarchingCubeChunk> callbackPerChunk)
         {
             for (int i = 0; i < chunks.Length; i++)
             {
@@ -787,8 +788,9 @@ namespace MarchingCubes
             if (toLod >= chunk.LOD || chunk.ChunkSize % toLod != 0)
                 Debug.LogWarning($"invalid new chunk lod {toLodPower} from lod {chunk.LODPower}");
 
+            chunk.FreeSimpleChunkCollider();
             int newSizePow = DEFAULT_CHUNK_SIZE_POWER + toLodPower;
-            if (newSizePow == chunk.ChunkSizePower || newSizePow == CHUNK_GROUP_SIZE_POWER)
+            if (newSizePow >= chunk.ChunkSizePower || newSizePow == CHUNK_GROUP_SIZE_POWER)
             {
                 ExchangeSingleChunkAsyncParallel(chunk, chunk.AnchorPos, toLodPower, chunk.ChunkSizePower, true);
             }
@@ -798,27 +800,14 @@ namespace MarchingCubes
             }
         }
 
-        public void SpawnEmptyChunksAround(CompressedMarchingCubeChunk c)
-        {
-            bool[] dirs = c.HasNeighbourInDirection;
-            int count = dirs.Length;
-            for (int i = 0; i < count; i++)
-            {
-                if (!dirs[i])
-                    continue;
-                Vector3Int v3 = VectorExtension.DirectionFromIndex[i] * (c.ChunkSize + 1) + c.CenterPos;
-                BuildEmptyChunkAt(v3);
-            }
-        }
-
         protected void ExchangeSingleChunkAsyncParallel(CompressedMarchingCubeChunk from, Vector3Int anchorPos, int lodPow, int sizePow, bool allowOveride)
         {
             from.PrepareDestruction();
-            ExchangeChunkAsyncParallel(anchorPos, lodPow, sizePow, allowOveride, (c,_) => { FinishParallelChunk(from, c); });
+            ExchangeChunkAsyncParallel(anchorPos, lodPow, sizePow, allowOveride, (c) => { FinishAsynchronChunk(from, c); });
         }
 
 
-        protected void FinishParallelChunk(CompressedMarchingCubeChunk from, CompressedMarchingCubeChunk newChunk)
+        protected void FinishAsynchronChunk(CompressedMarchingCubeChunk from, CompressedMarchingCubeChunk newChunk)
         {
             lock (exchangeLocker)
             {
@@ -826,18 +815,18 @@ namespace MarchingCubes
             }
         }
 
-        protected void BuildChunkAsyncFromMeshData(CompressedMarchingCubeChunk chunk, Action<CompressedMarchingCubeChunk, MeshData> onChunkDone)
+        protected void BuildChunkAsyncFromMeshData(CompressedMarchingCubeChunk chunk, Action<CompressedMarchingCubeChunk> onChunkDone)
         {
             chunkInAsync++;
             chunkGPURequest.DispatchAndGetChunkMeshDataAsync(chunk, SetChunkComponents, (data) =>
                 {
                     chunk.InitializeWithMeshData(data);
-                    onChunkDone(chunk, data);
+                    onChunkDone(chunk);
                     chunkInAsync--;
                 });
         }
 
-        protected void ExchangeChunkAsyncParallel(Vector3Int anchorPos, int lodPow, int sizePow, bool allowOveride, Action<CompressedMarchingCubeChunk, MeshData> onChunkDone)
+        protected void ExchangeChunkAsyncParallel(Vector3Int anchorPos, int lodPow, int sizePow, bool allowOveride, Action<CompressedMarchingCubeChunk> onChunkDone)
         {
             CompressedMarchingCubeChunk newChunk = GetThreadedChunkObjectAt(anchorPos, lodPow, sizePow, allowOveride);
             BuildChunkAsyncFromMeshData(newChunk, onChunkDone);
@@ -858,7 +847,7 @@ namespace MarchingCubes
 
             List<CompressedMarchingCubeChunk> chunks = new List<CompressedMarchingCubeChunk>();
 
-            Action<CompressedMarchingCubeChunk, MeshData> f = (c, _) =>
+            Action<CompressedMarchingCubeChunk> f = (c) =>
             {
                 //c.Hide();
                 lock (listLock)
@@ -908,6 +897,7 @@ namespace MarchingCubes
             }
             else
             {
+                chunk.FreeSimpleChunkCollider();
                 toLodPower = GetFeasibleReducedLodForChunk(chunk, toLodPower);
                 int toLod = RoundToPowerOf2(toLodPower);
                 if (toLod <= chunk.LOD || chunk.ChunkSize % toLod != 0)
@@ -931,7 +921,7 @@ namespace MarchingCubes
             List<CompressedMarchingCubeChunk> oldChunks = new List<CompressedMarchingCubeChunk>();
             chunk.Leaf.parent.PrepareBranchDestruction(oldChunks);
 
-            ExchangeChunkAsyncParallel(chunk.CenterPos, toLodPower, chunk.ChunkSizePower + 1, true, (c, _) =>
+            ExchangeChunkAsyncParallel(chunk.CenterPos, toLodPower, chunk.ChunkSizePower + 1, true, (c) =>
             {
                 lock (exchangeLocker)
                 {

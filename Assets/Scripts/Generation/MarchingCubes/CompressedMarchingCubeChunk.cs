@@ -15,7 +15,15 @@ namespace MarchingCubes
 
         //~CompressedMarchingCubeChunk()
         //{
-        //    Debug.Log("Destroyed chunk");
+        //    totalchunks--;
+        //    //Debug.Log("Destroyed chunk");
+        //}
+
+        //static int totalchunks = 0;
+
+        //public CompressedMarchingCubeChunk()
+        //{
+        //    Debug.Log("Total Chunks:" + totalchunks++);
         //}
 
         #region static fields
@@ -106,8 +114,6 @@ namespace MarchingCubes
 
         public Material Material { protected get; set; }
 
-        public bool[] HasNeighbourInDirection { get; private set; } = new bool[6];
-
         public bool IsSpawner { get; set; }
 
         public ChunkGroupTreeLeaf Leaf { get; set; }
@@ -125,9 +131,9 @@ namespace MarchingCubes
 
         protected bool ShouldBuildEnvironment => minDegreeBuffer != null;
 
-        public Maybe<MeshData> MeshData => meshData;
+        public MeshData MeshData => meshData;
 
-        protected Maybe<MeshData> meshData;
+        protected MeshData meshData;
 
         public int LOD
         {
@@ -260,8 +266,7 @@ namespace MarchingCubes
         public virtual void InitializeWithMeshData(MeshData meshData)
         {
             HasStarted = true;
-            this.meshData = new Maybe<MeshData>();
-            this.meshData.Value = meshData;
+            this.meshData = meshData;
 
             if (!meshData.IsEmpty)
             {
@@ -376,67 +381,6 @@ namespace MarchingCubes
             sqrPointsPerAxis = pointsPerAxis * pointsPerAxis;
         }
 
-
-        protected void SetNeighbourAt(int neighbourData)
-        {
-            //for (int i = 0; i < 8; i++)
-            //{
-            //    HasNeighbourInDirection[i] = HasNeighbourInDirection[i] && neighbourData % 2 == 0;
-            //    neighbourData = neighbourData >> 1;
-            //}
-
-            if((neighbourData & 1) == 1)
-                HasNeighbourInDirection[0] = true;
-            else if((neighbourData & 2) == 1)
-                HasNeighbourInDirection[1] = true;
-
-            if ((neighbourData & 4) == 1)
-                HasNeighbourInDirection[2] = true;
-            else if ((neighbourData & 8) == 1)
-                HasNeighbourInDirection[3] = true;
-
-            if ((neighbourData & 16) == 1)
-                HasNeighbourInDirection[4] = true;
-            else if ((neighbourData & 32) == 1)
-                HasNeighbourInDirection[5] = true;
-
-            if ((neighbourData & 64) == 1)
-                HasNeighbourInDirection[6] = true;
-            else if ((neighbourData & 128) == 1)
-                HasNeighbourInDirection[7] = true;
-
-        }
-
-
-        protected void SetNeighbourAt(int x, int y, int z)
-        {
-            if (x == 0)
-            {
-                HasNeighbourInDirection[1] = true;
-            }
-            else if (x == maxEntityIndexPerAxis)
-            {
-                HasNeighbourInDirection[0] = true;
-            }
-
-            if (y == 0)
-            {
-                HasNeighbourInDirection[3] = true;
-            }
-            else if (y == maxEntityIndexPerAxis)
-            {
-                HasNeighbourInDirection[2] = true;
-            }
-
-            if (z == 0)
-            {
-                HasNeighbourInDirection[5] = true;
-            }
-            else if (z == maxEntityIndexPerAxis)
-            {
-                HasNeighbourInDirection[4] = true;
-            }
-        }
 
         protected virtual void RebuildFromMeshData(MeshData meshData)
         {

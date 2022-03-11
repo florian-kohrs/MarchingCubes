@@ -117,16 +117,17 @@ namespace MarchingCubes
                 }
                 
                 List<CompressedMarchingCubeChunk> chunk = change.chunks;
-                List<CompressedMarchingCubeChunk> olds = change.old;
+                 List<CompressedMarchingCubeChunk> olds = change.old;
                 
                 if(olds.Count == 0)
                 {
+                    Debug.LogError("old is 0!");
                     continue;
                 }
 
                 if (olds[0].IsSpawner)
                 {
-                    chunkHandler.SpawnEmptyChunksAround(chunk[0]);
+                    chunkHandler.FindNeighbourOfChunk(chunk[0]);
                 }
                 for (int i = 0; i < olds.Count; i++)
                 {

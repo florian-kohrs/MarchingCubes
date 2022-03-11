@@ -14,6 +14,6 @@ public interface IEnvironmentSurface
 
     Maybe<Bounds> MeshBounds { get; }
 
-    Maybe<MeshData> MeshData { get; }
+    MeshData MeshData { get; }
 
 }

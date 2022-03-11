@@ -23,11 +23,24 @@ namespace MarchingCubes
                 result = children[i] == null 
                     || ((children[i] is ChunkGroupTreeLeaf l) 
                     && l.leaf.IsReady 
-                    && l.leaf.TargetLODPower >= targetLodPower);
+                    && l.leaf.TargetLODPower >= targetLodPower)
+                    || ((children[i] is ChunkGroupTreeNode n)
+                    && n.IsEmpty());
             }
             return result;
         }
 
+        protected bool IsEmpty()
+        {
+            bool result = true;
+            for (int i = 0; i < 8 && result; i++)
+            {
+                result = children[i] == null
+                    || ((children[i] is ChunkGroupTreeNode n)
+                    && n.IsEmpty());
+            }
+            return result;
+        }
 
         public void PrepareBranchDestruction(List<CompressedMarchingCubeChunk> allLeafs)
         {

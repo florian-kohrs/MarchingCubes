@@ -1648,10 +1648,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 143f073909c6af54ebe123afca8cad72, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  useGravity: 0
   planet: {fileID: 1125545287}
-  maxSpeed: 50
+  maxSpeed: 2001
   acceleration: 10
-  jumpPower: 20
+  jumpPower: 60
   airTime: 0
 --- !u!54 &2047378100
 Rigidbody:

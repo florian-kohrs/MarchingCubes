@@ -40,7 +40,7 @@ namespace MeshGPUInstanciation
 
         public void ComputeGrassFor(IEnvironmentSurface chunk)
         {
-            MeshData meshData = chunk.MeshData.Value;
+            MeshData meshData = chunk.MeshData;
             int numTris = meshData.vertices.Length / 3;
             vertexBuffer.SetData(meshData.vertices);
 
