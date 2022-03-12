@@ -86,8 +86,6 @@ namespace MarchingCubes
             int groupsPerAxis = Mathf.CeilToInt(chunk.PointsPerAxis / THREAD_GROUP_SIZE_PER_AXIS);
             pipeline.ApplyDensityPropertiesForChunk(chunk, hasStoredData);
             pipeline.densityGeneratorShader.Dispatch(0, groupsPerAxis, groupsPerAxis, groupsPerAxis);
-            float[] noise = new float[chunk.PointsPerAxis * chunk.PointsPerAxis * chunk.PointsPerAxis];
-            pipeline.pointsBuffer.GetData(noise);
         }
 
         public bool WorkOnNoiseMap(CompressedMarchingCubeChunk chunk, Action<ComputeBuffer> a)
