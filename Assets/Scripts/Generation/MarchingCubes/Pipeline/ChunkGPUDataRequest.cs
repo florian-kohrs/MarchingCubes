@@ -47,6 +47,27 @@ namespace MarchingCubes
             return result;
         }
 
+        public Vector3Int[] ScanForNonEmptyChunksAround(Vector3 position, int sizePower, int lodPower)
+        {
+            CompressedMarchingCubeChunk emptyChunk = new CompressedMarchingCubeChunk()
+            {
+                PointSpacing = 1,
+                LODPower = lodPower,
+                ChunkSizePower = sizePower,
+            };
+            float offset = emptyChunk.ChunkSize;
+            emptyChunk.AnchorPos = VectorExtension.ToVector3Int(position - new Vector3(offset / 2, offset / 2, offset / 2));
+
+
+            ChunkGenerationGPUData gpuData = pipelinePool.GetItemFromPool();
+            NoisePipeline noise = new NoisePipeline(gpuData, storedNoiseEdits);
+            ChunkPipeline chunkPipeline = new ChunkPipeline(gpuData, minDegreeBufferPool);
+
+            noise.DispatchNoiseForChunk(emptyChunk,false);
+            chunkPipeline.DispatchFindNonEmptyChunks(emptyChunk);
+            Vector3Int[] nonEmptyPositions = ComputeBufferExtension.ReadAppendBuffer<Vector3Int>(ChunkGenerationGPUData.chunkPositionBuffer, gpuData.triCountBuffer);
+            return nonEmptyPositions;
+        }
 
         public MeshData DispatchAndGetChunkMeshData(CompressedMarchingCubeChunk chunk, Action<CompressedMarchingCubeChunk> SetChunkComponents, Action<ComputeBuffer> WorkOnNoise = null)
         {
@@ -61,6 +82,7 @@ namespace MarchingCubes
             noise.TryLoadOrGenerateNoise(chunk);
             bool storeNoise = noise.WorkOnNoiseMap(chunk, WorkOnNoise);
             int numTris = chunkPipeline.ComputeMeshDataFromNoise(chunk, out vertsBuffer, out colorBuffer);
+
 
             Vector3[] verts;
             Color32[] colors;

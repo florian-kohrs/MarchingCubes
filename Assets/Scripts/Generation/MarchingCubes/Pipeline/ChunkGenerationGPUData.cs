@@ -27,6 +27,8 @@ namespace MarchingCubes
         public static ComputeBuffer biomsVizBuffer;
         public static ComputeBuffer biomBuffer;
 
+        public static ComputeBuffer chunkPositionBuffer;
+        public static ComputeShader findNonEmptyAreasShader;
 
         #endregion
 
@@ -40,6 +42,20 @@ namespace MarchingCubes
         //TODO: Pool theese seperatly somewhere else
         public ComputeBuffer savedPointsBuffer;
         public ComputeBuffer preparedTrisBuffer;
+
+        public static void ApplyStaticShaderProperties(ComputeShader findNonEmptyChunksShader)
+        {
+            findNonEmptyAreasShader = findNonEmptyChunksShader;
+            chunkPositionBuffer = new ComputeBuffer(MarchingCubeChunkHandler.VOXELS_IN_DEFAULT_SIZED_CHUNK, sizeof(int) * 3, ComputeBufferType.Append);
+            findNonEmptyAreasShader.SetBuffer(0, "chunkLocations", chunkPositionBuffer);
+        }
+
+
+        public static void FreeStaticInitialData()
+        {
+            chunkPositionBuffer.Dispose();
+        }
+
 
         public void ApplyStaticProperties()
         {
@@ -55,7 +71,6 @@ namespace MarchingCubes
             int pointsPerAxis = chunk.PointsPerAxis;
 
             densityGeneratorShader.SetVector("anchor", anchor);
-            densityGeneratorShader.SetVector("offset", offset);
             densityGeneratorShader.SetInt("numPointsPerAxis", pointsPerAxis);
             densityGeneratorShader.SetFloat("spacing", chunk.LOD);
             densityGeneratorShader.SetBool("tryLoadData", tryLoadData);
@@ -68,6 +83,17 @@ namespace MarchingCubes
             prepareTrisShader.SetInt("numPointsPerAxis", chunk.NoisePointsPerAxis);
             preparedTrisBuffer.SetCounterValue(0);
         }
+
+        public void ApplyPrepareFindNonEmptyChunks(CompressedMarchingCubeChunk chunk)
+        {
+            findNonEmptyAreasShader.SetInt("pointSpacing", chunk.PointSpacing);
+            findNonEmptyAreasShader.SetInt("lod", chunk.LOD);
+            findNonEmptyAreasShader.SetVector("anchorPosition", VectorExtension.ToVector4(chunk.AnchorPos));
+            findNonEmptyAreasShader.SetInt("numPointsPerAxis", chunk.NoisePointsPerAxis);
+            findNonEmptyAreasShader.SetBuffer(0, "points", pointsBuffer);
+            chunkPositionBuffer.SetCounterValue(0);
+        }
+
 
         public void ApplyBuildMeshDataPropertiesForChunk(CompressedMarchingCubeChunk chunk, int numTris, out ComputeBuffer verts, out ComputeBuffer colors)
         {
@@ -110,6 +136,7 @@ namespace MarchingCubes
 
         protected void ApplyDensityProperties()
         {
+            densityGeneratorShader.SetVector("offset", offset);
             densityGeneratorShader.SetBuffer(0, "points", pointsBuffer);
             densityGeneratorShader.SetBuffer(0, "savedPoints", savedPointsBuffer);
             densityGeneratorShader.SetBuffer(0, "octaveOffsets", octaveOffsetsBuffer);
@@ -122,6 +149,8 @@ namespace MarchingCubes
             prepareTrisShader.SetBuffer(0, "points", pointsBuffer);
             prepareTrisShader.SetBuffer(0, "triangleLocations", preparedTrisBuffer);
         }
+
+       
 
         protected void ApplyTriBuilderProperties(ComputeShader s)
         {

@@ -33,6 +33,16 @@ namespace MarchingCubes
             pipeline.prepareTrisShader.Dispatch(0, numThreadsPerAxis, numThreadsPerAxis, numThreadsPerAxis);
         }
 
+        public void DispatchFindNonEmptyChunks(CompressedMarchingCubeChunk chunk)
+        {
+            pipeline.ApplyPrepareFindNonEmptyChunks(chunk);
+
+            int numVoxelsPerAxis = chunk.PointsPerAxis - 1;
+
+            int numThreadsPerAxis = Mathf.CeilToInt(numVoxelsPerAxis / NoisePipeline.THREAD_GROUP_SIZE_PER_AXIS);
+
+            ChunkGenerationGPUData.findNonEmptyAreasShader.Dispatch(0, numThreadsPerAxis, numThreadsPerAxis, numThreadsPerAxis);
+        }
 
         public void BuildMeshFromPreparedCubes(CompressedMarchingCubeChunk chunk, int numTris, out ComputeBuffer verts, out ComputeBuffer colors)
         {
@@ -57,15 +67,6 @@ namespace MarchingCubes
                 verts = null;
             }
             return numTris;
-        }
-
-        public void DispatchPrepareCubesFromNoiseAround(ComputeShader rebuildShader, Vector3Int threadsPerAxis)
-        {
-            rebuildShader.SetBuffer(0, "points", pipeline.pointsBuffer);
-            rebuildShader.SetBuffer(0, "triangleLocations", pipeline.preparedTrisBuffer);
-            pipeline.preparedTrisBuffer.SetCounterValue(0);
-
-            rebuildShader.Dispatch(0, threadsPerAxis.x, threadsPerAxis.y, threadsPerAxis.z);
         }
 
 

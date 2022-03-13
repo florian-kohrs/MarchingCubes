@@ -89,7 +89,7 @@ namespace MarchingCubes
 
         public ComputeShader noiseEditShader;
 
-
+        public ComputeShader FindNonEmptyChunksShader;
 
         public AnimationCurve lodPowerForDistances;
 
@@ -203,6 +203,7 @@ namespace MarchingCubes
 
         public ChunkGPUDataRequest chunkGPURequest;
 
+        
         private void Start()
         {
             neighbourFinder = new AsynchronNeighbourFinder(this);
@@ -249,16 +250,46 @@ namespace MarchingCubes
             //});
         }
 
+        protected Vector3Int[] ScanForNonEmptyChunks()
+        {
+            ChunkGenerationGPUData.ApplyStaticShaderProperties(FindNonEmptyChunksShader);
+            Vector3 startPosition = GlobalPositionToDefaultAnchorPosition(player.position);
+            Vector3Int[] nonEmptyPositions = chunkGPURequest.ScanForNonEmptyChunksAround(startPosition, DEFAULT_CHUNK_SIZE_POWER + 2, DEFAULT_CHUNK_SIZE_POWER);
+            ChunkGenerationGPUData.FreeStaticInitialData();
+            return nonEmptyPositions;
+        }
+
         protected void CreatePlanetWithAsyncGPU()
         {
-            FindNonEmptyChunkAroundAsync(startPos, (chunk) =>
+            Vector3Int[] positions = ScanForNonEmptyChunks();
+            hasFoundInitialChunk = positions.Length > 0;
+            if (hasFoundInitialChunk)
             {
-                Time.timeScale = 1;
-                mainCam.enabled = true;
-                BuildNeighbourChunks(new bool[] { true, true, true, true, true, true }, chunk.ChunkSize, chunk.CenterPos);
-
+                BuildAllChunksAsync(positions);
                 StartCoroutine(WaitTillAsynGenerationDone());
-            });
+            }
+            else
+            {
+                FindNonEmptyChunkAroundAsync(startPos, (chunk) =>
+                {
+                    Time.timeScale = 1;
+                    mainCam.enabled = true;
+                    BuildNeighbourChunks(new bool[] { true, true, true, true, true, true }, chunk.ChunkSize, chunk.CenterPos);
+                    StartCoroutine(WaitTillAsynGenerationDone());
+                });
+            }
+        }
+
+        protected void BuildAllChunksAsync(Vector3Int[] pos)
+        {
+            for (int i = 0; i < pos.Length; i++)
+            {
+                Vector3Int next = pos[i];
+                if (!chunkGroup.HasChunkStartedAt(VectorExtension.ToArray(next)))
+                {
+                    CreateChunkWithAsyncGPUReadback(next, FindNeighbourOfChunk);
+                };
+            }
         }
 
         protected void CreatePlanetFromMeshData()
@@ -291,6 +322,9 @@ namespace MarchingCubes
 
         protected IEnumerator WaitTillAsynGenerationDone()
         {
+            Time.timeScale = 0;
+            mainCam.enabled = false;
+
             bool repeat = true;
             List<Exception> x = CompressedMarchingCubeChunk.xs;
 
@@ -453,8 +487,6 @@ namespace MarchingCubes
 
         public void BuildNeighbourChunks(bool[] dirs, int chunkSize, Vector3Int centerPos)
         {
-            Time.timeScale = 0;
-            mainCam.enabled = false;
             Vector3Int v3;
             int count = dirs.Length;
             for (int i = 0; i < count; ++i)
@@ -1104,7 +1136,12 @@ namespace MarchingCubes
             minDegreesAtCoordBufferPool.ReturnItemToPool(minDegreeBuffer);
         }
 
-
+        protected Vector3 GlobalPositionToDefaultAnchorPosition(Vector3 globalPos)
+        {
+            return new Vector3(((int)(globalPos.x / DEFAULT_CHUNK_SIZE)) * DEFAULT_CHUNK_SIZE,
+                ((int)(globalPos.y / DEFAULT_CHUNK_SIZE)) * DEFAULT_CHUNK_SIZE,
+                ((int)(globalPos.z / DEFAULT_CHUNK_SIZE)) * DEFAULT_CHUNK_SIZE);
+        }
 
         public void StartEnvironmentPipelineForChunk(IEnvironmentSurface environmentChunk)
         {
