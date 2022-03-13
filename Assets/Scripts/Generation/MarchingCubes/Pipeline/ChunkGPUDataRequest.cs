@@ -15,10 +15,17 @@ namespace MarchingCubes
             this.pipelinePool = pipelinePool;
             this.storedNoiseEdits = storedNoiseEdits;
             this.minDegreeBufferPool = minDegreeBufferPool;
-            if(emptyMinDegreeBuffer == null)
-            {
-                emptyMinDegreeBuffer = minDegreeBufferPool.GetItemFromPool();
-            }
+        }
+
+   
+        public static void AssignEmptyMinDegreeBuffer(ComputeBuffer buffer)
+        {
+            emptyMinDegreeBuffer = buffer;
+        }
+
+        public static void DisposeEmptyMinDegreeBuffer()
+        {
+            emptyMinDegreeBuffer.Dispose();
         }
 
         public static ComputeBuffer emptyMinDegreeBuffer;
@@ -66,6 +73,7 @@ namespace MarchingCubes
             noise.DispatchNoiseForChunk(emptyChunk,false);
             chunkPipeline.DispatchFindNonEmptyChunks(emptyChunk);
             Vector3Int[] nonEmptyPositions = ComputeBufferExtension.ReadAppendBuffer<Vector3Int>(ChunkGenerationGPUData.chunkPositionBuffer, gpuData.triCountBuffer);
+            pipelinePool.ReturnItemToPool(gpuData);
             return nonEmptyPositions;
         }
 

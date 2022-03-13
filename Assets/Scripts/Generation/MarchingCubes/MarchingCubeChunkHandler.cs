@@ -214,6 +214,8 @@ namespace MarchingCubes
 
             CreatePools();
 
+
+            ChunkGPUDataRequest.AssignEmptyMinDegreeBuffer(CreateEmptyMinDegreeBuffer());
             chunkGPURequest = new ChunkGPUDataRequest(chunkPipelinePool, storageGroup, minDegreesAtCoordBufferPool);
 
             TriangulationTableStaticData.BuildLookUpTables();
@@ -1092,7 +1094,10 @@ namespace MarchingCubes
         {
             return new ComputeBuffer(VOXELS_IN_DEFAULT_SIZED_CHUNK, sizeof(float));
         }
-
+        protected ComputeBuffer CreateEmptyMinDegreeBuffer()
+        {
+            return new ComputeBuffer(1, sizeof(float));
+        }
         protected ComputeBuffer CreateCopyCountBuffer()
         {
             return new ComputeBuffer(MAX_CHUNKS_PER_ITERATION, sizeof(int), ComputeBufferType.Raw);
@@ -1114,6 +1119,7 @@ namespace MarchingCubes
         {
             chunkPipelinePool.DisposeAll();
             minDegreesAtCoordBufferPool.DisposeAll();
+            ChunkGPUDataRequest.DisposeEmptyMinDegreeBuffer();
         }
 
         protected override void onDestroy()
