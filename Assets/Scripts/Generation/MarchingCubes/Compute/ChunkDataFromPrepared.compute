@@ -126,7 +126,8 @@ Triangle GetTriangleFromThreadId(uint3 id)
 	}
 
 	float invLerp = (angleFromCenter - minSteepness) / (maxSteepness - minSteepness);
-	if (invLerp < 0)
+	//catch NaN value in invLerp due to previous angle calculation
+	if (invLerp < 0 || !((invLerp >= 0) || (invLerp <= 0)))
 		invLerp = 0;
 	else if (invLerp > 1)
 		invLerp = 1;
