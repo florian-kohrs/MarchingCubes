@@ -1,0 +1,35 @@
+﻿#pragma kernel DetermineBuildingPositions
+#include "../Includes/BaseMarchingCubes.compute" 
+#include "/Includes/Bioms.compute"
+
+
+#define numThreads 4
+
+struct Building
+{
+    int3 anchor;
+    int size;
+};
+
+AppendStructuredBuffer<int3> buildingSize;
+
+float3 anchor;
+float spacing;
+uint length;
+
+
+int indexFromCoord(uint x, uint y, uint z) {
+    return z * numPointsPerAxis * numPointsPerAxis + y * numPointsPerAxis + x;
+}
+
+[numthreads(numThreads,numThreads,numThreads)]
+void DetermineBuildingPositions(int3 id : SV_DispatchThreadID)
+{
+    float3 pos = anchor + id * spacing;
+    int3 biomEvaluationPos = GetBiomEvaluationPosition(pos);
+
+    //Interpolate biom for position
+    Biom b = GetInterpolatedBiomAt(biomEvaluationPos);
+    float distance = len(pos);
+    if(pos)
+}

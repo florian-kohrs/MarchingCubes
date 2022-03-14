@@ -125,7 +125,7 @@ namespace MarchingCubes
         public WorldUpdater ChunkUpdater { set { chunkUpdater = value; } }
 
 
-        public ComputeBuffer minDegreeBuffer;
+        protected ComputeBuffer minDegreeBuffer;
 
         public ComputeBuffer MinDegreeBuffer { get { return minDegreeBuffer; } set { minDegreeBuffer = value; } }
 
