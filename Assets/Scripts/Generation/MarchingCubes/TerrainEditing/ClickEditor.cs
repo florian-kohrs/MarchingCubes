@@ -100,7 +100,7 @@ namespace MarchingCubes
                 }
 
             }
-            else if (Input.GetMouseButtonDown(0))
+            else if (Input.GetMouseButton/*Down*/(0))
             {
                 RaycastHit hit;
                 Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -113,7 +113,7 @@ namespace MarchingCubes
 
                     if (chunk != null)
                     {
-                        chunk.EditPointsAroundRayHit(pointDelta, hit,6);
+                        chunk.EditPointsAroundRayHit(pointDelta, hit,4);
                     }
                 }
             }
