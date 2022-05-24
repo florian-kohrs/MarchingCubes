@@ -93,8 +93,6 @@ namespace MarchingCubes
 
         public AnimationCurve lodPowerForDistances;
 
-        public AnimationCurve chunkSizePowerForDistances;
-
         protected MeshDisplayerPool displayerPool;
 
         protected InteractableMeshDisplayPool interactableDisplayerPool;
@@ -1028,28 +1026,12 @@ namespace MarchingCubes
             return GetLodPower((pos - startPos).magnitude);
         }
 
-        public int GetSizePowerForDistance(float distance)
-        {
-            return (int)chunkSizePowerForDistances.Evaluate(distance);
-        }
-
-
-        public int GetSizePowerForChunkAtPosition(Vector3 position)
-        {
-            return GetSizePowerForChunkAtDistance((position - startPos).magnitude);
-        }
-
-        public int GetSizePowerForChunkAtDistance(float distance)
-        {
-            return MIN_CHUNK_SIZE_POWER + GetSizePowerForDistance(distance);
-        }
-
 
         public void GetSizeAndLodPowerForChunkPosition(Vector3 pos, out int sizePower, out int lodPower)
         {
             float distance = (startPos - pos).magnitude;
             lodPower = GetLodPower(distance);
-            sizePower = GetSizePowerForChunkAtDistance(distance);
+            sizePower = lodPower + DEFAULT_CHUNK_SIZE_POWER;
             //TODO: check this
         }
 
