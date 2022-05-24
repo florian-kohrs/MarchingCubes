@@ -320,6 +320,11 @@ namespace MarchingCubes
             yield return CreateEmptyChunks();
         }
 
+        protected void OnInitialializationDone()
+        {
+
+        }
+
         protected IEnumerator WaitTillAsynGenerationDone()
         {
             Time.timeScale = 0;
@@ -373,6 +378,7 @@ namespace MarchingCubes
                     }
                     Debug.Log("Total triangles: " + totalTriBuild);
                     StartCoroutine(CreateEmptyChunks());
+                    OnInitialializationDone();
                 }
                 yield return null;
             }
@@ -440,7 +446,7 @@ namespace MarchingCubes
                 Debug.Log("Aborted");
             }
             Debug.Log("Total triangles: " + totalTriBuild);
-
+            OnInitialializationDone();
             // Debug.Log($"Number of chunks: {ChunkGroups.Count}");
         }
 
