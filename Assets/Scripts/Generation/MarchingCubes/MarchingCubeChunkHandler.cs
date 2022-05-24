@@ -126,7 +126,7 @@ namespace MarchingCubes
 
         public Material chunkMaterial;
 
-        public Transform player;
+        protected Vector3 StartPos => new Vector3(0,noiseData.radius,0);
 
         public int buildAroundDistance = 2;
 
@@ -221,7 +221,7 @@ namespace MarchingCubes
 
             watch.Start();
             buildAroundSqrDistance = (long)buildAroundDistance * buildAroundDistance;
-            startPos = player.position;
+            startPos = StartPos;
 
 
             //CompressedMarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
@@ -253,8 +253,8 @@ namespace MarchingCubes
         protected Vector3Int[] ScanForNonEmptyChunks()
         {
             ChunkGenerationGPUData.ApplyStaticShaderProperties(FindNonEmptyChunksShader);
-            Vector3 startPosition = GlobalPositionToDefaultAnchorPosition(player.position);
-            Vector3Int[] nonEmptyPositions = chunkGPURequest.ScanForNonEmptyChunksAround(startPosition, DEFAULT_CHUNK_SIZE_POWER + 2, DEFAULT_CHUNK_SIZE_POWER);
+            Vector3 chunkStartPos = GlobalPositionToDefaultAnchorPosition(StartPos);
+            Vector3Int[] nonEmptyPositions = chunkGPURequest.ScanForNonEmptyChunksAround(chunkStartPos, DEFAULT_CHUNK_SIZE_POWER + 2, DEFAULT_CHUNK_SIZE_POWER);
             ChunkGenerationGPUData.FreeStaticInitialData();
             return nonEmptyPositions;
         }
