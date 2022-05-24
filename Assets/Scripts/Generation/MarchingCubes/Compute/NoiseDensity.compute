@@ -65,7 +65,7 @@ void NoiseDensity(int3 id : SV_DispatchThreadID)
 
     float noise = b.heightOffset + radius - length(pos);
 
-    float frequency = b.noiseScale / 100;
+    float frequency = 0.01f;
     float localAmplitude = b.amplitude;
 
   /*  float lengthPos = length(pos);
