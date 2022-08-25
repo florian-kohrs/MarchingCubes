@@ -80,20 +80,20 @@ namespace MarchingCubes
             lodPowerAtDistance = chunkHandler.lodPowerForDistances;
 
             Keyframe last = lodPowerAtDistance[0];
-            float distThreshold = 0.15f;
+            float distThreshold = 1.1f;
             for (int i = 1; i < lodPowerAtDistance.length; i++)
             {
                 Keyframe f = lodPowerAtDistance.keys[i];
 
-                float timeDiff = f.time - last.time;
-                float extraTime = timeDiff * distThreshold;
+                //float timeDiff = f.time - last.time;
+                //float extraTime = timeDiff * distThreshold;
 
-                CreateTriggerOfTypeForLod<ChunkLodIncreaseTrigger>(i - 1, f.time - extraTime, increaseTriggerParent);
-                CreateTriggerOfTypeForLod<ChunkLodDecreaseTrigger>(i, f.time + extraTime, decreaseTriggerParent);
+                CreateTriggerOfTypeForLod<ChunkLodIncreaseTrigger>(i - 1, f.time / distThreshold, increaseTriggerParent);
+                CreateTriggerOfTypeForLod<ChunkLodDecreaseTrigger>(i, f.time * distThreshold, decreaseTriggerParent);
 
-                last = f;
+                //last = f;
             }
-            float chunkDeactivateDist = chunkHandler.buildAroundDistance * (1 + distThreshold);
+            float chunkDeactivateDist = chunkHandler.buildAroundDistance * distThreshold;
             CreateTriggerOfTypeForLod<ChunkLodIncreaseTrigger>(MarchingCubeChunkHandler.MAX_CHUNK_LOD_POWER, chunkHandler.buildAroundDistance, increaseTriggerParent);
             CreateTriggerOfTypeForLod<ChunkLodDecreaseTrigger>(MarchingCubeChunkHandler.MAX_CHUNK_LOD_POWER + 1, chunkDeactivateDist, decreaseTriggerParent);
             CreateTriggerOfTypeForLod<ChunkLodDecreaseTrigger>(MarchingCubeChunkHandler.DESTROY_CHUNK_LOD, chunkDeactivateDist + MarchingCubeChunkHandler.CHUNK_GROUP_SIZE, decreaseTriggerParent);
