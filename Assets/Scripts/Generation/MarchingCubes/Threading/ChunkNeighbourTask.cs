@@ -40,7 +40,7 @@ namespace MarchingCubes
             float zOffset = chunk.AnchorPos.z;
             int size = chunk.LOD;
 
-            for (int i = 0; i < length; i+=3)
+            for (int i = 0; i < length; i+=1)
             {
                 SetNeighbourAt(
                     (meshData.vertices[i].x - xOffset) / size, 

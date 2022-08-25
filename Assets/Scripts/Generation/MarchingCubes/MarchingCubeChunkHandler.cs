@@ -93,8 +93,6 @@ namespace MarchingCubes
 
         public AnimationCurve lodPowerForDistances;
 
-        public AnimationCurve chunkSizePowerForDistances;
-
         protected MeshDisplayerPool displayerPool;
 
         protected InteractableMeshDisplayPool interactableDisplayerPool;
@@ -128,7 +126,7 @@ namespace MarchingCubes
 
         public Material chunkMaterial;
 
-        public Transform player;
+        protected Vector3 StartPos => new Vector3(0,noiseData.radius,0);
 
         public int buildAroundDistance = 2;
 
@@ -223,7 +221,7 @@ namespace MarchingCubes
 
             watch.Start();
             buildAroundSqrDistance = (long)buildAroundDistance * buildAroundDistance;
-            startPos = player.position;
+            startPos = StartPos;
 
 
             //CompressedMarchingCubeChunk chunk = FindNonEmptyChunkAround(player.position);
@@ -255,8 +253,8 @@ namespace MarchingCubes
         protected Vector3Int[] ScanForNonEmptyChunks()
         {
             ChunkGenerationGPUData.ApplyStaticShaderProperties(FindNonEmptyChunksShader);
-            Vector3 startPosition = GlobalPositionToDefaultAnchorPosition(player.position);
-            Vector3Int[] nonEmptyPositions = chunkGPURequest.ScanForNonEmptyChunksAround(startPosition, DEFAULT_CHUNK_SIZE_POWER + 2, DEFAULT_CHUNK_SIZE_POWER);
+            Vector3 chunkStartPos = GlobalPositionToDefaultAnchorPosition(StartPos);
+            Vector3Int[] nonEmptyPositions = chunkGPURequest.ScanForNonEmptyChunksAround(chunkStartPos, DEFAULT_CHUNK_SIZE_POWER + 2, DEFAULT_CHUNK_SIZE_POWER);
             ChunkGenerationGPUData.FreeStaticInitialData();
             return nonEmptyPositions;
         }
@@ -322,6 +320,11 @@ namespace MarchingCubes
             yield return CreateEmptyChunks();
         }
 
+        protected void OnInitialializationDone()
+        {
+
+        }
+
         protected IEnumerator WaitTillAsynGenerationDone()
         {
             Time.timeScale = 0;
@@ -375,6 +378,7 @@ namespace MarchingCubes
                     }
                     Debug.Log("Total triangles: " + totalTriBuild);
                     StartCoroutine(CreateEmptyChunks());
+                    OnInitialializationDone();
                 }
                 yield return null;
             }
@@ -442,7 +446,7 @@ namespace MarchingCubes
                 Debug.Log("Aborted");
             }
             Debug.Log("Total triangles: " + totalTriBuild);
-
+            OnInitialializationDone();
             // Debug.Log($"Number of chunks: {ChunkGroups.Count}");
         }
 
@@ -1028,28 +1032,12 @@ namespace MarchingCubes
             return GetLodPower((pos - startPos).magnitude);
         }
 
-        public int GetSizePowerForDistance(float distance)
-        {
-            return (int)chunkSizePowerForDistances.Evaluate(distance);
-        }
-
-
-        public int GetSizePowerForChunkAtPosition(Vector3 position)
-        {
-            return GetSizePowerForChunkAtDistance((position - startPos).magnitude);
-        }
-
-        public int GetSizePowerForChunkAtDistance(float distance)
-        {
-            return MIN_CHUNK_SIZE_POWER + GetSizePowerForDistance(distance);
-        }
-
 
         public void GetSizeAndLodPowerForChunkPosition(Vector3 pos, out int sizePower, out int lodPower)
         {
             float distance = (startPos - pos).magnitude;
             lodPower = GetLodPower(distance);
-            sizePower = GetSizePowerForChunkAtDistance(distance);
+            sizePower = lodPower + DEFAULT_CHUNK_SIZE_POWER;
             //TODO: check this
         }
 

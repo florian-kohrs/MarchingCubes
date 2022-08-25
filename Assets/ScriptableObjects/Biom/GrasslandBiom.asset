@@ -17,7 +17,7 @@ MonoBehaviour:
     amplitude: 25.25
     lacunarity: 2
     persistence: 0.518
-    frequency: 2.05
+    frequency: 1
     scale: 18.5
     heightOffset: 0
     biomIndex: 0

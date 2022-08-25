@@ -13,6 +13,18 @@ namespace MarchingCubes
 
         public Transform player;
 
+        public void SetPlayer(Transform player)
+        {
+            if (player == null)
+            {
+                this.player = player;
+                GenerateTriggers();
+            }
+            else
+                Debug.LogError("Cant set the player of world " +
+                    "updater if it has been set before");
+        }
+
         public float updateClosestAfterDistance = 16;
 
         public float maxFrameTime = 15;
@@ -54,15 +66,19 @@ namespace MarchingCubes
         protected bool isInDecreasingChunkIteration;
 
 
-        private void Awake()
+        private void Start()
         {
-            lodPowerAtDistance = chunkHandler.lodPowerForDistances;
-            GenerateTriggers();
-            //StartCoroutine(UpdateChunkSizes());
+            if(player != null)
+            {
+                GenerateTriggers();
+            }
         }
+
 
         protected void GenerateTriggers()
         {
+            lodPowerAtDistance = chunkHandler.lodPowerForDistances;
+
             Keyframe last = lodPowerAtDistance[0];
             float distThreshold = 0.15f;
             for (int i = 1; i < lodPowerAtDistance.length; i++)

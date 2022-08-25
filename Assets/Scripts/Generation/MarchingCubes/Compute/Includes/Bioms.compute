@@ -5,7 +5,6 @@ struct Biom
     float amplitude;
     float lacunarity;
     float persistence;
-    float noiseScale;
     float scale;
     float heightOffset;
     uint biomIndex;
@@ -30,7 +29,6 @@ Biom interpolate(Biom b1, Biom b2, float t)
     Biom b;
     b.lacunarity = reversedT * b1.lacunarity + t * b2.lacunarity;
     b.persistence = reversedT * b1.persistence + t * b2.persistence;
-    b.noiseScale = reversedT * b1.noiseScale + t * b2.noiseScale;
     b.amplitude = reversedT * b1.amplitude + t * b2.amplitude;
     b.scale = reversedT * b1.scale + t * b2.scale;
     b.heightOffset = reversedT * b1.heightOffset + t * b2.heightOffset;

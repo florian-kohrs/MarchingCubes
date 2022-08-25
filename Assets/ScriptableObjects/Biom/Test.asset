@@ -17,10 +17,13 @@ MonoBehaviour:
     amplitude: 25
     lacunarity: 2
     persistence: 0.518
-    frequency: 2.05
+    frequency: 1
     scale: 18.5
     heightOffset: 0
     biomIndex: 0
   visualizationData:
     steepBiomColor: {r: 0, g: 1, b: 0.9155474, a: 0}
     flatBiomColor: {r: 1, g: 1, b: 0, a: 1}
+  envirenmentData:
+    grassDensity: 0
+    treeDensity: 0
