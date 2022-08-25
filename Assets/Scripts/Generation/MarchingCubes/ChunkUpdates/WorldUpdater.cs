@@ -62,6 +62,8 @@ namespace MarchingCubes
         public HashSet<CompressedMarchingCubeChunk> removedLowerChunkLodsBuffer = new HashSet<CompressedMarchingCubeChunk>();
         public HashSet<CompressedMarchingCubeChunk> increaseChunkLodsBuffer = new HashSet<CompressedMarchingCubeChunk>();
 
+        protected Stack<ChunkInitializeTask> chunksToInitialize = new Stack<ChunkInitializeTask>();
+
         protected bool isInIncreasingChunkIteration;
         protected bool isInDecreasingChunkIteration;
 
@@ -74,6 +76,10 @@ namespace MarchingCubes
             }
         }
 
+        public void AddChunkToInitialize(ChunkInitializeTask chunkTask)
+        {
+            chunksToInitialize.Push(chunkTask);
+        }
 
         protected void GenerateTriggers()
         {
@@ -124,6 +130,13 @@ namespace MarchingCubes
         //TODO: Use Request Async maybe for new chunks
         private void LateUpdate()
         {
+            while(chunksToInitialize.Count > 0 && FrameTimer.HasTimeLeftInFrame)
+            {
+                ChunkInitializeTask task = chunksToInitialize.Pop();
+                task.chunk.InitializeWithMeshData(task.chunk.MeshData);
+                task.onChunkDone(task.chunk);
+            }
+
             while (readyExchangeChunks.Count > 0 && FrameTimer.HasTimeLeftInFrame)
             {
                 ReadyChunkExchange change;
@@ -213,6 +226,8 @@ namespace MarchingCubes
                 lowerChunkLods.Remove(c);
             }
             removedLowerChunkLodsBuffer.Clear();
+
+            FrameTimer.RestartWatch();
         }
 
     }

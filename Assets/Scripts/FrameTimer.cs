@@ -6,17 +6,26 @@ using UnityEngine;
 public class FrameTimer : MonoBehaviour
 {
 
-    public static Stopwatch watch = new Stopwatch();
+    protected static Stopwatch watch = new Stopwatch();
 
     public static long MillisecondsSinceFrame => watch.ElapsedMilliseconds;
 
 
     public static bool HasTimeLeftInFrame => watch.ElapsedMilliseconds < 15;
 
-
-    private void Update()
+    private void Start()
     {
         watch.Restart();
     }
+
+    public static void RestartWatch()
+    {
+        watch.Restart();
+    }
+
+    //private void Update()
+    //{
+    //    watch.Restart();
+    //}
 
 }

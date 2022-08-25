@@ -262,7 +262,12 @@ namespace MarchingCubes
             }
         }
 
-     
+        public virtual void PrepareInitializationWithMeshData(MeshData meshData)
+        {
+            this.meshData = meshData;
+        }
+
+
         public virtual void InitializeWithMeshData(MeshData meshData)
         {
             HasStarted = true;
@@ -279,7 +284,6 @@ namespace MarchingCubes
                 DestroyChunk();
             }
 
-            //TODO: ELSE{PrepareDestroy? give displayers back?}
             IsReady = true;
 
             if (ShouldBuildEnvironment)

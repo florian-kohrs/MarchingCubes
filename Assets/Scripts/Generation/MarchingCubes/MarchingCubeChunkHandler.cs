@@ -786,11 +786,11 @@ namespace MarchingCubes
 
 
         //TODO: Maybe pool theese for fewer pipeline instances
-        protected void DispatchMultipleChunks(CompressedMarchingCubeChunk[] chunks, Action<CompressedMarchingCubeChunk> callbackPerChunk)
+        protected void DispatchMultipleChunksAsync(CompressedMarchingCubeChunk[] chunks, Action<CompressedMarchingCubeChunk> callbackPerChunk)
         {
             for (int i = 0; i < chunks.Length; i++)
             {
-                BuildChunkAsyncFromMeshData(chunks[i], callbackPerChunk);
+                PrepareChunkAsyncFromMeshData(chunks[i], callbackPerChunk);
             }
         }
 
@@ -866,10 +866,21 @@ namespace MarchingCubes
                 });
         }
 
+        protected void PrepareChunkAsyncFromMeshData(CompressedMarchingCubeChunk chunk, Action<CompressedMarchingCubeChunk> onChunkDone)
+        {
+            chunkInAsync++;
+            chunkGPURequest.DispatchAndGetChunkMeshDataAsync(chunk, SetChunkComponents, (data) =>
+            {
+                chunk.PrepareInitializationWithMeshData(data);
+                worldUpdater.AddChunkToInitialize(new ChunkInitializeTask(onChunkDone, chunk));
+                chunkInAsync--;
+            });
+        }
+
         protected void ExchangeChunkAsyncParallel(Vector3Int anchorPos, int lodPow, int sizePow, bool allowOveride, Action<CompressedMarchingCubeChunk> onChunkDone)
         {
             CompressedMarchingCubeChunk newChunk = GetThreadedChunkObjectAt(anchorPos, lodPow, sizePow, allowOveride);
-            BuildChunkAsyncFromMeshData(newChunk, onChunkDone);
+            PrepareChunkAsyncFromMeshData(newChunk, onChunkDone);
         }
 
         private void SplitChunkAndIncreaseLod(CompressedMarchingCubeChunk chunk, int toLodPower, int newSizePow)
@@ -903,7 +914,7 @@ namespace MarchingCubes
                 }
             };
 
-            DispatchMultipleChunks(newChunks,f);
+            DispatchMultipleChunksAsync(newChunks,f);
 
         }
 
