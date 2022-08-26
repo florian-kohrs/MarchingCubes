@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public class ChunkGroupMesh : GroupMesh<ChunkGroupRoot, CompressedMarchingCubeChunk, ChunkGroupTreeLeaf, IChunkGroupOrganizer<CompressedMarchingCubeChunk>>
+    public class ChunkGroupMesh : GroupMesh<ChunkGroupRoot, CompressedMarchingCubeChunk, ChunkGroupTreeLeaf, IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk>>
     {
 
         public ChunkGroupMesh(int groupSize) : base(groupSize) { }

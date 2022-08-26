@@ -39,8 +39,6 @@ namespace MarchingCubes
 
         protected WorldUpdater chunkUpdater;
 
-        protected ChunkLodCollider chunkSimpleCollider;
-
         public const int MAX_TRIANGLES_PER_MESH = 65000;
 
         protected List<MarchingCubeMeshDisplayer> activeDisplayers = new List<MarchingCubeMeshDisplayer>();
@@ -120,8 +118,6 @@ namespace MarchingCubes
 
         public Vector3Int CenterPos => chunkCenterPosition;
 
-        public ChunkLodCollider ChunkSimpleCollider { set { chunkSimpleCollider = value; } }
-
         public WorldUpdater ChunkUpdater { set { chunkUpdater = value; } }
 
 
@@ -162,58 +158,6 @@ namespace MarchingCubes
             }
         }
 
-        public int TargetLODPower
-        {
-            get
-            {
-                return targetLodPower;
-            }
-            set
-            {
-                targetLodPower = value;
-                if (targetLodPower == MarchingCubeChunkHandler.DESTROY_CHUNK_LOD)
-                {
-                    DestroyChunk();
-                }
-                else if (targetLodPower > lodPower)
-                {
-                    SetIncrease(false);
-                    SetDecrease(true);
-                }
-                else if (targetLodPower == lodPower)
-                {
-                    SetIncrease(false);
-                    SetDecrease(false);
-                }
-                else
-                {
-                    SetIncrease(true);
-                    SetDecrease(false);
-                }
-            }
-        }
-
-        protected void SetIncrease(bool value)
-        {
-            if (isInIncreaseUpdater == value)
-                return;
-            isInIncreaseUpdater = value;
-            if(value)
-                chunkUpdater.increaseChunkLods.Add(this);
-            else
-                chunkUpdater.increaseChunkLods.Remove(this);
-        }
-
-        protected void SetDecrease(bool value)
-        {
-            if (isInDecreaseUpdater == value)
-                return;
-            isInDecreaseUpdater = value;
-            if (value)
-                chunkUpdater.lowerChunkLods.Add(this);
-            else
-                chunkUpdater.lowerChunkLods.Remove(this);
-        }
 
         protected bool isInIncreaseUpdater;
         protected bool isInDecreaseUpdater;
@@ -267,14 +211,6 @@ namespace MarchingCubes
         #endregion properties
 
         #region getter and setter methods
-
-        public void SetSimpleCollider()
-        {
-            if (chunkSimpleCollider == null)
-            {
-                chunkHandler.SetChunkColliderOf(this);
-            }
-        }
 
         #endregion
 
@@ -368,7 +304,6 @@ namespace MarchingCubes
   
         public virtual void PrepareDestruction()
         {
-            chunkUpdater.RemoveLowerLodChunk(this);
             if (Leaf != null)
             {
                 Leaf.RemoveLeaf(this);
@@ -377,21 +312,9 @@ namespace MarchingCubes
             IsReady = false;
             HasStarted = false;
             MeshBounds.LazyRemoveValue();
-            FreeSimpleChunkCollider();
         }
 
       
-
-        public void FreeSimpleChunkCollider()
-        {
-            if(chunkSimpleCollider != null)
-            {
-                chunkHandler.FreeCollider(chunkSimpleCollider);
-                chunkSimpleCollider = null;
-            }
-        }
-
-
         private void UpdateChunkCenterPos()
         {
             int halfSize = ChunkSize / 2;

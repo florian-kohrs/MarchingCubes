@@ -97,8 +97,6 @@ namespace MarchingCubes
 
         protected InteractableMeshDisplayPool interactableDisplayerPool;
 
-        protected SimpleChunkColliderPool simpleChunkColliderPool;
-
         //Cant really pool noise array, maybe pool tribuilder aray instead (larger than neccessary)
 
         public static HashSet<CompressedMarchingCubeChunk> channeledChunks = new HashSet<CompressedMarchingCubeChunk>();
@@ -706,7 +704,6 @@ namespace MarchingCubes
 
                 chunkGroupRoot.SetLeafAtPosition(new int[] { pos.x, pos.y, pos.z }, chunk, false);
 
-                simpleChunkColliderPool.GetItemFromPoolFor(chunk);
             }
         }
 
@@ -726,7 +723,6 @@ namespace MarchingCubes
         protected void SetChunkComponents(CompressedMarchingCubeChunk chunk)
         {
             SetDisplayerOfChunk(chunk);
-            SetLODColliderOfChunk(chunk);
         }
 
 
@@ -797,10 +793,6 @@ namespace MarchingCubes
             }
         }
 
-        protected void SetLODColliderOfChunk(CompressedMarchingCubeChunk chunk)
-        {
-            simpleChunkColliderPool.GetItemFromPoolFor(chunk);
-        }
 
         //public int ComputeCubesFromNoise(CompressedMarchingCubeChunk chunk, int lod, bool resetCounter = true)
         //{
@@ -833,7 +825,6 @@ namespace MarchingCubes
             if (toLod >= chunk.LOD || chunk.ChunkSize % toLod != 0)
                 Debug.LogWarning($"invalid new chunk lod {toLodPower} from lod {chunk.LODPower}");
 
-            chunk.FreeSimpleChunkCollider();
             int newSizePow = GetSizePowerFromLodPower(toLodPower); ;
             if (newSizePow >= chunk.ChunkSizePower || newSizePow == CHUNK_GROUP_SIZE_POWER)
             {
@@ -941,38 +932,11 @@ namespace MarchingCubes
         //    return 0;
         //}
 
-        public void DecreaseChunkLod(CompressedMarchingCubeChunk chunk, int toLodPower)
+        public void MergeChunkGroup(IChunkGroupParent<ChunkGroupTreeLeaf> mergeGroup)
         {
-            if (toLodPower == DESTROY_CHUNK_LOD)
-            {
-                chunk.DestroyChunk();
-            }
-            else if (toLodPower == DEACTIVATE_CHUNK_LOD)
-            {
-                chunk.ResetChunk();
-            }
-            else
-            {
-                chunk.FreeSimpleChunkCollider();
-                toLodPower = GetFeasibleReducedLodForChunk(chunk, toLodPower);
-                int lodPowerDiff = toLodPower - chunk.LODPower;
-                int toLod = RoundToPowerOf2(toLodPower);
-                if (toLod <= chunk.LOD/* || chunk.ChunkSize % toLod != 0*/)
-                    Debug.LogWarning($"invalid new chunk lod {toLodPower} from lod {chunk.LODPower}");
-                IChunkGroupParent<ChunkGroupTreeLeaf> parent = chunk.Leaf.parent.AscendParentHirachy(lodPowerDiff - 1);
-                if (parent.EntireHirachyHasAtLeastTargetLod(toLodPower))
-                {
-                    MergeAndReduceChunkBranch(parent, chunk, toLodPower);
-                }
-                else
-                {
-                    ///Decrease single chunk lod
-                    ExchangeSingleChunkAsyncParallel(chunk, chunk.CenterPos, toLodPower, chunk.ChunkSizePower, true);
-                }
-            }
+
         }
-        
-      
+
         public void MergeAndReduceChunkBranch(IChunkGroupParent<ChunkGroupTreeLeaf> parent, CompressedMarchingCubeChunk chunk, int toLodPower)
         {
             List<CompressedMarchingCubeChunk> oldChunks = new List<CompressedMarchingCubeChunk>();
@@ -985,16 +949,6 @@ namespace MarchingCubes
                     worldUpdater.readyExchangeChunks.Push(new ReadyChunkExchange(oldChunks, c));
                 }
             });
-        }
-
-        public void FreeCollider(ChunkLodCollider c)
-        {
-            simpleChunkColliderPool.ReturnItemToPool(c);
-        }
-
-        public void SetChunkColliderOf(CompressedMarchingCubeChunk c)
-        {
-            simpleChunkColliderPool.GetItemFromPoolFor(c);
         }
 
         public MarchingCubeMeshDisplayer GetNextMeshDisplayer()
@@ -1071,7 +1025,6 @@ namespace MarchingCubes
             chunkPipelinePool = new ChunkGenerationPipelinePool(CreateChunkPipeline);
             minDegreesAtCoordBufferPool = new BufferPool(CreateMinDegreeBuffer);
 
-            simpleChunkColliderPool = new SimpleChunkColliderPool(colliderParent);
             displayerPool = new MeshDisplayerPool(transform);
             interactableDisplayerPool = new InteractableMeshDisplayPool(transform);
         }

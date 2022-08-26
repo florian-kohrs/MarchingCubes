@@ -5,40 +5,23 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public class ChunkGroupTreeNode : GenericTreeNode<CompressedMarchingCubeChunk, IChunkGroupOrganizer<CompressedMarchingCubeChunk>, ChunkGroupTreeLeaf>, IChunkGroupParent<ChunkGroupTreeLeaf>
+    public class ChunkGroupTreeNode : GenericTreeNode<CompressedMarchingCubeChunk, IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk>, ChunkGroupTreeLeaf>, IChunkGroupParent<ChunkGroupTreeLeaf>, IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk>
     {
 
         public ChunkGroupTreeNode(
-            IChunkGroupParent<ChunkGroupTreeLeaf> parent,
             int[] anchorPosition,
             int[] relativeAnchorPosition, 
             int sizePower) : base(anchorPosition, relativeAnchorPosition, sizePower)
         {
-            this.parent = parent;
+            int sizeHalf = (int)Mathf.Pow(2, sizePower) / 2;
+            centerPosition = new Vector3(anchorPosition[0] + sizeHalf, anchorPosition[1] + sizeHalf, anchorPosition[2] + sizeHalf);
+            int lodPow = sizePower - MarchingCubeChunkHandler.DEFAULT_CHUNK_SIZE_POWER;
+            ChunkUpdateRoutine.chunkGroupNodes[lodPow].Add(this);
         }
 
-        protected IChunkGroupParent<ChunkGroupTreeLeaf> parent;
+        protected Vector3 centerPosition;
 
-        public bool EntireHirachyHasAtLeastTargetLod(int targetLodPower)
-        {
-            bool result = true;
-            for (int i = 0; i < 8 && result; i++)
-            {
-                result = children[i] == null 
-                    || ((children[i] is ChunkGroupTreeLeaf l) 
-                    && l.leaf.IsReady 
-                    && l.leaf.TargetLODPower >= targetLodPower)
-                    || ((children[i] is ChunkGroupTreeNode n)
-                    && n.EntireHirachyHasAtLeastTargetLod(targetLodPower));
-            }
-            return result;
-        }
-
-
-        public int FindTargetLodThatWorksForHirachyOfAtLeast(int targetLodPower, int parentSteps, out IChunkGroupParent<ChunkGroupTreeLeaf> parentOfHirachy)
-        {
-            throw new NotImplementedException();
-        }
+        public Vector3 Center => centerPosition;
 
         protected bool IsEmpty()
         {
@@ -98,21 +81,26 @@ namespace MarchingCubes
             }
         }
 
-        public override IChunkGroupOrganizer<CompressedMarchingCubeChunk> GetLeaf(CompressedMarchingCubeChunk leaf, int index, int[] anchor, int[] relAnchor, int sizePow)
+        public override IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk> GetLeaf(CompressedMarchingCubeChunk leaf, int index, int[] anchor, int[] relAnchor, int sizePow)
         {
             return new ChunkGroupTreeLeaf(this, leaf, index, anchor, relAnchor, sizePow);
         }
 
-        public override IChunkGroupOrganizer<CompressedMarchingCubeChunk> GetNode(int[] anchor, int[] relAnchor, int sizePow)
+        public override IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk> GetNode(int[] anchor, int[] relAnchor, int sizePow)
         {
-            return new ChunkGroupTreeNode(this, anchor, relAnchor, sizePow);
+            return new ChunkGroupTreeNode( anchor, relAnchor, sizePow);
         }
 
-        public IChunkGroupParent<ChunkGroupTreeLeaf> AscendParentHirachy(int steps)
+        public void DestroyBranch()
         {
-            if (steps <= 0) return this;
-            else return parent.AscendParentHirachy(steps - 1);
-        }
+            for (int i = 0; i < 8; i++)
+            {
+                IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk> child = children[i];
+                if (child == null)
+                    continue;
+                child.DestroyBranch();
 
+            }
+        }
     }
 }

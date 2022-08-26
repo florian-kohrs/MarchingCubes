@@ -11,13 +11,7 @@ namespace MarchingCubes
 
         void RemoveChildAtIndex(int index, CompressedMarchingCubeChunk chunk);
 
-        bool EntireHirachyHasAtLeastTargetLod(int targetLodPower);
-
-        int FindTargetLodThatWorksForHirachyOfAtLeast(int targetLodPower);
-
         void PrepareBranchDestruction(List<CompressedMarchingCubeChunk> oldChunks);
-
-        IChunkGroupParent<ChunkGroupTreeLeaf> AscendParentHirachy(int steps);
 
     }
 

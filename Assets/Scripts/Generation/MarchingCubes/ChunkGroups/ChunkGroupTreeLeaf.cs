@@ -5,7 +5,7 @@ using UnityEngine;
 namespace MarchingCubes
 {
 
-    public class ChunkGroupTreeLeaf : GenericTreeLeaf<CompressedMarchingCubeChunk>
+    public class ChunkGroupTreeLeaf : GenericTreeLeaf<CompressedMarchingCubeChunk>, IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk>
     {
 
         //~ChunkGroupTreeLeaf()
@@ -19,11 +19,19 @@ namespace MarchingCubes
             this.parent = parent;
             chunk.AnchorPos = new Vector3Int(anchorPoint[0], anchorPoint[1],anchorPoint[2]);
             chunk.ChunkSizePower = sizePower;
+            ///only register if the leaf can be split
+            if (sizePower > MarchingCubeChunkHandler.MIN_CHUNK_SIZE_POWER)
+            {
+                isRegistered = true;
+                ChunkUpdateRoutine.chunkGroupTreeLeaves.Add(this);
+            }
             chunk.Leaf = this;
         }
 
 
         public IChunkGroupParent<ChunkGroupTreeLeaf> parent;
+
+        protected bool isRegistered;
 
         public int[][] GetAllChildGlobalAnchorPosition()
         {
@@ -61,16 +69,20 @@ namespace MarchingCubes
             return result;
         }
 
-
-        public bool AllSiblingsAreLeafsWithSameTargetLod()
-        {
-            return parent.EntireHirachyHasAtLeastTargetLod(leaf.TargetLODPower);
-        }
-
         public override bool RemoveLeafAtLocalPosition(int[] pos)
         {
-            leaf.DestroyChunk();
+            DestroyBranch();
             return true;
+        }
+
+        public void DestroyBranch()
+        {
+            if(isRegistered)
+            {
+                ChunkUpdateRoutine.chunkGroupTreeLeaves.Remove(this);
+                isRegistered = false;
+            }
+            leaf.DestroyChunk();
         }
     }
 

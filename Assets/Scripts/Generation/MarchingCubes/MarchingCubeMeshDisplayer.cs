@@ -41,7 +41,7 @@ namespace MarchingCubes
         protected MarchingCubeMeshDisplayer(ReducedMarchingCubesChunk chunk, GameObject g, Transform t) : this(g, g.AddComponent<MeshFilter>(), g.AddComponent<MeshRenderer>(), new Mesh(), g.AddComponent<MeshCollider>())
         {
             g.transform.SetParent(t, false);
-            if (chunk is ReducedMarchingCubesChunk interactable)
+            if (chunk is ReducedMarchingCubesChunk)
             {
                 hasCube = g.AddComponent<HasMarchingCube>();
                 hasCube.chunk = chunk;
