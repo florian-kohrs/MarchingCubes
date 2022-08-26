@@ -175,24 +175,48 @@ namespace MarchingCubes
                 {
                     DestroyChunk();
                 }
-                if (targetLodPower > lodPower)
+                else if (targetLodPower > lodPower)
                 {
-                    chunkUpdater.lowerChunkLods.Add(this);
-                    chunkUpdater.increaseChunkLods.Remove(this);
+                    SetIncrease(false);
+                    SetDecrease(true);
                 }
                 else if (targetLodPower == lodPower)
                 {
-                    chunkUpdater.lowerChunkLods.Remove(this);
-                    chunkUpdater.increaseChunkLods.Remove(this);
+                    SetIncrease(false);
+                    SetDecrease(false);
                 }
                 else
                 {
-                    chunkUpdater.increaseChunkLods.Add(this);
-                    chunkUpdater.lowerChunkLods.Remove(this);
+                    SetIncrease(true);
+                    SetDecrease(false);
                 }
             }
         }
 
+        protected void SetIncrease(bool value)
+        {
+            if (isInIncreaseUpdater == value)
+                return;
+            isInIncreaseUpdater = value;
+            if(value)
+                chunkUpdater.increaseChunkLods.Add(this);
+            else
+                chunkUpdater.increaseChunkLods.Remove(this);
+        }
+
+        protected void SetDecrease(bool value)
+        {
+            if (isInDecreaseUpdater == value)
+                return;
+            isInDecreaseUpdater = value;
+            if (value)
+                chunkUpdater.lowerChunkLods.Add(this);
+            else
+                chunkUpdater.lowerChunkLods.Remove(this);
+        }
+
+        protected bool isInIncreaseUpdater;
+        protected bool isInDecreaseUpdater;
 
         public MarchingCubeChunkHandler ChunkHandler
         {

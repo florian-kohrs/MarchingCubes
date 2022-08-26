@@ -201,17 +201,14 @@ namespace MarchingCubes
             }
             chunks.Clear();
 
+            //TODO: Potential race condition? maybe lock something
             isInDecreasingChunkIteration = true;
             foreach (var item in lowerChunkLods)
             {
                 if (FrameTimer.HasTimeLeftInFrame)
                 {
-                    if (item.IsReady)
+                    if (item.IsReady && !removedLowerChunkLodsBuffer.Contains(item))
                     {
-                        bool contains = removedLowerChunkLodsBuffer.Contains(item);
-                        if (!item.IsReady || contains)
-                            continue;
-
                         chunkHandler.DecreaseChunkLod(item, item.TargetLODPower);
                     }
                 }
