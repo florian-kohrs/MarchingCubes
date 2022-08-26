@@ -13,7 +13,11 @@ namespace MarchingCubes
 
         bool EntireHirachyHasAtLeastTargetLod(int targetLodPower);
 
+        int FindTargetLodThatWorksForHirachyOfAtLeast(int targetLodPower);
+
         void PrepareBranchDestruction(List<CompressedMarchingCubeChunk> oldChunks);
+
+        IChunkGroupParent<ChunkGroupTreeLeaf> AscendParentHirachy(int steps);
 
     }
 

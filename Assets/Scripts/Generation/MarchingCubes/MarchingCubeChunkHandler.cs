@@ -228,7 +228,9 @@ namespace MarchingCubes
             //maxSqrChunkDistance = buildAroundDistance * buildAroundDistance;
             //BuildRelevantChunksParallelBlockingAround(chunk);
 
+            ///uncomment to make work!
             CreatePlanetWithAsyncGPU();
+
             //CreatePlanetFromMeshData();
 
             //BuildRelevantChunksParallelWithAsyncGpuAround(chunk);
@@ -265,8 +267,9 @@ namespace MarchingCubes
             hasFoundInitialChunk = positions.Length > 0;
             if (hasFoundInitialChunk)
             {
-                BuildAllChunksAsync(positions);
-                StartCoroutine(WaitTillAsynGenerationDone());
+                BuildAllChunksAsync(new Vector3Int[] { positions[0] });
+                //BuildAllChunksAsync(positions);
+                //StartCoroutine(WaitTillAsynGenerationDone());
             }
             else
             {
@@ -813,6 +816,8 @@ namespace MarchingCubes
 
         public int GetFeasibleReducedLodForChunk(CompressedMarchingCubeChunk c, int toLodPower)
         {
+            //TODO: this sucks. also have new chunks detect they are too small
+            return toLodPower;
             return Mathf.Min(toLodPower, c.LODPower + 1);
         }
 
@@ -829,7 +834,7 @@ namespace MarchingCubes
                 Debug.LogWarning($"invalid new chunk lod {toLodPower} from lod {chunk.LODPower}");
 
             chunk.FreeSimpleChunkCollider();
-            int newSizePow = DEFAULT_CHUNK_SIZE_POWER + toLodPower;
+            int newSizePow = GetSizePowerFromLodPower(toLodPower); ;
             if (newSizePow >= chunk.ChunkSizePower || newSizePow == CHUNK_GROUP_SIZE_POWER)
             {
                 ExchangeSingleChunkAsyncParallel(chunk, chunk.AnchorPos, toLodPower, chunk.ChunkSizePower, true);
@@ -950,13 +955,14 @@ namespace MarchingCubes
             {
                 chunk.FreeSimpleChunkCollider();
                 toLodPower = GetFeasibleReducedLodForChunk(chunk, toLodPower);
+                int lodPowerDiff = toLodPower - chunk.LODPower;
                 int toLod = RoundToPowerOf2(toLodPower);
-                if (toLod <= chunk.LOD || chunk.ChunkSize % toLod != 0)
+                if (toLod <= chunk.LOD/* || chunk.ChunkSize % toLod != 0*/)
                     Debug.LogWarning($"invalid new chunk lod {toLodPower} from lod {chunk.LODPower}");
-
-                if (chunk.Leaf.AllSiblingsAreLeafsWithSameTargetLod())
+                IChunkGroupParent<ChunkGroupTreeLeaf> parent = chunk.Leaf.parent.AscendParentHirachy(lodPowerDiff - 1);
+                if (parent.EntireHirachyHasAtLeastTargetLod(toLodPower))
                 {
-                    MergeAndReduceChunkBranch(chunk, toLodPower);
+                    MergeAndReduceChunkBranch(parent, chunk, toLodPower);
                 }
                 else
                 {
@@ -965,14 +971,14 @@ namespace MarchingCubes
                 }
             }
         }
-
-
-        public void MergeAndReduceChunkBranch(CompressedMarchingCubeChunk chunk, int toLodPower)
+        
+      
+        public void MergeAndReduceChunkBranch(IChunkGroupParent<ChunkGroupTreeLeaf> parent, CompressedMarchingCubeChunk chunk, int toLodPower)
         {
             List<CompressedMarchingCubeChunk> oldChunks = new List<CompressedMarchingCubeChunk>();
-            chunk.Leaf.parent.PrepareBranchDestruction(oldChunks);
-
-            ExchangeChunkAsyncParallel(chunk.CenterPos, toLodPower, chunk.ChunkSizePower + 1, true, (c) =>
+            parent.PrepareBranchDestruction(oldChunks);
+            int sizePow = GetSizePowerFromLodPower(toLodPower);
+            ExchangeChunkAsyncParallel(chunk.CenterPos, toLodPower, sizePow, true, (c) =>
             {
                 lock (exchangeLocker)
                 {
@@ -1048,15 +1054,16 @@ namespace MarchingCubes
         {
             float distance = (startPos - pos).magnitude;
             lodPower = GetLodPower(distance);
-            sizePower = lodPower + DEFAULT_CHUNK_SIZE_POWER;
+            sizePower = GetSizePowerFromLodPower(lodPower);
             //TODO: check this
         }
 
-        protected int RoundToPowerOf2(float f)
-        {
-            int r = (int)Mathf.Pow(2, Mathf.RoundToInt(f));
+        protected int GetSizePowerFromLodPower(int lodPower) => lodPower + DEFAULT_CHUNK_SIZE_POWER;
+        protected int GetSizeFromLodPower(int lodPower) => RoundToPowerOf2(lodPower + DEFAULT_CHUNK_SIZE_POWER);
 
-            return Mathf.Max(1, r);
+        protected int RoundToPowerOf2(int f)
+        {
+            return (int)Mathf.Pow(2, f);
         }
 
         protected void CreatePools()

@@ -14,12 +14,7 @@ namespace MarchingCubes
         public override int Size => MarchingCubeChunkHandler.CHUNK_GROUP_SIZE;
 
         public override int SizePower => MarchingCubeChunkHandler.CHUNK_GROUP_SIZE_POWER;
-        
-        public void PrepareBranchDestruction(List<CompressedMarchingCubeChunk> allLeafs)
-        {
-            throw new System.NotImplementedException();
-        }
-
+    
         public override IChunkGroupOrganizer<CompressedMarchingCubeChunk> GetLeaf(CompressedMarchingCubeChunk leaf, int index, int[] anchor, int[] relAnchor, int sizePow)
         {
             return new ChunkGroupTreeLeaf(this, leaf, index, anchor, relAnchor, sizePow);
@@ -27,7 +22,7 @@ namespace MarchingCubes
 
         public override IChunkGroupOrganizer<CompressedMarchingCubeChunk> GetNode(int[] anchor, int[] relAnchor, int sizePow)
         {
-            return new ChunkGroupTreeNode(anchor, relAnchor, sizePow);
+            return new ChunkGroupTreeNode(this, anchor, relAnchor, sizePow);
         }
 
         public void RemoveChildAtIndex(int index, CompressedMarchingCubeChunk chunk)
@@ -40,6 +35,21 @@ namespace MarchingCubes
 
 
         public bool EntireHirachyHasAtLeastTargetLod(int targetLodPower)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void PrepareBranchDestruction(List<CompressedMarchingCubeChunk> allLeafs)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public IChunkGroupParent<ChunkGroupTreeLeaf> AscendParentHirachy(int steps)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public int FindTargetLodThatWorksForHirachyOfAtLeast(int targetLodPower)
         {
             throw new System.NotImplementedException();
         }

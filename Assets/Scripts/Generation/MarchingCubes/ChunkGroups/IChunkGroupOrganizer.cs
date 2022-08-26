@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public interface IChunkGroupOrganizer<T>
+    public interface IChunkGroupOrganizer<T> 
     {
 
         T GetChunkAtLocalPosition(int[] pos);

@@ -9,11 +9,15 @@ namespace MarchingCubes
     {
 
         public ChunkGroupTreeNode(
+            IChunkGroupParent<ChunkGroupTreeLeaf> parent,
             int[] anchorPosition,
             int[] relativeAnchorPosition, 
             int sizePower) : base(anchorPosition, relativeAnchorPosition, sizePower)
         {
+            this.parent = parent;
         }
+
+        protected IChunkGroupParent<ChunkGroupTreeLeaf> parent;
 
         public bool EntireHirachyHasAtLeastTargetLod(int targetLodPower)
         {
@@ -25,9 +29,15 @@ namespace MarchingCubes
                     && l.leaf.IsReady 
                     && l.leaf.TargetLODPower >= targetLodPower)
                     || ((children[i] is ChunkGroupTreeNode n)
-                    && n.IsEmpty());
+                    && n.EntireHirachyHasAtLeastTargetLod(targetLodPower));
             }
             return result;
+        }
+
+
+        public int FindTargetLodThatWorksForHirachyOfAtLeast(int targetLodPower, int parentSteps, out IChunkGroupParent<ChunkGroupTreeLeaf> parentOfHirachy)
+        {
+            throw new NotImplementedException();
         }
 
         protected bool IsEmpty()
@@ -95,9 +105,14 @@ namespace MarchingCubes
 
         public override IChunkGroupOrganizer<CompressedMarchingCubeChunk> GetNode(int[] anchor, int[] relAnchor, int sizePow)
         {
-            return new ChunkGroupTreeNode(anchor, relAnchor, sizePow);
+            return new ChunkGroupTreeNode(this, anchor, relAnchor, sizePow);
         }
 
-    
+        public IChunkGroupParent<ChunkGroupTreeLeaf> AscendParentHirachy(int steps)
+        {
+            if (steps <= 0) return this;
+            else return parent.AscendParentHirachy(steps - 1);
+        }
+
     }
 }
