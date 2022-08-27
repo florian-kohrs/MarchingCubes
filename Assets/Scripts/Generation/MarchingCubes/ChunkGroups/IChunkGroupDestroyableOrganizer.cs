@@ -8,5 +8,9 @@ namespace MarchingCubes
 
         void DestroyBranch();
 
+        void DeactivateBranch();
+
+        void RemoveChildsFromRegister();
+
     }
 }

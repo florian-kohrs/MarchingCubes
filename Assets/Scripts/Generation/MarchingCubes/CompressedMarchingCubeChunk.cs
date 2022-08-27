@@ -285,7 +285,7 @@ namespace MarchingCubes
         public void ResetChunk()
         {
             NumTris = 0;
-            lodPower = MarchingCubeChunkHandler.DEACTIVATE_CHUNK_LOD;
+            lodPower = MarchingCubeChunkHandler.DEACTIVATE_CHUNK_LOD_POWER;
             lod = (int)Mathf.Pow(2, lodPower);
             vertices = null;
             FreeAllMeshes();

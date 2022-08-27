@@ -10,14 +10,42 @@ namespace MarchingCubes
         public ChunkGroupRoot(int[] coord, int chunkGroupSize) : base(coord, chunkGroupSize)
         {
             ChunkUpdateRoutine.chunkGroupTreeRoots.Add(this);
-            float halfSize = Mathf.Pow(2, chunkGroupSize) / 2;
+            float halfSize = chunkGroupSize / 2;
             center = new Vector3(coord[0] + halfSize, coord[1] + halfSize, coord[2] + halfSize);
         }
 
         protected Vector3 center;
 
-        public bool channeledForDestruction;
-        public bool channeledForDeactivation;
+        protected bool channeledForDestruction;
+        protected bool channeledForDeactivation;
+
+        public bool ChanneledForDestruction { 
+            get { return channeledForDestruction; }
+        }
+
+        public void SetChannelChunkForDestruction ()
+        {
+            channeledForDestruction = true;
+            ChunkUpdateRoutine.chunkGroupTreeRoots.Remove(this);
+            RemoveChildsFromRegister();
+        }
+
+        public bool ChanneledForDeactivation
+        {
+            get { return channeledForDeactivation; }
+        }
+
+        public void SetChannelChunkForDeactivation()
+        {
+            channeledForDeactivation = true;
+            RemoveChildsFromRegister();
+        }
+
+
+        protected void RemoveChildsFromRegister()
+        {
+            child.RemoveChildsFromRegister();
+        }
 
 
         public Vector3 Center => center;
@@ -33,7 +61,7 @@ namespace MarchingCubes
 
         public override IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk> GetNode(int[] anchor, int[] relAnchor, int sizePow)
         {
-            return new ChunkGroupTreeNode(anchor, relAnchor, sizePow);
+            return new ChunkGroupTreeNode(anchor, relAnchor, 0, sizePow);
         }
 
         public void RemoveChildAtIndex(int index, CompressedMarchingCubeChunk chunk)
@@ -49,10 +77,30 @@ namespace MarchingCubes
             child.DestroyBranch();
         }
 
+        public void DeactivateBranch()
+        {
+            child.DeactivateBranch();
+        }
+
+        //exception is still valid here
         public void PrepareBranchDestruction(List<CompressedMarchingCubeChunk> allLeafs)
         {
             throw new System.NotImplementedException();
         }
 
+        public void SplitChildAtIndex(int index, out List<ChunkGroupTreeNode> newNodes)
+        {
+            newNodes = new List<ChunkGroupTreeNode>();
+            child = GetNode(GroupAnchorPosition, GroupAnchorPosition, SizePower);
+            if(child is ChunkGroupTreeNode n)
+            {
+                newNodes.Add(n);
+                n.CheckAnyChildrenForSplit(newNodes);
+            }
+            else
+            {
+                throw new System.Exception();
+            }
+        }
     }
 }

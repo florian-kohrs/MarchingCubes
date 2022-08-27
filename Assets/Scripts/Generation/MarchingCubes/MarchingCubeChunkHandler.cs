@@ -58,7 +58,7 @@ namespace MarchingCubes
 
         public const int DESTROY_CHUNK_LOD = MAX_CHUNK_LOD_POWER + 2;
 
-        public const int DEACTIVATE_CHUNK_LOD = MAX_CHUNK_LOD_POWER + 1;
+        public const int DEACTIVATE_CHUNK_LOD_POWER = MAX_CHUNK_LOD_POWER + 1;
 
         public const int VOXELS_IN_DEFAULT_SIZED_CHUNK = DEFAULT_CHUNK_SIZE * DEFAULT_CHUNK_SIZE * DEFAULT_CHUNK_SIZE;
 
@@ -265,9 +265,9 @@ namespace MarchingCubes
             hasFoundInitialChunk = positions.Length > 0;
             if (hasFoundInitialChunk)
             {
-                BuildAllChunksAsync(new Vector3Int[] { positions[0] });
-                //BuildAllChunksAsync(positions);
-                //StartCoroutine(WaitTillAsynGenerationDone());
+                //BuildAllChunksAsync(new Vector3Int[] { positions[0] });
+                BuildAllChunksAsync(positions);
+                StartCoroutine(WaitTillAsynGenerationDone());
             }
             else
             {
@@ -321,9 +321,14 @@ namespace MarchingCubes
             yield return CreateEmptyChunks();
         }
 
+        public List<Action> OnInitializationDoneCallback = new List<Action>();
+
         protected void OnInitialializationDone()
         {
-
+            foreach (var item in OnInitializationDoneCallback)
+            {
+                item();
+            }
         }
 
         protected IEnumerator WaitTillAsynGenerationDone()

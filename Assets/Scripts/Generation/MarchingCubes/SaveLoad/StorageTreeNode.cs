@@ -25,7 +25,8 @@ namespace MarchingCubes
             IStorageGroupOrganizer<StoredChunkEdits> parent,
             int[] anchorPosition,
             int[] relativeAnchorPosition,
-            int sizePower) : base(anchorPosition, relativeAnchorPosition, sizePower)
+            int index,
+            int sizePower) : base(anchorPosition, relativeAnchorPosition, index, sizePower)
         {
             this.parent = parent;
         }
@@ -197,9 +198,9 @@ namespace MarchingCubes
             return children;
         }
 
-        public override IStorageGroupOrganizer<StoredChunkEdits> GetNode(int[] anchor, int[] relAnchor, int sizePow)
+        public override IStorageGroupOrganizer<StoredChunkEdits> GetNode(int index, int[] anchor, int[] relAnchor, int sizePow)
         {
-            return new StorageTreeNode(this, anchor, relAnchor, sizePow);
+            return new StorageTreeNode(this, anchor, relAnchor, index, sizePow);
         }
 
         public bool TryGetNodeWithSizePower(int[] relativePosition, int sizePow, out IStorageGroupOrganizer<StoredChunkEdits> child)

@@ -10,14 +10,19 @@ namespace MarchingCubes
 
         public ChunkGroupTreeNode(
             int[] anchorPosition,
-            int[] relativeAnchorPosition, 
-            int sizePower) : base(anchorPosition, relativeAnchorPosition, sizePower)
+            int[] relativeAnchorPosition,
+            int index,
+            int sizePower) : base(anchorPosition, relativeAnchorPosition, index, sizePower)
         {
             int sizeHalf = (int)Mathf.Pow(2, sizePower) / 2;
             centerPosition = new Vector3(anchorPosition[0] + sizeHalf, anchorPosition[1] + sizeHalf, anchorPosition[2] + sizeHalf);
-            int lodPow = sizePower - MarchingCubeChunkHandler.DEFAULT_CHUNK_SIZE_POWER;
-            ChunkUpdateRoutine.chunkGroupNodes[lodPow].Add(this);
+            ChunkUpdateRoutine.chunkGroupNodes[LodRegisterPower].Add(this);
         }
+
+
+        protected const int CHILD_COUNT = 8;
+
+        protected int LodRegisterPower => sizePower - MarchingCubeChunkHandler.DEFAULT_CHUNK_SIZE_POWER - 1;
 
         protected Vector3 centerPosition;
 
@@ -26,7 +31,7 @@ namespace MarchingCubes
         protected bool IsEmpty()
         {
             bool result = true;
-            for (int i = 0; i < 8 && result; i++)
+            for (int i = 0; i < CHILD_COUNT && result; i++)
             {
                 result = children[i] == null
                     || ((children[i] is ChunkGroupTreeNode n)
@@ -73,7 +78,7 @@ namespace MarchingCubes
             //if(AreAllChildrenLeafs())
             {
                 ChunkGroupTreeLeaf[] result = new ChunkGroupTreeLeaf[8];
-                for (int i = 0; i < 8; i++)
+                for (int i = 0; i < CHILD_COUNT; i++)
                 {
                     result[i] = ((ChunkGroupTreeLeaf)children[i]);
                 }
@@ -86,21 +91,73 @@ namespace MarchingCubes
             return new ChunkGroupTreeLeaf(this, leaf, index, anchor, relAnchor, sizePow);
         }
 
-        public override IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk> GetNode(int[] anchor, int[] relAnchor, int sizePow)
+        public override IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk> GetNode(int index, int[] anchor, int[] relAnchor, int sizePow)
         {
-            return new ChunkGroupTreeNode( anchor, relAnchor, sizePow);
+            return new ChunkGroupTreeNode(anchor, relAnchor, index, sizePow);
         }
 
         public void DestroyBranch()
         {
-            for (int i = 0; i < 8; i++)
+            for (int i = 0; i < CHILD_COUNT; i++)
             {
-                IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk> child = children[i];
-                if (child == null)
+                if (children[i] == null)
                     continue;
-                child.DestroyBranch();
-
+                children[i].DestroyBranch();
             }
         }
+
+        /// <summary>
+        /// Chunks are only deactivated out of range where normaly the root connects to a leaf directly.
+        /// if it doesnt connect to a leaf the players position jumped and the node shouldnt be existing
+        /// </summary>
+        public void DeactivateBranch()
+        {
+            DestroyBranch();
+        }
+
+        public void RemoveChildsFromRegister()
+        {
+            ChunkUpdateRoutine.chunkGroupNodes[LodRegisterPower].Remove(this);
+            for (int i = 0; i < CHILD_COUNT; i++)
+            {
+                if(children[i] != null)
+                    children[i].RemoveChildsFromRegister();
+            }
+        }
+
+        /// <summary>
+        /// spawn a new chunk for given lod for each null child element
+        /// </summary>
+        /// <param name="index"></param>
+        /// <param name="newNodes"></param>
+        /// <param name="oldLeaf"></param>
+        public void SplitChildAtIndex(int index, out List<ChunkGroupTreeNode> newNodes)
+        {
+            newNodes = new List<ChunkGroupTreeNode>();
+            SplitChildAtIndex(index, newNodes);
+        }
+
+        protected void SplitChildAtIndex(int index, List<ChunkGroupTreeNode> newNodes)
+        {
+            var oldLeaf = children[index];
+            ChunkGroupTreeNode newNode = new ChunkGroupTreeNode(oldLeaf.GroupAnchorPositionCopy, oldLeaf.GroupRelativeAnchorPosition, index, oldLeaf.SizePower);
+            children[index] = newNode;
+            newNodes.Add(newNode);
+            if (LodRegisterPower > 0)
+                CheckAnyChildrenForSplit(newNodes);
+        }
+
+        public void CheckAnyChildrenForSplit(List<ChunkGroupTreeNode> newNodes)
+        {
+            for (int i = 0;i < CHILD_COUNT; i++)
+            {
+                //TODO: Improve performance here (maybe!)
+                Vector3 position = GetChildCenterPositionForIndex(i);
+                int lodPower = ChunkUpdateRoutine.GetLodPowerForPosition(position);
+                if (lodPower < LodRegisterPower)
+                    SplitChildAtIndex(index, newNodes);
+            }
+        }
+
     }
 }

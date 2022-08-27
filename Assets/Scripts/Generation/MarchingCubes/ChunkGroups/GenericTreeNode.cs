@@ -16,8 +16,10 @@ namespace MarchingCubes
         public GenericTreeNode(
         int[] anchorPosition,
         int[] relativeAnchorPosition,
+        int index,
         int sizePower)
         {
+            this.index = index;
             this.sizePower = sizePower;
             halfSize = (int)Mathf.Pow(2, sizePower) / 2;
             GroupAnchorPosition = anchorPosition;
@@ -31,6 +33,10 @@ namespace MarchingCubes
 
         [Save]
         public int sizePower;
+
+
+        [Save]
+        public int index;
 
         [Save]
         protected int halfSize;
@@ -53,7 +59,7 @@ namespace MarchingCubes
 
         public abstract Node GetLeaf(T leaf, int index, int[] anchor, int[] relAnchor, int sizePow);
 
-        public abstract Node GetNode(int[] anchor, int[] relAnchor, int sizePow);
+        public abstract Node GetNode(int index, int[] anchor, int[] relAnchor, int sizePow);
 
         public override int SizePower
         {
@@ -72,6 +78,36 @@ namespace MarchingCubes
             return result;
         }
 
+        protected Vector3 GetChildLocalPositionForIndex(int index)
+        {
+            return GetChildCenterPositionForIndex(index, 0);
+        }
+
+        protected Vector3 GetChildCenterPositionForIndex(int index)
+        {
+            return GetChildCenterPositionForIndex(index, halfSize / 2);
+        }
+
+        private Vector3 GetChildCenterPositionForIndex(int index, int offset)
+        {
+            Vector3 result = GroupRelativeAnchorPositionVector + new Vector3(offset,offset,offset);
+            int threeQuarterSize = halfSize;
+            if (index >= 4)
+            {
+                result[1] += threeQuarterSize;
+                index -= 4;
+            }
+            if (index >= 2)
+            {
+                result[0] += threeQuarterSize;
+                index -= 2;
+            }
+            if (index >= 1)
+            {
+                result[2] += threeQuarterSize;
+            }
+            return result;
+        }
 
         protected void GetAnchorPositionForChunkAt(int[] position, out int[] anchorPos, out int[] relAchorPos)
         {
@@ -123,7 +159,7 @@ namespace MarchingCubes
                 int[] childAnchorPosition;
                 int[] childRelativeAnchorPosition;
                 GetAnchorPositionForChunkAt(relativePosition, out childAnchorPosition, out childRelativeAnchorPosition);
-                children[index] = GetNode(childAnchorPosition, childRelativeAnchorPosition, sizePower - 1);
+                children[index] = GetNode(index, childAnchorPosition, childRelativeAnchorPosition, sizePower - 1);
             }
             return children[index];
         }

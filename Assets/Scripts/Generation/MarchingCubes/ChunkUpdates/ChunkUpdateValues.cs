@@ -14,7 +14,7 @@ public class ChunkUpdateValues
     public void UpdateValues(int chunkCheckIntervalInMs, float deactivateDistance, float destroyDistance,
         float[] centerLodDistance, float mergeSplitDistanceScale)
     {
-        mergeSplitDistanceScale = Mathf.Max(0.1f, mergeSplitDistanceScale);
+        mergeSplitDistanceScale = Mathf.Max(1.1f, mergeSplitDistanceScale);
 
         this.chunkCheckIntervalInMs = chunkCheckIntervalInMs;
         sqrDeactivateDistance = deactivateDistance * deactivateDistance;
@@ -23,13 +23,26 @@ public class ChunkUpdateValues
         float[] splitDistanceRequirement = new float[centerLodDistance.Length];
         for (int i = 0; i < centerLodDistance.Length; i++)
         {
-            mergeDistanceRequirement[i] = centerLodDistance[i] * mergeSplitDistanceScale;
-            splitDistanceRequirement[i] = centerLodDistance[i] / mergeSplitDistanceScale;
+            float centerDistance = centerLodDistance[i]/* + HalfChunkSizeForLodPow(i)*/;
+            mergeDistanceRequirement[i] = centerDistance * mergeSplitDistanceScale;
+            splitDistanceRequirement[i] = centerDistance / mergeSplitDistanceScale;
         }
         ApplySqrDistanceToList(mergeDistanceRequirement);
         ApplySqrDistanceToList(splitDistanceRequirement);
         sqrMergeDistanceRequirement = mergeDistanceRequirement;
         sqrSplitDistanceRequirement = splitDistanceRequirement;
+    }
+
+    protected float HalfChunkSizeForLodPow(int lodPow) => Mathf.Pow(2, lodPow + MarchingCubes.MarchingCubeChunkHandler.DEFAULT_CHUNK_SIZE_POWER) / 2;
+
+    public int GetLodForSqrDistance(float sqrDistance)
+    {
+        for (int i = 0; i < sqrMergeDistanceRequirement.Length; i++)
+        {
+            if (sqrDistance <= sqrSplitDistanceRequirement[i])
+                return i;
+        }
+        return MarchingCubes.MarchingCubeChunkHandler.DEACTIVATE_CHUNK_LOD_POWER;
     }
 
     protected void ApplySqrDistanceToList(float[] list)

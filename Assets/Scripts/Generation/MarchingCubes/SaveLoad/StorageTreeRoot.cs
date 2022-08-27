@@ -58,7 +58,7 @@ namespace MarchingCubes
 
         public override IStorageGroupOrganizer<StoredChunkEdits> GetNode(int[] anchor, int[] relAnchor, int sizePow)
         {
-            return new StorageTreeNode(null, anchor, relAnchor, sizePow);
+            return new StorageTreeNode(null, anchor, relAnchor,0, sizePow);
         }
 
 

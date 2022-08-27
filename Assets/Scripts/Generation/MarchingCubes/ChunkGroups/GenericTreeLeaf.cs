@@ -30,6 +30,8 @@ namespace MarchingCubes
         [Save]
         protected int childIndex;
 
+        public int ChildIndex => childIndex;
+
         [Save]
         public T leaf;
 

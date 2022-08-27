@@ -13,6 +13,8 @@ namespace MarchingCubes
 
         void PrepareBranchDestruction(List<CompressedMarchingCubeChunk> oldChunks);
 
+        void SplitChildAtIndex(int index, out List<ChunkGroupTreeNode> newNodes);
+
     }
 
 }

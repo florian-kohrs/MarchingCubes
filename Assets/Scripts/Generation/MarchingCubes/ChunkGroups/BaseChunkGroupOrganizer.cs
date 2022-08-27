@@ -19,9 +19,19 @@ namespace MarchingCubes
             }
         }
 
+        public int[] GroupRelativeAnchorPositionCopy
+        {
+            get
+            {
+                return new int[] { GroupRelativeAnchorPosition[0], GroupRelativeAnchorPosition[1], GroupRelativeAnchorPosition[2] };
+            }
+        }
+
         public abstract int[] GroupRelativeAnchorPosition { get; }
 
         public Vector3Int GroupAnchorPositionVector { get => new Vector3Int(GroupAnchorPosition[0], GroupAnchorPosition[1], GroupAnchorPosition[2]); }
+        
+        public Vector3 GroupRelativeAnchorPositionVector { get => new Vector3(GroupRelativeAnchorPosition[0], GroupRelativeAnchorPosition[1], GroupRelativeAnchorPosition[2]); }
 
         public abstract int SizePower { get; }
 

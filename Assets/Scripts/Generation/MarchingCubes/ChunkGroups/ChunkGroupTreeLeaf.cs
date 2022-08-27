@@ -20,13 +20,19 @@ namespace MarchingCubes
             chunk.AnchorPos = new Vector3Int(anchorPoint[0], anchorPoint[1],anchorPoint[2]);
             chunk.ChunkSizePower = sizePower;
             ///only register if the leaf can be split
-            if (sizePower > MarchingCubeChunkHandler.MIN_CHUNK_SIZE_POWER)
+            if (chunk.LODPower > 0 && chunk.LODPower < MarchingCubeChunkHandler.DEACTIVATE_CHUNK_LOD_POWER)
             {
                 isRegistered = true;
-                ChunkUpdateRoutine.chunkGroupTreeLeaves.Add(this);
+                ChunkUpdateRoutine.chunkGroupTreeLeaves[chunk.LODPower - 1].Add(this);
             }
+            int halfSize = (int)Mathf.Pow(2, sizePower) / 2;
+            centerPosition = new Vector3(anchorPoint[0] + halfSize, anchorPoint[1] + halfSize, anchorPoint[2] + halfSize);
             chunk.Leaf = this;
         }
+
+        protected Vector3 centerPosition;
+
+        public Vector3 Center => centerPosition;
 
 
         public IChunkGroupParent<ChunkGroupTreeLeaf> parent;
@@ -45,6 +51,7 @@ namespace MarchingCubes
             return result;
         }
 
+        protected int RegisterIndex => SizePower - MarchingCubeChunkHandler.DEFAULT_CHUNK_SIZE_POWER;
 
         public void RemoveLeaf(CompressedMarchingCubeChunk chunk)
         {
@@ -77,12 +84,23 @@ namespace MarchingCubes
 
         public void DestroyBranch()
         {
-            if(isRegistered)
+            RemoveChildsFromRegister();
+            leaf.DestroyChunk();
+        }
+
+        public void DeactivateBranch()
+        {
+            leaf.ResetChunk();
+        }
+
+        
+        public void RemoveChildsFromRegister()
+        {
+            if (isRegistered)
             {
-                ChunkUpdateRoutine.chunkGroupTreeLeaves.Remove(this);
+                ChunkUpdateRoutine.chunkGroupTreeLeaves[RegisterIndex].Remove(this);
                 isRegistered = false;
             }
-            leaf.DestroyChunk();
         }
     }
 

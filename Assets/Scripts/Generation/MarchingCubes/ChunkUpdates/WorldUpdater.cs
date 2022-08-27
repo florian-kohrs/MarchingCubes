@@ -13,6 +13,7 @@ namespace MarchingCubes
 
         public ChunkUpdateRoutine updateRoutine;
 
+        [SerializeField]
         protected Transform player;
 
         public void SetPlayer(Transform player)
@@ -30,6 +31,10 @@ namespace MarchingCubes
         {
             updateRoutine.playerPos = player.position;
             updateRoutine.update = true;
+            if(updateRoutine.updateDone)
+            {
+                HandleChunkChanges();
+            }
         }
 
 
@@ -58,10 +63,10 @@ namespace MarchingCubes
         protected bool isInIncreasingChunkIteration;
         protected bool isInDecreasingChunkIteration;
 
-        protected HashSet<ChunkGroupRoot> destroyRoots;
-        protected HashSet<ChunkGroupRoot> deactivateRoots;
-        protected HashSet<ChunkGroupTreeNode> mergeSet;
-        protected HashSet<ChunkGroupTreeLeaf> splitSet;
+        protected Stack<ChunkGroupRoot> destroyRoots;
+        protected Stack<ChunkGroupRoot> deactivateRoots;
+        protected Stack<ChunkGroupTreeNode> mergeSet;
+        protected Stack<ChunkSplitExchange> splitSet;
 
         private void Awake()
         {
@@ -69,13 +74,18 @@ namespace MarchingCubes
             float chunkDeactivateDist = chunkHandler.buildAroundDistance * distThreshold;
             float chunkDestroyDistance = chunkDeactivateDist + MarchingCubeChunkHandler.CHUNK_GROUP_SIZE;
             ChunkUpdateValues updateValues = new ChunkUpdateValues(500, chunkDeactivateDist, chunkDestroyDistance,
-                new float[] {}, new float[] {});
+                new float[] { 200, 350, 600, 1000, 2000 }, 1.1f);
 
-            destroyRoots = new HashSet<ChunkGroupRoot>();
-            deactivateRoots = new HashSet<ChunkGroupRoot>();
-            mergeSet = new HashSet<ChunkGroupTreeNode>();
-            splitSet = new HashSet<ChunkGroupTreeLeaf>();
-            updateRoutine = new ChunkUpdateRoutine(deactivateRoots, deactivateRoots, mergeSet, splitSet,);
+            destroyRoots = new Stack<ChunkGroupRoot>();
+            deactivateRoots = new Stack<ChunkGroupRoot>();
+            mergeSet = new Stack<ChunkGroupTreeNode>();
+            splitSet = new Stack<ChunkSplitExchange>();
+            updateRoutine = new ChunkUpdateRoutine(deactivateRoots, deactivateRoots, mergeSet, splitSet, updateValues);
+        }
+
+        private void Start()
+        {
+            chunkHandler.OnInitializationDoneCallback.Add(delegate { updateRoutine.BeginAsynchrounLodCheck(); });        
         }
 
         public void AddChunkToInitialize(ChunkInitializeTask chunkTask)
@@ -157,6 +167,60 @@ namespace MarchingCubes
            
 
             FrameTimer.RestartWatch();
+        }
+
+        protected void HandleChunkChanges()
+        {
+            DestroyOutOfRangeChunks();
+            DeactivateOutOfRangeChunks();
+            MergeNode();
+            SplitLeafs();
+        }
+
+        protected void DestroyOutOfRangeChunks()
+        {
+            lock (updateRoutine.mutexLockDestroy)
+            {
+                while (destroyRoots.Count > 0)
+                    destroyRoots.Pop().DestroyBranch();
+            }
+        }
+
+        protected void DeactivateOutOfRangeChunks()
+        {
+            lock (updateRoutine.mutexLockDeactivate)
+            {
+                while (deactivateRoots.Count > 0)
+                    deactivateRoots.Pop().DeactivateBranch();
+            }
+        }
+
+        protected void MergeNode()
+        {
+            lock (updateRoutine.mutexLockMerge)
+            {
+                while (mergeSet.Count > 0)
+                    HandleMerge(mergeSet.Pop());
+            }
+        }
+
+        protected void SplitLeafs()
+        {
+            lock (updateRoutine.mutexLockSplit)
+            {
+                while (splitSet.Count > 0)
+                    HandleSplit(splitSet.Pop());
+            }
+        }
+
+        protected void HandleMerge(ChunkGroupTreeNode node)
+        {
+
+        }
+
+        protected void HandleSplit(ChunkSplitExchange split)
+        {
+
         }
 
     }
