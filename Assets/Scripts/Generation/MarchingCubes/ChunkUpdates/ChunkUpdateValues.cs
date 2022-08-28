@@ -23,9 +23,9 @@ public class ChunkUpdateValues
         float[] splitDistanceRequirement = new float[centerLodDistance.Length];
         for (int i = 0; i < centerLodDistance.Length; i++)
         {
-            float centerDistance = centerLodDistance[i]/* + HalfChunkSizeForLodPow(i)*/;
-            mergeDistanceRequirement[i] = centerDistance * mergeSplitDistanceScale;
-            splitDistanceRequirement[i] = centerDistance / mergeSplitDistanceScale;
+            float halfChunkSize = 0;// HalfChunkSizeForLodPow(i);
+            mergeDistanceRequirement[i] = centerLodDistance[i] * mergeSplitDistanceScale + halfChunkSize;
+            splitDistanceRequirement[i] = centerLodDistance[i] / mergeSplitDistanceScale - halfChunkSize;
         }
         ApplySqrDistanceToList(mergeDistanceRequirement);
         ApplySqrDistanceToList(splitDistanceRequirement);

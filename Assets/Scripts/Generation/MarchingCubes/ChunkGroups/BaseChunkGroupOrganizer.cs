@@ -42,5 +42,6 @@ namespace MarchingCubes
         public abstract bool TryGetLeafAtLocalPosition(int[] pos, out T chunk);
         public abstract bool HasChunkAtLocalPosition(int[] pos);
         public abstract bool RemoveLeafAtLocalPosition(int[] pos);
+        public abstract void OverrideChildAtLocalIndex(int index, T chunk);
     }
 }

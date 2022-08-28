@@ -38,6 +38,8 @@ namespace MarchingCubes
         [Save]
         public int index;
 
+        public int Index => index;
+
         [Save]
         protected int halfSize;
 
@@ -78,6 +80,27 @@ namespace MarchingCubes
             return result;
         }
 
+        protected int[] GetLocalPositionFromIndex(int index)
+        {
+            int[] result = GroupRelativeAnchorPositionCopy;
+            if (index >= 4)
+            {
+                result[1] += halfSize;
+                index -= 4;
+            }
+            if (index >= 2)
+            {
+                result[0] += halfSize;
+                index -= 2;
+            }
+            if (index >= 1)
+            {
+                result[2] += halfSize;
+            }
+            return result;
+        }
+
+
         protected Vector3 GetChildLocalPositionForIndex(int index)
         {
             return GetChildCenterPositionForIndex(index, 0);
@@ -91,20 +114,19 @@ namespace MarchingCubes
         private Vector3 GetChildCenterPositionForIndex(int index, int offset)
         {
             Vector3 result = GroupRelativeAnchorPositionVector + new Vector3(offset,offset,offset);
-            int threeQuarterSize = halfSize;
             if (index >= 4)
             {
-                result[1] += threeQuarterSize;
+                result.y += halfSize;
                 index -= 4;
             }
             if (index >= 2)
             {
-                result[0] += threeQuarterSize;
+                result.x += halfSize;
                 index -= 2;
             }
             if (index >= 1)
             {
-                result[2] += threeQuarterSize;
+                result.z += halfSize;
             }
             return result;
         }
@@ -150,6 +172,23 @@ namespace MarchingCubes
                 Node child = GetOrCreateChildAt(childIndex, relativePosition, allowOverride);
                 child.SetLeafAtLocalPosition(relativePosition, chunk, allowOverride);
             }
+        }
+
+        public override void OverrideChildAtLocalIndex(int index, T chunk)
+        {
+            children[index] = GetLeaf(chunk, index, children[index].GroupRelativeAnchorPosition, children[index].GroupAnchorPosition, sizePower - 1);
+        }
+
+        public void SetLeafAtLocalIndex(int index, T chunk)
+        {
+            int[] relativePosition = GetLocalPositionFromIndex(index);
+            int[] anchorPos = new int[] {
+                relativePosition[0] + GroupAnchorPosition [0],
+                relativePosition[1] + GroupAnchorPosition[1],
+                relativePosition[2] + GroupAnchorPosition[2]
+            };
+
+            children[index] = GetLeaf(chunk, index, relativePosition, anchorPos, sizePower - 1);
         }
 
         protected Node GetOrCreateChildAt(int index, int[] relativePosition, bool allowOverride)

@@ -52,7 +52,14 @@ namespace MarchingCubes
 
         public override void SetLeafAtLocalPosition(int[] pos, T chunk, bool allowOverride)
         {
+            throw new System.Exception();
         }
+
+        public override void OverrideChildAtLocalIndex(int index, T chunk)
+        {
+            throw new System.NotImplementedException();
+        }
+
 
         public override bool TryGetLeafAtLocalPosition(int[] pos, out T leaf)
         {

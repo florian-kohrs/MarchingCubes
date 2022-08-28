@@ -81,12 +81,10 @@ namespace MarchingCubes
             mergeSet = new Stack<ChunkGroupTreeNode>();
             splitSet = new Stack<ChunkSplitExchange>();
             updateRoutine = new ChunkUpdateRoutine(deactivateRoots, deactivateRoots, mergeSet, splitSet, updateValues);
+        
+            chunkHandler.OnInitializationDoneCallback.Add(delegate { updateRoutine.BeginAsynchrounLodCheck(); });
         }
 
-        private void Start()
-        {
-            chunkHandler.OnInitializationDoneCallback.Add(delegate { updateRoutine.BeginAsynchrounLodCheck(); });        
-        }
 
         public void AddChunkToInitialize(ChunkInitializeTask chunkTask)
         {
@@ -195,6 +193,11 @@ namespace MarchingCubes
             }
         }
 
+        protected void ActivateRoot()
+        {
+
+        }
+
         protected void MergeNode()
         {
             lock (updateRoutine.mutexLockMerge)
@@ -215,12 +218,12 @@ namespace MarchingCubes
 
         protected void HandleMerge(ChunkGroupTreeNode node)
         {
-
+            chunkHandler.MergeAndReduceChunkNode(node);
         }
 
         protected void HandleSplit(ChunkSplitExchange split)
         {
-
+            chunkHandler.SplitChunkLeaf(split);
         }
 
     }

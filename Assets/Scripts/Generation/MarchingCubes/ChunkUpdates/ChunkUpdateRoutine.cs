@@ -13,17 +13,61 @@ namespace MarchingCubes
         /// <summary>
         /// check each array entry representing all nodes of the same groupsize for any node to merge its children becoming a leaf itself 
         /// </summary>
-        public static HashSet<ChunkGroupTreeNode>[] chunkGroupNodes = new HashSet<ChunkGroupTreeNode>[MarchingCubeChunkHandler.MAX_CHUNK_LOD_POWER];
+        protected HashSet<ChunkGroupTreeNode>[] chunkGroupNodes = new HashSet<ChunkGroupTreeNode>[MarchingCubeChunkHandler.MAX_CHUNK_LOD_POWER];
 
         /// <summary>
         /// check this hashset for leafs to split 
         /// </summary>
-        public static HashSet<ChunkGroupTreeLeaf>[] chunkGroupTreeLeaves = new HashSet<ChunkGroupTreeLeaf>[MarchingCubeChunkHandler.MAX_CHUNK_LOD_POWER];
-        
+        protected HashSet<ChunkGroupTreeLeaf>[] chunkGroupTreeLeaves = new HashSet<ChunkGroupTreeLeaf>[MarchingCubeChunkHandler.MAX_CHUNK_LOD_POWER];
+
         /// <summary>
         /// Check this hashset for chunks to disable or delete altogether
         /// </summary>
-        public static HashSet<ChunkGroupRoot> chunkGroupTreeRoots = new HashSet<ChunkGroupRoot>();
+        protected HashSet<ChunkGroupRoot> chunkGroupTreeRoots = new HashSet<ChunkGroupRoot>();
+
+        public static void RegisterChunkNode(int index, ChunkGroupTreeNode node)
+        {
+            instance.RegisterLockedInHashset(instance.chunkGroupNodes[index], node, instance.mutexLockNodes);
+        }
+
+        public static void RegisterChunkRoot(ChunkGroupRoot root)
+        {
+            instance.RegisterLockedInHashset(instance.chunkGroupTreeRoots, root, instance.mutexLockRoots);
+        }
+
+        public static void RegisterChunkLeaf(int index, ChunkGroupTreeLeaf leaf)
+        {
+            instance.RegisterLockedInHashset(instance.chunkGroupTreeLeaves[index], leaf, instance.mutexLockLeafs);
+        }
+
+        public static void RemoveChunkNode(int index, ChunkGroupTreeNode node)
+        {
+            instance.RemoveLockedInHashset(instance.chunkGroupNodes[index], node, instance.mutexLockNodes);
+        }
+
+        public static void RemoveChunkRoot(ChunkGroupRoot root)
+        {
+            instance.RemoveLockedInHashset(instance.chunkGroupTreeRoots, root, instance.mutexLockRoots);
+        }
+
+        public static void RemoveChunkLeaf(int index, ChunkGroupTreeLeaf leaf)
+        {
+            instance.RemoveLockedInHashset(instance.chunkGroupTreeLeaves[index], leaf, instance.mutexLockLeafs);
+        }
+
+
+        protected void RegisterLockedInHashset<T>(HashSet<T> set, T entry, object l)
+        {
+            lock (l)
+                set.Add(entry);
+        }
+
+        protected void RemoveLockedInHashset<T>(HashSet<T> set, T entry, object l)
+        {
+            lock (l)
+                set.Remove(entry);
+        }
+
 
         /// <summary>
         /// Distance the player has to move from last checked position to trigger another routine check
@@ -110,6 +154,7 @@ namespace MarchingCubes
                 update = false;
                 //UpdateAll();
                 CheckAllLodsForUpdate();
+                updateDone = true;
             }
             Thread.Sleep(ChunkCheckIntervalInMs);
             RunRoutine();
@@ -120,7 +165,6 @@ namespace MarchingCubes
             CheckRootsForDestruction();
             CheckRootsForDeactivation();
             CheckAllLodsForUpdate();
-            updateDone = true;
         }
 
 
@@ -150,7 +194,10 @@ namespace MarchingCubes
                 if (CheckChunkForDestruction(item.Center))
                 {
                     item.SetChannelChunkForDestruction();
-                    destroySet.Push(item);
+                    lock (mutexLockDestroy)
+                    {
+                        destroySet.Push(item);
+                    }
                 }
             }
         }
@@ -162,7 +209,10 @@ namespace MarchingCubes
                 if (!item.ChanneledForDestruction && !item.ChanneledForDeactivation && CheckChunkForDeactivation(item.Center))
                 {
                     item.SetChannelChunkForDeactivation();
-                    deactivateSet.Push(item);
+                    lock (mutexLockDeactivate)
+                    {
+                        deactivateSet.Push(item);
+                    }
                 }
             }
         }
@@ -208,6 +258,7 @@ namespace MarchingCubes
             if (!CheckNodeForMerge(index, node.Center))
                 return;
 
+            node.RemoveChildsFromRegister();
             lock (mutexLockMerge)
             {
                 mergeSet.Push(node);
@@ -220,6 +271,8 @@ namespace MarchingCubes
                 return;
             leaf.parent.SplitChildAtIndex(leaf.ChildIndex, out List<ChunkGroupTreeNode> newNodes);
             ChunkSplitExchange exchange = new ChunkSplitExchange(leaf, newNodes);
+            leaf.RemoveChildsFromRegister();
+            
             lock (mutexLockSplit)
             {
                 splitSet.Push(exchange);

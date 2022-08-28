@@ -12,17 +12,23 @@ namespace MarchingCubes
             int[] anchorPosition,
             int[] relativeAnchorPosition,
             int index,
+            IChunkGroupOrganizer<CompressedMarchingCubeChunk> parent,
             int sizePower) : base(anchorPosition, relativeAnchorPosition, index, sizePower)
         {
+            this.parent = parent;
             int sizeHalf = (int)Mathf.Pow(2, sizePower) / 2;
             centerPosition = new Vector3(anchorPosition[0] + sizeHalf, anchorPosition[1] + sizeHalf, anchorPosition[2] + sizeHalf);
-            ChunkUpdateRoutine.chunkGroupNodes[LodRegisterPower].Add(this);
+            ChunkUpdateRoutine.RegisterChunkNode(RegisterIndex,this);
         }
 
 
+        protected IChunkGroupOrganizer<CompressedMarchingCubeChunk> parent;
+
+        public IChunkGroupOrganizer<CompressedMarchingCubeChunk> Parent => parent;
+
         protected const int CHILD_COUNT = 8;
 
-        protected int LodRegisterPower => sizePower - MarchingCubeChunkHandler.DEFAULT_CHUNK_SIZE_POWER - 1;
+        protected int RegisterIndex => sizePower - MarchingCubeChunkHandler.DEFAULT_CHUNK_SIZE_POWER - 1;
 
         protected Vector3 centerPosition;
 
@@ -61,6 +67,7 @@ namespace MarchingCubes
             }
         }
 
+
         public void RemoveChildAtIndex(int index, CompressedMarchingCubeChunk chunk)
         {
             if(children[index] != null 
@@ -71,6 +78,7 @@ namespace MarchingCubes
                 children[index] = null;
             }
         }
+
 
 
         public override ChunkGroupTreeLeaf[] GetLeafs()
@@ -93,7 +101,7 @@ namespace MarchingCubes
 
         public override IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk> GetNode(int index, int[] anchor, int[] relAnchor, int sizePow)
         {
-            return new ChunkGroupTreeNode(anchor, relAnchor, index, sizePow);
+            return new ChunkGroupTreeNode(anchor, relAnchor, index, this, sizePow);
         }
 
         public void DestroyBranch()
@@ -117,7 +125,7 @@ namespace MarchingCubes
 
         public void RemoveChildsFromRegister()
         {
-            ChunkUpdateRoutine.chunkGroupNodes[LodRegisterPower].Remove(this);
+            ChunkUpdateRoutine.RemoveChunkNode(RegisterIndex, this);
             for (int i = 0; i < CHILD_COUNT; i++)
             {
                 if(children[i] != null)
@@ -140,10 +148,10 @@ namespace MarchingCubes
         protected void SplitChildAtIndex(int index, List<ChunkGroupTreeNode> newNodes)
         {
             var oldLeaf = children[index];
-            ChunkGroupTreeNode newNode = new ChunkGroupTreeNode(oldLeaf.GroupAnchorPositionCopy, oldLeaf.GroupRelativeAnchorPosition, index, oldLeaf.SizePower);
+            ChunkGroupTreeNode newNode = new ChunkGroupTreeNode(oldLeaf.GroupAnchorPositionCopy, oldLeaf.GroupRelativeAnchorPosition, index, this, oldLeaf.SizePower);
             children[index] = newNode;
             newNodes.Add(newNode);
-            if (LodRegisterPower > 0)
+            if (RegisterIndex > 0)
                 CheckAnyChildrenForSplit(newNodes);
         }
 
@@ -154,7 +162,7 @@ namespace MarchingCubes
                 //TODO: Improve performance here (maybe!)
                 Vector3 position = GetChildCenterPositionForIndex(i);
                 int lodPower = ChunkUpdateRoutine.GetLodPowerForPosition(position);
-                if (lodPower < LodRegisterPower)
+                if (lodPower < RegisterIndex)
                     SplitChildAtIndex(index, newNodes);
             }
         }

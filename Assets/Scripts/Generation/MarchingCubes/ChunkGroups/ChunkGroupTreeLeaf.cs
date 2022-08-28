@@ -23,7 +23,7 @@ namespace MarchingCubes
             if (chunk.LODPower > 0 && chunk.LODPower < MarchingCubeChunkHandler.DEACTIVATE_CHUNK_LOD_POWER)
             {
                 isRegistered = true;
-                ChunkUpdateRoutine.chunkGroupTreeLeaves[chunk.LODPower - 1].Add(this);
+                ChunkUpdateRoutine.RegisterChunkLeaf(chunk.LODPower - 1,this);
             }
             int halfSize = (int)Mathf.Pow(2, sizePower) / 2;
             centerPosition = new Vector3(anchorPoint[0] + halfSize, anchorPoint[1] + halfSize, anchorPoint[2] + halfSize);
@@ -51,7 +51,7 @@ namespace MarchingCubes
             return result;
         }
 
-        protected int RegisterIndex => SizePower - MarchingCubeChunkHandler.DEFAULT_CHUNK_SIZE_POWER;
+        protected int RegisterIndex => SizePower - MarchingCubeChunkHandler.DEFAULT_CHUNK_SIZE_POWER - 1;
 
         public void RemoveLeaf(CompressedMarchingCubeChunk chunk)
         {
@@ -98,10 +98,11 @@ namespace MarchingCubes
         {
             if (isRegistered)
             {
-                ChunkUpdateRoutine.chunkGroupTreeLeaves[RegisterIndex].Remove(this);
+                ChunkUpdateRoutine.RemoveChunkLeaf(leaf.LODPower - 1,this);
                 isRegistered = false;
             }
         }
+
     }
 
 }

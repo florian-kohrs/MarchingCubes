@@ -4,12 +4,12 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public class ChunkGroupRoot : GenericTreeRoot<CompressedMarchingCubeChunk, ChunkGroupTreeLeaf, IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk>>, IChunkGroupParent<ChunkGroupTreeLeaf>
+    public class ChunkGroupRoot : GenericTreeRoot<CompressedMarchingCubeChunk, ChunkGroupTreeLeaf, IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk>>, IChunkGroupParent<ChunkGroupTreeLeaf>, IChunkGroupOrganizer<CompressedMarchingCubeChunk>
     {
 
         public ChunkGroupRoot(int[] coord, int chunkGroupSize) : base(coord, chunkGroupSize)
         {
-            ChunkUpdateRoutine.chunkGroupTreeRoots.Add(this);
+            ChunkUpdateRoutine.RegisterChunkRoot(this);
             float halfSize = chunkGroupSize / 2;
             center = new Vector3(coord[0] + halfSize, coord[1] + halfSize, coord[2] + halfSize);
         }
@@ -26,7 +26,7 @@ namespace MarchingCubes
         public void SetChannelChunkForDestruction ()
         {
             channeledForDestruction = true;
-            ChunkUpdateRoutine.chunkGroupTreeRoots.Remove(this);
+            ChunkUpdateRoutine.RemoveChunkRoot(this);
             RemoveChildsFromRegister();
         }
 
@@ -53,7 +53,11 @@ namespace MarchingCubes
         public override int Size => MarchingCubeChunkHandler.CHUNK_GROUP_SIZE;
 
         public override int SizePower => MarchingCubeChunkHandler.CHUNK_GROUP_SIZE_POWER;
-    
+
+        public bool IsLeaf => throw new System.NotImplementedException();
+
+        public int[] GroupAnchorPositionCopy => throw new System.NotImplementedException();
+
         public override IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk> GetLeaf(CompressedMarchingCubeChunk leaf, int index, int[] anchor, int[] relAnchor, int sizePow)
         {
             return new ChunkGroupTreeLeaf(this, leaf, index, anchor, relAnchor, sizePow);
@@ -61,7 +65,7 @@ namespace MarchingCubes
 
         public override IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk> GetNode(int[] anchor, int[] relAnchor, int sizePow)
         {
-            return new ChunkGroupTreeNode(anchor, relAnchor, 0, sizePow);
+            return new ChunkGroupTreeNode(anchor, relAnchor, 0, this, sizePow);
         }
 
         public void RemoveChildAtIndex(int index, CompressedMarchingCubeChunk chunk)
@@ -101,6 +105,36 @@ namespace MarchingCubes
             {
                 throw new System.Exception();
             }
+        }
+
+        public CompressedMarchingCubeChunk GetChunkAtLocalPosition(int[] pos)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void SetLeafAtLocalPosition(int[] pos, CompressedMarchingCubeChunk chunk, bool allowOverride)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void OverrideChildAtLocalIndex(int index, CompressedMarchingCubeChunk chunk)
+        {
+            child = GetLeaf(chunk, 0, GroupAnchorPosition, GroupAnchorPosition, SizePower);
+        }
+
+        public bool TryGetLeafAtLocalPosition(int[] pos, out CompressedMarchingCubeChunk chunk)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public bool HasChunkAtLocalPosition(int[] pos)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public bool RemoveLeafAtLocalPosition(int[] pos)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }
