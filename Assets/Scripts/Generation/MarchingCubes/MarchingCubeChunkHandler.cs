@@ -74,9 +74,6 @@ namespace MarchingCubes
 
         protected float[] storedNoiseData;
 
-        [Range(1, 253)]
-        public int blockAroundPlayer = 16;
-
         private const int maxTrianglesLeft = 5000000;
 
         public NoiseData noiseData;
@@ -91,8 +88,6 @@ namespace MarchingCubes
 
         public ComputeShader FindNonEmptyChunksShader;
 
-        public AnimationCurve lodPowerForDistances;
-
         protected MeshDisplayerPool displayerPool;
 
         protected InteractableMeshDisplayPool interactableDisplayerPool;
@@ -105,6 +100,7 @@ namespace MarchingCubes
 
         protected bool hasFoundInitialChunk;
 
+        public ChunkUpdateValues updateValues;
 
         public int totalTriBuild;
 
@@ -116,6 +112,7 @@ namespace MarchingCubes
 
         public ChunkGenerationPipelinePool chunkPipelinePool;
 
+        protected bool initializationDone;
 
         public bool useTerrainNoise;
 
@@ -157,6 +154,20 @@ namespace MarchingCubes
             }
         }
 
+        protected static MarchingCubeChunkHandler instance;
+
+        public override void OnAwake()
+        {
+            if (instance != null)
+            {
+                throw new Exception("There can be only one marchingCubesChunkHandler!");
+            }
+                instance = this;
+        }
+
+
+        public static bool InitialWorldBuildingDone => instance.initializationDone;
+
 
 
         public bool NoWorkOnMainThread =>
@@ -165,7 +176,7 @@ namespace MarchingCubes
             WaitingForAsyncChunkResultCount <= 0 &&
             closestNeighbours.size <= 0;
 
-        public bool InitializationComplete => neighbourFinder.InitializationDone;
+        public bool NeighbourBuildingComplete => neighbourFinder.InitializationDone;
 
         public bool HasFinishedTask => finishedNeighbourTasks.Count > 0;
 
@@ -215,7 +226,7 @@ namespace MarchingCubes
             chunkGPURequest = new ChunkGPUDataRequest(chunkPipelinePool, storageGroup, minDegreesAtCoordBufferPool);
 
             TriangulationTableStaticData.BuildLookUpTables();
-
+            BuildUpdateValues();
 
             watch.Start();
             buildAroundSqrDistance = (long)buildAroundDistance * buildAroundDistance;
@@ -250,6 +261,16 @@ namespace MarchingCubes
             //});
         }
 
+        protected void BuildUpdateValues()
+        {
+            float distThreshold = 1.1f;
+            float chunkDeactivateDist = buildAroundDistance * distThreshold;
+            float chunkDestroyDistance = chunkDeactivateDist + CHUNK_GROUP_SIZE;
+            updateValues = new ChunkUpdateValues(500, chunkDeactivateDist, chunkDestroyDistance,
+                new float[] { 250, 500, 1000, 1750, 3000 }, 1.1f);
+            worldUpdater.InitializeUpdateRoutine(updateValues);
+        }
+
         protected Vector3Int[] ScanForNonEmptyChunks()
         {
             ChunkGenerationGPUData.ApplyStaticShaderProperties(FindNonEmptyChunksShader);
@@ -265,10 +286,10 @@ namespace MarchingCubes
             hasFoundInitialChunk = positions.Length > 0;
             if (hasFoundInitialChunk)
             {
-                BuildAllChunksAsync(new Vector3Int[] { positions[0] });
-                OnInitialializationDone();
-                //BuildAllChunksAsync(positions);
-                //StartCoroutine(WaitTillAsynGenerationDone());
+                //BuildAllChunksAsync(new Vector3Int[] { positions[0] });
+                //OnInitialializationDone();
+                BuildAllChunksAsync(positions);
+                StartCoroutine(WaitTillAsynGenerationDone());
             }
             else
             {
@@ -326,6 +347,7 @@ namespace MarchingCubes
 
         protected void OnInitialializationDone()
         {
+            initializationDone = true;
             foreach (var item in OnInitializationDoneCallback)
             {
                 item();
@@ -465,7 +487,7 @@ namespace MarchingCubes
             CompressedMarchingCubeChunk chunk;
 
             bool isNextInProgress;
-            while (!InitializationComplete)
+            while (!NeighbourBuildingComplete)
             {
                 do
                 {
@@ -481,7 +503,7 @@ namespace MarchingCubes
                 }
                 if (totalTriBuild < maxTrianglesLeft)
                 {
-                    while (closestNeighbours.size == 0 && !InitializationComplete)
+                    while (closestNeighbours.size == 0 && !NeighbourBuildingComplete)
                     {
                         //TODO: while waiting create mesh displayers! -> leads to worse performance?
                         while (HasFinishedTask)
@@ -625,11 +647,11 @@ namespace MarchingCubes
         {
             bool hasChunkAtPosition = chunkGroup.TryGetGroupItemAt(VectorExtension.ToArray(p), out chunk);
 
-            if (!hasChunkAtPosition || !chunk.HasStarted)
+            if (!hasChunkAtPosition || chunk.IsSpawner)
             {
                 if (chunk != null)
                 {
-                    ///current chunk is marks border of generated chunks, so destroy it
+                    ///current chunk marks border of generated chunks, so destroy it
                     chunk.DestroyChunk();
                 }
                 chunk = CreateChunkWithProperties(p, 0, DEFAULT_CHUNK_SIZE_POWER, false,
@@ -673,7 +695,7 @@ namespace MarchingCubes
             CreateChunkWithPropertiesAsync(VectorExtension.ToVector3Int(pos), lodPower, chunkSizePower, allowOverride, callback);
         }
 
-        protected void CreateChunkWithPropertiesAsync(Vector3Int pos, int lodPower, int chunkSizePower, bool allowOverride, Action<CompressedMarchingCubeChunk> callback, Action WorkOnNoise = null)
+        protected void CreateChunkWithPropertiesAsync(Vector3Int pos, int lodPower, int chunkSizePower, bool allowOverride, Action<CompressedMarchingCubeChunk> callback)
         {
             CompressedMarchingCubeChunk chunk = GetThreadedChunkObjectAt(pos, lodPower, chunkSizePower, allowOverride);
             BuildChunkAsyncFromMeshData(chunk, callback);
@@ -681,27 +703,32 @@ namespace MarchingCubes
 
         protected CompressedMarchingCubeChunk GetChunkObjectAt(CompressedMarchingCubeChunk chunk, Vector3Int position, int lodPower, int chunkSizePower, bool allowOverride)
         {
-            ///Pot racecondition
             ChunkGroupRoot chunkGroupRoot = chunkGroup.GetOrCreateGroupAtGlobalPosition(VectorExtension.ToArray(position));
-            chunk.ChunkHandler = this;
             chunk.ChunkSizePower = chunkSizePower;
-            chunk.ChunkUpdater = worldUpdater;
-            chunk.Material = chunkMaterial;
             chunk.LODPower = lodPower;
+            InitializeNonEmptyChunk(chunk);
 
             chunkGroupRoot.SetLeafAtPosition(new int[] { position.x, position.y, position.z }, chunk, allowOverride);
 
             return chunk;
         }
 
+        protected void InitializeNonEmptyChunk(CompressedMarchingCubeChunk chunk)
+        {
+            chunk.HasStarted = true;
+            chunk.ChunkHandler = this;
+            chunk.ChunkUpdater = worldUpdater;
+            chunk.Material = chunkMaterial;
+        }
+
+
         protected CompressedMarchingCubeChunk GetChunkObjectAt(CompressedMarchingCubeChunk chunk, ChunkGroupTreeNode node)
         {
             ///Pot racecondition
-            chunk.ChunkHandler = this;
+            
             chunk.ChunkSizePower = node.SizePower;
-            chunk.ChunkUpdater = worldUpdater;
-            chunk.Material = chunkMaterial;
             chunk.LODPower = GetLodPowerFromSizePower(node.SizePower);
+            InitializeNonEmptyChunk(chunk);
 
             node.Parent.OverrideChildAtLocalIndex(node.Index, chunk);
 
@@ -710,12 +737,9 @@ namespace MarchingCubes
 
         protected CompressedMarchingCubeChunk GetChunkObjectAtChildIndex(CompressedMarchingCubeChunk chunk, ChunkGroupTreeNode node, int childIndex)
         {
-            ///Pot racecondition
-            chunk.ChunkHandler = this;
             chunk.ChunkSizePower = node.SizePower - 1;
-            chunk.ChunkUpdater = worldUpdater;
-            chunk.Material = chunkMaterial;
             chunk.LODPower = GetLodPowerFromSizePower(node.SizePower - 1);
+            InitializeNonEmptyChunk(chunk);
 
             node.SetLeafAtLocalIndex(childIndex, chunk);
 
@@ -856,22 +880,6 @@ namespace MarchingCubes
             }
         }
 
-
-        protected void ExchangeSingleChunkAsyncParallel(CompressedMarchingCubeChunk from, Vector3Int anchorPos, int lodPow, int sizePow, bool allowOveride)
-        {
-            from.PrepareDestruction();
-            ExchangeChunkAsyncParallel(anchorPos, lodPow, sizePow, allowOveride, (c) => { FinishAsynchronChunk(from, c); });
-        }
-
-
-        protected void FinishAsynchronChunk(CompressedMarchingCubeChunk from, CompressedMarchingCubeChunk newChunk)
-        {
-            lock (exchangeLocker)
-            {
-                worldUpdater.readyExchangeChunks.Push(new ReadyChunkExchange(from, newChunk));
-            }
-        }
-
         protected void BuildChunkAsyncFromMeshData(CompressedMarchingCubeChunk chunk, Action<CompressedMarchingCubeChunk> onChunkDone)
         {
             chunkInAsync++;
@@ -904,41 +912,6 @@ namespace MarchingCubes
         {
             CompressedMarchingCubeChunk newChunk = GetThreadedCompressedChunkObjectAt(node);
             PrepareChunkAsyncFromMeshData(newChunk, onChunkDone);
-        }
-
-        private void SplitChunkAndIncreaseLod(CompressedMarchingCubeChunk chunk, int toLodPower, int newSizePow)
-        {
-            int[][] anchors = chunk.Leaf.GetAllChildGlobalAnchorPosition();
-            CompressedMarchingCubeChunk[] newChunks = new CompressedMarchingCubeChunk[8];
-            for (int i = 0; i < 8; i++)
-            {
-                Vector3Int v3 = IntArrToVector3(anchors[i]);
-                //TODO:use already referenced parent to set children
-                newChunks[i] = GetThreadedChunkObjectAt(v3, toLodPower, newSizePow, true);
-            }
-            chunk.PrepareDestruction();
-            object listLock = new object();
-
-            List<CompressedMarchingCubeChunk> chunks = new List<CompressedMarchingCubeChunk>();
-
-            Action<CompressedMarchingCubeChunk> f = (c) =>
-            {
-                //c.Hide();
-                lock (listLock)
-                {
-                    chunks.Add(c);
-                }
-                if (chunks.Count == 8)
-                {
-                    lock (exchangeLocker)
-                    {
-                        worldUpdater.readyExchangeChunks.Push(new ReadyChunkExchange(chunk, chunks));
-                    }
-                }
-            };
-
-            DispatchMultipleChunksAsync(newChunks,f);
-
         }
 
 
@@ -1001,7 +974,7 @@ namespace MarchingCubes
                 {
                     lock (exchangeLocker)
                     {
-                        worldUpdater.readyExchangeChunks.Push(new ReadyChunkExchange(exchange.leaf.leaf, chunks));
+                        worldUpdater.readyExchangeChunks.Push(new ReadyChunkExchange(exchange.leaf.leaf, chunks, exchange.newNodes));
                     }
                 }
             };
@@ -1051,21 +1024,16 @@ namespace MarchingCubes
             }
         }
 
-        public int GetLodPower(float distance)
+        public int GetLodPower(float sqrDistance)
         {
-            return (int)Mathf.Max(DEFAULT_MIN_CHUNK_LOD_POWER, lodPowerForDistances.Evaluate(distance));
-        }
-
-        public int GetLodPowerAt(Vector3 pos)
-        {
-            return GetLodPower((pos - startPos).magnitude);
+            return updateValues.GetLodForSqrDistance(sqrDistance);
         }
 
 
         public void GetSizeAndLodPowerForChunkPosition(Vector3 pos, out int sizePower, out int lodPower)
         {
-            float distance = (startPos - pos).magnitude;
-            lodPower = GetLodPower(distance);
+            float sqrDistance = (startPos - pos).sqrMagnitude;
+            lodPower = GetLodPower(sqrDistance);
             sizePower = GetSizePowerFromLodPower(lodPower);
             //TODO: check this
         }

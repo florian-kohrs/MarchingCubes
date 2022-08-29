@@ -8,31 +8,23 @@ namespace MarchingCubes
     public class ReadyChunkExchange
     {
 
-        public ReadyChunkExchange(CompressedMarchingCubeChunk old, List<CompressedMarchingCubeChunk> chunks)
+        public ReadyChunkExchange(CompressedMarchingCubeChunk old, List<CompressedMarchingCubeChunk> chunks, IEnumerable<IRegisterableNode> newNodes)
         {
+            this.nodes = newNodes;
             this.old = new List<CompressedMarchingCubeChunk>() { old };
             this.chunks = chunks;
         }
 
         public ReadyChunkExchange(List<CompressedMarchingCubeChunk> old, CompressedMarchingCubeChunk chunks)
         {
+            nodes = new List<IRegisterableNode>();
             this.old = old ;
             this.chunks = new List<CompressedMarchingCubeChunk>() { chunks };
         }
 
-        public ReadyChunkExchange(CompressedMarchingCubeChunk old, CompressedMarchingCubeChunk chunks)
-        {
-            this.old = new List<CompressedMarchingCubeChunk>() { old };
-            this.chunks = new List<CompressedMarchingCubeChunk>() { chunks };
-        }
-
-        public ReadyChunkExchange(List<CompressedMarchingCubeChunk> old, List<CompressedMarchingCubeChunk> chunks)
-        {
-            this.old = old;
-            this.chunks = chunks;
-        }
-
         public List<CompressedMarchingCubeChunk> old;
+
+        public IEnumerable<IRegisterableNode> nodes;
 
         public List<CompressedMarchingCubeChunk> chunks;
 

@@ -122,7 +122,6 @@ namespace MarchingCubes
 
         public void DispatchAndGetChunkMeshDataAsync(CompressedMarchingCubeChunk chunk, Action<CompressedMarchingCubeChunk> SetChunkComponents, Action<MeshData> onMeshDataDone)
         {
-
             ChunkGenerationGPUData gpuData = pipelinePool.GetItemFromPool();
             NoisePipeline noise = new NoisePipeline(gpuData, storedNoiseEdits);
             ChunkPipeline chunkPipeline = new ChunkPipeline(gpuData, minDegreeBufferPool);

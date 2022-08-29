@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using UnityEngine;
 
@@ -24,6 +25,8 @@ namespace MarchingCubes
         /// Check this hashset for chunks to disable or delete altogether
         /// </summary>
         protected HashSet<ChunkGroupRoot> chunkGroupTreeRoots = new HashSet<ChunkGroupRoot>();
+
+        protected Stopwatch watch = new Stopwatch();
 
         public static void RegisterChunkNode(int index, ChunkGroupTreeNode node)
         {
@@ -148,7 +151,8 @@ namespace MarchingCubes
 
         protected void RunRoutine()
         {
-            if(update)
+            watch.Restart();
+            if (update)
             {
                 updateDone = false; 
                 update = false;
@@ -156,7 +160,9 @@ namespace MarchingCubes
                 CheckAllLodsForUpdate();
                 updateDone = true;
             }
-            Thread.Sleep(ChunkCheckIntervalInMs);
+            watch.Stop();
+            int waitTime = Mathf.Max(10, ChunkCheckIntervalInMs - watch.Elapsed.Milliseconds);
+            Thread.Sleep(waitTime);
             RunRoutine();
         }
 

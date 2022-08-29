@@ -9,8 +9,6 @@ namespace MarchingCubes
 
         public MarchingCubeChunkHandler chunkHandler;
 
-        public Vector3 lastUpdatePosition;
-
         public ChunkUpdateRoutine updateRoutine;
 
         [SerializeField]
@@ -45,12 +43,6 @@ namespace MarchingCubes
         public float estimatedTimeReduce = 1;
         public float estimatedTimeIncrease = 4;
 
-        public Transform increaseTriggerParent;
-
-        public Transform decreaseTriggerParent;
-
-        public AnimationCurve lodPowerAtDistance;
-
         public float reduceChunkAtCorrectSizeDist = 0.25f;
 
         public float increaseChunkAtCorrectSizeDist = 0.25f;
@@ -60,9 +52,6 @@ namespace MarchingCubes
 
         protected Stack<ChunkInitializeTask> chunksToInitialize = new Stack<ChunkInitializeTask>();
 
-        protected bool isInIncreasingChunkIteration;
-        protected bool isInDecreasingChunkIteration;
-
         protected Stack<ChunkGroupRoot> destroyRoots;
         protected Stack<ChunkGroupRoot> deactivateRoots;
         protected Stack<ChunkGroupTreeNode> mergeSet;
@@ -70,21 +59,19 @@ namespace MarchingCubes
 
         private void Awake()
         {
-            float distThreshold = 1.1f;
-            float chunkDeactivateDist = chunkHandler.buildAroundDistance * distThreshold;
-            float chunkDestroyDistance = chunkDeactivateDist + MarchingCubeChunkHandler.CHUNK_GROUP_SIZE;
-            ChunkUpdateValues updateValues = new ChunkUpdateValues(500, chunkDeactivateDist, chunkDestroyDistance,
-                new float[] { 200, 350, 600, 1000, 2000 }, 1.1f);
+            
+            chunkHandler.OnInitializationDoneCallback.Add(delegate { updateRoutine.BeginAsynchrounLodCheck(); });
+        }
 
+
+        public void InitializeUpdateRoutine(ChunkUpdateValues updateValues)
+        {
             destroyRoots = new Stack<ChunkGroupRoot>();
             deactivateRoots = new Stack<ChunkGroupRoot>();
             mergeSet = new Stack<ChunkGroupTreeNode>();
             splitSet = new Stack<ChunkSplitExchange>();
             updateRoutine = new ChunkUpdateRoutine(deactivateRoots, deactivateRoots, mergeSet, splitSet, updateValues);
-        
-            chunkHandler.OnInitializationDoneCallback.Add(delegate { updateRoutine.BeginAsynchrounLodCheck(); });
         }
-
 
         public void AddChunkToInitialize(ChunkInitializeTask chunkTask)
         {
@@ -146,23 +133,17 @@ namespace MarchingCubes
                     }
                     else
                     {
+                        chunk[i].Leaf.Register();
                         chunk[i].BuildEnvironmentForChunk();
                     }
+                    
+                }
+                foreach (var item in change.nodes)
+                {
+                    item.Register();
                 }
                
             }
-
-
-            isInIncreasingChunkIteration = true;
-            
-
-            isInIncreasingChunkIteration = false;
-            
-            //TODO: Potential race condition? maybe lock something
-            isInDecreasingChunkIteration = true;
-            
-            isInDecreasingChunkIteration = false;
-           
 
             FrameTimer.RestartWatch();
         }

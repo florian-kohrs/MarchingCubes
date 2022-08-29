@@ -33,7 +33,7 @@ namespace MarchingCubes
 
         public override void SetLeafAtLocalPosition(int[] pos, StoredChunkEdits chunk, bool allowOverride)
         {
-            chunk.leaf = this;
+            
         }
 
         public override bool RemoveLeafAtLocalPosition(int[] pos)

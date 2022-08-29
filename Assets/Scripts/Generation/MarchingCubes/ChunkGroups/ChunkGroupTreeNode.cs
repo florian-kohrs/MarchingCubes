@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public class ChunkGroupTreeNode : GenericTreeNode<CompressedMarchingCubeChunk, IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk>, ChunkGroupTreeLeaf>, IChunkGroupParent<ChunkGroupTreeLeaf>, IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk>
+    public class ChunkGroupTreeNode : GenericTreeNode<CompressedMarchingCubeChunk, IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk>, ChunkGroupTreeLeaf>, IChunkGroupParent<ChunkGroupTreeLeaf>, IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk>, IRegisterableNode
     {
 
         public ChunkGroupTreeNode(
@@ -18,7 +18,7 @@ namespace MarchingCubes
             this.parent = parent;
             int sizeHalf = (int)Mathf.Pow(2, sizePower) / 2;
             centerPosition = new Vector3(anchorPosition[0] + sizeHalf, anchorPosition[1] + sizeHalf, anchorPosition[2] + sizeHalf);
-            ChunkUpdateRoutine.RegisterChunkNode(RegisterIndex,this);
+            if (!MarchingCubeChunkHandler.InitialWorldBuildingDone) Register();
         }
 
 
@@ -28,7 +28,8 @@ namespace MarchingCubes
 
         protected const int CHILD_COUNT = 8;
 
-        protected int RegisterIndex => sizePower - MarchingCubeChunkHandler.DEFAULT_CHUNK_SIZE_POWER - 1;
+        protected int RegisterIndex => LodPower - 1;
+        protected int LodPower => sizePower - MarchingCubeChunkHandler.DEFAULT_CHUNK_SIZE_POWER;
 
         protected Vector3 centerPosition;
 
@@ -145,14 +146,29 @@ namespace MarchingCubes
             SplitChildAtIndex(index, newNodes);
         }
 
+
         protected void SplitChildAtIndex(int index, List<ChunkGroupTreeNode> newNodes)
         {
+            ChunkGroupTreeNode newNode;
             var oldLeaf = children[index];
-            ChunkGroupTreeNode newNode = new ChunkGroupTreeNode(oldLeaf.GroupAnchorPositionCopy, oldLeaf.GroupRelativeAnchorPosition, index, this, oldLeaf.SizePower);
+            if (oldLeaf == null)
+            {
+                int[] relativePosition = GetLocalPositionFromIndex(index);
+                int[] anchorPos = new int[] {
+                relativePosition[0] + GroupAnchorPosition [0],
+                relativePosition[1] + GroupAnchorPosition[1],
+                relativePosition[2] + GroupAnchorPosition[2]
+                };
+                newNode = new ChunkGroupTreeNode(anchorPos, relativePosition, index, this, SizePower - 1);
+            }
+            else
+            {
+                newNode = new ChunkGroupTreeNode(oldLeaf.GroupAnchorPositionCopy, oldLeaf.GroupRelativeAnchorPosition, index, this, SizePower-1);
+            }
             children[index] = newNode;
             newNodes.Add(newNode);
-            if (RegisterIndex > 0)
-                CheckAnyChildrenForSplit(newNodes);
+            if (newNode.RegisterIndex > 0)
+                newNode.CheckAnyChildrenForSplit(newNodes);
         }
 
         public void CheckAnyChildrenForSplit(List<ChunkGroupTreeNode> newNodes)
@@ -165,6 +181,11 @@ namespace MarchingCubes
                 if (lodPower < RegisterIndex)
                     SplitChildAtIndex(index, newNodes);
             }
+        }
+
+        public void Register()
+        {
+            ChunkUpdateRoutine.RegisterChunkNode(RegisterIndex, this);
         }
 
     }

@@ -82,7 +82,7 @@ namespace MarchingCubes
 
         protected int[] GetLocalPositionFromIndex(int index)
         {
-            int[] result = GroupRelativeAnchorPositionCopy;
+            int[] result = new int[3];
             if (index >= 4)
             {
                 result[1] += halfSize;
@@ -113,7 +113,7 @@ namespace MarchingCubes
 
         private Vector3 GetChildCenterPositionForIndex(int index, int offset)
         {
-            Vector3 result = GroupRelativeAnchorPositionVector + new Vector3(offset,offset,offset);
+            Vector3 result = GroupAnchorPositionVector + new Vector3(offset,offset,offset);
             if (index >= 4)
             {
                 result.y += halfSize;

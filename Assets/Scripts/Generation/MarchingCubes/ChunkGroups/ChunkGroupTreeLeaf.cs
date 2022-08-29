@@ -20,14 +20,10 @@ namespace MarchingCubes
             chunk.AnchorPos = new Vector3Int(anchorPoint[0], anchorPoint[1],anchorPoint[2]);
             chunk.ChunkSizePower = sizePower;
             ///only register if the leaf can be split
-            if (chunk.LODPower > 0 && chunk.LODPower < MarchingCubeChunkHandler.DEACTIVATE_CHUNK_LOD_POWER)
-            {
-                isRegistered = true;
-                ChunkUpdateRoutine.RegisterChunkLeaf(chunk.LODPower - 1,this);
-            }
             int halfSize = (int)Mathf.Pow(2, sizePower) / 2;
             centerPosition = new Vector3(anchorPoint[0] + halfSize, anchorPoint[1] + halfSize, anchorPoint[2] + halfSize);
             chunk.Leaf = this;
+            if (!MarchingCubeChunkHandler.InitialWorldBuildingDone) Register();
         }
 
         protected Vector3 centerPosition;
@@ -36,6 +32,8 @@ namespace MarchingCubes
 
 
         public IChunkGroupParent<ChunkGroupTreeLeaf> parent;
+
+        protected bool RegisterInConstructor => false;
 
         protected bool isRegistered;
 
@@ -93,6 +91,15 @@ namespace MarchingCubes
             leaf.ResetChunk();
         }
 
+
+        public void Register()
+        {
+            if (leaf.LODPower > 0 && leaf.LODPower < MarchingCubeChunkHandler.DEACTIVATE_CHUNK_LOD_POWER)
+            {
+                isRegistered = true;
+                ChunkUpdateRoutine.RegisterChunkLeaf(leaf.LODPower - 1, this);
+            }
+        }
         
         public void RemoveChildsFromRegister()
         {

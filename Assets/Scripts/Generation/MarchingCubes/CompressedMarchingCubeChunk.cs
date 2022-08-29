@@ -108,7 +108,7 @@ namespace MarchingCubes
 
         public bool IsReady { get; set; }
 
-        public bool HasStarted { get; protected set; }
+        public bool HasStarted { get; set; }
 
         public Material Material { protected get; set; }
 
@@ -230,9 +230,7 @@ namespace MarchingCubes
 
         public virtual void InitializeWithMeshData(MeshData meshData)
         {
-            HasStarted = true;
             this.meshData = meshData;
-
             if (!meshData.IsEmpty)
             {
                 NumTris = meshData.vertices.Length / 3;
