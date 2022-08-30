@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public class ChunkGroupTreeNode : GenericTreeNode<CompressedMarchingCubeChunk, IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk>, ChunkGroupTreeLeaf, ChunkGroupTreeNode>, IChunkGroupParent<ChunkGroupTreeLeaf>, IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk>, IRegisterableNode
+    public class ChunkGroupTreeNode : GenericTreeNode<CompressedMarchingCubeChunk, IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk>, ChunkGroupTreeLeaf, ChunkGroupTreeNode>, IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk>, IRegisterableNode
     {
 
         public ChunkGroupTreeNode(
@@ -70,21 +70,9 @@ namespace MarchingCubes
                 }
                 else
                 {
-                    ((IChunkGroupParent<ChunkGroupTreeLeaf>)child).PrepareBranchDestruction(allLeafs);
+                    ((ChunkGroupTreeNode)child).PrepareBranchDestruction(allLeafs);
                 }
                 
-            }
-        }
-
-
-        public void RemoveChildAtIndex(int index, CompressedMarchingCubeChunk chunk)
-        {
-            if(children[index] != null 
-                && children[index].IsLeaf 
-                && children[index] is ChunkGroupTreeLeaf leaf 
-                && leaf.leaf == chunk)
-            {
-                children[index] = null;
             }
         }
 

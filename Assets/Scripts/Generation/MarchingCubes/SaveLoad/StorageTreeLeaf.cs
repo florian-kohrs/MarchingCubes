@@ -6,15 +6,14 @@ namespace MarchingCubes
 {
 
     [System.Serializable]
-    public class StorageTreeLeaf : GenericTreeLeaf<StoredChunkEdits>, IStorageGroupOrganizer<StoredChunkEdits>
+    public class StorageTreeLeaf : GenericTreeLeaf<StoredChunkEdits, IStorageGroupOrganizer<StoredChunkEdits>, StorageTreeLeaf, StorageTreeNode>, IStorageGroupOrganizer<StoredChunkEdits>
     {
 
         public StorageTreeLeaf() { }
 
-        public StorageTreeLeaf(IStorageGroupOrganizer<StoredChunkEdits> parent, StoredChunkEdits leaf, int index, int[] relativeAnchorPoint, int[] anchorPoint, int sizePower) : base(leaf, index, relativeAnchorPoint, anchorPoint, sizePower)
+        public StorageTreeLeaf(StorageTreeNode parent, StoredChunkEdits leaf, int index, int[] relativeAnchorPoint, int[] anchorPoint, int sizePower) : base(parent, leaf, index, relativeAnchorPoint, anchorPoint, sizePower)
         {
             leaf.leaf = this;
-            this.parent = parent;
         }
 
         //TODO: Maybe store for each chunk num of tris -> dont have to read from gpu
@@ -28,8 +27,6 @@ namespace MarchingCubes
         public bool HasNoiseMapReady => true;
 
         public bool IsMipMapComplete => true;
-
-        public IStorageGroupOrganizer<StoredChunkEdits> parent;
 
         public override void SetLeafAtLocalPosition(int[] pos, StoredChunkEdits chunk, bool allowOverride)
         {

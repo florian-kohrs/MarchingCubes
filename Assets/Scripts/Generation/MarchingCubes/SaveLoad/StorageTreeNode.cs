@@ -7,7 +7,7 @@ namespace MarchingCubes
 {
 
     [System.Serializable]
-    public class StorageTreeNode : GenericTreeNode<StoredChunkEdits, IStorageGroupOrganizer<StoredChunkEdits>, IStorageGroupOrganizer<StoredChunkEdits>, StorageTreeNode>, IStorageGroupOrganizer<StoredChunkEdits>
+    public class StorageTreeNode : GenericTreeNode<StoredChunkEdits, IStorageGroupOrganizer<StoredChunkEdits>, StorageTreeLeaf, StorageTreeNode>, IStorageGroupOrganizer<StoredChunkEdits>
     {
 
         public static float NON_SET_NOISE_VALUE = -9999;

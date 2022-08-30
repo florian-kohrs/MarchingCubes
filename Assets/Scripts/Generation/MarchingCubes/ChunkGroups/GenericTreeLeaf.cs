@@ -5,24 +5,37 @@ using UnityEngine;
 namespace MarchingCubes
 {
     [System.Serializable]
-    public abstract class GenericTreeLeaf<T> : BaseChunkGroupOrganizer<T>
+    public abstract class GenericTreeLeaf<T,Node, Self, ParentTyp> : BaseChunkGroupOrganizer<T>, IHasValue<T>
+        where ParentTyp : GenericTreeNode<T,Node, Self, ParentTyp>
+        where T : ISizeManager
+        where Node : IChunkGroupOrganizer<T>
+        where Self : IHasValue<T>
     {
 
         public GenericTreeLeaf()
         {
         }
 
-        public GenericTreeLeaf(T leaf, int index, int[] relativeAnchorPoint, int[] anchorPoint, int sizePower)
+        public GenericTreeLeaf(ParentTyp parent, T leaf, int index, int[] relativeAnchorPoint, int[] anchorPoint, int sizePower)
         {
-            childIndex = index;
-            this.sizePower = sizePower;
             this.leaf = leaf;
+            childIndex = index;
+            this.parent = parent;
+            this.sizePower = sizePower;
             GroupAnchorPosition = anchorPoint;
             groupRelativeAnchorPosition = relativeAnchorPoint;
         }
 
         public override bool IsLeaf => true;
 
+        [Save]
+        protected ParentTyp parent;
+
+
+        public void RemoveChildFromParent() 
+        {
+            parent.RemoveChildAtIndex(childIndex);
+        }
 
         [Save]
         protected int sizePower;
@@ -44,6 +57,12 @@ namespace MarchingCubes
 
         public override int SizePower => sizePower;
 
+        public T Value => leaf;
+
+        public void RemoveLeafValue()
+        {
+            leaf = default;
+        }
 
         public override T GetChunkAtLocalPosition(int[] pos)
         {
@@ -53,11 +72,6 @@ namespace MarchingCubes
         public override void SetLeafAtLocalPosition(int[] pos, T chunk, bool allowOverride)
         {
             throw new System.Exception();
-        }
-
-        public override void OverrideChildAtLocalIndex(int index, T chunk)
-        {
-            throw new System.NotImplementedException();
         }
 
 

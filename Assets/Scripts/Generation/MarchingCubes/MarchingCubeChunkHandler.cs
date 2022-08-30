@@ -306,7 +306,7 @@ namespace MarchingCubes
             for (int i = 0; i < pos.Length; i++)
             {
                 Vector3Int next = pos[i];
-                if (!chunkGroup.HasChunkStartedAt(VectorExtension.ToArray(next)))
+                if (!chunkGroup.HasLeafAtGlobalPosition(VectorExtension.ToArray(next)))
                 {
                     CreateChunkWithAsyncGPUReadback(next, FindNeighbourOfChunk);
                 };
@@ -382,7 +382,7 @@ namespace MarchingCubes
                     do
                     {
                         next = closestNeighbours.Dequeue();
-                        isNextInProgress = chunkGroup.HasChunkStartedAt(VectorExtension.ToArray(next));
+                        isNextInProgress = chunkGroup.HasLeafAtGlobalPosition(VectorExtension.ToArray(next));
                     } while (isNextInProgress && closestNeighbours.size > 0);
 
                     if (!isNextInProgress)
@@ -422,7 +422,7 @@ namespace MarchingCubes
                 do
                 {
                     next = closestNeighbours.Dequeue();
-                    isNextInProgress = chunkGroup.HasChunkStartedAt(VectorExtension.ToArray(next));
+                    isNextInProgress = chunkGroup.HasLeafAtGlobalPosition(VectorExtension.ToArray(next));
                 } while (isNextInProgress && closestNeighbours.size > 0);
 
 
@@ -490,7 +490,7 @@ namespace MarchingCubes
                 do
                 {
                     next = closestNeighbours.Dequeue();
-                    isNextInProgress = chunkGroup.HasChunkStartedAt(VectorExtension.ToArray(next));
+                    isNextInProgress = chunkGroup.HasLeafAtGlobalPosition(VectorExtension.ToArray(next));
                 } while (isNextInProgress && closestNeighbours.size > 0);
 
 

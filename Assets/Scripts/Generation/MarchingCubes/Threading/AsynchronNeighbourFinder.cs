@@ -49,7 +49,7 @@ namespace MarchingCubes
             lock (mutex)
             {
                 activeTasks--;
-                //activeTask.Remove(task);
+                activeTask.Remove(task);
             }
             handler.AddFinishedTask(task);
         }
@@ -63,7 +63,7 @@ namespace MarchingCubes
                 {
                     lock (mutex)
                     {
-                        //activeTask.Add(task);
+                        activeTask.Add(task);
                         activeTasks++;
                     }
                     task.FindNeighbours(); 

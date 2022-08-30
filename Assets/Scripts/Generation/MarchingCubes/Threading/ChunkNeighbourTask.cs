@@ -55,7 +55,6 @@ namespace MarchingCubes
             if (x == 0)
             {
                 hasNeighbourInDirection[1] = true;
-
             }
             else if (x == maxEntityIndexPerAxis)
             {
@@ -89,7 +88,7 @@ namespace MarchingCubes
                 if(hasNeighbourInDirection[i])
                 {
                     v3 = VectorExtension.GetDirectionFromIndex(i) * (chunk.ChunkSize + 1) + chunk.CenterPos;
-                    hasNeighbourInDirection[i] = !chunkGroup.HasChunkStartedAt(VectorExtension.ToArray(v3));
+                    hasNeighbourInDirection[i] = !chunkGroup.HasLeafAtGlobalPosition(VectorExtension.ToArray(v3));
                 }
             }
         }

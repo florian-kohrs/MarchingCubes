@@ -275,7 +275,7 @@ namespace MarchingCubes
         {
             if (!CheckLeafForSplit(index, leaf.Center))
                 return;
-            leaf.parent.SplitChildAtIndex(leaf.ChildIndex, out List<ChunkGroupTreeNode> newNodes);
+            leaf.SplitChildAtIndex(out List<ChunkGroupTreeNode> newNodes);
             ChunkSplitExchange exchange = new ChunkSplitExchange(leaf, newNodes);
             leaf.RemoveChildsFromRegister();
             

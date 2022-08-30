@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -22,14 +23,9 @@ namespace MarchingCubes
             return TryGetGroupItemAt(p, out chunk) && chunk.IsReady;
         }
 
-        public bool HasChunkStartedAt(int[] p)
-        {
-            return TryGetGroupItemAt(p, out CompressedMarchingCubeChunk chunk) && chunk.HasStarted;
-        }
-
         public bool HasLeafAtGlobalPosition(int[] p)
         {
-            return TryGetGroupItemAt(p, out CompressedMarchingCubeChunk chunk) && chunk.HasStarted;
+            return TryGetGroupItemAt(p, out _);
         }
 
 

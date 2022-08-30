@@ -307,7 +307,7 @@ namespace MarchingCubes
         {
             if (Leaf != null)
             {
-                Leaf.RemoveLeaf(this);
+                Leaf.RemoveLeafValue();
                 Leaf = null;
             }
             IsReady = false;

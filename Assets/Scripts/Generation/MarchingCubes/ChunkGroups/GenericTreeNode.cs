@@ -9,9 +9,10 @@ namespace MarchingCubes
 
 
     [System.Serializable]
-    public abstract class GenericTreeNode<T, Node, Leaf, Self> : BaseChunkGroupOrganizer<T>, ITreeNodeParent<Leaf> 
+    public abstract class GenericTreeNode<T, Node, Leaf, Self> : BaseChunkGroupOrganizer<T>
         where Node : IChunkGroupOrganizer<T>
         where T : ISizeManager
+        where Leaf : IHasValue<T>
         where Self : GenericTreeNode<T, Node, Leaf, Self>
     {
 
@@ -113,6 +114,13 @@ namespace MarchingCubes
         }
 
 
+        public void RemoveChildAtIndex(int index)
+        {
+            //TODO:Maybe disallow nodes to be removed here
+            children[index] = default;
+        }
+
+
         protected Vector3 GetChildLocalPositionForIndex(int index)
         {
             return GetChildCenterPositionForIndex(index, 0);
@@ -186,7 +194,7 @@ namespace MarchingCubes
             }
         }
 
-        public override void OverrideChildAtLocalIndex(int index, T chunk)
+        public void OverrideChildAtLocalIndex(int index, T chunk)
         {
             children[index] = GetLeaf(chunk, index, children[index].GroupRelativeAnchorPosition, children[index].GroupAnchorPosition, sizePower - 1);
         }

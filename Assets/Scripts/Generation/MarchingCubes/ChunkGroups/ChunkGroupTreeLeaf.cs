@@ -5,7 +5,7 @@ using UnityEngine;
 namespace MarchingCubes
 {
 
-    public class ChunkGroupTreeLeaf : GenericTreeLeaf<CompressedMarchingCubeChunk>, IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk>
+    public class ChunkGroupTreeLeaf : GenericTreeLeaf<CompressedMarchingCubeChunk, IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk>, ChunkGroupTreeLeaf, ChunkGroupTreeNode>, IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk>
     {
 
         //~ChunkGroupTreeLeaf()
@@ -13,10 +13,9 @@ namespace MarchingCubes
         //    Debug.Log("destroyed leaf");
         //}
 
-        public ChunkGroupTreeLeaf(IChunkGroupParent<ChunkGroupTreeLeaf> parent, CompressedMarchingCubeChunk chunk, int index, int[] relativeAnchorPoint, int[] anchorPoint, int sizePower) 
-            : base(chunk,index,relativeAnchorPoint,anchorPoint,sizePower)
+        public ChunkGroupTreeLeaf(ChunkGroupTreeNode parent, CompressedMarchingCubeChunk chunk, int index, int[] relativeAnchorPoint, int[] anchorPoint, int sizePower) 
+            : base(parent, chunk,index,relativeAnchorPoint,anchorPoint,sizePower)
         {
-            this.parent = parent;
             chunk.AnchorPos = new Vector3Int(anchorPoint[0], anchorPoint[1],anchorPoint[2]);
             chunk.ChunkSizePower = sizePower;
             ///only register if the leaf can be split
@@ -29,9 +28,6 @@ namespace MarchingCubes
         protected Vector3 centerPosition;
 
         public Vector3 Center => centerPosition;
-
-
-        public IChunkGroupParent<ChunkGroupTreeLeaf> parent;
 
         protected bool RegisterInConstructor => false;
 
@@ -50,11 +46,6 @@ namespace MarchingCubes
         }
 
         protected int RegisterIndex => SizePower - MarchingCubeChunkHandler.DEFAULT_CHUNK_SIZE_POWER - 1;
-
-        public void RemoveLeaf(CompressedMarchingCubeChunk chunk)
-        {
-            parent.RemoveChildAtIndex(childIndex, chunk);
-        }
 
         protected int[] GetGlobalAnchorPositionForIndex(int index, int halfSize)
         {
@@ -78,6 +69,11 @@ namespace MarchingCubes
         {
             DestroyBranch();
             return true;
+        }
+
+        public void SplitChildAtIndex(out List<ChunkGroupTreeNode> newNodes)
+        {
+            parent.SplitChildAtIndex(childIndex, out newNodes);
         }
 
         public void DestroyBranch()
