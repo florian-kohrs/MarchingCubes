@@ -23,7 +23,7 @@ namespace MarchingCubes
         protected bool[] hasNeighbourInDirection { get; private set; } = new bool[6];
 
         public bool[] HasNeighbourInDirection => hasNeighbourInDirection;
-
+      
         protected int maxEntityIndexPerAxis;
 
         public void FindNeighbours()

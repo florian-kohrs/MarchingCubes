@@ -5,8 +5,8 @@ using UnityEngine;
 namespace MarchingCubes
 {
     [System.Serializable]
-    public abstract class GenericTreeLeaf<T,Node, Self, ParentTyp> : BaseChunkGroupOrganizer<T>, IHasValue<T>
-        where ParentTyp : GenericTreeNode<T,Node, Self, ParentTyp>
+    public abstract class GenericTreeLeaf<T,Node, Self, ParentType> : BaseChunkGroupOrganizer<T>, IHasValue<T>
+        where ParentType : GenericTreeNode<T,Node, Self, ParentType>, Node
         where T : ISizeManager
         where Node : IChunkGroupOrganizer<T>
         where Self : IHasValue<T>
@@ -16,7 +16,7 @@ namespace MarchingCubes
         {
         }
 
-        public GenericTreeLeaf(ParentTyp parent, T leaf, int index, int[] anchorPoint, int[] relativeAnchorPoint, int sizePower)
+        public GenericTreeLeaf(ParentType parent, T leaf, int index, int[] anchorPoint, int[] relativeAnchorPoint, int sizePower)
         {
             this.leaf = leaf;
             childIndex = index;
@@ -29,7 +29,7 @@ namespace MarchingCubes
         public override bool IsLeaf => true;
 
         [Save]
-        protected ParentTyp parent;
+        protected ParentType parent;
 
 
         public void RemoveChildFromParent() 
@@ -51,9 +51,11 @@ namespace MarchingCubes
         [Save]
         public int[] groupRelativeAnchorPosition;
 
-        public void AssignLeafInDirection(Direction d, T value)
+        public bool TryGetLeafParentInDirection(Direction d, out ParentType lastParent, out Stack<int> directionChildIndex)
         {
-            parent.AssignLeafInDirection(d, childIndex, value, 0);
+            directionChildIndex = new Stack<int>();
+            directionChildIndex.Push(childIndex);
+            return parent.TryGetLeafParentInDirection(d, directionChildIndex, out lastParent);
         }
 
         public override int[] GroupRelativeAnchorPosition => groupRelativeAnchorPosition;

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -12,8 +13,8 @@ namespace MarchingCubes
     public abstract class GenericTreeNode<T, Node, Leaf, Self> : BaseChunkGroupOrganizer<T>
         where Node : IChunkGroupOrganizer<T>
         where T : ISizeManager
-        where Leaf : IHasValue<T>
-        where Self : GenericTreeNode<T, Node, Leaf, Self>
+        where Leaf : IHasValue<T>, Node
+        where Self : GenericTreeNode<T, Node, Leaf, Self>, Node
     {
 
         public GenericTreeNode() { }
@@ -64,6 +65,69 @@ namespace MarchingCubes
 
         protected const int topLeftBack = 0;
         protected const int topLeftFront = 1;
+
+        protected abstract Self GetSelf { get; }
+
+        //public bool TryGetEmptyLeafParentInDirection(Direction d, Stack<int> childIndices, out Self parent)
+        //{
+        //    return TryGetLeafParentInDirection(d, childIndices, out parent) && !parent.HasChildAtIndex(childIndices.Peek());
+        //}
+
+        public bool TryGetEmptyLeafParentInDirection(Direction d, Stack<int> childIndices, out Self parent)
+        {
+            bool result = false;
+            int childIndex = childIndices.Pop();
+            int depth = childIndices.Count;
+            if (HasDirectionAvailable(d, children[childIndex].GroupRelativeAnchorPosition))
+            {
+                int newChildIndex = DirectionToNewChildIndex(d, childIndex, 1);
+                parent = GetSelf;
+                if (depth == 0)
+                {
+                    childIndices.Push(newChildIndex);
+                    result = !HasChildAtIndex(childIndex);
+                }
+                else
+                {
+                    Node child = children[newChildIndex];
+                    Self node;
+                    if (child is Leaf)
+                    {
+                        node = null;
+                        childIndices.Push(childIndex);
+                        result = false;
+                    }
+                    else if (child is Self self)
+                    {
+                        node = self;
+                    }
+                    else
+                    {
+                        ///child is null
+                        /////TODO Dont spawn here! Cant be used in async neighbour search!
+                        DirectionToNewLocalAndGlobalPosition(d, childIndex, out int[] localPos, out int[] globalPos);
+                        node = GetNode(newChildIndex, globalPos, localPos, sizePower - 1);
+                        children[childIndex] = node;
+                    }
+
+                    if (node != null)
+                        return node.TryGetEmptyLeafParentInDirection(d, childIndices, out parent);
+                }
+                return result;
+            }
+            else
+            {
+                int oldSwappedChildIndex = DirectionToNewChildIndex(d, childIndex, -1);
+                childIndices.Push(oldSwappedChildIndex);
+                childIndices.Push(childIndex);
+                return this.parent.TryGetLeafParentInDirection(d, childIndices, out parent);
+            }
+        }
+
+        public bool HasChildAtIndex(int index) => children[index] != null;
+
+        public bool HasLeafAtIndex(int index) => children[index] is Leaf;
+
         protected const int topRightBack = 2;
         protected const int topRightFront = 3;
         protected const int bottomLeftBack = 4;
@@ -72,9 +136,9 @@ namespace MarchingCubes
         protected const int bottomRightFront = 7;
 
 
-        public abstract Node GetLeaf(T leaf, int index, int[] anchor, int[] relAnchor, int sizePow);
+        public abstract Leaf GetLeaf(T leaf, int index, int[] anchor, int[] relAnchor, int sizePow);
 
-        public abstract Node GetNode(int index, int[] anchor, int[] relAnchor, int sizePow);
+        public abstract Self GetNode(int index, int[] anchor, int[] relAnchor, int sizePow);
 
         public override int SizePower
         {
@@ -101,38 +165,68 @@ namespace MarchingCubes
                 case Direction.Back:
                     return childLocalPosition[2] > 0;
                 default:
-                    throw new System.Exception("Unhandled enum case!");
+                    throw new Exception("Unhandled enum case!");
             } 
         }
 
-        protected void DirectionToIndexAndPositionChange(Direction d, ref int childIndex, out int[] newLocalPos)
+        protected int DirectionToNewChildIndex(Direction d, int oldChildIndex, int sign)
         {
-            newLocalPos = children[childIndex].GroupRelativeAnchorPositionCopy;
+            int newChildIndex = oldChildIndex;
             switch (d)
             {
                 case Direction.Right:
-                    childIndex += 2;
-                    newLocalPos[0] += halfSize;
+                    newChildIndex += 2 * sign;
                     break;
                 case Direction.Left:
-                    childIndex -= 2;
-                    newLocalPos[0] -= halfSize;
+                    newChildIndex -= 2 * sign;
                     break;
                 case Direction.Up:
-                    childIndex += 4;
-                    newLocalPos[1] += halfSize;
+                    newChildIndex += 4 * sign;
                     break;
                 case Direction.Down:
-                    childIndex -= 4;
-                    newLocalPos[1] -= halfSize;
+                    newChildIndex -= 4 * sign;
                     break;
                 case Direction.Front:
-                    childIndex += 1;
-                    newLocalPos[2] += halfSize;
+                    newChildIndex += 1 * sign;
                     break;
                 case Direction.Back:
-                    childIndex -= 1;
-                    newLocalPos[2] -= halfSize;
+                    newChildIndex -= 1 * sign;
+                    break;
+                default:
+                    throw new Exception("Unhandled enum case!");
+            }
+            return newChildIndex;
+        }
+
+        protected void DirectionToNewLocalAndGlobalPosition(Direction d, int oldChildIndex, out int[] localPos, out int[] globalPos)
+        {
+            localPos = children[oldChildIndex].GroupRelativeAnchorPosition;
+            globalPos = children[oldChildIndex].GroupAnchorPositionCopy;
+            switch (d)
+            {
+                case Direction.Right:
+                    localPos[0] += halfSize;
+                    globalPos[0] += halfSize;
+                    break;
+                case Direction.Left:
+                    localPos[0] -= halfSize;
+                    globalPos[0] -= halfSize;
+                    break;
+                case Direction.Up:
+                    localPos[1] += halfSize;
+                    globalPos[1] += halfSize;
+                    break;
+                case Direction.Down:
+                    localPos[1] -= halfSize;
+                    globalPos[1] -= halfSize;
+                    break;
+                case Direction.Front:
+                    localPos[2] += halfSize;
+                    globalPos[2] += halfSize;
+                    break;
+                case Direction.Back:
+                    localPos[2] -= halfSize;
+                    globalPos[2] -= halfSize;
                     break;
                 default:
                     throw new System.Exception("Unhandled enum case!");
@@ -144,26 +238,7 @@ namespace MarchingCubes
             return new int[] { GroupAnchorPosition[0] + shift[0], GroupAnchorPosition[1] + shift[1], GroupAnchorPosition[2] + shift[2] };
         }
 
-        public void AssignLeafInDirection(Direction d, int childIndex, T value, int depth)
-        {
-            if (HasDirectionAvailable(d, children[childIndex].GroupRelativeAnchorPosition))
-            {
-                int newChildIndex = childIndex;
-                if (depth == 0)
-                {
-                    DirectionToIndexAndPositionChange(d, ref newChildIndex, out int[] newLocalPos);
-                    children[newChildIndex] = GetLeaf(value, newChildIndex, AnchorPositonShift(newLocalPos), newLocalPos, sizePower - 1);
-                }
-                else
-                {
-                    if(children[childIndex] != null)
-                    {
-
-                    }
-                }
-            }
-        }
-
+      
         protected int GetIndexForLocalPosition(int[] position)
         {
             int result = 0;

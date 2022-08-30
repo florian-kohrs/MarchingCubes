@@ -43,6 +43,8 @@ namespace MarchingCubes
 
         public Vector3 Center => centerPosition;
 
+        protected override ChunkGroupTreeNode GetSelf => this;
+
         protected bool IsEmpty()
         {
             bool result = true;
@@ -76,14 +78,12 @@ namespace MarchingCubes
             }
         }
 
-
-
-        public override IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk> GetLeaf(CompressedMarchingCubeChunk leaf, int index, int[] anchor, int[] relAnchor, int sizePow)
+        public override ChunkGroupTreeLeaf GetLeaf(CompressedMarchingCubeChunk leaf, int index, int[] anchor, int[] relAnchor, int sizePow)
         {
             return new ChunkGroupTreeLeaf(this, leaf, index, anchor, relAnchor, sizePow);
         }
 
-        public override IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk> GetNode(int index, int[] anchor, int[] relAnchor, int sizePow)
+        public override ChunkGroupTreeNode GetNode(int index, int[] anchor, int[] relAnchor, int sizePow)
         {
             return new ChunkGroupTreeNode(this, anchor, relAnchor, index, sizePow);
         }
