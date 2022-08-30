@@ -26,6 +26,8 @@ namespace MarchingCubes
 
         int[] GroupAnchorPositionCopy { get; }
 
+        int[] GroupRelativeAnchorPositionCopy { get; }
+
         int[] GroupAnchorPosition { get; }
 
 

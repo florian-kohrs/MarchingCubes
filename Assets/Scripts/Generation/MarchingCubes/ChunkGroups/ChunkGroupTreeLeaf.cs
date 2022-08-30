@@ -13,8 +13,8 @@ namespace MarchingCubes
         //    Debug.Log("destroyed leaf");
         //}
 
-        public ChunkGroupTreeLeaf(ChunkGroupTreeNode parent, CompressedMarchingCubeChunk chunk, int index, int[] relativeAnchorPoint, int[] anchorPoint, int sizePower) 
-            : base(parent, chunk,index,relativeAnchorPoint,anchorPoint,sizePower)
+        public ChunkGroupTreeLeaf(ChunkGroupTreeNode parent, CompressedMarchingCubeChunk chunk, int index, int[] anchorPoint, int[] relativeAnchorPoint, int sizePower) 
+            : base(parent, chunk,index, anchorPoint, relativeAnchorPoint,sizePower)
         {
             chunk.AnchorPos = new Vector3Int(anchorPoint[0], anchorPoint[1],anchorPoint[2]);
             chunk.ChunkSizePower = sizePower;

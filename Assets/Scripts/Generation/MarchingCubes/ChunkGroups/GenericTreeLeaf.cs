@@ -16,7 +16,7 @@ namespace MarchingCubes
         {
         }
 
-        public GenericTreeLeaf(ParentTyp parent, T leaf, int index, int[] relativeAnchorPoint, int[] anchorPoint, int sizePower)
+        public GenericTreeLeaf(ParentTyp parent, T leaf, int index, int[] anchorPoint, int[] relativeAnchorPoint, int sizePower)
         {
             this.leaf = leaf;
             childIndex = index;
@@ -50,6 +50,11 @@ namespace MarchingCubes
 
         [Save]
         public int[] groupRelativeAnchorPosition;
+
+        public void AssignLeafInDirection(Direction d, T value)
+        {
+            parent.AssignLeafInDirection(d, childIndex, value, 0);
+        }
 
         public override int[] GroupRelativeAnchorPosition => groupRelativeAnchorPosition;
 

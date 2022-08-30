@@ -84,6 +84,86 @@ namespace MarchingCubes
             }
         }
 
+        protected bool HasDirectionAvailable(Direction d, int[] childLocalPosition)
+        {
+            switch (d)
+            {
+                case Direction.Right:
+                    return childLocalPosition[0] == 0;
+                case Direction.Left:
+                    return childLocalPosition[0] > 0;
+                case Direction.Up:
+                    return childLocalPosition[1] == 0;
+                case Direction.Down:
+                    return childLocalPosition[1] > 0;
+                case Direction.Front:
+                    return childLocalPosition[2] == 0;
+                case Direction.Back:
+                    return childLocalPosition[2] > 0;
+                default:
+                    throw new System.Exception("Unhandled enum case!");
+            } 
+        }
+
+        protected void DirectionToIndexAndPositionChange(Direction d, ref int childIndex, out int[] newLocalPos)
+        {
+            newLocalPos = children[childIndex].GroupRelativeAnchorPositionCopy;
+            switch (d)
+            {
+                case Direction.Right:
+                    childIndex += 2;
+                    newLocalPos[0] += halfSize;
+                    break;
+                case Direction.Left:
+                    childIndex -= 2;
+                    newLocalPos[0] -= halfSize;
+                    break;
+                case Direction.Up:
+                    childIndex += 4;
+                    newLocalPos[1] += halfSize;
+                    break;
+                case Direction.Down:
+                    childIndex -= 4;
+                    newLocalPos[1] -= halfSize;
+                    break;
+                case Direction.Front:
+                    childIndex += 1;
+                    newLocalPos[2] += halfSize;
+                    break;
+                case Direction.Back:
+                    childIndex -= 1;
+                    newLocalPos[2] -= halfSize;
+                    break;
+                default:
+                    throw new System.Exception("Unhandled enum case!");
+            }
+        }
+
+        protected int[] AnchorPositonShift(int[] shift)
+        {
+            return new int[] { GroupAnchorPosition[0] + shift[0], GroupAnchorPosition[1] + shift[1], GroupAnchorPosition[2] + shift[2] };
+        }
+
+        public void AssignLeafInDirection(Direction d, int childIndex, T value, int depth)
+        {
+            if (HasDirectionAvailable(d, children[childIndex].GroupRelativeAnchorPosition))
+            {
+                int newChildIndex = childIndex;
+                if (depth == 0)
+                {
+                    DirectionToIndexAndPositionChange(d, ref newChildIndex, out int[] newLocalPos);
+                    children[newChildIndex] = GetLeaf(value, newChildIndex, AnchorPositonShift(newLocalPos), newLocalPos, sizePower - 1);
+                }
+                else
+                {
+                    if(children[childIndex] != null)
+                    {
+
+                    }
+                }
+            }
+        }
+
         protected int GetIndexForLocalPosition(int[] position)
         {
             int result = 0;
@@ -185,7 +265,7 @@ namespace MarchingCubes
                 int[] childAnchorPosition;
                 int[] childRelativeAnchorPosition;
                 GetAnchorPositionForChunkAt(relativePosition, out childAnchorPosition, out childRelativeAnchorPosition);
-                children[childIndex] = GetLeaf(chunk, childIndex, childRelativeAnchorPosition, childAnchorPosition, sizePower - 1);
+                children[childIndex] = GetLeaf(chunk, childIndex, childAnchorPosition, childRelativeAnchorPosition, sizePower - 1);
             }
             else
             {
@@ -196,7 +276,7 @@ namespace MarchingCubes
 
         public void OverrideChildAtLocalIndex(int index, T chunk)
         {
-            children[index] = GetLeaf(chunk, index, children[index].GroupRelativeAnchorPosition, children[index].GroupAnchorPosition, sizePower - 1);
+            children[index] = GetLeaf(chunk, index, children[index].GroupAnchorPosition, children[index].GroupRelativeAnchorPosition, sizePower - 1);
         }
 
         public void SetLeafAtLocalIndex(int index, T chunk)
@@ -208,7 +288,7 @@ namespace MarchingCubes
                 relativePosition[2] + GroupAnchorPosition[2]
             };
 
-            children[index] = GetLeaf(chunk, index, relativePosition, anchorPos, sizePower - 1);
+            children[index] = GetLeaf(chunk, index, anchorPos, relativePosition, sizePower - 1);
         }
 
         protected Node GetOrCreateChildAt(int index, int[] relativePosition, bool allowOverride)

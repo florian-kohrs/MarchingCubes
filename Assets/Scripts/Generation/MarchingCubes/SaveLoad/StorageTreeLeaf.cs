@@ -11,7 +11,7 @@ namespace MarchingCubes
 
         public StorageTreeLeaf() { }
 
-        public StorageTreeLeaf(StorageTreeNode parent, StoredChunkEdits leaf, int index, int[] relativeAnchorPoint, int[] anchorPoint, int sizePower) : base(parent, leaf, index, relativeAnchorPoint, anchorPoint, sizePower)
+        public StorageTreeLeaf(StorageTreeNode parent, StoredChunkEdits leaf, int index, int[] anchorPoint, int[] relativeAnchorPoint, int sizePower) : base(parent, leaf, index, anchorPoint, relativeAnchorPoint, sizePower)
         {
             leaf.leaf = this;
         }
