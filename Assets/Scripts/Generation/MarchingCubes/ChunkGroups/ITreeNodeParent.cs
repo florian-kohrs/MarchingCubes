@@ -7,8 +7,6 @@ namespace MarchingCubes
     public interface ITreeNodeParent<T>
     {
 
-        T[] GetLeafs();
-
         int[] GroupRelativeAnchorPosition { get; }
 
         int[] GroupAnchorPosition { get; }

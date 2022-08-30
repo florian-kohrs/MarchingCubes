@@ -7,20 +7,21 @@ namespace MarchingCubes
 {
 
     [Serializable]
-    public class StorageGroupMesh : GroupMesh<StorageTreeRoot, StoredChunkEdits, StorageTreeLeaf, IStorageGroupOrganizer<StoredChunkEdits>>
+    public class StorageGroupMesh : GroupMesh<StorageTreeNode, StoredChunkEdits, StorageTreeLeaf, IStorageGroupOrganizer<StoredChunkEdits>>
     {
 
         public StorageGroupMesh(int groupSize) : base(groupSize) { }
 
-        protected override StorageTreeRoot CreateKey(Vector3Int coord)
+        protected override StorageTreeNode CreateKey(Vector3Int coord)
         {
-            return new StorageTreeRoot(new int[] {coord.x, coord.y, coord.z}, GROUP_SIZE);
+            int[] nodeCoord = VectorExtension.ToArray(coord);
+            return new StorageTreeNode(null, nodeCoord, nodeCoord,0, GROUP_SIZE);
         }
 
         //TODO: Has to mark mipmaps dirty if any child changes!
         public bool TryGetMipMapAt(Vector3Int pos, int sizePower, out float[] storedNoise, out bool isMipMapComplete)
         {
-            if (TryGetGroupAt(pos, out StorageTreeRoot chunkGroup))
+            if (TryGetGroupAt(pos, out StorageTreeNode chunkGroup))
             {
                 return chunkGroup.TryGetMipMapOfChunkSizePower(new int[] { pos.x, pos.y, pos.z }, sizePower, out storedNoise, out isMipMapComplete);
             }
@@ -45,11 +46,11 @@ namespace MarchingCubes
             if (!TryGetGroupItemAt(VectorExtension.ToArray(anchorPos), out edits) || overrideNoise)
             {
                 edits = new StoredChunkEdits();
-                StorageTreeRoot r = GetOrCreateGroupAtCoordinate(PositionToGroupCoord(anchorPos));
+                StorageTreeNode r = GetOrCreateGroupAtCoordinate(PositionToGroupCoord(anchorPos));
 
                 chunk.StoreChunk(edits);
 
-                r.SetLeafAtPosition(anchorPos, edits, true);
+                r.SetLeafAtLocalPosition(VectorExtension.ToArray(anchorPos), edits, true);
                 //call all instantiableData from chunk that need to be stored
                 //(everything not depending on triangles only, e.g trees )
             }

@@ -16,7 +16,7 @@ namespace MarchingCubes
         int[] GroupRelativeAnchorPosition { get; }
 
         bool TryGetLeafAtLocalPosition(int[] pos, out T chunk);
-
+        
         bool HasChunkAtLocalPosition(int[] pos);
 
 
@@ -29,6 +29,7 @@ namespace MarchingCubes
         int[] GroupAnchorPositionCopy { get; }
 
         int[] GroupAnchorPosition { get; }
+
 
 
     }

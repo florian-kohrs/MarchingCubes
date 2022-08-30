@@ -7,7 +7,7 @@ namespace MarchingCubes
 {
 
     [System.Serializable]
-    public class StorageTreeNode : GenericTreeNode<StoredChunkEdits, IStorageGroupOrganizer<StoredChunkEdits>, IStorageGroupOrganizer<StoredChunkEdits>>, IStorageGroupOrganizer<StoredChunkEdits>
+    public class StorageTreeNode : GenericTreeNode<StoredChunkEdits, IStorageGroupOrganizer<StoredChunkEdits>, IStorageGroupOrganizer<StoredChunkEdits>, StorageTreeNode>, IStorageGroupOrganizer<StoredChunkEdits>
     {
 
         public static float NON_SET_NOISE_VALUE = -9999;
@@ -22,13 +22,12 @@ namespace MarchingCubes
         public StorageTreeNode() { }
 
         public StorageTreeNode(
-            IStorageGroupOrganizer<StoredChunkEdits> parent,
+            StorageTreeNode parent,
             int[] anchorPosition,
             int[] relativeAnchorPosition,
             int index,
-            int sizePower) : base(anchorPosition, relativeAnchorPosition, index, sizePower)
+            int sizePower) : base(parent, anchorPosition, relativeAnchorPosition, index, sizePower)
         {
-            this.parent = parent;
         }
 
         //mark dirty when childs noise changes
@@ -191,11 +190,6 @@ namespace MarchingCubes
         public override IStorageGroupOrganizer<StoredChunkEdits> GetLeaf(StoredChunkEdits leaf, int index, int[] anchor, int[] relAnchor, int sizePow)
         {
             return new StorageTreeLeaf(this,leaf, index, anchor, relAnchor,sizePow);
-        }
-
-        public override IStorageGroupOrganizer<StoredChunkEdits>[] GetLeafs()
-        {
-            return children;
         }
 
         public override IStorageGroupOrganizer<StoredChunkEdits> GetNode(int index, int[] anchor, int[] relAnchor, int sizePow)

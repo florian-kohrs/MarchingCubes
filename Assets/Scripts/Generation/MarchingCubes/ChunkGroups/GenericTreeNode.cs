@@ -9,25 +9,33 @@ namespace MarchingCubes
 
 
     [System.Serializable]
-    public abstract class GenericTreeNode<T, Node, Leaf> : BaseChunkGroupOrganizer<T>, ITreeNodeParent<Leaf> 
+    public abstract class GenericTreeNode<T, Node, Leaf, Self> : BaseChunkGroupOrganizer<T>, ITreeNodeParent<Leaf> 
         where Node : IChunkGroupOrganizer<T>
-        where T : ISizeManager 
+        where T : ISizeManager
+        where Self : GenericTreeNode<T, Node, Leaf, Self>
     {
 
         public GenericTreeNode() { }
 
         public GenericTreeNode(
+        Self parent,
         int[] anchorPosition,
         int[] relativeAnchorPosition,
         int index,
         int sizePower)
         {
+            this.parent = parent;
             this.index = index;
             this.sizePower = sizePower;
             halfSize = (int)Mathf.Pow(2, sizePower) / 2;
             GroupAnchorPosition = anchorPosition;
             groupRelativeAnchorPosition = relativeAnchorPosition;
         }
+
+        [Save]
+        private Self parent;
+
+        public Self Parent => parent;
 
         public override bool IsLeaf => false;
 
@@ -51,6 +59,7 @@ namespace MarchingCubes
 
         public override int[] GroupRelativeAnchorPosition => groupRelativeAnchorPosition;
 
+        public bool IsRoot => parent == null;
 
         protected const int topLeftBack = 0;
         protected const int topLeftFront = 1;
@@ -249,8 +258,6 @@ namespace MarchingCubes
 
             return (child == null && (child is Leaf || child.HasChunkAtLocalPosition(relativePosition)));
         }
-
-        public abstract Leaf[] GetLeafs();
 
     }
 }

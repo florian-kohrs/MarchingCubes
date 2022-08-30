@@ -24,7 +24,7 @@ namespace MarchingCubes
         /// <summary>
         /// Check this hashset for chunks to disable or delete altogether
         /// </summary>
-        protected HashSet<ChunkGroupRoot> chunkGroupTreeRoots = new HashSet<ChunkGroupRoot>();
+        protected HashSet<ChunkGroupTreeNode> chunkGroupTreeRoots = new HashSet<ChunkGroupTreeNode>();
 
         protected Stopwatch watch = new Stopwatch();
 
@@ -33,7 +33,7 @@ namespace MarchingCubes
             instance.RegisterLockedInHashset(instance.chunkGroupNodes[index], node, instance.mutexLockNodes);
         }
 
-        public static void RegisterChunkRoot(ChunkGroupRoot root)
+        public static void RegisterChunkRoot(ChunkGroupTreeNode root)
         {
             instance.RegisterLockedInHashset(instance.chunkGroupTreeRoots, root, instance.mutexLockRoots);
         }
@@ -48,7 +48,7 @@ namespace MarchingCubes
             instance.RemoveLockedInHashset(instance.chunkGroupNodes[index], node, instance.mutexLockNodes);
         }
 
-        public static void RemoveChunkRoot(ChunkGroupRoot root)
+        public static void RemoveChunkRoot(ChunkGroupTreeNode root)
         {
             instance.RemoveLockedInHashset(instance.chunkGroupTreeRoots, root, instance.mutexLockRoots);
         }
@@ -82,8 +82,8 @@ namespace MarchingCubes
 
         public Vector3 playerPos;
 
-        protected Stack<ChunkGroupRoot> destroySet;
-        protected Stack<ChunkGroupRoot> deactivateSet;
+        protected Stack<ChunkGroupTreeNode> destroySet;
+        protected Stack<ChunkGroupTreeNode> deactivateSet;
         protected Stack<ChunkGroupTreeNode> mergeSet;
         protected Stack<ChunkSplitExchange> splitSet;
 
@@ -117,7 +117,7 @@ namespace MarchingCubes
             }
         }
 
-        public ChunkUpdateRoutine(Stack<ChunkGroupRoot> destroySet, Stack<ChunkGroupRoot> deactivateSet, Stack<ChunkGroupTreeNode> mergeSet, Stack<ChunkSplitExchange> splitSet, ChunkUpdateValues updateValues)
+        public ChunkUpdateRoutine(Stack<ChunkGroupTreeNode> destroySet, Stack<ChunkGroupTreeNode> deactivateSet, Stack<ChunkGroupTreeNode> mergeSet, Stack<ChunkSplitExchange> splitSet, ChunkUpdateValues updateValues)
         {
             if (instance != null)
                 throw new System.Exception("There can be only one " + nameof(ChunkUpdateRoutine));

@@ -5,26 +5,34 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public class ChunkGroupTreeNode : GenericTreeNode<CompressedMarchingCubeChunk, IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk>, ChunkGroupTreeLeaf>, IChunkGroupParent<ChunkGroupTreeLeaf>, IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk>, IRegisterableNode
+    public class ChunkGroupTreeNode : GenericTreeNode<CompressedMarchingCubeChunk, IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk>, ChunkGroupTreeLeaf, ChunkGroupTreeNode>, IChunkGroupParent<ChunkGroupTreeLeaf>, IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk>, IRegisterableNode
     {
 
         public ChunkGroupTreeNode(
+            ChunkGroupTreeNode parent,
             int[] anchorPosition,
             int[] relativeAnchorPosition,
             int index,
-            IChunkGroupOrganizer<CompressedMarchingCubeChunk> parent,
-            int sizePower) : base(anchorPosition, relativeAnchorPosition, index, sizePower)
+            int sizePower) : base(parent, anchorPosition, relativeAnchorPosition, index, sizePower)
         {
-            this.parent = parent;
-            int sizeHalf = (int)Mathf.Pow(2, sizePower) / 2;
-            centerPosition = new Vector3(anchorPosition[0] + sizeHalf, anchorPosition[1] + sizeHalf, anchorPosition[2] + sizeHalf);
+            centerPosition = new Vector3(anchorPosition[0] + halfSize, anchorPosition[1] + halfSize, anchorPosition[2] + halfSize);
             if (!MarchingCubeChunkHandler.InitialWorldBuildingDone) Register();
         }
 
 
-        protected IChunkGroupOrganizer<CompressedMarchingCubeChunk> parent;
+        public bool ChanneledForDestruction { get; private set; }
+       
+        public bool ChanneledForDeactivation { get; private set; }
 
-        public IChunkGroupOrganizer<CompressedMarchingCubeChunk> Parent => parent;
+        public void SetChannelChunkForDeactivation()
+        {
+            ChanneledForDeactivation = true;
+        }
+
+        public void SetChannelChunkForDestruction()
+        {
+            ChanneledForDestruction = true;
+        }
 
         protected const int CHILD_COUNT = 8;
 
@@ -82,19 +90,6 @@ namespace MarchingCubes
 
 
 
-        public override ChunkGroupTreeLeaf[] GetLeafs()
-        {
-            //if(AreAllChildrenLeafs())
-            {
-                ChunkGroupTreeLeaf[] result = new ChunkGroupTreeLeaf[8];
-                for (int i = 0; i < CHILD_COUNT; i++)
-                {
-                    result[i] = ((ChunkGroupTreeLeaf)children[i]);
-                }
-                return result;
-            }
-        }
-
         public override IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk> GetLeaf(CompressedMarchingCubeChunk leaf, int index, int[] anchor, int[] relAnchor, int sizePow)
         {
             return new ChunkGroupTreeLeaf(this, leaf, index, anchor, relAnchor, sizePow);
@@ -102,7 +97,7 @@ namespace MarchingCubes
 
         public override IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk> GetNode(int index, int[] anchor, int[] relAnchor, int sizePow)
         {
-            return new ChunkGroupTreeNode(anchor, relAnchor, index, this, sizePow);
+            return new ChunkGroupTreeNode(this, anchor, relAnchor, index, sizePow);
         }
 
         public void DestroyBranch()
@@ -159,11 +154,11 @@ namespace MarchingCubes
                 relativePosition[1] + GroupAnchorPosition[1],
                 relativePosition[2] + GroupAnchorPosition[2]
                 };
-                newNode = new ChunkGroupTreeNode(anchorPos, relativePosition, index, this, SizePower - 1);
+                newNode = new ChunkGroupTreeNode(this, anchorPos, relativePosition, index, SizePower - 1);
             }
             else
             {
-                newNode = new ChunkGroupTreeNode(oldLeaf.GroupAnchorPositionCopy, oldLeaf.GroupRelativeAnchorPosition, index, this, SizePower-1);
+                newNode = new ChunkGroupTreeNode(this, oldLeaf.GroupAnchorPositionCopy, oldLeaf.GroupRelativeAnchorPosition, index, SizePower-1);
             }
             children[index] = newNode;
             newNodes.Add(newNode);
@@ -185,7 +180,10 @@ namespace MarchingCubes
 
         public void Register()
         {
-            ChunkUpdateRoutine.RegisterChunkNode(RegisterIndex, this);
+            if(IsRoot)
+                ChunkUpdateRoutine.RegisterChunkRoot(this);
+            else
+                ChunkUpdateRoutine.RegisterChunkNode(RegisterIndex, this);
         }
 
     }

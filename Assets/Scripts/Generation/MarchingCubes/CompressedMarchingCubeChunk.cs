@@ -198,7 +198,10 @@ namespace MarchingCubes
         public int ChunkSizePower
         {
             get => chunkSizePower;
-            set { chunkSizePower = value; ChunkSize = (int)Mathf.Pow(2, chunkSizePower); }
+            set { 
+                chunkSizePower = value; 
+                ChunkSize = (int)Mathf.Pow(2, chunkSizePower); 
+            }
         }
 
         public virtual bool UseCollider => false;

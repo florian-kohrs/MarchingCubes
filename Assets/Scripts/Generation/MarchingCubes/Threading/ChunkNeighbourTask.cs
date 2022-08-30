@@ -49,6 +49,7 @@ namespace MarchingCubes
             }
         }
 
+        
         protected void SetNeighbourAt(float x, float y, float z)
         {
             if (x == 0)

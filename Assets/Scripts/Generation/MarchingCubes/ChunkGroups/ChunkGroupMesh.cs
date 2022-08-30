@@ -4,15 +4,16 @@ using UnityEngine;
 
 namespace MarchingCubes
 {
-    public class ChunkGroupMesh : GroupMesh<ChunkGroupRoot, CompressedMarchingCubeChunk, ChunkGroupTreeLeaf, IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk>>
+    public class ChunkGroupMesh : GroupMesh<ChunkGroupTreeNode, CompressedMarchingCubeChunk, ChunkGroupTreeLeaf, IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk>>
     {
 
         public ChunkGroupMesh(int groupSize) : base(groupSize) { }
 
 
-        protected override ChunkGroupRoot CreateKey(Vector3Int coord)
+        protected override ChunkGroupTreeNode CreateKey(Vector3Int coord)
         {
-            return new ChunkGroupRoot(new int[] { coord.x, coord.y, coord.z }, GROUP_SIZE);
+            int[] chunkCoord = new int[] { coord.x, coord.y, coord.z };
+            return new ChunkGroupTreeNode(null, chunkCoord, chunkCoord, 0, GROUP_SIZE_POWER);
         }
 
 
@@ -22,6 +23,11 @@ namespace MarchingCubes
         }
 
         public bool HasChunkStartedAt(int[] p)
+        {
+            return TryGetGroupItemAt(p, out CompressedMarchingCubeChunk chunk) && chunk.HasStarted;
+        }
+
+        public bool HasLeafAtGlobalPosition(int[] p)
         {
             return TryGetGroupItemAt(p, out CompressedMarchingCubeChunk chunk) && chunk.HasStarted;
         }

@@ -52,8 +52,8 @@ namespace MarchingCubes
 
         protected Stack<ChunkInitializeTask> chunksToInitialize = new Stack<ChunkInitializeTask>();
 
-        protected Stack<ChunkGroupRoot> destroyRoots;
-        protected Stack<ChunkGroupRoot> deactivateRoots;
+        protected Stack<ChunkGroupTreeNode> destroyRoots;
+        protected Stack<ChunkGroupTreeNode> deactivateRoots;
         protected Stack<ChunkGroupTreeNode> mergeSet;
         protected Stack<ChunkSplitExchange> splitSet;
 
@@ -66,8 +66,8 @@ namespace MarchingCubes
 
         public void InitializeUpdateRoutine(ChunkUpdateValues updateValues)
         {
-            destroyRoots = new Stack<ChunkGroupRoot>();
-            deactivateRoots = new Stack<ChunkGroupRoot>();
+            destroyRoots = new Stack<ChunkGroupTreeNode>();
+            deactivateRoots = new Stack<ChunkGroupTreeNode>();
             mergeSet = new Stack<ChunkGroupTreeNode>();
             splitSet = new Stack<ChunkSplitExchange>();
             updateRoutine = new ChunkUpdateRoutine(deactivateRoots, deactivateRoots, mergeSet, splitSet, updateValues);

@@ -7,14 +7,19 @@ namespace MarchingCubes
 {
 
     [System.Serializable]
-    public abstract class GroupMesh<Key, T, Leaf, Child> where Key : GenericTreeRoot<T, Leaf, Child> where T : ISizeManager where Child : IChunkGroupOrganizer<T>
+    public abstract class GroupMesh<Key, T, Leaf, Child> 
+        where Key : IChunkGroupOrganizer<T>
+        where T : ISizeManager 
+        where Child : IChunkGroupOrganizer<T>
     {
 
-        public GroupMesh(int groupSize)
+        public GroupMesh(int groupSizePower)
         {
-            GROUP_SIZE = groupSize;
+            GROUP_SIZE_POWER = groupSizePower;
+            GROUP_SIZE = (int)Mathf.Pow(2, groupSizePower);
         }
 
+        public readonly int GROUP_SIZE_POWER;
         public readonly int GROUP_SIZE;
 
         public Dictionary<Serializable3DIntVector, Key> storageGroups = new Dictionary<Serializable3DIntVector, Key>();
@@ -27,7 +32,7 @@ namespace MarchingCubes
             Vector3Int coord = PositionToGroupCoord(pos);
             if (storageGroups.TryGetValue(coord, out Key group))
             {
-                if (group.TryGetLeafAtGlobalPosition(pos, out result))
+                if (group.TryGetLeafAtLocalPosition(pos, out result))
                 {
                     return true;
                 }
@@ -38,14 +43,25 @@ namespace MarchingCubes
 
         protected Key CreateGroupAtCoordinate(Vector3Int coord)
         {
-            Key group = CreateKey(coord);
+            Key group = CreateKey(GROUP_SIZE * coord);
             storageGroups.Add(coord, group);
             return group;
         }
 
+        public void SetValueAtGlobalPosition(Vector3Int position, T value, bool allowOverride)
+        {
+            int[] input = VectorExtension.ToArray(position);
+            SetValueAtGlobalPosition(input, value, allowOverride);
+        }
+
+        public void SetValueAtGlobalPosition(int[] position, T value, bool allowOverride)
+        {
+            GetOrCreateGroupAtGlobalPosition(position).SetLeafAtLocalPosition(position, value, allowOverride);
+        }
+
         public bool HasGroupItemAt(int[] p)
         {
-            return TryGetGroupItemAt(p, out T _);
+            return TryGetGroupItemAt(p, out _);
         }
 
         public Key GetOrCreateGroupAtGlobalPosition(int[] pos)

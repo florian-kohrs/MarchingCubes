@@ -7,8 +7,6 @@ using System.Threading;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Rendering;
-using IChunkGroupRoot = MarchingCubes.IChunkGroupRoot<MarchingCubes.CompressedMarchingCubeChunk>;
-using StorageGroup = MarchingCubes.GroupMesh<MarchingCubes.StorageTreeRoot, MarchingCubes.StoredChunkEdits, MarchingCubes.StorageTreeLeaf, MarchingCubes.IStorageGroupOrganizer<MarchingCubes.StoredChunkEdits>>;
 
 
 namespace MarchingCubes
@@ -67,10 +65,10 @@ namespace MarchingCubes
         public const int MAX_TRIANGLES_IN_CHUNK = VOXELS_IN_DEFAULT_SIZED_CHUNK * 2;
 
 
-        protected ChunkGroupMesh chunkGroup = new ChunkGroupMesh(CHUNK_GROUP_SIZE);
+        protected ChunkGroupMesh chunkGroup = new ChunkGroupMesh(CHUNK_GROUP_SIZE_POWER + 1);
 
         [Save]
-        protected StorageGroupMesh storageGroup = new StorageGroupMesh(STORAGE_GROUP_SIZE);
+        protected StorageGroupMesh storageGroup = new StorageGroupMesh(STORAGE_GROUP_SIZE_POWER + 1);
 
         protected float[] storedNoiseData;
 
@@ -703,12 +701,11 @@ namespace MarchingCubes
 
         protected CompressedMarchingCubeChunk GetChunkObjectAt(CompressedMarchingCubeChunk chunk, Vector3Int position, int lodPower, int chunkSizePower, bool allowOverride)
         {
-            ChunkGroupRoot chunkGroupRoot = chunkGroup.GetOrCreateGroupAtGlobalPosition(VectorExtension.ToArray(position));
             chunk.ChunkSizePower = chunkSizePower;
             chunk.LODPower = lodPower;
             InitializeNonEmptyChunk(chunk);
 
-            chunkGroupRoot.SetLeafAtPosition(new int[] { position.x, position.y, position.z }, chunk, allowOverride);
+            chunkGroup.SetValueAtGlobalPosition(position, chunk, allowOverride);
 
             return chunk;
         }
@@ -748,9 +745,7 @@ namespace MarchingCubes
 
         public void BuildEmptyChunkAt(Vector3Int pos)
         {
-            int[] posArray = VectorExtension.ToArray(pos);
-            ChunkGroupRoot chunkGroupRoot = chunkGroup.GetOrCreateGroupAtGlobalPosition(posArray);
-            if (!chunkGroupRoot.HasLeafAtGlobalPosition(posArray))
+            if (!chunkGroup.HasGroupItemAt(VectorExtension.ToArray(pos)))
             {
                 CompressedMarchingCubeChunk chunk = new CompressedMarchingCubeChunk();
                 chunk.ChunkHandler = this;
@@ -760,8 +755,7 @@ namespace MarchingCubes
 
                 chunk.IsSpawner = true;
 
-                chunkGroupRoot.SetLeafAtPosition(new int[] { pos.x, pos.y, pos.z }, chunk, false);
-
+                chunkGroup.SetValueAtGlobalPosition(VectorExtension.ToArray(pos), chunk, false);
             }
         }
 
