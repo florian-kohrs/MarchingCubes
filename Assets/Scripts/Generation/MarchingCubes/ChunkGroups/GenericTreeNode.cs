@@ -5,6 +5,9 @@ using UnityEngine;
 namespace MarchingCubes
 {
 
+    public enum Direction { Right = 0, Left = 1, Up = 2, Down = 3, Front = 4, Back = 5 }
+
+
     [System.Serializable]
     public abstract class GenericTreeNode<T, Node, Leaf> : BaseChunkGroupOrganizer<T>, ITreeNodeParent<Leaf> 
         where Node : IChunkGroupOrganizer<T>
