@@ -121,7 +121,7 @@ namespace MarchingCubes
 
         protected Vector3 StartPos => new Vector3(0,noiseData.radius,0);
 
-        public int buildAroundDistance = 2;
+        public int buildAroundDistance = 4000;
 
         protected long buildAroundSqrDistance;
 
@@ -266,8 +266,8 @@ namespace MarchingCubes
             float distThreshold = 1.1f;
             float chunkDeactivateDist = buildAroundDistance * distThreshold;
             float chunkDestroyDistance = chunkDeactivateDist + CHUNK_GROUP_SIZE;
-            updateValues = new ChunkUpdateValues(500, chunkDeactivateDist, chunkDestroyDistance,
-                new float[] { 250, 500, 1000, 1750, 3000 }, 1.1f);
+            updateValues = new ChunkUpdateValues(500, chunkDestroyDistance,
+                new float[] { 250, 500, 1000, 1750, 3000, chunkDeactivateDist }, 1.1f);
             worldUpdater.InitializeUpdateRoutine(updateValues);
         }
 

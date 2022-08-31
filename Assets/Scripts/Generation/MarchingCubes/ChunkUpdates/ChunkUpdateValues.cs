@@ -4,20 +4,19 @@ using UnityEngine;
 
 public class ChunkUpdateValues
 {
-    public ChunkUpdateValues(int chunkCheckIntervalInMs, float deactivateDistance, float destroyDistance,
+    public ChunkUpdateValues(int chunkCheckIntervalInMs, float destroyDistance,
         float[] centerLodDistance, float mergeSplitDistanceScale)
     {
-        UpdateValues(chunkCheckIntervalInMs, deactivateDistance, destroyDistance, centerLodDistance, mergeSplitDistanceScale);
+        UpdateValues(chunkCheckIntervalInMs, destroyDistance, centerLodDistance, mergeSplitDistanceScale);
     }
 
 
-    public void UpdateValues(int chunkCheckIntervalInMs, float deactivateDistance, float destroyDistance,
+    public void UpdateValues(int chunkCheckIntervalInMs, float destroyDistance,
         float[] centerLodDistance, float mergeSplitDistanceScale)
     {
         mergeSplitDistanceScale = Mathf.Max(1.1f, mergeSplitDistanceScale);
 
         this.chunkCheckIntervalInMs = chunkCheckIntervalInMs;
-        sqrDeactivateDistance = deactivateDistance * deactivateDistance;
         sqrDestroyDistance = destroyDistance * destroyDistance;
         float[] mergeDistanceRequirement = new float[centerLodDistance.Length];
         float[] splitDistanceRequirement = new float[centerLodDistance.Length];
@@ -81,14 +80,12 @@ public class ChunkUpdateValues
     protected int chunkCheckIntervalInMs = 500;
     public int ChunkCheckIntervalInMs => chunkCheckIntervalInMs;
 
-    private float sqrDeactivateDistance;
     private float sqrDestroyDistance;
 
     public float[] sqrMergeDistanceRequirement;
     public float[] sqrSplitDistanceRequirement;
     public float[] sqrCenterDistanceRequirement;
 
-    public float SqrDeactivateDistance => sqrDeactivateDistance;
     public float SqrDestroyDistance => sqrDestroyDistance;
 
 }

@@ -161,6 +161,7 @@ namespace MarchingCubes
             }
         }
 
+       
 
         protected Vector3 GetDirectionFromIndex(int index)
         {

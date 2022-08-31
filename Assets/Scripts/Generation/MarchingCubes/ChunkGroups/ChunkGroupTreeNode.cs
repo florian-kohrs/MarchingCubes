@@ -44,6 +44,13 @@ namespace MarchingCubes
         public void SetChannelChunkForDeactivation()
         {
             ChanneledForDeactivation = true;
+            ChunkUpdateRoutine.MoveRootToDeactivation(this);
+        }
+
+        public void SetChannelChunkForReactivation()
+        {
+            ChanneledForDeactivation = false;
+            ChunkUpdateRoutine.MoveRootToActivation(this);
         }
 
         public void SetChannelChunkForDestruction()
