@@ -15,10 +15,27 @@ namespace MarchingCubes
             int index,
             int sizePower) : base(parent, anchorPosition, relativeAnchorPosition, index, sizePower)
         {
-            centerPosition = new Vector3(anchorPosition[0] + halfSize, anchorPosition[1] + halfSize, anchorPosition[2] + halfSize);
+            Initialize();
+        }
+
+        public ChunkGroupTreeNode(
+            ChunkGroupMesh mesh,
+            int[] anchorPosition,
+            int[] relativeAnchorPosition,
+            int index,
+            int sizePower) : base(null, anchorPosition, relativeAnchorPosition, index, sizePower)
+        {
+            this.mesh = mesh;
+            Initialize();
+        }
+
+        protected void Initialize()
+        {
+            centerPosition = new Vector3(GroupAnchorPosition[0] + halfSize, GroupAnchorPosition[1] + halfSize, GroupAnchorPosition[2] + halfSize);
             if (!MarchingCubeChunkHandler.InitialWorldBuildingDone) Register();
         }
 
+        protected ChunkGroupMesh mesh;
 
         public bool ChanneledForDestruction { get; private set; }
        
@@ -37,7 +54,8 @@ namespace MarchingCubes
         protected const int CHILD_COUNT = 8;
 
         protected int RegisterIndex => LodPower - 1;
-        protected int LodPower => sizePower - MarchingCubeChunkHandler.DEFAULT_CHUNK_SIZE_POWER;
+        
+        public int LodPower => sizePower - MarchingCubeChunkHandler.DEFAULT_CHUNK_SIZE_POWER;
 
         protected Vector3 centerPosition;
 
@@ -53,6 +71,121 @@ namespace MarchingCubes
                 result = children[i] == null
                     || ((children[i] is ChunkGroupTreeNode n)
                     && n.IsEmpty());
+            }
+            return result;
+        }
+
+        public Vector3 GetChildCenterPositionAtIndex(int index)
+        {
+            return Center + GetDirectionFromIndex(index) * halfSize;
+        }
+
+
+        public bool TryGetEmptyLeafParentInDirection(Direction d, Stack<int> childIndices, out ChunkGroupTreeNode parent)
+        {
+            int childIndex = childIndices.Pop();
+            int depth = childIndices.Count;
+            if (HasDirectionAvailable(d, children[childIndex].GroupRelativeAnchorPosition))
+            {
+                int newChildIndex = DirectionToNewChildIndex(d, childIndex, 1);
+                parent = GetSelf;
+                if (depth == 0)
+                {
+                    childIndices.Push(newChildIndex);
+                    return !HasChildAtIndex(childIndex);
+                }
+                else
+                {
+                    var child = children[newChildIndex];
+                    if (child is ChunkGroupTreeNode node)
+                    {
+                        return node.TryGetEmptyLeafParentInDirection(d, childIndices, out parent);
+                    }
+                    else
+                    {
+                        childIndices.Push(newChildIndex);
+                        childIndices.Push(childIndex);
+                        return child == null;
+                    }
+                }
+            }
+            else
+            {
+                if (IsRoot)
+                {
+                    if(mesh.TryGetNodeInDirection(this,d, out ChunkGroupTreeNode neighbour))
+                    {
+                        int oldSwappedChildIndex = DirectionToNewChildIndex(d, childIndex, -1);
+                        childIndices.Push(oldSwappedChildIndex);
+                        return neighbour.TryGetEmptyLeafParentInDirection(d,childIndices, out parent);
+                    }
+                    else
+                    {
+                        ///neighbour doesnt exist yet and since this runs
+                        ///async it isnt allowed to create anything
+                        ///continue on main thread
+                        childIndices.Push(childIndex);
+                        parent = GetSelf;
+                        return true;
+                    }
+                }
+                else
+                {
+                    int oldSwappedChildIndex = DirectionToNewChildIndex(d, childIndex, -1);
+                    childIndices.Push(oldSwappedChildIndex);
+                    childIndices.Push(index);
+                    return Parent.TryGetEmptyLeafParentInDirection(d, childIndices, out parent);
+                }
+            }
+        }
+
+        public bool ContinueFollowPathBuildingNodesToEmptyLeafPosition(Direction d, Stack<int> childIndices, out ChunkGroupTreeNode lastValidParent, out int lastChildIndex)
+        {
+            int previousChildIndex = childIndices.Pop();
+            if (HasDirectionAvailable(d, children[previousChildIndex].GroupRelativeAnchorPosition))
+            {
+                return FollowPathBuildingNodesToEmptyLeafPosition(d, childIndices, out lastValidParent, out lastChildIndex);
+            }
+            else
+            {
+                ChunkGroupTreeNode neighbour = mesh.GetOrCreateNodeInDirection(this, d);
+                int oldSwappedChildIndex = DirectionToNewChildIndex(d, previousChildIndex, -1);
+                childIndices.Push(oldSwappedChildIndex);
+                return neighbour.FollowPathBuildingNodesToEmptyLeafPosition(d, childIndices, out lastValidParent, out lastChildIndex);
+            }
+        }
+
+        protected bool FollowPathBuildingNodesToEmptyLeafPosition(Direction d, Stack<int> childIndices, out ChunkGroupTreeNode lastValidParent, out int nextChildIndex)
+        {
+            bool result;
+            nextChildIndex = childIndices.Pop();
+            bool shouldChildBeSplitAgain = !HasLeafAtIndex(nextChildIndex) && RegisterIndex > 0 && ChunkUpdateRoutine.HasLowerLodPowerAs(GetChildCenterPositionAtIndex(nextChildIndex), LodPower - 1);
+            if (!shouldChildBeSplitAgain)
+            {
+                lastValidParent = this;
+                result = !HasChildAtIndex(nextChildIndex);
+            }
+            else
+            {
+                if(childIndices.Count == 0)
+                {
+                    Debug.Log("Denied placement due to new childs position couldnt be determined." +
+                        "Another child should be able to spawn this child tho.");
+                    lastValidParent = null;
+                    result = false;
+                    ///doesnt have enough information to continue
+                    ///there must(?) exist another neighbour of this chunk which has a lower lod 
+                }
+                else 
+                {
+                    if (children[nextChildIndex] == null)
+                    {
+                        GetAnchorPositionsForChildAtIndex(nextChildIndex, out int[] globalPos, out int[] localPos);
+                        ChunkGroupTreeNode node = GetNode(nextChildIndex, globalPos, localPos, sizePower - 1);
+                        children[nextChildIndex] = node;
+                    }
+                    return ((ChunkGroupTreeNode)children[nextChildIndex]).FollowPathBuildingNodesToEmptyLeafPosition(d, childIndices, out lastValidParent, out nextChildIndex);
+                }
             }
             return result;
         }
@@ -136,12 +269,7 @@ namespace MarchingCubes
             var oldLeaf = children[index];
             if (oldLeaf == null)
             {
-                int[] relativePosition = GetLocalPositionFromIndex(index);
-                int[] anchorPos = new int[] {
-                relativePosition[0] + GroupAnchorPosition [0],
-                relativePosition[1] + GroupAnchorPosition[1],
-                relativePosition[2] + GroupAnchorPosition[2]
-                };
+                GetAnchorPositionsForChildAtIndex(index, out int[] anchorPos, out int[] relativePosition);
                 newNode = new ChunkGroupTreeNode(this, anchorPos, relativePosition, index, SizePower - 1);
             }
             else

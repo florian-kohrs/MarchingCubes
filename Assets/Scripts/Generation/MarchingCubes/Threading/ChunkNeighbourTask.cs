@@ -14,15 +14,19 @@ namespace MarchingCubes
             maxEntityIndexPerAxis = chunk.MaxEntitiesIndexPerAxis;
         }
 
+        public const int MAX_NEIGHBOUR_CHUNKS = 6;
+
         public static ChunkGroupMesh chunkGroup;
 
         public CompressedMarchingCubeChunk chunk;
 
         public MeshData meshData;
 
-        protected bool[] hasNeighbourInDirection { get; private set; } = new bool[6];
+        protected bool[] hasNeighbourInDirection { get; private set; } = new bool[MAX_NEIGHBOUR_CHUNKS];
 
         public bool[] HasNeighbourInDirection => hasNeighbourInDirection;
+
+        public ChunkDirectionSearchState[] searchedNeighbours = new ChunkDirectionSearchState[MAX_NEIGHBOUR_CHUNKS];
       
         protected int maxEntityIndexPerAxis;
 
@@ -82,13 +86,14 @@ namespace MarchingCubes
 
         protected void CheckIfNeighboursExistAlready()
         {
-            Vector3Int v3;
             for (int i = 0; i < 6; i++)
             {
                 if(hasNeighbourInDirection[i])
                 {
-                    v3 = VectorExtension.GetDirectionFromIndex(i) * (chunk.ChunkSize + 1) + chunk.CenterPos;
-                    hasNeighbourInDirection[i] = !chunkGroup.HasLeafAtGlobalPosition(VectorExtension.ToArray(v3));
+                    bool wasChildFree = chunk.Leaf.TryGetEmptyLeafParentInDirection((Direction)i, out ChunkGroupTreeNode lastParent, out Stack<int> stack);
+                    hasNeighbourInDirection[i] = wasChildFree;
+                    if (wasChildFree)
+                        searchedNeighbours[i] = new ChunkDirectionSearchState((Direction)i, stack, lastParent);
                 }
             }
         }

@@ -132,7 +132,22 @@ namespace MarchingCubes
 
         public static int GetLodPowerForPosition(Vector3 pos)
         {
-            return instance.updateValues.GetLodForSqrDistance(Vector3.SqrMagnitude(pos - instance.playerPos));
+            return instance.updateValues.GetLodPowerForSqrDistance(Vector3.SqrMagnitude(pos - instance.playerPos));
+        }
+
+        public static bool CanHaveLodPowerAt(Vector3 pos, int lodPower)
+        {
+            return instance.updateValues.CanHaveLodPowerAt(Vector3.SqrMagnitude(pos - instance.playerPos), lodPower);
+        }
+
+        public static bool HasLowerLodPowerAs(Vector3 pos, int lodPower)
+        {
+            return instance.updateValues.HasLowerLodPowerAs(Vector3.SqrMagnitude(pos - instance.playerPos), lodPower);
+        }
+
+        public static bool HasHigherLodPowerAs(Vector3 pos, int lodPower)
+        {
+            return instance.updateValues.HasHigherLodPowerAs(Vector3.SqrMagnitude(pos - instance.playerPos), lodPower);
         }
 
         public void BeginAsynchrounLodCheck()

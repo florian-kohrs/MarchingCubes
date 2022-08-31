@@ -132,12 +132,13 @@ namespace MarchingCubes
         protected Vector3 startPos;
         protected float maxSqrChunkDistance;
 
-        protected BinaryHeap<float, Vector3Int> closestNeighbours = new BinaryHeap<float, Vector3Int>(float.MinValue, float.MaxValue, 200);
+        protected BinaryHeap<float, ChunkReadyState> closestNeighbours = new BinaryHeap<float, ChunkReadyState>(float.MinValue, float.MaxValue, 200);
 
         protected Queue<ChunkNeighbourTask> finishedNeighbourTasks = new Queue<ChunkNeighbourTask>();
 
         public static object neighbourTaskLocker = new object();
 
+        protected Camera mainCam;
 
 
         protected int chunkInAsync = 0;
@@ -208,7 +209,8 @@ namespace MarchingCubes
 
         public ChunkGPUDataRequest chunkGPURequest;
 
-        
+
+
         private void Start()
         {
             neighbourFinder = new AsynchronNeighbourFinder(this);
@@ -295,7 +297,7 @@ namespace MarchingCubes
                 {
                     Time.timeScale = 1;
                     mainCam.enabled = true;
-                    BuildNeighbourChunks(new bool[] { true, true, true, true, true, true }, chunk.ChunkSize, chunk.CenterPos);
+                    BuildNeighbourChunks(chunk);
                     StartCoroutine(WaitTillAsynGenerationDone());
                 });
             }
@@ -313,17 +315,16 @@ namespace MarchingCubes
             }
         }
 
-        protected void CreatePlanetFromMeshData()
-        {
-            MeshData data;
-            CompressedMarchingCubeChunk start = FindNonEmptyChunkAround(startPos, out data);
+        //protected void CreatePlanetFromMeshData()
+        //{
+        //    MeshData data;
+        //    CompressedMarchingCubeChunk start = FindNonEmptyChunkAround(startPos, out data);
 
-            ChunkNeighbourTask task = new ChunkNeighbourTask(start, data);
-            task.NeighbourSearch();
-            BuildRelevantChunksFromMeshDataBlockingAround(task);
-        }
+        //    ChunkNeighbourTask task = new ChunkNeighbourTask(start, data);
+        //    task.NeighbourSearch();
+        //    BuildRelevantChunksFromMeshDataBlockingAround(task);
+        //}
 
-        Camera mainCam;
 
 
         protected IEnumerator CreateEmptyChunks()
@@ -362,7 +363,7 @@ namespace MarchingCubes
 
             while (repeat)
             {
-                Vector3 next;
+                ChunkReadyState next;
                 bool isNextInProgress;
 
 
@@ -382,7 +383,7 @@ namespace MarchingCubes
                     do
                     {
                         next = closestNeighbours.Dequeue();
-                        isNextInProgress = chunkGroup.HasLeafAtGlobalPosition(VectorExtension.ToArray(next));
+                        isNextInProgress = next.node.HasChildAtIndex(next.childIndex);
                     } while (isNextInProgress && closestNeighbours.size > 0);
 
                     if (!isNextInProgress)
@@ -413,26 +414,26 @@ namespace MarchingCubes
 
 
         //Todo: try do this work on compute shader already
-        private void BuildRelevantChunksWithAsyncGpuAround()
-        {
-            Vector3Int next;
-            bool isNextInProgress;
-            while (closestNeighbours.size > 0)
-            {
-                do
-                {
-                    next = closestNeighbours.Dequeue();
-                    isNextInProgress = chunkGroup.HasLeafAtGlobalPosition(VectorExtension.ToArray(next));
-                } while (isNextInProgress && closestNeighbours.size > 0);
+        //private void BuildRelevantChunksWithAsyncGpuAround()
+        //{
+        //    Vector3Int next;
+        //    bool isNextInProgress;
+        //    while (closestNeighbours.size > 0)
+        //    {
+        //        do
+        //        {
+        //            next = closestNeighbours.Dequeue();
+        //            isNextInProgress = chunkGroup.HasLeafAtGlobalPosition(VectorExtension.ToArray(next));
+        //        } while (isNextInProgress && closestNeighbours.size > 0);
 
 
-                if (!isNextInProgress)
-                {
-                    CreateChunkWithAsyncGPUReadback(next, FindNeighbourOfChunk);
-                }
+        //        if (!isNextInProgress)
+        //        {
+        //            CreateChunkWithAsyncGPUReadback(next, FindNeighbourOfChunk);
+        //        }
 
-            }
-        }
+        //    }
+        //}
 
         public void FindNeighbourOfChunk(CompressedMarchingCubeChunk c)
         {
@@ -441,103 +442,109 @@ namespace MarchingCubes
         }
 
 
-        public void BuildRelevantChunksFromMeshDataBlockingAround(ChunkNeighbourTask task)
+        //public void BuildRelevantChunksFromMeshDataBlockingAround(ChunkNeighbourTask task)
+        //{
+        //    bool[] dirs = task.HasNeighbourInDirection;
+        //    CompressedMarchingCubeChunk chunk = task.chunk;
+        //    int count = dirs.Length;
+        //    for (int i = 0; i < count; ++i)
+        //    {
+        //        if (!dirs[i])
+        //            continue;
+
+        //        Vector3Int v3 = VectorExtension.DirectionFromIndex[i] * (chunk.ChunkSize + 1) + chunk.CenterPos;
+        //        closestNeighbours.Enqueue(0, v3);
+        //        ///for initial neighbours build additional chunks to not just wait for first thread to be done
+        //        ///seems to worsen performance?
+        //        //v3 = 2 * VectorExtension.DirectionFromIndex[i] * (chunk.ChunkSize + 1) + chunk.CenterPos;
+        //        //closestNeighbours.Enqueue(0, v3);
+
+        //        //v3 = 3 * VectorExtension.DirectionFromIndex[i] * (chunk.ChunkSize + 1) + chunk.CenterPos;
+        //        //closestNeighbours.Enqueue(0, v3);
+        //    }
+        //    if (closestNeighbours.size > 0)
+        //    {
+        //        BuildRelevantChunksFromMeshDataBlockingAround();
+        //    }
+
+        //    watch.Stop();
+        //    Debug.Log("Total millis: " + watch.Elapsed.TotalMilliseconds);
+        //    if (totalTriBuild >= maxTrianglesLeft)
+        //    {
+        //        Debug.Log("Aborted");
+        //    }
+        //    Debug.Log("Total triangles: " + totalTriBuild);
+        //    OnInitialializationDone();
+        //    // Debug.Log($"Number of chunks: {ChunkGroups.Count}");
+        //}
+
+        //private void BuildRelevantChunksFromMeshDataBlockingAround()
+        //{
+        //    List<Exception> x = CompressedMarchingCubeChunk.xs;
+        //    Vector3Int next;
+        //    MeshData data;
+        //    CompressedMarchingCubeChunk chunk;
+
+        //    bool isNextInProgress;
+        //    while (!NeighbourBuildingComplete)
+        //    {
+        //        do
+        //        {
+        //            next = closestNeighbours.Dequeue();
+        //            isNextInProgress = chunkGroup.HasLeafAtGlobalPosition(VectorExtension.ToArray(next));
+        //        } while (isNextInProgress && closestNeighbours.size > 0);
+
+
+        //        if (!isNextInProgress)
+        //        {
+        //            chunk = CreateChunkAt(next, out data);
+        //            FindNeighbourOfChunk(chunk);
+        //        }
+        //        if (totalTriBuild < maxTrianglesLeft)
+        //        {
+        //            while (closestNeighbours.size == 0 && !NeighbourBuildingComplete)
+        //            {
+        //                //TODO: while waiting create mesh displayers! -> leads to worse performance?
+        //                while (HasFinishedTask)
+        //                {
+        //                    BuildNeighbourChunks(GetFinishedTask());
+        //                }
+        //            }
+        //        }
+        //    }
+        //}
+
+        public void BuildNeighbourChunks(CompressedMarchingCubeChunk chunk)
         {
-            bool[] dirs = task.HasNeighbourInDirection;
-            CompressedMarchingCubeChunk chunk = task.chunk;
-            int count = dirs.Length;
-            for (int i = 0; i < count; ++i)
-            {
-                if (!dirs[i])
-                    continue;
-
-                Vector3Int v3 = VectorExtension.DirectionFromIndex[i] * (chunk.ChunkSize + 1) + chunk.CenterPos;
-                closestNeighbours.Enqueue(0, v3);
-                ///for initial neighbours build additional chunks to not just wait for first thread to be done
-                ///seems to worsen performance?
-                //v3 = 2 * VectorExtension.DirectionFromIndex[i] * (chunk.ChunkSize + 1) + chunk.CenterPos;
-                //closestNeighbours.Enqueue(0, v3);
-
-                //v3 = 3 * VectorExtension.DirectionFromIndex[i] * (chunk.ChunkSize + 1) + chunk.CenterPos;
-                //closestNeighbours.Enqueue(0, v3);
-            }
-            if (closestNeighbours.size > 0)
-            {
-                BuildRelevantChunksFromMeshDataBlockingAround();
-            }
-
-            watch.Stop();
-            Debug.Log("Total millis: " + watch.Elapsed.TotalMilliseconds);
-            if (totalTriBuild >= maxTrianglesLeft)
-            {
-                Debug.Log("Aborted");
-            }
-            Debug.Log("Total triangles: " + totalTriBuild);
-            OnInitialializationDone();
-            // Debug.Log($"Number of chunks: {ChunkGroups.Count}");
+            //TODO: FINISH awdda
         }
 
-        private void BuildRelevantChunksFromMeshDataBlockingAround()
-        {
-            List<Exception> x = CompressedMarchingCubeChunk.xs;
-            Vector3Int next;
-            MeshData data;
-            CompressedMarchingCubeChunk chunk;
-
-            bool isNextInProgress;
-            while (!NeighbourBuildingComplete)
-            {
-                do
-                {
-                    next = closestNeighbours.Dequeue();
-                    isNextInProgress = chunkGroup.HasLeafAtGlobalPosition(VectorExtension.ToArray(next));
-                } while (isNextInProgress && closestNeighbours.size > 0);
-
-
-                if (!isNextInProgress)
-                {
-                    chunk = CreateChunkAt(next, out data);
-                    FindNeighbourOfChunk(chunk);
-                }
-                if (totalTriBuild < maxTrianglesLeft)
-                {
-                    while (closestNeighbours.size == 0 && !NeighbourBuildingComplete)
-                    {
-                        //TODO: while waiting create mesh displayers! -> leads to worse performance?
-                        while (HasFinishedTask)
-                        {
-                            BuildNeighbourChunks(GetFinishedTask());
-                        }
-                    }
-                }
-            }
-        }
 
         public void BuildNeighbourChunks(ChunkNeighbourTask task)
         {
-            BuildNeighbourChunks(task.HasNeighbourInDirection, task.chunk.ChunkSize, task.chunk.CenterPos);
-        }
-
-        public void BuildNeighbourChunks(bool[] dirs, int chunkSize, Vector3Int centerPos)
-        {
-            Vector3Int v3;
-            int count = dirs.Length;
-            for (int i = 0; i < count; ++i)
+            bool[] dirs = task.HasNeighbourInDirection;
+            ChunkDirectionSearchState[] searches = task.searchedNeighbours;
+            for (int i = 0; i < ChunkNeighbourTask.MAX_NEIGHBOUR_CHUNKS; ++i)
             {
                 if (!dirs[i])
                     continue;
 
-                v3 = VectorExtension.DirectionFromIndex[i] * (chunkSize + 1) + centerPos;
-                float sqrDist = (startPos - v3).sqrMagnitude;
+                ChunkDirectionSearchState searchState = searches[i];
 
-                if (sqrDist <= buildAroundSqrDistance
-                    && !chunkGroup.HasGroupItemAt(VectorExtension.ToArray(v3)))
+                bool canBuildNeighbour = searchState.ContinueFollowPathBuildingNodesToEmptyLeafPosition(out ChunkGroupTreeNode lastParent, out int lastChildIndex);
+
+                if (canBuildNeighbour)
                 {
-                    closestNeighbours.Enqueue(sqrDist, v3);
-                }
-                else
-                {
-                    BuildEmptyChunkAt(v3);
+                    float sqrDist = (startPos - lastParent.GetChildCenterPositionAtIndex(lastChildIndex)).sqrMagnitude;
+                    if (sqrDist <= buildAroundSqrDistance)
+                    {
+                        closestNeighbours.Enqueue(sqrDist, new ChunkReadyState(lastParent, lastChildIndex));
+                    }
+                    else
+                    {
+                        //BuildEmptyChunkAt(v3);
+                        //TODO: FINISH
+                    }
                 }
             }
         }
@@ -693,21 +700,25 @@ namespace MarchingCubes
             CreateChunkWithPropertiesAsync(VectorExtension.ToVector3Int(pos), lodPower, chunkSizePower, allowOverride, callback);
         }
 
+        protected void CreateChunkWithAsyncGPUReadback(ChunkReadyState readyChunkParent, Action<CompressedMarchingCubeChunk> callback, bool allowOverride = false)
+        {
+            CompressedMarchingCubeChunk chunk = GetThreadedChunkObjectAtParent(readyChunkParent);
+            BuildChunkAsyncFromMeshData(chunk, callback);
+        }
+
         protected void CreateChunkWithPropertiesAsync(Vector3Int pos, int lodPower, int chunkSizePower, bool allowOverride, Action<CompressedMarchingCubeChunk> callback)
         {
             CompressedMarchingCubeChunk chunk = GetThreadedChunkObjectAt(pos, lodPower, chunkSizePower, allowOverride);
             BuildChunkAsyncFromMeshData(chunk, callback);
         }
 
-        protected CompressedMarchingCubeChunk GetChunkObjectAt(CompressedMarchingCubeChunk chunk, Vector3Int position, int lodPower, int chunkSizePower, bool allowOverride)
+        protected void GetChunkObjectAt(CompressedMarchingCubeChunk chunk, Vector3Int position, int lodPower, int chunkSizePower, bool allowOverride)
         {
             chunk.ChunkSizePower = chunkSizePower;
             chunk.LODPower = lodPower;
             InitializeNonEmptyChunk(chunk);
 
             chunkGroup.SetValueAtGlobalPosition(position, chunk, allowOverride);
-
-            return chunk;
         }
 
         protected void InitializeNonEmptyChunk(CompressedMarchingCubeChunk chunk)
@@ -719,28 +730,22 @@ namespace MarchingCubes
         }
 
 
-        protected CompressedMarchingCubeChunk GetChunkObjectAt(CompressedMarchingCubeChunk chunk, ChunkGroupTreeNode node)
+        protected void InitializeChunkObject(CompressedMarchingCubeChunk chunk, ChunkGroupTreeNode node)
         {
-            ///Pot racecondition
-            
             chunk.ChunkSizePower = node.SizePower;
             chunk.LODPower = GetLodPowerFromSizePower(node.SizePower);
             InitializeNonEmptyChunk(chunk);
 
             node.Parent.OverrideChildAtLocalIndex(node.Index, chunk);
-
-            return chunk;
         }
 
-        protected CompressedMarchingCubeChunk GetChunkObjectAtChildIndex(CompressedMarchingCubeChunk chunk, ChunkGroupTreeNode node, int childIndex)
+        protected void InitializeChunkAtChildIndex(CompressedMarchingCubeChunk chunk, ChunkGroupTreeNode node, int childIndex)
         {
             chunk.ChunkSizePower = node.SizePower - 1;
             chunk.LODPower = GetLodPowerFromSizePower(node.SizePower - 1);
             InitializeNonEmptyChunk(chunk);
 
             node.SetLeafAtLocalIndex(childIndex, chunk);
-
-            return chunk;
         }
 
         public void BuildEmptyChunkAt(Vector3Int pos)
@@ -761,15 +766,17 @@ namespace MarchingCubes
 
         protected CompressedMarchingCubeChunk GetThreadedChunkObjectAt(Vector3Int position, int lodPower, int chunkSizePower, bool allowOverride)
         {
+            CompressedMarchingCubeChunk chunk = GetMarchingCubeChunkFromLodPower(lodPower);
+            GetChunkObjectAt(chunk, position, lodPower, chunkSizePower, allowOverride);
+            return chunk;
+        }
+
+        protected CompressedMarchingCubeChunk GetMarchingCubeChunkFromLodPower(int lodPower)
+        {
             if (lodPower <= DEFAULT_MIN_CHUNK_LOD_POWER)
-            {
-                ReducedMarchingCubesChunk chunk = new ReducedMarchingCubesChunk();
-                return GetChunkObjectAt(chunk, position, lodPower, chunkSizePower, allowOverride);
-            }
+                return new ReducedMarchingCubesChunk();
             else
-            {
-                return GetChunkObjectAt(new CompressedMarchingCubeChunk(), position, lodPower, chunkSizePower, allowOverride);
-            }
+                return new CompressedMarchingCubeChunk();
         }
 
         protected void AddThreadedChunkObjectsAtEmptyChildPosition(ChunkGroupTreeNode node, List<CompressedMarchingCubeChunk> newChunkList)
@@ -785,12 +792,23 @@ namespace MarchingCubes
 
         protected CompressedMarchingCubeChunk GetThreadedCompressedChunkObjectAt(ChunkGroupTreeNode node)
         {
-            return GetChunkObjectAt(new CompressedMarchingCubeChunk(), node);
+            CompressedMarchingCubeChunk c = new CompressedMarchingCubeChunk();
+            InitializeChunkObject(c, node);
+            return c;
         }
 
         protected CompressedMarchingCubeChunk GetThreadedChunkObjectAtChildIndex(ChunkGroupTreeNode node, int childIndex)
         {
-            return GetChunkObjectAtChildIndex(new ReducedMarchingCubesChunk(), node, childIndex);
+            ReducedMarchingCubesChunk c = new ReducedMarchingCubesChunk();
+            InitializeChunkAtChildIndex(c, node, childIndex);
+            return c;
+        }
+
+        protected CompressedMarchingCubeChunk GetThreadedChunkObjectAtParent(ChunkReadyState state)
+        {
+            CompressedMarchingCubeChunk c = GetMarchingCubeChunkFromLodPower(state.node.LodPower - 1);
+            InitializeChunkAtChildIndex(c, state.node, state.childIndex);
+            return c;
         }
 
         protected void SetChunkComponents(CompressedMarchingCubeChunk chunk)
@@ -1020,7 +1038,7 @@ namespace MarchingCubes
 
         public int GetLodPower(float sqrDistance)
         {
-            return updateValues.GetLodForSqrDistance(sqrDistance);
+            return updateValues.GetLodPowerForSqrDistance(sqrDistance);
         }
 
 

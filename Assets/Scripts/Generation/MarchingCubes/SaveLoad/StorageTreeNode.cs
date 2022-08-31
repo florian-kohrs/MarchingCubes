@@ -73,6 +73,8 @@ namespace MarchingCubes
 
         public bool IsMipMapComplete => isMipMapComplete;
 
+        protected override StorageTreeNode GetSelf => this;
+
         protected int CountNonNullChildren()
         {
             int result = 0;

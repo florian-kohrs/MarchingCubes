@@ -65,6 +65,15 @@ namespace MarchingCubes
             return result;
         }
 
+
+        public bool TryGetEmptyLeafParentInDirection(Direction d, out ChunkGroupTreeNode lastParent, out Stack<int> directionChildIndex)
+        {
+            directionChildIndex = new Stack<int>();
+            directionChildIndex.Push(childIndex);
+            return parent.TryGetEmptyLeafParentInDirection(d, directionChildIndex, out lastParent);
+        }
+
+
         public override bool RemoveLeafAtLocalPosition(int[] pos)
         {
             DestroyBranch();

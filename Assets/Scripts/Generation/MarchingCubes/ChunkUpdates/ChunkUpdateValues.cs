@@ -31,18 +31,42 @@ public class ChunkUpdateValues
         ApplySqrDistanceToList(splitDistanceRequirement);
         sqrMergeDistanceRequirement = mergeDistanceRequirement;
         sqrSplitDistanceRequirement = splitDistanceRequirement;
+
+        sqrCenterDistanceRequirement = centerLodDistance;
+        ApplySqrDistanceToList(sqrCenterDistanceRequirement);
     }
 
     protected float HalfChunkSizeForLodPow(int lodPow) => Mathf.Pow(2, lodPow + MarchingCubes.MarchingCubeChunkHandler.DEFAULT_CHUNK_SIZE_POWER) / 2;
 
-    public int GetLodForSqrDistance(float sqrDistance)
+    public int GetLodPowerForSqrDistance(float sqrDistance)
     {
         for (int i = 0; i < sqrMergeDistanceRequirement.Length; i++)
         {
-            if (sqrDistance <= sqrSplitDistanceRequirement[i])
+            if (sqrDistance <= sqrCenterDistanceRequirement[i])
                 return i;
         }
         return MarchingCubes.MarchingCubeChunkHandler.DEACTIVATE_CHUNK_LOD_POWER;
+    }
+
+    public bool CanHaveLodPowerAt(float sqrDistance, int lodPower)
+    {
+        return !HasLowerLodPowerAs(sqrDistance,lodPower) 
+            && !HasHigherLodPowerAs(sqrDistance,lodPower);
+    }
+
+    public bool HasLowerLodPowerAs(float sqrDistance, int lodPower)
+    {
+        bool shouldSplit = false;
+        int splitLod = lodPower - 1;
+        if (splitLod >= 0)
+            shouldSplit = sqrDistance <= sqrCenterDistanceRequirement[splitLod];
+
+        return shouldSplit;
+    }
+
+    public bool HasHigherLodPowerAs(float sqrDistance, int lodPower)
+    {
+        return sqrDistance > sqrCenterDistanceRequirement[lodPower]; ;
     }
 
     protected void ApplySqrDistanceToList(float[] list)
@@ -62,6 +86,7 @@ public class ChunkUpdateValues
 
     public float[] sqrMergeDistanceRequirement;
     public float[] sqrSplitDistanceRequirement;
+    public float[] sqrCenterDistanceRequirement;
 
     public float SqrDeactivateDistance => sqrDeactivateDistance;
     public float SqrDestroyDistance => sqrDestroyDistance;

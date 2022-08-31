@@ -9,7 +9,7 @@ namespace MarchingCubes
         where ParentType : GenericTreeNode<T,Node, Self, ParentType>, Node
         where T : ISizeManager
         where Node : IChunkGroupOrganizer<T>
-        where Self : IHasValue<T>
+        where Self : IHasValue<T>, Node
     {
 
         public GenericTreeLeaf()
@@ -50,13 +50,6 @@ namespace MarchingCubes
 
         [Save]
         public int[] groupRelativeAnchorPosition;
-
-        public bool TryGetLeafParentInDirection(Direction d, out ParentType lastParent, out Stack<int> directionChildIndex)
-        {
-            directionChildIndex = new Stack<int>();
-            directionChildIndex.Push(childIndex);
-            return parent.TryGetLeafParentInDirection(d, directionChildIndex, out lastParent);
-        }
 
         public override int[] GroupRelativeAnchorPosition => groupRelativeAnchorPosition;
 

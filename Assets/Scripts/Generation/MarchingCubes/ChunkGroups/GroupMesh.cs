@@ -7,10 +7,8 @@ namespace MarchingCubes
 {
 
     [System.Serializable]
-    public abstract class GroupMesh<Key, T, Leaf, Child> 
+    public abstract class GroupMesh<Key, T> 
         where Key : IChunkGroupOrganizer<T>
-        where T : ISizeManager 
-        where Child : IChunkGroupOrganizer<T>
     {
 
         public GroupMesh(int groupSizePower)

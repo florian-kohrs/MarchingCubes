@@ -7,7 +7,7 @@ namespace MarchingCubes
 {
 
     [Serializable]
-    public class StorageGroupMesh : GroupMesh<StorageTreeNode, StoredChunkEdits, StorageTreeLeaf, IStorageGroupOrganizer<StoredChunkEdits>>
+    public class StorageGroupMesh : GroupMesh<StorageTreeNode, StoredChunkEdits>
     {
 
         public StorageGroupMesh(int groupSize) : base(groupSize) { }

@@ -6,8 +6,6 @@ using UnityEngine;
 namespace MarchingCubes
 {
 
-    public enum Direction { Right = 0, Left = 1, Up = 2, Down = 3, Front = 4, Back = 5 }
-
 
     [System.Serializable]
     public abstract class GenericTreeNode<T, Node, Leaf, Self> : BaseChunkGroupOrganizer<T>
@@ -68,73 +66,10 @@ namespace MarchingCubes
 
         protected abstract Self GetSelf { get; }
 
-        //public bool TryGetEmptyLeafParentInDirection(Direction d, Stack<int> childIndices, out Self parent)
-        //{
-        //    return TryGetLeafParentInDirection(d, childIndices, out parent) && !parent.HasChildAtIndex(childIndices.Peek());
-        //}
-
-        public bool TryGetEmptyLeafParentInDirection(Direction d, Stack<int> childIndices, out Self parent)
-        {
-            bool result = false;
-            int childIndex = childIndices.Pop();
-            int depth = childIndices.Count;
-            if (HasDirectionAvailable(d, children[childIndex].GroupRelativeAnchorPosition))
-            {
-                int newChildIndex = DirectionToNewChildIndex(d, childIndex, 1);
-                parent = GetSelf;
-                if (depth == 0)
-                {
-                    childIndices.Push(newChildIndex);
-                    result = !HasChildAtIndex(childIndex);
-                }
-                else
-                {
-                    Node child = children[newChildIndex];
-                    Self node;
-                    if (child is Leaf)
-                    {
-                        node = null;
-                        childIndices.Push(childIndex);
-                        result = false;
-                    }
-                    else if (child is Self self)
-                    {
-                        node = self;
-                    }
-                    else
-                    {
-                        ///child is null
-                        /////TODO Dont spawn here! Cant be used in async neighbour search!
-                        DirectionToNewLocalAndGlobalPosition(d, childIndex, out int[] localPos, out int[] globalPos);
-                        node = GetNode(newChildIndex, globalPos, localPos, sizePower - 1);
-                        children[childIndex] = node;
-                    }
-
-                    if (node != null)
-                        return node.TryGetEmptyLeafParentInDirection(d, childIndices, out parent);
-                }
-                return result;
-            }
-            else
-            {
-                int oldSwappedChildIndex = DirectionToNewChildIndex(d, childIndex, -1);
-                childIndices.Push(oldSwappedChildIndex);
-                childIndices.Push(childIndex);
-                return this.parent.TryGetLeafParentInDirection(d, childIndices, out parent);
-            }
-        }
 
         public bool HasChildAtIndex(int index) => children[index] != null;
 
         public bool HasLeafAtIndex(int index) => children[index] is Leaf;
-
-        protected const int topRightBack = 2;
-        protected const int topRightFront = 3;
-        protected const int bottomLeftBack = 4;
-        protected const int bottomLeftFront = 5;
-        protected const int bottomRightBack = 6;
-        protected const int bottomRightFront = 7;
-
 
         public abstract Leaf GetLeaf(T leaf, int index, int[] anchor, int[] relAnchor, int sizePow);
 
@@ -169,68 +104,19 @@ namespace MarchingCubes
             } 
         }
 
+        protected static readonly int[] DIRECTION_TO_NEW_CHILD_INDEX_LOOKUP = new int[] { 2, -2, 4, -4, 1, -1 };
+
         protected int DirectionToNewChildIndex(Direction d, int oldChildIndex, int sign)
         {
-            int newChildIndex = oldChildIndex;
-            switch (d)
-            {
-                case Direction.Right:
-                    newChildIndex += 2 * sign;
-                    break;
-                case Direction.Left:
-                    newChildIndex -= 2 * sign;
-                    break;
-                case Direction.Up:
-                    newChildIndex += 4 * sign;
-                    break;
-                case Direction.Down:
-                    newChildIndex -= 4 * sign;
-                    break;
-                case Direction.Front:
-                    newChildIndex += 1 * sign;
-                    break;
-                case Direction.Back:
-                    newChildIndex -= 1 * sign;
-                    break;
-                default:
-                    throw new Exception("Unhandled enum case!");
-            }
-            return newChildIndex;
+            return oldChildIndex + DIRECTION_TO_NEW_CHILD_INDEX_LOOKUP[(int)d] * sign;
         }
 
         protected void DirectionToNewLocalAndGlobalPosition(Direction d, int oldChildIndex, out int[] localPos, out int[] globalPos)
         {
             localPos = children[oldChildIndex].GroupRelativeAnchorPosition;
             globalPos = children[oldChildIndex].GroupAnchorPositionCopy;
-            switch (d)
-            {
-                case Direction.Right:
-                    localPos[0] += halfSize;
-                    globalPos[0] += halfSize;
-                    break;
-                case Direction.Left:
-                    localPos[0] -= halfSize;
-                    globalPos[0] -= halfSize;
-                    break;
-                case Direction.Up:
-                    localPos[1] += halfSize;
-                    globalPos[1] += halfSize;
-                    break;
-                case Direction.Down:
-                    localPos[1] -= halfSize;
-                    globalPos[1] -= halfSize;
-                    break;
-                case Direction.Front:
-                    localPos[2] += halfSize;
-                    globalPos[2] += halfSize;
-                    break;
-                case Direction.Back:
-                    localPos[2] -= halfSize;
-                    globalPos[2] -= halfSize;
-                    break;
-                default:
-                    throw new System.Exception("Unhandled enum case!");
-            }
+            DirectionHelper.OffsetIntArray(d, localPos, halfSize);
+            DirectionHelper.OffsetIntArray(d, globalPos, halfSize);  
         }
 
         protected int[] AnchorPositonShift(int[] shift)
@@ -250,24 +136,54 @@ namespace MarchingCubes
 
         protected int[] GetLocalPositionFromIndex(int index)
         {
-            int[] result = new int[3];
-            if (index >= 4)
+            switch (index)
             {
-                result[1] += halfSize;
-                index -= 4;
+                case 0:
+                    return new int[] {0,0,0};
+                case 1:
+                    return new int[] { 0, 0, halfSize };
+                case 2:
+                    return new int[] { halfSize, 0, 0 };
+                case 3:
+                    return new int[] { halfSize, 0, halfSize };
+                case 4:
+                    return new int[] { 0, halfSize, 0 };
+                case 5:
+                    return new int[] { 0, halfSize, halfSize };
+                case 6:
+                    return new int[] { halfSize, halfSize, 0 };
+                case 7:
+                    return new int[] { halfSize, halfSize, halfSize };
+                default:
+                    throw new ArgumentException("Bad index value:" + index);
             }
-            if (index >= 2)
-            {
-                result[0] += halfSize;
-                index -= 2;
-            }
-            if (index >= 1)
-            {
-                result[2] += halfSize;
-            }
-            return result;
         }
 
+
+        protected Vector3 GetDirectionFromIndex(int index)
+        {
+            switch (index)
+            {
+                case 0:
+                    return Vector3.zero;
+                case 1:
+                    return Vector3.forward;
+                case 2:
+                    return Vector3.right;
+                case 3:
+                    return new Vector3(1, 0, 1);
+                case 4:
+                    return Vector3.up;
+                case 5:
+                    return new Vector3(0, 1, 1);
+                case 6:
+                    return new Vector3(1, 1, 0);
+                case 7:
+                    return new Vector3(1, 1, 1);
+                default:
+                    throw new ArgumentException("Bad index value:" + index);
+            }
+        }
 
         public void RemoveChildAtIndex(int index)
         {
@@ -275,18 +191,20 @@ namespace MarchingCubes
             children[index] = default;
         }
 
+        
+
 
         protected Vector3 GetChildLocalPositionForIndex(int index)
         {
-            return GetChildCenterPositionForIndex(index, 0);
+            return GetOffsetedAnchorPosition(index, 0);
         }
 
         protected Vector3 GetChildCenterPositionForIndex(int index)
         {
-            return GetChildCenterPositionForIndex(index, halfSize / 2);
+            return GetOffsetedAnchorPosition(index, halfSize / 2);
         }
 
-        private Vector3 GetChildCenterPositionForIndex(int index, int offset)
+        private Vector3 GetOffsetedAnchorPosition(int index, int offset)
         {
             Vector3 result = GroupAnchorPositionVector + new Vector3(offset,offset,offset);
             if (index >= 4)
@@ -304,6 +222,16 @@ namespace MarchingCubes
                 result.z += halfSize;
             }
             return result;
+        }
+
+        protected void GetAnchorPositionsForChildAtIndex(int childIndex, out int[] anchorPos, out int[] relAchorPos)
+        {
+            relAchorPos = GetLocalPositionFromIndex(childIndex);
+            anchorPos = new int[] {
+                relAchorPos[0] + GroupAnchorPosition[0],
+                relAchorPos[1] + GroupAnchorPosition[1],
+                relAchorPos[2] + GroupAnchorPosition[2]
+            };
         }
 
         protected void GetAnchorPositionForChunkAt(int[] position, out int[] anchorPos, out int[] relAchorPos)
@@ -356,13 +284,7 @@ namespace MarchingCubes
 
         public void SetLeafAtLocalIndex(int index, T chunk)
         {
-            int[] relativePosition = GetLocalPositionFromIndex(index);
-            int[] anchorPos = new int[] {
-                relativePosition[0] + GroupAnchorPosition [0],
-                relativePosition[1] + GroupAnchorPosition[1],
-                relativePosition[2] + GroupAnchorPosition[2]
-            };
-
+            GetAnchorPositionsForChildAtIndex(index, out int[] anchorPos, out int[] relativePosition);
             children[index] = GetLeaf(chunk, index, anchorPos, relativePosition, sizePower - 1);
         }
 
