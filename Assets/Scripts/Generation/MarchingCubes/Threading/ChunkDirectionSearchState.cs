@@ -7,21 +7,25 @@ namespace MarchingCubes
     public class ChunkDirectionSearchState
     {
 
-        public ChunkDirectionSearchState(Direction d, Stack<int> childIndices, ChunkGroupTreeNode lastParent)
+        public ChunkDirectionSearchState(Direction d)
         {
-            this.d = d;
-            this.childIndices = childIndices;
-            this.lastParent = lastParent;
+            direction = d;
+            childIndices = new Stack<int>();
         }
 
 
-        protected Direction d;
-        protected Stack<int> childIndices;
-        protected ChunkGroupTreeNode lastParent;
+        public Direction direction;
 
-        public bool ContinueFollowPathBuildingNodesToEmptyLeafPosition(out ChunkGroupTreeNode lastValidParent, out int lastChildIndex)
+        public Stack<int> childIndices;
+        public ChunkGroupTreeNode lastParent;
+        public bool isInDownWardsTrend;
+        public int lastChildIndex;
+
+        public bool ContinueFollowPathBuildingNodesToEmptyLeafPosition(out ChunkReadyState readyState)
         {
-            return lastParent.ContinueFollowPathBuildingNodesToEmptyLeafPosition(d, childIndices, out lastValidParent, out lastChildIndex);
+            bool result = lastParent.ContinueFollowPathBuildingNodesToEmptyLeafPosition(this);
+            readyState = new ChunkReadyState(lastParent, lastChildIndex);
+            return result;
         }
 
     }

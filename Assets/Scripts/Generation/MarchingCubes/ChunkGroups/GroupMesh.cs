@@ -83,7 +83,11 @@ namespace MarchingCubes
             Vector3Int coord = PositionToGroupCoord(p);
             return storageGroups.TryGetValue(coord, out group);
         }
-
+        public bool TryGetGroupAt(int[] p, out Key group)
+        {
+            Vector3Int coord = PositionToGroupCoord(p);
+            return storageGroups.TryGetValue(coord, out group);
+        }
 
         protected Vector3Int CoordToPosition(Vector3Int coord)
         {

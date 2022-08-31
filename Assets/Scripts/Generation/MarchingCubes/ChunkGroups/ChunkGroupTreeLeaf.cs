@@ -66,11 +66,11 @@ namespace MarchingCubes
         }
 
 
-        public bool TryGetEmptyLeafParentInDirection(Direction d, out ChunkGroupTreeNode lastParent, out Stack<int> directionChildIndex)
+        public bool TryGetEmptyLeafParentInDirection(Direction d, out ChunkDirectionSearchState searchState)
         {
-            directionChildIndex = new Stack<int>();
-            directionChildIndex.Push(childIndex);
-            return parent.TryGetEmptyLeafParentInDirection(d, directionChildIndex, out lastParent);
+            searchState = new ChunkDirectionSearchState(d);
+            searchState.childIndices.Push(childIndex);
+            return parent.TryGetEmptyLeafParentInDirection(searchState);
         }
 
 

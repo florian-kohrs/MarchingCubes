@@ -7,14 +7,14 @@ namespace MarchingCubes
     public class ChunkReadyState
     {
 
-        public ChunkGroupTreeNode node;
+        public ChunkGroupTreeNode lastParent;
 
-        public int childIndex;
+        public int lastParentsChildIndex;
 
         public ChunkReadyState(ChunkGroupTreeNode node, int childIndex)
         {
-            this.node = node;
-            this.childIndex = childIndex;
+            lastParent = node;
+            lastParentsChildIndex = childIndex;
         }
     }
 }

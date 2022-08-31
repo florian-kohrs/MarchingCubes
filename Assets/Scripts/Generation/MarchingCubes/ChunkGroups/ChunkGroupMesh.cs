@@ -28,7 +28,7 @@ namespace MarchingCubes
         {
             int[] newChunkCoord = node.GroupAnchorPositionCopy;
             DirectionHelper.OffsetIntArray(d, newChunkCoord, GROUP_SIZE);
-            return TryGetGroupAt(new Vector3Int(newChunkCoord[0], newChunkCoord[1], newChunkCoord[2]), out neighbourNode);
+            return TryGetGroupAt(newChunkCoord, out neighbourNode);
         }
 
         public bool TryGetReadyChunkAt(int[] p, out CompressedMarchingCubeChunk chunk)

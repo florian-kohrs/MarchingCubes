@@ -90,10 +90,10 @@ namespace MarchingCubes
             {
                 if(hasNeighbourInDirection[i])
                 {
-                    bool wasChildFree = chunk.Leaf.TryGetEmptyLeafParentInDirection((Direction)i, out ChunkGroupTreeNode lastParent, out Stack<int> stack);
+                    bool wasChildFree = chunk.Leaf.TryGetEmptyLeafParentInDirection((Direction)i, out ChunkDirectionSearchState searchState);
                     hasNeighbourInDirection[i] = wasChildFree;
                     if (wasChildFree)
-                        searchedNeighbours[i] = new ChunkDirectionSearchState((Direction)i, stack, lastParent);
+                        searchedNeighbours[i] = searchState;
                 }
             }
         }

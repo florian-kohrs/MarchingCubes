@@ -383,7 +383,7 @@ namespace MarchingCubes
                     do
                     {
                         next = closestNeighbours.Dequeue();
-                        isNextInProgress = next.node.HasChildAtIndex(next.childIndex);
+                        isNextInProgress = next.lastParent.HasChildAtIndex(next.lastParentsChildIndex);
                     } while (isNextInProgress && closestNeighbours.size > 0);
 
                     if (!isNextInProgress)
@@ -404,7 +404,7 @@ namespace MarchingCubes
                     {
                         Debug.Log("Aborted");
                     }
-                    Debug.Log("Total triangles: " + totalTriBuild);
+                    //Debug.Log("Total triangles: " + totalTriBuild);
                     StartCoroutine(CreateEmptyChunks());
                     OnInitialializationDone();
                 }
@@ -531,14 +531,14 @@ namespace MarchingCubes
 
                 ChunkDirectionSearchState searchState = searches[i];
 
-                bool canBuildNeighbour = searchState.ContinueFollowPathBuildingNodesToEmptyLeafPosition(out ChunkGroupTreeNode lastParent, out int lastChildIndex);
+                bool canBuildNeighbour = searchState.ContinueFollowPathBuildingNodesToEmptyLeafPosition(out ChunkReadyState readyState);
 
                 if (canBuildNeighbour)
                 {
-                    float sqrDist = (startPos - lastParent.GetChildCenterPositionAtIndex(lastChildIndex)).sqrMagnitude;
+                    float sqrDist = (startPos - readyState.lastParent.GetChildCenterPositionAtIndex(readyState.lastParentsChildIndex)).sqrMagnitude;
                     if (sqrDist <= buildAroundSqrDistance)
                     {
-                        closestNeighbours.Enqueue(sqrDist, new ChunkReadyState(lastParent, lastChildIndex));
+                        closestNeighbours.Enqueue(sqrDist, readyState);
                     }
                     else
                     {
@@ -806,8 +806,8 @@ namespace MarchingCubes
 
         protected CompressedMarchingCubeChunk GetThreadedChunkObjectAtParent(ChunkReadyState state)
         {
-            CompressedMarchingCubeChunk c = GetMarchingCubeChunkFromLodPower(state.node.LodPower - 1);
-            InitializeChunkAtChildIndex(c, state.node, state.childIndex);
+            CompressedMarchingCubeChunk c = GetMarchingCubeChunkFromLodPower(state.lastParent.LodPower - 1);
+            InitializeChunkAtChildIndex(c, state.lastParent, state.lastParentsChildIndex);
             return c;
         }
 

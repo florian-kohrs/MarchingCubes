@@ -56,7 +56,7 @@ namespace MarchingCubes
 
         public void AddTask(ChunkNeighbourTask task)
         {
-        
+            activeTasks++;
             ThreadPool.QueueUserWorkItem((o) =>
             {
                 try
@@ -64,7 +64,6 @@ namespace MarchingCubes
                     lock (mutex)
                     {
                         activeTask.Add(task);
-                        activeTasks++;
                     }
                     task.FindNeighbours(); 
                     OnTaskDone(task);

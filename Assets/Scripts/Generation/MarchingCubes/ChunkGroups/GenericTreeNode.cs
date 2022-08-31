@@ -45,6 +45,8 @@ namespace MarchingCubes
         [Save]
         public int sizePower;
 
+        protected int ChildrenSizePower => sizePower - 1;
+
 
         [Save]
         public int index;
