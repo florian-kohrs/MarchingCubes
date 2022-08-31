@@ -38,7 +38,7 @@ namespace MarchingCubes
 
         public const int STORAGE_GROUP_UNTIL_LOD = STORAGE_GROUP_SIZE_POWER - DEFAULT_CHUNK_SIZE_POWER;
 
-        public const int CHUNK_GROUP_SIZE = 1024;
+        public static readonly int CHUNK_GROUP_SIZE = (int)Mathf.Pow(2,CHUNK_GROUP_SIZE_POWER);
 
         public const int CHUNK_GROUP_SIZE_POWER = 10;
 
