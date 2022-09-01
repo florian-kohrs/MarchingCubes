@@ -24,21 +24,17 @@ namespace MarchingCubes
             return GetOrCreateGroupAtGlobalPosition(newChunkCoord);
         }
 
+        public bool TryCreateEmptyChunkGroupAdjacentTo(CompressedMarchingCubeChunk chunk, Direction d)
+        {
+            if(TryGetGroupAt(chunk.Leaf.GroupAnchorPosition))
+            if(TryGetNodeInDirection)
+        }
+
         public bool TryGetNodeInDirection(ChunkGroupTreeNode node, Direction d, out ChunkGroupTreeNode neighbourNode)
         {
             int[] newChunkCoord = node.GroupAnchorPositionCopy;
             DirectionHelper.OffsetIntArray(d, newChunkCoord, GROUP_SIZE);
             return TryGetGroupAt(newChunkCoord, out neighbourNode);
-        }
-
-        public bool TryGetReadyChunkAt(int[] p, out CompressedMarchingCubeChunk chunk)
-        {
-            return TryGetGroupItemAt(p, out chunk) && chunk.IsReady;
-        }
-
-        public bool HasLeafAtGlobalPosition(int[] p)
-        {
-            return TryGetGroupItemAt(p, out _);
         }
 
 

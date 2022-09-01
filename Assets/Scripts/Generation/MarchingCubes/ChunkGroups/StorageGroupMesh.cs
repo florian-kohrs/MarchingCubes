@@ -40,21 +40,36 @@ namespace MarchingCubes
             return TryGetMipMapAt(anchor, sizePow, out noise, out isMipMapComplete) && isMipMapComplete;
         }
 
+        public bool TryGetGroupItemAt(int[] startPos, CompressedMarchingCubeChunk chunk, out StoredChunkEdits result)
+        {
+            bool found = TryGetGroupAt(startPos, out StorageTreeNode group);
+            if (found)
+            {
+                group.TryFollowPathToLeaf(chunk.GetStoragePath, out result);
+            }
+            else
+            {
+                result = null;
+            }
+            return result != null;
+        }
+
+
         public void Store(Vector3Int anchorPos, ReducedMarchingCubesChunk chunk, bool overrideNoise = false)
         {
             StoredChunkEdits edits;
-            if (!TryGetGroupItemAt(VectorExtension.ToArray(anchorPos), out edits) || overrideNoise)
+            if (!TryGetGroupItemAt(VectorExtension.ToArray(anchorPos), chunk, out edits) || overrideNoise)
             {
                 edits = new StoredChunkEdits();
                 StorageTreeNode r = GetOrCreateGroupAtCoordinate(PositionToGroupCoord(anchorPos));
 
                 chunk.StoreChunk(edits);
 
-                r.SetLeafAtLocalPosition(VectorExtension.ToArray(anchorPos), edits, true);
+                r.SetLeafAtPath(chunk.GetStoragePath, edits, true);
                 //call all instantiableData from chunk that need to be stored
                 //(everything not depending on triangles only, e.g trees )
             }
-            //Remove later
+            //TODO: Remove later
             if (edits.noise != chunk.Points)
             {
                 throw new Exception();

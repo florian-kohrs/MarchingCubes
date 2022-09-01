@@ -66,6 +66,17 @@ namespace MarchingCubes
             return result;
         }
 
+        public Stack<int> BuildChildIndexList(int depth)
+        {
+            Stack<int> result = new Stack<int>();
+            if (depth > 0)
+            {
+                result.Push(childIndex);
+                parent.BuildChildIndexList(depth - 1, result);
+            }
+            return result;
+        }
+
         public void DestroyLeaf()
         {
             leaf = default;

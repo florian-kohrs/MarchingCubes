@@ -290,6 +290,15 @@ namespace MarchingCubes
                 newNode.CheckAnyChildrenForSplit(newNodes);
         }
 
+        public void BuildChildIndexList(int depth, Stack<int> stack)
+        {
+            if (depth <= 0)
+                return;
+
+            stack.Push(index);
+            Parent.BuildChildIndexList(depth - 1, stack);
+        }
+
         public void CheckAnyChildrenForSplit(List<ChunkGroupTreeNode> newNodes)
         {
             for (int i = 0;i < CHILD_COUNT; i++)

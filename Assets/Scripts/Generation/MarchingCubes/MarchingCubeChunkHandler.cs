@@ -288,7 +288,7 @@ namespace MarchingCubes
             {
                 //BuildAllChunksAsync(new Vector3Int[] { positions[0] });
                 //OnInitialializationDone();
-                BuildAllChunksAsync(positions);
+                BuildAllInitialChunksAsync(positions);
                 StartCoroutine(WaitTillAsynGenerationDone());
             }
             else
@@ -303,15 +303,11 @@ namespace MarchingCubes
             }
         }
 
-        protected void BuildAllChunksAsync(Vector3Int[] pos)
+        protected void BuildAllInitialChunksAsync(Vector3Int[] pos)
         {
             for (int i = 0; i < pos.Length; i++)
             {
-                Vector3Int next = pos[i];
-                if (!chunkGroup.HasLeafAtGlobalPosition(VectorExtension.ToArray(next)))
-                {
-                    CreateChunkWithAsyncGPUReadback(next, FindNeighbourOfChunk);
-                };
+                CreateChunkWithAsyncGPUReadback(pos[i], FindNeighbourOfChunk);
             }
         }
 
@@ -551,12 +547,8 @@ namespace MarchingCubes
 
         public void BuildSpawnersAround(ChunkNeighbourTask task)
         {
-            BuildSpawnersAround(task.HasNeighbourInDirection, task.chunk.ChunkSize, task.chunk.CenterPos);
-        }
-
-        public void BuildSpawnersAround(bool[] dirs, int chunkSize, Vector3Int centerPos)
-        {
             Vector3Int v3;
+            bool[] dirs = task.HasNeighbourInDirection;
             int count = dirs.Length;
             for (int i = 0; i < count; ++i)
             {
@@ -748,9 +740,10 @@ namespace MarchingCubes
             node.SetLeafAtLocalIndex(childIndex, chunk);
         }
 
-        public void BuildEmptyChunkAt(Vector3Int pos)
+        public void BuildEmptyChunkAt(CompressedMarchingCubeChunk chunk, Direction d)
         {
-            if (!chunkGroup.HasGroupItemAt(VectorExtension.ToArray(pos)))
+            ChunkGroupTreeNode node = chunkGroup.GetOrCreateGroupAtGlobalPosition(chunk.Leaf.GroupAnchorPosition);
+            if (!chunkGroup.HasGroupItemAt(chunk.AnchorPos))
             {
                 CompressedMarchingCubeChunk chunk = new CompressedMarchingCubeChunk();
                 chunk.ChunkHandler = this;

@@ -24,21 +24,6 @@ namespace MarchingCubes
 
         protected abstract Key CreateKey(Vector3Int coord);
 
-        public bool TryGetGroupItemAt
-            (int[] pos, out T result)
-        {
-            Vector3Int coord = PositionToGroupCoord(pos);
-            if (storageGroups.TryGetValue(coord, out Key group))
-            {
-                if (group.TryGetLeafAtLocalPosition(pos, out result))
-                {
-                    return true;
-                }
-            }
-            result = default;
-            return false;
-        }
-
         protected Key CreateGroupAtCoordinate(Vector3Int coord)
         {
             Key group = CreateKey(GROUP_SIZE * coord);
@@ -57,15 +42,12 @@ namespace MarchingCubes
             GetOrCreateGroupAtGlobalPosition(position).SetLeafAtLocalPosition(position, value, allowOverride);
         }
 
-        public bool HasGroupItemAt(int[] p)
-        {
-            return TryGetGroupItemAt(p, out _);
-        }
-
         public Key GetOrCreateGroupAtGlobalPosition(int[] pos)
         {
             return GetOrCreateGroupAtCoordinate(PositionToGroupCoord(pos));
         }
+
+       
 
         public Key GetOrCreateGroupAtCoordinate
             (Vector3Int coord)

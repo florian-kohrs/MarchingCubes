@@ -251,6 +251,10 @@ namespace MarchingCubes
             };
         }
 
+        public void SetLeafAtPath(Stack<int> path, T chunk, bool allowOverride)
+        {
+        }
+
         public override void SetLeafAtLocalPosition(int[] relativePosition, T chunk, bool allowOverride)
         {
             relativePosition[0] -= groupRelativeAnchorPosition[0];
@@ -287,6 +291,27 @@ namespace MarchingCubes
         {
             children[index] = child;
             ChildCount++;
+        }
+
+        public bool TryFollowPathToLeaf(Stack<int> path, out T leafValue)
+        {
+            int next = path.Pop();
+            var child = children[next];
+            if(path.Count == 0)
+            {
+                if (child is Leaf l)
+                    leafValue = l.Value;
+                else
+                    leafValue = default;
+            }
+            else
+            {
+                if (child is Self s)
+                    return s.TryFollowPathToLeaf(path, out leafValue);
+                else
+                    leafValue = default;
+            }
+            return !leafValue.Equals(default);
         }
 
         protected Node GetOrCreateChildAt(int index, int[] relativePosition, bool allowOverride)

@@ -195,6 +195,8 @@ namespace MarchingCubes
             protected set { chunkSize = value; UpdateChunkCenterPos(); UpdateChunkData(); }
         }
 
+        public Stack<int> GetStoragePath => Leaf.BuildChildIndexList(MarchingCubeChunkHandler.STORAGE_GROUP_SIZE_POWER);
+
         public int ChunkSizePower
         {
             get => chunkSizePower;
