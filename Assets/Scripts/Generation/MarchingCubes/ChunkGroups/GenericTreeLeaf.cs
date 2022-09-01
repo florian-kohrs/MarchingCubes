@@ -59,16 +59,6 @@ namespace MarchingCubes
 
         public T Value => leaf;
 
-        public void RemoveLeafValue()
-        {
-            leaf = default;
-        }
-
-        public override T GetChunkAtLocalPosition(int[] pos)
-        {
-            return leaf;
-        }
-
         public override void SetLeafAtLocalPosition(int[] pos, T chunk, bool allowOverride)
         {
             throw new System.Exception();

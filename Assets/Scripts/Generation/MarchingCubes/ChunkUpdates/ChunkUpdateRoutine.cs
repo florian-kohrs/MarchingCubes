@@ -40,7 +40,7 @@ namespace MarchingCubes
 
         public static void RegisterChunkRoot(ChunkGroupTreeNode root)
         {
-            instance.RegisterLockedInHashset(instance.activeChunkGroupTreeRoots, root, instance.mutexLockRoots);
+            instance.RegisterLockedInHashset(instance.activeChunkGroupTreeRoots, root, instance.mutexLockActiveRoots);
         }
 
         public static void RegisterChunkLeaf(int index, ChunkGroupTreeLeaf leaf)
@@ -53,20 +53,25 @@ namespace MarchingCubes
             instance.RemoveLockedInHashset(instance.chunkGroupNodes[index], node, instance.mutexLockNodes);
         }
 
-        public static void RemoveChunkRoot(ChunkGroupTreeNode root)
+        public static void RemoveActiveChunkRoot(ChunkGroupTreeNode root)
         {
-            instance.RemoveLockedInHashset(instance.activeChunkGroupTreeRoots, root, instance.mutexLockRoots);
+            instance.RemoveLockedInHashset(instance.activeChunkGroupTreeRoots, root, instance.mutexLockActiveRoots);
+        }
+
+        public static void RemoveInactiveChunkRoot(ChunkGroupTreeNode root)
+        {
+            instance.RemoveLockedInHashset(instance.deactivatedChunkRoots, root, instance.mutexLockInactiveRoots);
         }
 
         public static void MoveRootToDeactivation(ChunkGroupTreeNode root)
         {
-            instance.RemoveLockedInHashset(instance.activeChunkGroupTreeRoots, root, instance.mutexLockRoots);
+            instance.RemoveLockedInHashset(instance.activeChunkGroupTreeRoots, root, instance.mutexLockActiveRoots);
             instance.RegisterLockedInHashset(instance.deactivatedChunkRoots, root, instance.mutexLockInactiveRoots);
         }
 
         public static void MoveRootToActivation(ChunkGroupTreeNode root)
         {
-            instance.RegisterLockedInHashset(instance.activeChunkGroupTreeRoots, root, instance.mutexLockRoots);
+            instance.RegisterLockedInHashset(instance.activeChunkGroupTreeRoots, root, instance.mutexLockActiveRoots);
             instance.RemoveLockedInHashset(instance.deactivatedChunkRoots, root, instance.mutexLockInactiveRoots);
         }
 
@@ -100,12 +105,17 @@ namespace MarchingCubes
         /// </summary>
         public static int[] SQR_DISTANCE_LOD_UPDATES = new int[] { 5, 10 ,15, 25, 50};
 
+        protected static readonly int SQR_DISTANCE_ROOT_LOD_UPDATE = 80;
+
         public static Vector3[] lastTimeCheckedPositions = new Vector3[SQR_DISTANCE_LOD_UPDATES.Length];
+
+        protected Vector3 lastRootLodCheck;
 
         public Vector3 playerPos;
 
         protected Stack<ChunkGroupTreeNode> destroySet;
         protected Stack<ChunkGroupTreeNode> deactivateSet;
+        protected Stack<ChunkGroupTreeNode> reactivateSet;
         protected Stack<ChunkGroupTreeNode> mergeSet;
         protected Stack<ChunkSplitExchange> splitSet;
 
@@ -126,25 +136,25 @@ namespace MarchingCubes
         public object mutexLockSplit = new object();
         public object mutexLockDestroy = new object();
         public object mutexLockDeactivate = new object(); 
+        public object mutexLockReactivate = new object(); 
         
         public object mutexLockLeafs = new object();
-        public object mutexLockRoots = new object();
+        public object mutexLockActiveRoots = new object();
         public object mutexLockInactiveRoots = new object();
         public object mutexLockNodes = new object();
 
         static ChunkUpdateRoutine()
         {
-            for (int i = 0; i < SQR_DISTANCE_LOD_UPDATES.Length; i++)
-            {
-                SQR_DISTANCE_LOD_UPDATES[i] *= SQR_DISTANCE_LOD_UPDATES[i];
-            }
+            SQR_DISTANCE_ROOT_LOD_UPDATE *= SQR_DISTANCE_ROOT_LOD_UPDATE;
+            ChunkUpdateValues.ApplySqrDistanceToList(SQR_DISTANCE_LOD_UPDATES);
         }
 
-        public ChunkUpdateRoutine(Stack<ChunkGroupTreeNode> destroySet, Stack<ChunkGroupTreeNode> deactivateSet, Stack<ChunkGroupTreeNode> mergeSet, Stack<ChunkSplitExchange> splitSet, ChunkUpdateValues updateValues)
+        public ChunkUpdateRoutine(Stack<ChunkGroupTreeNode> destroySet, Stack<ChunkGroupTreeNode> deactivateSet, Stack<ChunkGroupTreeNode> reactivateSet, Stack<ChunkGroupTreeNode> mergeSet, Stack<ChunkSplitExchange> splitSet, ChunkUpdateValues updateValues)
         {
             if (instance != null)
                 throw new System.Exception("There can be only one " + nameof(ChunkUpdateRoutine));
             instance = this;
+            this.reactivateSet = reactivateSet;
             this.destroySet = destroySet;
             this.deactivateSet = deactivateSet;
             this.mergeSet = mergeSet;
@@ -194,7 +204,7 @@ namespace MarchingCubes
             {
                 updateDone = false; 
                 update = false;
-                UpdateAll();
+                CheckAllLodsForUpdate();
                 updateDone = true;
             }
             watch.Stop();
@@ -203,37 +213,37 @@ namespace MarchingCubes
             RunRoutine();
         }
 
-        protected void UpdateAll()
-        {
-            CheckRootsForDestruction();
-            CheckRootsForDeactivation();
 
-            CheckAllLodsForUpdate();
+        protected void CheckAllLodsForUpdate(bool force = false)
+        {
+            CheckAllLodsForUpdate(0, force);
         }
 
-
-        protected void PrepareChunkNodeRegister()
+        protected void CheckAllLodsForUpdate(int index, bool force)
         {
-            for (int i = 0; i < MarchingCubeChunkHandler.MAX_CHUNK_LOD_POWER; i++)
-            {
-                chunkGroupNodes[i] = new HashSet<ChunkGroupTreeNode>();
-                chunkGroupTreeLeaves[i] = new HashSet<ChunkGroupTreeLeaf>();
-            }
+            bool doneWithNodeLods = index >= SQR_DISTANCE_LOD_UPDATES.Length;
+            if (doneWithNodeLods)
+                CheckAllRootsForUpdate(force);
+
+
+            if (doneWithNodeLods || (!force && !CheckLod(index)))
+                return;
+
+            ///only check next lod if current lod is going to be updated
+            CheckAllLodsForUpdate(index + 1, force);
+            CheckLodRoutineMerge(index);
+            CheckLodRoutineSplit(index);
         }
 
-        protected T[] GetCopiedHashset<T>(HashSet<T> set, object lockObject)
+        protected void CheckAllRootsForDestruction()
         {
-            T[] result = new T[set.Count];
-            lock (lockObject)
-            {
-                set.CopyTo(result);
-            }
-            return result;
+            CheckRootsForDestruction(activeChunkGroupTreeRoots, mutexLockActiveRoots);
+            CheckRootsForDestruction(deactivatedChunkRoots, mutexLockInactiveRoots);
         }
 
-        protected void CheckRootsForDestruction()
+        protected void CheckRootsForDestruction(HashSet<ChunkGroupTreeNode> nodes, object lockObject)
         {
-            foreach (var item in GetCopiedHashset(activeChunkGroupTreeRoots, mutexLockRoots))
+            foreach (var item in GetCopiedHashset(nodes, lockObject))
             {
                 if (CheckChunkForDestruction(item.Center))
                 {
@@ -248,9 +258,9 @@ namespace MarchingCubes
 
         protected void CheckRootsForDeactivation()
         {
-            foreach (var item in GetCopiedHashset(activeChunkGroupTreeRoots, mutexLockRoots))
+            foreach (var item in GetCopiedHashset(activeChunkGroupTreeRoots, mutexLockActiveRoots))
             {
-                if (!item.ChanneledForDestruction && !item.ChanneledForDeactivation && CheckChunkForDeactivation(item.Center))
+                if (CheckChunkForDeactivation(item.Center))
                 {
                     item.SetChannelChunkForDeactivation();
                     lock (mutexLockDeactivate)
@@ -263,33 +273,29 @@ namespace MarchingCubes
 
         protected void CheckRootsForReactivation()
         {
-            foreach (var item in GetCopiedHashset(activeChunkGroupTreeRoots, mutexLockRoots))
+            foreach (var item in GetCopiedHashset(deactivatedChunkRoots, mutexLockActiveRoots))
             {
-                if (!item.ChanneledForDestruction && item.ChanneledForDeactivation && CheckChunkForReactivation(item.Center))
+                if (CheckChunkForReactivation(item.Center))
                 {
                     item.SetChannelChunkForDeactivation();
-                    lock (mutexLockDeactivate)
+                    lock (mutexLockReactivate)
                     {
-                        deactivateSet.Push(item);
+                        reactivateSet.Push(item);
                     }
                 }
             }
         }
 
-        protected void CheckAllLodsForUpdate(bool force = false)
+        protected void CheckAllRootsForUpdate(bool force)
         {
-            CheckAllLodsForUpdate(0, force);
-        }
+            if (!force && !CheckRootUpdateLod())
+                return;
 
-        protected void CheckAllLodsForUpdate(int index, bool force = false)
-        {
-            if (index >= SQR_DISTANCE_LOD_UPDATES.Length || (!force && !CheckLod(index)))
-                    return;
+            lastRootLodCheck = playerPos;
 
-            ///only check next lod if current lod is going to be updated
-            CheckAllLodsForUpdate(index + 1, force);
-            CheckLodRoutineMerge(index);
-            CheckLodRoutineSplit(index);
+            CheckAllRootsForDestruction();
+            CheckRootsForDeactivation();
+            CheckRootsForReactivation();
         }
 
         protected void CheckLodRoutineMerge(int index)
@@ -340,12 +346,16 @@ namespace MarchingCubes
 
 
 
-        public float SqrDeactivateDistance => SqrMergeDistanceRequirement[MarchingCubeChunkHandler.CHUNK_GROUP_SIZE];
+        public float SqrDeactivateDistance => SqrMergeDistanceRequirement[MarchingCubeChunkHandler.MAX_CHUNK_EXTRA_SIZE_POWER];
         
-        public float SqrReactivateDistance => SqrSplitDistanceRequirement[MarchingCubeChunkHandler.CHUNK_GROUP_SIZE];
+        public float SqrReactivateDistance => SqrSplitDistanceRequirement[MarchingCubeChunkHandler.MAX_CHUNK_EXTRA_SIZE_POWER];
 
         protected bool CheckLod(int index) => 
             Vector3.SqrMagnitude(lastTimeCheckedPositions[index] - playerPos) >= SQR_DISTANCE_LOD_UPDATES[index];
+
+        protected bool CheckRootUpdateLod() =>
+            Vector3.SqrMagnitude(lastRootLodCheck - playerPos) >= SQR_DISTANCE_ROOT_LOD_UPDATE;
+
 
         protected bool CheckChunkForDestruction(Vector3 center) =>
           Vector3.SqrMagnitude(center - playerPos) >= SqrDestroyDistance;
@@ -363,6 +373,29 @@ namespace MarchingCubes
 
         protected bool CheckLeafForSplit(int index, Vector3 center) =>
             Vector3.SqrMagnitude(center - playerPos) < SqrSplitDistanceRequirement[index];
+
+
+
+
+        protected void PrepareChunkNodeRegister()
+        {
+            for (int i = 0; i < MarchingCubeChunkHandler.MAX_CHUNK_LOD_POWER; i++)
+            {
+                chunkGroupNodes[i] = new HashSet<ChunkGroupTreeNode>();
+                chunkGroupTreeLeaves[i] = new HashSet<ChunkGroupTreeLeaf>();
+            }
+        }
+
+        protected T[] GetCopiedHashset<T>(HashSet<T> set, object lockObject)
+        {
+            T[] result = new T[set.Count];
+            lock (lockObject)
+            {
+                set.CopyTo(result);
+            }
+            return result;
+        }
+
 
     }
 

@@ -22,6 +22,7 @@ namespace MarchingCubes
             int halfSize = (int)Mathf.Pow(2, sizePower) / 2;
             centerPosition = new Vector3(anchorPoint[0] + halfSize, anchorPoint[1] + halfSize, anchorPoint[2] + halfSize);
             chunk.Leaf = this;
+
             if (!MarchingCubeChunkHandler.InitialWorldBuildingDone) Register();
         }
 
@@ -65,6 +66,12 @@ namespace MarchingCubes
             return result;
         }
 
+        public void DestroyLeaf()
+        {
+            leaf = default;
+            RemoveChildsFromRegister();
+            parent.RemoveChildAtIndex(childIndex);
+        }
 
         public bool TryGetEmptyLeafParentInDirection(Direction d, out ChunkDirectionSearchState searchState)
         {

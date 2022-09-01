@@ -188,14 +188,15 @@ namespace MarchingCubes
             }
         }
 
+        public int ChildCount { get; protected set; }
+
+        public bool HasChildren => ChildCount > 0;
+
         public void RemoveChildAtIndex(int index)
         {
-            //TODO:Maybe disallow nodes to be removed here
             children[index] = default;
+            ChildCount--;
         }
-
-        
-
 
         protected Vector3 GetChildLocalPositionForIndex(int index)
         {
@@ -250,15 +251,6 @@ namespace MarchingCubes
             };
         }
 
-        public override T GetChunkAtLocalPosition(int[] pos)
-        {
-            IChunkGroupOrganizer<T> child = children[GetIndexForLocalPosition(pos)];
-            pos[0] -= groupRelativeAnchorPosition[0];
-            pos[1] -= groupRelativeAnchorPosition[1];
-            pos[2] -= groupRelativeAnchorPosition[2];
-            return child.GetChunkAtLocalPosition(pos);
-        }
-
         public override void SetLeafAtLocalPosition(int[] relativePosition, T chunk, bool allowOverride)
         {
             relativePosition[0] -= groupRelativeAnchorPosition[0];
@@ -288,7 +280,13 @@ namespace MarchingCubes
         public void SetLeafAtLocalIndex(int index, T chunk)
         {
             GetAnchorPositionsForChildAtIndex(index, out int[] anchorPos, out int[] relativePosition);
-            children[index] = GetLeaf(chunk, index, anchorPos, relativePosition, sizePower - 1);
+            SetNewChildAt(GetLeaf(chunk, index, anchorPos, relativePosition, sizePower - 1), index);
+        }
+
+        protected void SetNewChildAt(Node child, int index)
+        {
+            children[index] = child;
+            ChildCount++;
         }
 
         protected Node GetOrCreateChildAt(int index, int[] relativePosition, bool allowOverride)
@@ -298,7 +296,7 @@ namespace MarchingCubes
                 int[] childAnchorPosition;
                 int[] childRelativeAnchorPosition;
                 GetAnchorPositionForChunkAt(relativePosition, out childAnchorPosition, out childRelativeAnchorPosition);
-                children[index] = GetNode(index, childAnchorPosition, childRelativeAnchorPosition, sizePower - 1);
+                SetNewChildAt(GetNode(index, childAnchorPosition, childRelativeAnchorPosition, sizePower - 1), index);
             }
             return children[index];
         }

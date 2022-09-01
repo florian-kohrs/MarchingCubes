@@ -37,7 +37,6 @@ namespace MarchingCubes
 
         public abstract bool IsLeaf { get; }
 
-        public abstract T GetChunkAtLocalPosition(int[] pos);
         public abstract void SetLeafAtLocalPosition(int[] pos, T chunk, bool allowOverride);
         public abstract bool TryGetLeafAtLocalPosition(int[] pos, out T chunk);
         public abstract bool HasChunkAtLocalPosition(int[] pos);

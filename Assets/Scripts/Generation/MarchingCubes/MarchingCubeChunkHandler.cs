@@ -40,7 +40,7 @@ namespace MarchingCubes
 
         public static readonly int CHUNK_GROUP_SIZE = (int)Mathf.Pow(2,CHUNK_GROUP_SIZE_POWER);
 
-        public const int CHUNK_GROUP_SIZE_POWER = 10;
+        public const int CHUNK_GROUP_SIZE_POWER = DEFAULT_CHUNK_SIZE_POWER + MAX_CHUNK_EXTRA_SIZE_POWER;
 
         public const int DEFAULT_CHUNK_SIZE = 32;
 
@@ -48,13 +48,13 @@ namespace MarchingCubes
 
         public const int DEFAULT_CHUNK_SIZE_POWER = 5;
 
+        public const int MAX_CHUNK_EXTRA_SIZE_POWER = 5;
+
         public const int DEFAULT_MIN_CHUNK_LOD_POWER = 0;
 
         public const int MAX_CHUNK_LOD_POWER = 5;
 
         public const int MAX_CHUNK_LOD_BIT_REPRESENTATION_SIZE = 3;
-
-        public const int DESTROY_CHUNK_LOD = MAX_CHUNK_LOD_POWER + 2;
 
         public const int DEACTIVATE_CHUNK_LOD_POWER = MAX_CHUNK_LOD_POWER + 1;
 

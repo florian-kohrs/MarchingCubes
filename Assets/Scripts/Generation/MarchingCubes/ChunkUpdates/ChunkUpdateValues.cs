@@ -68,7 +68,16 @@ public class ChunkUpdateValues
         return sqrDistance > sqrCenterDistanceRequirement[lodPower]; ;
     }
 
-    protected void ApplySqrDistanceToList(float[] list)
+    public static void ApplySqrDistanceToList(float[] list)
+    {
+        int length = list.Length;
+        for (int i = 0; i < length; i++)
+        {
+            list[i] *= list[i];
+        }
+    }
+
+    public static void ApplySqrDistanceToList(int[] list)
     {
         int length = list.Length;
         for (int i = 0; i < length; i++)

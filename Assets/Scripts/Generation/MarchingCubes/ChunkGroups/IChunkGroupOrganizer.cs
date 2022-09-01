@@ -7,7 +7,6 @@ namespace MarchingCubes
     public interface IChunkGroupOrganizer<T> 
     {
 
-        T GetChunkAtLocalPosition(int[] pos);
 
         void SetLeafAtLocalPosition(int[] pos, T chunk, bool allowOverride);
 

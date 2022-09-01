@@ -307,7 +307,10 @@ namespace MarchingCubes
         {
             if (Leaf != null)
             {
-                Leaf.RemoveLeafValue();
+                if (MarchingCubeChunkHandler.InitialWorldBuildingDone)
+                    Leaf.DestroyLeaf();
+                else
+                    chunkUpdater.leafsWithEmptyChunks.Add(Leaf);
                 Leaf = null;
             }
             IsReady = false;

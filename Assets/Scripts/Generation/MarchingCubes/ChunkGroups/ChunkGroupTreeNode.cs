@@ -56,6 +56,10 @@ namespace MarchingCubes
         public void SetChannelChunkForDestruction()
         {
             ChanneledForDestruction = true;
+            if(ChanneledForDeactivation)
+                ChunkUpdateRoutine.RemoveInactiveChunkRoot(this);
+            else
+                ChunkUpdateRoutine.RemoveActiveChunkRoot(this);
         }
 
         protected const int CHILD_COUNT = 8;
@@ -175,7 +179,7 @@ namespace MarchingCubes
                         {
                             GetAnchorPositionsForChildAtIndex(nextChildIndex, out int[] globalPos, out int[] localPos);
                             node = GetNode(nextChildIndex, globalPos, localPos, ChildrenSizePower);
-                            children[nextChildIndex] = node;
+                            SetNewChildAt(node, nextChildIndex);
                         }
                         else
                         {
@@ -274,6 +278,7 @@ namespace MarchingCubes
             {
                 GetAnchorPositionsForChildAtIndex(index, out int[] anchorPos, out int[] relativePosition);
                 newNode = new ChunkGroupTreeNode(this, anchorPos, relativePosition, index, SizePower - 1);
+                ChildCount++;
             }
             else
             {

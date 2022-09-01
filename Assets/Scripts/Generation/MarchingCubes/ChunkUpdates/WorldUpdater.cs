@@ -11,6 +11,9 @@ namespace MarchingCubes
 
         public ChunkUpdateRoutine updateRoutine;
 
+        [HideInInspector]
+        public List<ChunkGroupTreeLeaf> leafsWithEmptyChunks = new List<ChunkGroupTreeLeaf>();
+
         [SerializeField]
         protected Transform player;
 
@@ -54,31 +57,44 @@ namespace MarchingCubes
 
         protected Stack<ChunkGroupTreeNode> destroyRoots;
         protected Stack<ChunkGroupTreeNode> deactivateRoots;
+        protected Stack<ChunkGroupTreeNode> reactivateRoots;
         protected Stack<ChunkGroupTreeNode> mergeSet;
         protected Stack<ChunkSplitExchange> splitSet;
 
         private void Awake()
         {
-            
-            chunkHandler.OnInitializationDoneCallback.Add(delegate { updateRoutine.BeginAsynchrounLodCheck(); });
+            chunkHandler.OnInitializationDoneCallback.Add(BeginChunkUpdates);
         }
 
+
+        protected void BeginChunkUpdates()
+        {
+            ClearLeafesWithoutValue();
+            updateRoutine.BeginAsynchrounLodCheck();
+        }
+
+        protected void ClearLeafesWithoutValue()
+        {
+            for (int i = 0; i < leafsWithEmptyChunks.Count; i++)
+            {
+                leafsWithEmptyChunks[i].DestroyLeaf();
+            }
+        }
 
         public void InitializeUpdateRoutine(ChunkUpdateValues updateValues)
         {
             destroyRoots = new Stack<ChunkGroupTreeNode>();
             deactivateRoots = new Stack<ChunkGroupTreeNode>();
+            reactivateRoots = new Stack<ChunkGroupTreeNode>();
             mergeSet = new Stack<ChunkGroupTreeNode>();
             splitSet = new Stack<ChunkSplitExchange>();
-            updateRoutine = new ChunkUpdateRoutine(deactivateRoots, deactivateRoots, mergeSet, splitSet, updateValues);
+            updateRoutine = new ChunkUpdateRoutine(deactivateRoots, deactivateRoots, reactivateRoots, mergeSet, splitSet, updateValues);
         }
 
         public void AddChunkToInitialize(ChunkInitializeTask chunkTask)
         {
             chunksToInitialize.Push(chunkTask);
         }
-
-     
 
 
         public int maxMillisecondsPerFrame = 30;
