@@ -60,7 +60,7 @@ namespace MarchingCubes
         }
 
 
-        protected void GetNoiseEditData(Vector3 offset, int radius, Vector3Int clickedIndex, out Vector3Int start, out Vector3Int end)
+        protected void GetNoiseEditData(int radius, Vector3Int clickedIndex, out Vector3Int start, out Vector3Int end)
         {
             int ppMinus = pointsPerAxis - 1;
 
@@ -78,12 +78,10 @@ namespace MarchingCubes
         //TODO: When editing chunk that spawns new chunk build neighbours of new chunk if existing
         public void RebuildAround(Vector3 offset, int radius, Vector3Int clickedIndex, float delta)
         {
-
-
             ///define loop ranges
             Vector3Int start;
             Vector3Int end;
-            GetNoiseEditData(offset, radius, VectorExtension.ToVector3Int(clickedIndex - offset), out start, out end);
+            GetNoiseEditData(radius, VectorExtension.ToVector3Int(clickedIndex - offset), out start, out end);
 
             bool rebuildChunk;
             if (!HasPoints)
@@ -216,21 +214,25 @@ namespace MarchingCubes
             Vector3 globalOrigin = origin + AnchorPos;
             Vector3 hitDiff = hit.point - globalOrigin;
 
-            Vector3Int[] neighbourDirs = NeighbourDirections(originX, originY, originZ, editDistance + 1);
+            Direction[] neighbourDirs = NeighbourDirections(originX, originY, originZ, editDistance + 1);
 
             int length = neighbourDirs.Length;
 
             List<Tuple<ReducedMarchingCubesChunk, Vector3Int>> chunks = new List<Tuple<ReducedMarchingCubesChunk, Vector3Int>>();
             chunks.Add(Tuple.Create(this, origin));
 
+            CompressedMarchingCubeChunk lastChunk = this;
             CompressedMarchingCubeChunk chunk;
+
+            Vector3Int offset = Vector3Int.zero;
+
             for (int i = 0; i < length; i++)
             {
-                Vector3Int offset = ChunkSize * neighbourDirs[i];
-                Vector3Int newChunkPos = AnchorPos + offset;
+                Direction dir = neighbourDirs[i];
+                offset = DirectionHelper.OffsetVector3Int(dir, offset, ChunkSize);
                 //TODO: Get empty chunk first, only request actual noise when noise values change
                 //!TODO: When requesting a nonexisting chunk instead of create -> edit request modified noise and only build that
-                if (ChunkHandler.TryGetReadyChunkAt(newChunkPos, out chunk))
+                if (lastChunk.Leaf.TryGetChunkInDirection(dir, out ChunkReadyState readyState) && readyState.HasLeaf(out chunk))
                 {
                     if (chunk is ReducedMarchingCubesChunk threadedChunk)
                     {
@@ -246,8 +248,9 @@ namespace MarchingCubes
                 {
                     Vector3Int start;
                     Vector3Int end;
-                    GetNoiseEditData(offset, editDistance, origin - offset, out start, out end);
-                    chunkHandler.CreateChunkWithNoiseEdit(newChunkPos, hit.point - newChunkPos, start, end, delta, editDistance, out CompressedMarchingCubeChunk a);
+                    Vector3Int newChunkPos = AnchorPos + offset;
+                    GetNoiseEditData(editDistance, origin - offset, out start, out end);
+                    chunkHandler.CreateChunkWithNoiseEdit(readyState, hit.point - newChunkPos, start, end, delta, editDistance, out _);
                 }
             }
 

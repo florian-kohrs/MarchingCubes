@@ -22,13 +22,18 @@ namespace MarchingCubes
 
         public Dictionary<Serializable3DIntVector, Key> storageGroups = new Dictionary<Serializable3DIntVector, Key>();
 
-        protected abstract Key CreateKey(Vector3Int coord);
+        protected abstract Key CreateRootNodeAt(Vector3Int coord);
 
         protected Key CreateGroupAtCoordinate(Vector3Int coord)
         {
-            Key group = CreateKey(GROUP_SIZE * coord);
+            Key group = CreateRootNodeAt(GROUP_SIZE * coord);
             storageGroups.Add(coord, group);
             return group;
+        }
+
+        protected void StoreGroupAtCoordinate(Key group, Vector3Int coord)
+        {
+            storageGroups.Add(coord, group);
         }
 
         public void SetValueAtGlobalPosition(Vector3Int position, T value, bool allowOverride)
@@ -47,7 +52,25 @@ namespace MarchingCubes
             return GetOrCreateGroupAtCoordinate(PositionToGroupCoord(pos));
         }
 
-       
+        public bool CreateNodeIfNotExisitingAt(int[] pos)
+        {
+            return CreateNodeIfNotExisitingAt(pos, out _);
+        }
+
+        public bool CreateNodeIfNotExisitingAt(int[] pos, out Key key)
+        {
+            return CreateNodeIfNotExisitingAtCoord(PositionToGroupCoord(pos), out key);
+        }
+
+        public bool CreateNodeIfNotExisitingAtCoord(Vector3Int coord, out Key k)
+        {
+            if (!storageGroups.TryGetValue(coord, out k))
+            {
+                k = CreateGroupAtCoordinate(coord);
+                return true;
+            }
+            return false;
+        }
 
         public Key GetOrCreateGroupAtCoordinate
             (Vector3Int coord)
@@ -60,6 +83,16 @@ namespace MarchingCubes
             return group;
         }
 
+        public bool HasGroupAtPos(int[] pos)
+        {
+            return HasGroupAtCoord(PositionToGroupCoord(pos));
+        }
+
+        public bool HasGroupAtCoord(Vector3Int coord)
+        {
+            return storageGroups.TryGetValue(coord, out _);
+        }
+
         public bool TryGetGroupAt(Vector3Int p, out Key group)
         {
             Vector3Int coord = PositionToGroupCoord(p);
@@ -69,6 +102,12 @@ namespace MarchingCubes
         {
             Vector3Int coord = PositionToGroupCoord(p);
             return storageGroups.TryGetValue(coord, out group);
+        }
+
+        public Key GetGroupAt(int[] p)
+        {
+            Vector3Int coord = PositionToGroupCoord(p);
+            return storageGroups[coord];
         }
 
         protected Vector3Int CoordToPosition(Vector3Int coord)

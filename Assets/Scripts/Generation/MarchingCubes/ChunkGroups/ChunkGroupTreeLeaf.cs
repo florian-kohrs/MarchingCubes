@@ -30,8 +30,6 @@ namespace MarchingCubes
 
         public Vector3 Center => centerPosition;
 
-        protected bool RegisterInConstructor => false;
-
         protected bool isRegistered;
 
         public int[][] GetAllChildGlobalAnchorPosition()
@@ -91,6 +89,19 @@ namespace MarchingCubes
             return parent.TryGetEmptyLeafParentInDirection(searchState);
         }
 
+        public bool TryGetChunkInDirection(Direction d, out ChunkReadyState readyState)
+        {
+            ChunkDirectionSearchState searchState = new ChunkDirectionSearchState(d);
+            searchState.childIndices.Push(childIndex);
+            bool result = parent.TryGetEmptyLeafParentInDirection(searchState, true);
+            result = result && searchState.lastParent.RegisterIndex == 0;
+            if (result)
+                readyState = searchState.GetReadyState();
+            else
+                readyState = null;
+            return result;
+        }
+
 
         public override bool RemoveLeafAtLocalPosition(int[] pos)
         {
@@ -117,10 +128,10 @@ namespace MarchingCubes
 
         public void Register()
         {
-            if (leaf.LODPower > 0 && leaf.LODPower < MarchingCubeChunkHandler.DEACTIVATE_CHUNK_LOD_POWER)
+            if (RegisterIndex >= 0 && RegisterIndex < MarchingCubeChunkHandler.MAX_CHUNK_LOD_POWER)
             {
                 isRegistered = true;
-                ChunkUpdateRoutine.RegisterChunkLeaf(leaf.LODPower - 1, this);
+                ChunkUpdateRoutine.RegisterChunkLeaf(RegisterIndex, this);
             }
         }
         
@@ -128,11 +139,18 @@ namespace MarchingCubes
         {
             if (isRegistered)
             {
-                ChunkUpdateRoutine.RemoveChunkLeaf(leaf.LODPower - 1,this);
+                ChunkUpdateRoutine.RemoveChunkLeaf(RegisterIndex, this);
                 isRegistered = false;
             }
         }
 
+        public void AddChildsToRegister()
+        {
+            if (!isRegistered)
+            {
+                Register();
+            }
+        }
     }
 
 }

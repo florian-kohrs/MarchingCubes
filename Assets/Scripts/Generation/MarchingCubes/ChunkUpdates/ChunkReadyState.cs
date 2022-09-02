@@ -11,6 +11,21 @@ namespace MarchingCubes
 
         public int lastParentsChildIndex;
 
+        public bool HasLeaf(out CompressedMarchingCubeChunk chunk)
+        {
+            var child = lastParent.children[lastParentsChildIndex];
+            if (child is ChunkGroupTreeLeaf l)
+            {
+                chunk = l.leaf;
+                return true;
+            }
+            else 
+            {
+                chunk = null;
+                return false;
+            }
+        }
+
         public ChunkReadyState(ChunkGroupTreeNode node, int childIndex)
         {
             lastParent = node;

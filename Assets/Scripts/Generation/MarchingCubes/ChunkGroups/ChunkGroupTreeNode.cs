@@ -23,8 +23,10 @@ namespace MarchingCubes
             int[] anchorPosition,
             int[] relativeAnchorPosition,
             int index,
-            int sizePower) : base(null, anchorPosition, relativeAnchorPosition, index, sizePower)
+            int sizePower,
+            bool isActive) : base(null, anchorPosition, relativeAnchorPosition, index, sizePower)
         {
+            ChanneledForDeactivation = !isActive;
             this.mesh = mesh;
             Initialize();
         }
@@ -32,7 +34,7 @@ namespace MarchingCubes
         protected void Initialize()
         {
             centerPosition = new Vector3(GroupAnchorPosition[0] + halfSize, GroupAnchorPosition[1] + halfSize, GroupAnchorPosition[2] + halfSize);
-            if (!MarchingCubeChunkHandler.InitialWorldBuildingDone) Register();
+            if (IsRoot || !MarchingCubeChunkHandler.InitialWorldBuildingDone) Register();
         }
 
         protected ChunkGroupMesh mesh;
@@ -45,6 +47,7 @@ namespace MarchingCubes
         {
             ChanneledForDeactivation = true;
             ChunkUpdateRoutine.MoveRootToDeactivation(this);
+            RemoveChildsFromRegister();
         }
 
         public void SetChannelChunkForReactivation()
@@ -60,11 +63,12 @@ namespace MarchingCubes
                 ChunkUpdateRoutine.RemoveInactiveChunkRoot(this);
             else
                 ChunkUpdateRoutine.RemoveActiveChunkRoot(this);
+            RemoveChildsFromRegister();
         }
 
         protected const int CHILD_COUNT = 8;
 
-        protected int RegisterIndex => LodPower - 1;
+        public int RegisterIndex => LodPower - 1;
         
         public int LodPower => sizePower - MarchingCubeChunkHandler.DEFAULT_CHUNK_SIZE_POWER;
 
@@ -91,7 +95,7 @@ namespace MarchingCubes
             return Center + GetDirectionFromIndex(index) * halfSize;
         }
 
-        public bool TryGetEmptyLeafParentInDirection(ChunkDirectionSearchState searchState)
+        public bool TryGetEmptyLeafParentInDirection(ChunkDirectionSearchState searchState, bool allowedToBuildNodes = false)
         {
             Direction d = searchState.direction;
             Stack<int> childIndices = searchState.childIndices;
@@ -101,7 +105,7 @@ namespace MarchingCubes
             {
                 searchState.isInDownWardsTrend = true;
                 childIndices.Push(DirectionToNewChildIndex(d, childIndex, 1));
-                bool canBuild = FollowPathBuildingNodesToEmptyLeafPosition(searchState, false);
+                bool canBuild = FollowPathBuildingNodesToEmptyLeafPosition(searchState, allowedToBuildNodes);
                 childIndices.Push(searchState.lastChildIndex);
                 return canBuild;
             }
@@ -111,9 +115,13 @@ namespace MarchingCubes
                 {
                     newChildIndex = DirectionToNewChildIndex(d, childIndex, -1);
                     childIndices.Push(newChildIndex);
-                    if (mesh.TryGetNodeInDirection(this,d, out ChunkGroupTreeNode neighbour))
+                    ChunkGroupTreeNode neighbour = null;
+                    if (allowedToBuildNodes)
+                        neighbour = mesh.GetOrCreateRootNodeInDirection(this, d);
+                    
+                    if (neighbour != null || mesh.TryGetRootNodeInDirection(this,d, out neighbour))
                     {
-                        bool result = neighbour.FollowPathBuildingNodesToEmptyLeafPosition(searchState, false);
+                        bool result = neighbour.FollowPathBuildingNodesToEmptyLeafPosition(searchState, allowedToBuildNodes);
                         childIndices.Push(searchState.lastChildIndex);
                         searchState.isInDownWardsTrend = true;
                         return result;
@@ -145,7 +153,7 @@ namespace MarchingCubes
             }
             else
             {
-                ChunkGroupTreeNode neighbour = mesh.GetOrCreateNodeInDirection(this, searchState.direction);
+                ChunkGroupTreeNode neighbour = mesh.GetOrCreateRootNodeInDirection(this, searchState.direction);
                 return neighbour.FollowPathBuildingNodesToEmptyLeafPosition(searchState, true);
             }
         }
@@ -165,8 +173,7 @@ namespace MarchingCubes
             {
                 if(searchState.childIndices.Count == 0)
                 {
-                    //Debug.Log("Denied placement due to new childs position couldnt be determined." +
-                    //    "Another child should be able to spawn this child tho.");
+                    ///cant continue search without child index
                     result = false;
                 }
                 else 
@@ -230,6 +237,11 @@ namespace MarchingCubes
 
         public void DestroyBranch()
         {
+            DeactivateBranch();
+        }
+
+        protected void DestroyChildBranches()
+        {
             for (int i = 0; i < CHILD_COUNT; i++)
             {
                 if (children[i] == null)
@@ -244,16 +256,29 @@ namespace MarchingCubes
         /// </summary>
         public void DeactivateBranch()
         {
-            DestroyBranch();
+            DestroyChildBranches();
+            children = new IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk>[CHILD_COUNT];
         }
 
         public void RemoveChildsFromRegister()
         {
-            ChunkUpdateRoutine.RemoveChunkNode(RegisterIndex, this);
+            if(!IsRoot)
+                ChunkUpdateRoutine.RemoveChunkNode(RegisterIndex, this);
             for (int i = 0; i < CHILD_COUNT; i++)
             {
                 if(children[i] != null)
                     children[i].RemoveChildsFromRegister();
+            }
+        }
+
+        public void AddChildsToRegister()
+        {
+            if (!IsRoot)
+                Register();
+            for (int i = 0; i < CHILD_COUNT; i++)
+            {
+                if (children[i] != null)
+                    children[i].AddChildsToRegister();
             }
         }
 
@@ -314,7 +339,10 @@ namespace MarchingCubes
         public void Register()
         {
             if(IsRoot)
-                ChunkUpdateRoutine.RegisterChunkRoot(this);
+                if(ChanneledForDeactivation)
+                    ChunkUpdateRoutine.RegisterDeactiveRoot(this);
+                else
+                    ChunkUpdateRoutine.RegisterActiveChunkRoot(this);
             else
                 ChunkUpdateRoutine.RegisterChunkNode(RegisterIndex, this);
         }

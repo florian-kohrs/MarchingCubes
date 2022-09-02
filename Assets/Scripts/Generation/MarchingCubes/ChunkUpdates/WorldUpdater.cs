@@ -69,11 +69,10 @@ namespace MarchingCubes
 
         protected void BeginChunkUpdates()
         {
-            ClearLeafesWithoutValue();
             updateRoutine.BeginAsynchrounLodCheck();
         }
 
-        protected void ClearLeafesWithoutValue()
+        public void ClearLeafesWithoutValue()
         {
             for (int i = 0; i < leafsWithEmptyChunks.Count; i++)
             {
@@ -126,24 +125,20 @@ namespace MarchingCubes
                 
                 List<CompressedMarchingCubeChunk> chunk = change.chunks;
                 List<CompressedMarchingCubeChunk> olds = change.old;
-                
-                if(olds.Count == 0)
+
+                if (olds.Count == 0)
                 {
                     Debug.LogError("old is 0!");
                     continue;
                 }
 
-                if (olds[0].IsSpawner)
-                {
-                    chunkHandler.FindNeighbourOfChunk(chunk[0]);
-                }
                 for (int i = 0; i < olds.Count; i++)
                 {
                     olds[i].DestroyChunk();
                 }
                 for (int i = 0; i < chunk.Count; i++)
                 {
-                    if (chunk[i].IsEmpty && !chunk[i].IsSpawner)
+                    if (chunk[i].IsEmpty)
                     {
                         chunk[i].DestroyChunk();
                     }

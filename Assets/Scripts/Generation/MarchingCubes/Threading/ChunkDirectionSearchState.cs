@@ -24,8 +24,13 @@ namespace MarchingCubes
         public bool ContinueFollowPathBuildingNodesToEmptyLeafPosition(out ChunkReadyState readyState)
         {
             bool result = lastParent.ContinueFollowPathBuildingNodesToEmptyLeafPosition(this);
-            readyState = new ChunkReadyState(lastParent, lastChildIndex);
+            readyState = GetReadyState();
             return result;
+        }
+
+        public ChunkReadyState GetReadyState()
+        {
+            return new ChunkReadyState(lastParent, lastChildIndex);
         }
 
     }

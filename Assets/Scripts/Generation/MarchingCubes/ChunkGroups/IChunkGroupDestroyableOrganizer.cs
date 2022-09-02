@@ -12,5 +12,7 @@ namespace MarchingCubes
 
         void RemoveChildsFromRegister();
 
+        void AddChildsToRegister();
+
     }
 }

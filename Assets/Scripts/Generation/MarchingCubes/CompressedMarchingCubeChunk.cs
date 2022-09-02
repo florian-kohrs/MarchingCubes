@@ -112,8 +112,6 @@ namespace MarchingCubes
 
         public Material Material { protected get; set; }
 
-        public bool IsSpawner { get; set; }
-
         public ChunkGroupTreeLeaf Leaf { get; set; }
 
         public Vector3Int CenterPos => chunkCenterPosition;
@@ -242,7 +240,7 @@ namespace MarchingCubes
                 RebuildFromMeshData(meshData);
             }
 
-            if(meshData.IsEmpty && !IsSpawner)
+            if(meshData.IsEmpty)
             {
                 DestroyChunk();
             }
@@ -478,10 +476,9 @@ namespace MarchingCubes
       
 
 
-        public Vector3Int[] NeighbourDirections(int x, int y, int z, int space = 0)
+        public Direction[] NeighbourDirections(int x, int y, int z, int space = 0)
         {
             Vector3Int v3 = new Vector3Int();
-
 
             int pointsMinus = pointsPerAxis - 1 - space;
             if (x <= space)
@@ -511,7 +508,7 @@ namespace MarchingCubes
                 v3.z = 1;
             }
 
-            return v3.GetAllNonDefaultAxisCombinations();
+            return DirectionHelper.GetAllNonDefaultAxisCombinations(v3);
         }
 
 

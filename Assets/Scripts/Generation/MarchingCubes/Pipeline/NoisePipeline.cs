@@ -29,7 +29,7 @@ namespace MarchingCubes
             if (chunk is ReducedMarchingCubesChunk c)
             {
                 c.Points = pointsArray;
-                storageGroup.Store(chunk.AnchorPos, chunk as ReducedMarchingCubesChunk, true);
+                storageGroup.Store(chunk.AnchorPos, c, true);
             }
         }
 

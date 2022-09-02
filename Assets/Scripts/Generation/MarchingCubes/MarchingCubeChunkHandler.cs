@@ -265,7 +265,7 @@ namespace MarchingCubes
         {
             float distThreshold = 1.1f;
             float chunkDeactivateDist = buildAroundDistance * distThreshold;
-            float chunkDestroyDistance = chunkDeactivateDist + CHUNK_GROUP_SIZE;
+            float chunkDestroyDistance = chunkDeactivateDist + chunkGroup.GROUP_SIZE * 2;
             updateValues = new ChunkUpdateValues(500, chunkDestroyDistance,
                 new float[] { 250, 500, 1000, 1750, 3000, chunkDeactivateDist }, 1.1f);
             worldUpdater.InitializeUpdateRoutine(updateValues);
@@ -323,26 +323,13 @@ namespace MarchingCubes
 
 
 
-        protected IEnumerator CreateEmptyChunks()
-        {
-            while (finishedNeighbourTasks.Count > 0)
-            {
-                ChunkNeighbourTask task = GetFinishedTask();
-                BuildSpawnersAround(task);
-            }
-
-            yield return new WaitForSeconds(0.1f);
-            //maybe dont create empty but check if normal chunk should be build.
-            //since no new chunks are searched for increasing lod a small connection
-            //to neighbour chunk may be missed resulting in hole in mesh
-            yield return CreateEmptyChunks();
-        }
-
         public List<Action> OnInitializationDoneCallback = new List<Action>();
 
         protected void OnInitialializationDone()
         {
+            worldUpdater.ClearLeafesWithoutValue();
             initializationDone = true;
+
             foreach (var item in OnInitializationDoneCallback)
             {
                 item();
@@ -401,7 +388,6 @@ namespace MarchingCubes
                         Debug.Log("Aborted");
                     }
                     //Debug.Log("Total triangles: " + totalTriBuild);
-                    StartCoroutine(CreateEmptyChunks());
                     OnInitialializationDone();
                 }
                 yield return null;
@@ -532,32 +518,33 @@ namespace MarchingCubes
                 if (canBuildNeighbour)
                 {
                     float sqrDist = (startPos - readyState.lastParent.GetChildCenterPositionAtIndex(readyState.lastParentsChildIndex)).sqrMagnitude;
-                    if (sqrDist <= buildAroundSqrDistance)
+                    if(updateValues.ShouldChunkBeDestroyed(sqrDist))
                     {
-                        closestNeighbours.Enqueue(sqrDist, readyState);
+                        continue;
+                    }
+                    else if (updateValues.ShouldChunkBeDeactivated(sqrDist))
+                    {
+                        BuildSpawnerInDirection(task.chunk, (Direction)i);
                     }
                     else
                     {
-                        //BuildEmptyChunkAt(v3);
-                        //TODO: FINISH
+                        closestNeighbours.Enqueue(sqrDist, readyState);
                     }
                 }
             }
         }
 
-        public void BuildSpawnersAround(ChunkNeighbourTask task)
+        public void BuildSpawnersAround(CompressedMarchingCubeChunk chunk)
         {
-            Vector3Int v3;
-            bool[] dirs = task.HasNeighbourInDirection;
-            int count = dirs.Length;
-            for (int i = 0; i < count; ++i)
+            for (int i = 0; i < ChunkNeighbourTask.MAX_NEIGHBOUR_CHUNKS; ++i)
             {
-                if (!dirs[i])
-                    continue;
-
-                v3 = VectorExtension.DirectionFromIndex[i] * (chunkSize + 1) + centerPos;
-                BuildEmptyChunkAt(v3);
+                BuildSpawnerInDirection(chunk, (Direction)i);
             }
+        }
+
+        protected void BuildSpawnerInDirection(CompressedMarchingCubeChunk chunk, Direction d)
+        {
+            chunkGroup.CreateEmptyChunkGroupAdjacentTo(chunk, d);
         }
 
         protected bool lastChunkWasAir = true;
@@ -640,18 +627,15 @@ namespace MarchingCubes
         /// <param name="maxDistance"></param>
         /// <param name="chunk"></param>
         /// <returns></returns>
-        public void CreateChunkWithNoiseEdit(Vector3Int p, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance, out CompressedMarchingCubeChunk chunk)
+        public void CreateChunkWithNoiseEdit(ChunkReadyState readyState, Vector3 editPoint, Vector3Int start, Vector3Int end, float delta, float maxDistance, out CompressedMarchingCubeChunk chunk)
         {
-            bool hasChunkAtPosition = chunkGroup.TryGetGroupItemAt(VectorExtension.ToArray(p), out chunk);
-
-            if (!hasChunkAtPosition || chunk.IsSpawner)
+            bool hasChunkAtPosition = readyState.HasLeaf(out chunk);
+            if (chunk.LODPower > 0)
+                throw new ArgumentException("Leaf must be of lod 0 to be edited!");
+            if (!hasChunkAtPosition)
             {
-                if (chunk != null)
-                {
-                    ///current chunk marks border of generated chunks, so destroy it
-                    chunk.DestroyChunk();
-                }
-                chunk = CreateChunkWithProperties(p, 0, DEFAULT_CHUNK_SIZE_POWER, false,
+                ReducedMarchingCubesChunk newChunk = GetThreadedChunkObjectAtChildIndex(readyState.lastParent,readyState.lastParentsChildIndex);
+                BuildChunkMeshData(newChunk,
                     (b) => {
                         ApplyNoiseEditing(b, editPoint, start, end, delta, maxDistance);
                     });
@@ -731,6 +715,11 @@ namespace MarchingCubes
             node.Parent.OverrideChildAtLocalIndex(node.Index, chunk);
         }
 
+        protected void InitializeChunkAtChildIndex(CompressedMarchingCubeChunk chunk, ChunkReadyState readyState)
+        {
+            InitializeChunkAtChildIndex(chunk, readyState.lastParent, readyState.lastParentsChildIndex);
+        }
+
         protected void InitializeChunkAtChildIndex(CompressedMarchingCubeChunk chunk, ChunkGroupTreeNode node, int childIndex)
         {
             chunk.ChunkSizePower = node.SizePower - 1;
@@ -738,23 +727,6 @@ namespace MarchingCubes
             InitializeNonEmptyChunk(chunk);
 
             node.SetLeafAtLocalIndex(childIndex, chunk);
-        }
-
-        public void BuildEmptyChunkAt(CompressedMarchingCubeChunk chunk, Direction d)
-        {
-            ChunkGroupTreeNode node = chunkGroup.GetOrCreateGroupAtGlobalPosition(chunk.Leaf.GroupAnchorPosition);
-            if (!chunkGroup.HasGroupItemAt(chunk.AnchorPos))
-            {
-                CompressedMarchingCubeChunk chunk = new CompressedMarchingCubeChunk();
-                chunk.ChunkHandler = this;
-                chunk.ChunkSizePower = CHUNK_GROUP_SIZE_POWER;
-                chunk.ChunkUpdater = worldUpdater;
-                chunk.LODPower = MAX_CHUNK_LOD_POWER + 1;
-
-                chunk.IsSpawner = true;
-
-                chunkGroup.SetValueAtGlobalPosition(VectorExtension.ToArray(pos), chunk, false);
-            }
         }
 
         protected CompressedMarchingCubeChunk GetThreadedChunkObjectAt(Vector3Int position, int lodPower, int chunkSizePower, bool allowOverride)
@@ -790,7 +762,7 @@ namespace MarchingCubes
             return c;
         }
 
-        protected CompressedMarchingCubeChunk GetThreadedChunkObjectAtChildIndex(ChunkGroupTreeNode node, int childIndex)
+        protected ReducedMarchingCubesChunk GetThreadedChunkObjectAtChildIndex(ChunkGroupTreeNode node, int childIndex)
         {
             ReducedMarchingCubesChunk c = new ReducedMarchingCubesChunk();
             InitializeChunkAtChildIndex(c, node, childIndex);
@@ -808,10 +780,6 @@ namespace MarchingCubes
         {
             SetDisplayerOfChunk(chunk);
         }
-
-
-        public bool TryGetReadyChunkAt(Vector3Int p, out CompressedMarchingCubeChunk chunk) => chunkGroup.TryGetReadyChunkAt(VectorExtension.ToArray(p), out chunk);
-
 
         //public MarchingCubeChunkNeighbourLODs GetNeighbourLODSFrom(ReducedMarchingCubesChunk chunk)
         //{

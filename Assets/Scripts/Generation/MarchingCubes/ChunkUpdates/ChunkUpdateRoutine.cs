@@ -38,7 +38,7 @@ namespace MarchingCubes
             instance.RegisterLockedInHashset(instance.chunkGroupNodes[index], node, instance.mutexLockNodes);
         }
 
-        public static void RegisterChunkRoot(ChunkGroupTreeNode root)
+        public static void RegisterActiveChunkRoot(ChunkGroupTreeNode root)
         {
             instance.RegisterLockedInHashset(instance.activeChunkGroupTreeRoots, root, instance.mutexLockActiveRoots);
         }
@@ -75,7 +75,7 @@ namespace MarchingCubes
             instance.RemoveLockedInHashset(instance.deactivatedChunkRoots, root, instance.mutexLockInactiveRoots);
         }
 
-        public static void RegisterRootInDeactivation(ChunkGroupTreeNode root)
+        public static void RegisterDeactiveRoot(ChunkGroupTreeNode root)
         {
             instance.RegisterLockedInHashset(instance.deactivatedChunkRoots, root, instance.mutexLockInactiveRoots);
         }
@@ -361,7 +361,7 @@ namespace MarchingCubes
           Vector3.SqrMagnitude(center - playerPos) >= SqrDestroyDistance;
 
         protected bool CheckChunkForDeactivation(Vector3 center) =>
-            Vector3.SqrMagnitude(center - playerPos) >= SqrDeactivateDistance;
+            updateValues.ShouldChunkBeDeactivated(Vector3.SqrMagnitude(center - playerPos));
 
 
         protected bool CheckChunkForReactivation(Vector3 center) =>

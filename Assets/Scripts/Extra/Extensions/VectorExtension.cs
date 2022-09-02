@@ -320,9 +320,9 @@ public static class VectorExtension
         r[1] = new Vector3Int(v.x, v.y, 0);
         r[2] = new Vector3Int(v.x, v.y, v.z);
         r[3] = new Vector3Int(v.x, 0, v.z);
+        r[6] = new Vector3Int(0, 0, v.z);
         r[4] = new Vector3Int(0, v.y, v.z);
         r[5] = new Vector3Int(0, v.y, 0);
-        r[6] = new Vector3Int(0, 0, v.z);
         return r;
     }
 
@@ -360,7 +360,7 @@ public static class VectorExtension
         else if (count == 1)
             return new Vector3Int[] { v };
         else
-            return new Vector3Int[0];
+            return Array.Empty<Vector3Int>();
     }
 
     public static int CountNonZeros(this Vector3Int v)

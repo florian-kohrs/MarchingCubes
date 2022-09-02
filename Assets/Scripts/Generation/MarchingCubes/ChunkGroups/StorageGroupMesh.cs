@@ -12,7 +12,7 @@ namespace MarchingCubes
 
         public StorageGroupMesh(int groupSize) : base(groupSize) { }
 
-        protected override StorageTreeNode CreateKey(Vector3Int coord)
+        protected override StorageTreeNode CreateRootNodeAt(Vector3Int coord)
         {
             int[] nodeCoord = VectorExtension.ToArray(coord);
             return new StorageTreeNode(null, nodeCoord, nodeCoord,0, GROUP_SIZE);
