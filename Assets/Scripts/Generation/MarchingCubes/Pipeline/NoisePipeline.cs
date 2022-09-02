@@ -47,7 +47,7 @@ namespace MarchingCubes
         public float[] RequestNoiseForChunk(CompressedMarchingCubeChunk chunk)
         {
             float[] result;
-            if (!storageGroup.TryLoadCompleteNoise(chunk.AnchorPos, chunk.ChunkSizePower, out result, out bool _))
+            if (!storageGroup.TryLoadCompleteNoise(chunk.AnchorPos, chunk.NodeSizePower, out result, out bool _))
             {
                 result = GenerateAndGetNoiseForChunk(chunk);
             }
@@ -58,7 +58,7 @@ namespace MarchingCubes
         {
             bool hasStoredData = false;
             bool isMipMapComplete = false;
-            int sizePow = chunk.ChunkSizePower;
+            int sizePow = chunk.NodeSizePower;
             float[] storedNoiseData = null;
             if (chunk.LODPower <= MarchingCubeChunkHandler.STORAGE_GROUP_UNTIL_LOD && sizePow <= MarchingCubeChunkHandler.STORAGE_GROUP_SIZE_POWER)
             {
@@ -70,7 +70,7 @@ namespace MarchingCubes
             }
             if (isMipMapComplete)
             {
-                int pointSpacing = (int)Mathf.Pow(2, chunk.LODPower - (chunk.ChunkSizePower - MarchingCubeChunkHandler.DEFAULT_CHUNK_SIZE_POWER));
+                int pointSpacing = (int)Mathf.Pow(2, chunk.LODPower - (chunk.NodeSizePower - MarchingCubeChunkHandler.DEFAULT_CHUNK_SIZE_POWER));
 
                 chunk.PointSpacing = pointSpacing;
                 pipeline.pointsBuffer.SetData(storedNoiseData);

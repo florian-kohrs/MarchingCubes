@@ -255,24 +255,24 @@ namespace MarchingCubes
         {
         }
 
-        public override void SetLeafAtLocalPosition(int[] relativePosition, T chunk, bool allowOverride)
+        public override void SetLeafAtLocalPosition(int[] relativePosition, T node, bool allowOverride)
         {
             relativePosition[0] -= groupRelativeAnchorPosition[0];
             relativePosition[1] -= groupRelativeAnchorPosition[1];
             relativePosition[2] -= groupRelativeAnchorPosition[2];
             int childIndex = GetIndexForLocalPosition(relativePosition);
 
-            if (chunk.ChunkSizePower >= sizePower - 1 && (children[childIndex] == null || allowOverride))
+            if (node.NodeSizePower >= sizePower - 1 && (children[childIndex] == null || allowOverride))
             {
                 int[] childAnchorPosition;
                 int[] childRelativeAnchorPosition;
                 GetAnchorPositionForChunkAt(relativePosition, out childAnchorPosition, out childRelativeAnchorPosition);
-                children[childIndex] = GetLeaf(chunk, childIndex, childAnchorPosition, childRelativeAnchorPosition, sizePower - 1);
+                children[childIndex] = GetLeaf(node, childIndex, childAnchorPosition, childRelativeAnchorPosition, sizePower - 1);
             }
             else
             {
                 Node child = GetOrCreateChildAt(childIndex, relativePosition, allowOverride);
-                child.SetLeafAtLocalPosition(relativePosition, chunk, allowOverride);
+                child.SetLeafAtLocalPosition(relativePosition, node, allowOverride);
             }
         }
 

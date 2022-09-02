@@ -26,6 +26,6 @@ namespace MarchingCubes
 
         //Save tree positions
   
-        int ISizeManager.ChunkSizePower { get => 5; set => throw new System.NotImplementedException(); }
+        int ISizeManager.NodeSizePower { get => 5; set => throw new System.NotImplementedException(); }
     }
 }

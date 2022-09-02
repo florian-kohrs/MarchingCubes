@@ -32,7 +32,7 @@ namespace MarchingCubes
 
         public bool TryLoadPoints(CompressedMarchingCubeChunk chunk, out float[] loadedPoints)
         {
-            return TryGetMipMapAt(chunk.AnchorPos, chunk.ChunkSizePower, out loadedPoints, out bool complete) && complete;
+            return TryGetMipMapAt(chunk.AnchorPos, chunk.NodeSizePower, out loadedPoints, out bool complete) && complete;
         }
 
         public bool TryLoadCompleteNoise(Vector3Int anchor, int sizePow, out float[] noise, out bool isMipMapComplete)

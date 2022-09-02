@@ -6,6 +6,6 @@ namespace MarchingCubes
 {
     public interface ISizeManager 
     {
-        int ChunkSizePower { get; set; }
+        int NodeSizePower { get; set; }
     }
 }

@@ -60,7 +60,7 @@ namespace MarchingCubes
             {
                 PointSpacing = 1,
                 LODPower = lodPower,
-                ChunkSizePower = sizePower,
+                NodeSizePower = sizePower,
             };
             float offset = emptyChunk.ChunkSize;
             emptyChunk.AnchorPos = VectorExtension.ToVector3Int(position - new Vector3(offset / 2, offset / 2, offset / 2));

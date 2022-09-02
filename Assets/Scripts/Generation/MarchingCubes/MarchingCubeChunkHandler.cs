@@ -690,7 +690,7 @@ namespace MarchingCubes
 
         protected void GetChunkObjectAt(CompressedMarchingCubeChunk chunk, Vector3Int position, int lodPower, int chunkSizePower, bool allowOverride)
         {
-            chunk.ChunkSizePower = chunkSizePower;
+            chunk.NodeSizePower = chunkSizePower;
             chunk.LODPower = lodPower;
             InitializeNonEmptyChunk(chunk);
 
@@ -708,7 +708,7 @@ namespace MarchingCubes
 
         protected void InitializeChunkObject(CompressedMarchingCubeChunk chunk, ChunkGroupTreeNode node)
         {
-            chunk.ChunkSizePower = node.SizePower;
+            chunk.NodeSizePower = node.SizePower;
             chunk.LODPower = GetLodPowerFromSizePower(node.SizePower);
             InitializeNonEmptyChunk(chunk);
 
@@ -722,7 +722,7 @@ namespace MarchingCubes
 
         protected void InitializeChunkAtChildIndex(CompressedMarchingCubeChunk chunk, ChunkGroupTreeNode node, int childIndex)
         {
-            chunk.ChunkSizePower = node.SizePower - 1;
+            chunk.NodeSizePower = node.SizePower - 1;
             chunk.LODPower = GetLodPowerFromSizePower(node.SizePower - 1);
             InitializeNonEmptyChunk(chunk);
 

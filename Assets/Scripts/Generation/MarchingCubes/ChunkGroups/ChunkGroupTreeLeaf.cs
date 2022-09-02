@@ -17,7 +17,7 @@ namespace MarchingCubes
             : base(parent, chunk,index, anchorPoint, relativeAnchorPoint,sizePower)
         {
             chunk.AnchorPos = new Vector3Int(anchorPoint[0], anchorPoint[1],anchorPoint[2]);
-            chunk.ChunkSizePower = sizePower;
+            chunk.NodeSizePower = sizePower;
             ///only register if the leaf can be split
             int halfSize = (int)Mathf.Pow(2, sizePower) / 2;
             centerPosition = new Vector3(anchorPoint[0] + halfSize, anchorPoint[1] + halfSize, anchorPoint[2] + halfSize);
