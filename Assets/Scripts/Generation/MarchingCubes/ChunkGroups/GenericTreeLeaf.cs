@@ -35,11 +35,6 @@ namespace MarchingCubes
 
         protected abstract void SetValue(T value);
 
-        public void RemoveChildFromParent() 
-        {
-            parent.RemoveChildAtIndex(childIndex);
-        }
-
         [Save]
         protected int sizePower;
 

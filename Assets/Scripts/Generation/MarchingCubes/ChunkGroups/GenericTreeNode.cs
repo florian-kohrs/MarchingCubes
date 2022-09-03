@@ -213,11 +213,6 @@ namespace MarchingCubes
 
         public bool HasChildren => ChildCount > 0;
 
-        public void RemoveChildAtIndex(int index)
-        {
-            children[index] = default;
-            ChildCount--;
-        }
 
         protected void GetAnchorPositionsForChildAtIndex(int childIndex, out int[] anchorPos, out int[] relAchorPos)
         {

@@ -910,6 +910,7 @@ namespace MarchingCubes
             int lodPower = GetLodPowerFromSizePower(node.SizePower);
             ExchangeChunkAsyncParallel(node, (c) =>
             {
+                c.BakeMeshe sIfUsingCollider();
                 lock (exchangeLocker)
                 {
                     worldUpdater.readyExchangeChunks.Push(new ReadyChunkExchange(oldChunks, c));
@@ -919,7 +920,8 @@ namespace MarchingCubes
 
         public void SplitChunkLeaf(ChunkSplitExchange exchange)
         {
-            exchange.leaf.leaf.PrepareDestruction();
+            CompressedMarchingCubeChunk oldChunk = exchange.leaf.leaf;
+            oldChunk.PrepareDestruction();
 
             int exchangeCount = exchange.newNodes.Count;
             int newLeafs = exchangeCount * 8 - (exchangeCount - 1);
@@ -941,11 +943,12 @@ namespace MarchingCubes
                 {
                     chunks.Add(c);
                 }
+                c.BakeMes hesIfUsingCollider();
                 if (chunks.Count == newChunks.Count)
                 {
                     lock (exchangeLocker)
                     {
-                        worldUpdater.readyExchangeChunks.Push(new ReadyChunkExchange(exchange.leaf.leaf, chunks, exchange.newNodes));
+                        worldUpdater.readyExchangeChunks.Push(new ReadyChunkExchange(oldChunk, chunks, exchange.newNodes));
                     }
                 }
             };

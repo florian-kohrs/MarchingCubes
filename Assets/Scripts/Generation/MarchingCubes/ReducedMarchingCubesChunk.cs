@@ -15,7 +15,6 @@ namespace MarchingCubes
 
         protected static object rebuildListLock = new object();
 
-
         public ReducedMarchingCubesChunk GetChunk => this;
 
         public StorageTreeLeaf storageLeaf;

@@ -48,6 +48,11 @@ namespace MarchingCubes
             }
         }
 
+        public void BakeMesh()
+        {
+            Physics.BakeMesh(collider.sharedMesh.GetInstanceID(), false);
+        }
+
 
         protected MarchingCubeMeshDisplayer(GameObject g, Transform t) : this(g, g.AddComponent<MeshFilter>(), g.AddComponent<MeshRenderer>(), new Mesh())
         {

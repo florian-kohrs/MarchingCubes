@@ -364,6 +364,17 @@ namespace MarchingCubes
             }
         }
 
+        public void BakeMeshesIfUsingCollider()
+        {
+            if (!UseCollider)
+                return;
+
+            foreach (var item in activeDisplayers)
+            {
+                item.BakeMesh();
+            }
+        }
+
         protected MarchingCubeMeshDisplayer GetFittingMeshDisplayer()
         {
             if (UseCollider)

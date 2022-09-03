@@ -210,10 +210,10 @@ namespace MarchingCubes
                 if (child == null)
                     continue;
 
-                if (child is ChunkGroupTreeLeaf l && l.leaf != null)
+                if (child is ChunkGroupTreeLeaf l)
                 {
-                    l.leaf.PrepareDestruction();
                     allLeafs.Add(l.leaf);
+                    l.leaf.PrepareDestruction();
                 }
                 else
                 {
@@ -293,6 +293,18 @@ namespace MarchingCubes
         }
 
 
+        public void RemoveChildAtIndex(int index)
+        {
+            children[index] = default;
+            ChildCount--;
+            if (ChildCount <= 0)
+            {
+                Unregister();
+                if(!IsRoot)
+                    Parent.RemoveChildAtIndex(this.index);
+            }
+        }
+
         protected void SplitChildAtIndex(int index, List<ChunkGroupTreeNode> newNodes)
         {
             ChunkGroupTreeNode newNode = SetNodeAt(index);
@@ -320,6 +332,17 @@ namespace MarchingCubes
                 if (lodPower < RegisterIndex)
                     SplitChildAtIndex(index, newNodes);
             }
+        }
+
+        public void Unregister()
+        {
+            if (IsRoot)
+                if (ChanneledForDeactivation)
+                    ChunkUpdateRoutine.RemoveInactiveChunkRoot(this);
+                else
+                    ChunkUpdateRoutine.RemoveActiveChunkRoot(this);
+            else
+                ChunkUpdateRoutine.RemoveChunkNode(RegisterIndex, this);
         }
 
         public void Register()
