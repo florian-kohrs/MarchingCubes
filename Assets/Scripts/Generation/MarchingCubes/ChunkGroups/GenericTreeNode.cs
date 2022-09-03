@@ -73,9 +73,23 @@ namespace MarchingCubes
 
         public bool HasLeafAtIndex(int index) => children[index] is Leaf;
 
-        public abstract Leaf GetLeaf(T leaf, int index, int[] anchor, int[] relAnchor, int sizePow);
+        public abstract Leaf GetLeaf(T leafValue, int index, int[] anchor, int[] relAnchor, int sizePow);
+
+        public Leaf GetLeaf(T leafValue, int index)
+        {
+            int[] anchor, relAnchor;
+            GetAnchorPositionsForChildAtIndex(index, out anchor, out relAnchor);
+            return GetLeaf(leafValue, index, anchor, relAnchor, ChildrenSizePower);
+        }
 
         public abstract Self GetNode(int index, int[] anchor, int[] relAnchor, int sizePow);
+
+        public Self GetNode(int index)
+        {
+            int[] anchor, relAnchor;
+            GetAnchorPositionsForChildAtIndex(index, out anchor, out relAnchor);
+            return GetNode(index, anchor, relAnchor, ChildrenSizePower);
+        }
 
         public override int SizePower
         {
@@ -113,20 +127,6 @@ namespace MarchingCubes
             return oldChildIndex + DIRECTION_TO_NEW_CHILD_INDEX_LOOKUP[(int)d] * sign;
         }
 
-        protected void DirectionToNewLocalAndGlobalPosition(Direction d, int oldChildIndex, out int[] localPos, out int[] globalPos)
-        {
-            localPos = children[oldChildIndex].GroupRelativeAnchorPosition;
-            globalPos = children[oldChildIndex].GroupAnchorPositionCopy;
-            DirectionHelper.OffsetIntArray(d, localPos, halfSize);
-            DirectionHelper.OffsetIntArray(d, globalPos, halfSize);  
-        }
-
-        protected int[] AnchorPositonShift(int[] shift)
-        {
-            return new int[] { GroupAnchorPosition[0] + shift[0], GroupAnchorPosition[1] + shift[1], GroupAnchorPosition[2] + shift[2] };
-        }
-
-      
         protected int GetIndexForLocalPosition(int[] position)
         {
             int result = 0;
@@ -163,26 +163,26 @@ namespace MarchingCubes
 
        
 
-        protected Vector3 GetDirectionFromIndex(int index)
+        protected Vector3 GetDirectionFromIndex(int index, int directionLength)
         {
             switch (index)
             {
                 case 0:
-                    return Vector3.zero;
+                    return new Vector3(0, 0, 0);
                 case 1:
-                    return Vector3.forward;
+                    return new Vector3(0, 0, directionLength);
                 case 2:
-                    return Vector3.right;
+                    return new Vector3(directionLength, 0, 0);
                 case 3:
-                    return new Vector3(1, 0, 1);
+                    return new Vector3(directionLength, 0, directionLength);
                 case 4:
-                    return Vector3.up;
+                    return new Vector3(0, directionLength, 0);
                 case 5:
-                    return new Vector3(0, 1, 1);
+                    return new Vector3(0, directionLength, directionLength);
                 case 6:
-                    return new Vector3(1, 1, 0);
+                    return new Vector3(directionLength, directionLength, 0);
                 case 7:
-                    return new Vector3(1, 1, 1);
+                    return new Vector3(directionLength, directionLength, directionLength);
                 default:
                     throw new ArgumentException("Bad index value:" + index);
             }
@@ -198,36 +198,6 @@ namespace MarchingCubes
             ChildCount--;
         }
 
-        protected Vector3 GetChildLocalPositionForIndex(int index)
-        {
-            return GetOffsetedAnchorPosition(index, 0);
-        }
-
-        protected Vector3 GetChildCenterPositionForIndex(int index)
-        {
-            return GetOffsetedAnchorPosition(index, halfSize / 2);
-        }
-
-        private Vector3 GetOffsetedAnchorPosition(int index, int offset)
-        {
-            Vector3 result = GroupAnchorPositionVector + new Vector3(offset,offset,offset);
-            if (index >= 4)
-            {
-                result.y += halfSize;
-                index -= 4;
-            }
-            if (index >= 2)
-            {
-                result.x += halfSize;
-                index -= 2;
-            }
-            if (index >= 1)
-            {
-                result.z += halfSize;
-            }
-            return result;
-        }
-
         protected void GetAnchorPositionsForChildAtIndex(int childIndex, out int[] anchorPos, out int[] relAchorPos)
         {
             relAchorPos = GetLocalPositionFromIndex(childIndex);
@@ -238,21 +208,39 @@ namespace MarchingCubes
             };
         }
 
-        protected void GetAnchorPositionForChunkAt(int[] position, out int[] anchorPos, out int[] relAchorPos)
+        public bool SetLeafAtPath(Stack<int> path, T value, bool allowOverrideValue)
         {
-            relAchorPos = new int[3];
-            if (position[2] >= halfSize) relAchorPos[2] += halfSize;
-            if (position[0] >= halfSize) relAchorPos[0] += halfSize;
-            if (position[1] >= halfSize) relAchorPos[1] += halfSize;
-            anchorPos = new int[] {
-                relAchorPos[0] + GroupAnchorPosition [0],
-                relAchorPos[1] + GroupAnchorPosition[1],
-                relAchorPos[2] + GroupAnchorPosition[2]
-            };
-        }
-
-        public void SetLeafAtPath(Stack<int> path, T chunk, bool allowOverride)
-        {
+            int currentChildIndex = path.Pop();
+            var child = children[currentChildIndex];
+            if(path.Count == 0)
+            {
+                if(child == null)
+                {
+                    children[currentChildIndex] = GetLeaf(value, currentChildIndex);
+                    return true;
+                }
+                else if(allowOverrideValue && child is Leaf l)
+                {
+                    l.Value = value;
+                    return true;
+                }
+                return false;
+            }
+            else if(child == null)
+            {
+                Self node = GetNode(currentChildIndex);
+                children[currentChildIndex] = node;
+                return node.SetLeafAtPath(path, value, allowOverrideValue);
+            }
+            else if(child is Leaf l)
+            {
+                return false;
+            }
+            else if(child is Self self)
+            {
+                return self.SetLeafAtPath(path, value, allowOverrideValue);
+            }
+            return false;
         }
 
         public override void SetLeafAtLocalPosition(int[] relativePosition, T node, bool allowOverride)
@@ -264,14 +252,11 @@ namespace MarchingCubes
 
             if (node.NodeSizePower >= sizePower - 1 && (children[childIndex] == null || allowOverride))
             {
-                int[] childAnchorPosition;
-                int[] childRelativeAnchorPosition;
-                GetAnchorPositionForChunkAt(relativePosition, out childAnchorPosition, out childRelativeAnchorPosition);
-                children[childIndex] = GetLeaf(node, childIndex, childAnchorPosition, childRelativeAnchorPosition, sizePower - 1);
+                children[childIndex] = GetLeaf(node, childIndex);
             }
             else
             {
-                Node child = GetOrCreateChildAt(childIndex, relativePosition, allowOverride);
+                Node child = GetOrCreateChildAt(childIndex, allowOverride);
                 child.SetLeafAtLocalPosition(relativePosition, node, allowOverride);
             }
         }
@@ -314,13 +299,11 @@ namespace MarchingCubes
             return !leafValue.Equals(default);
         }
 
-        protected Node GetOrCreateChildAt(int index, int[] relativePosition, bool allowOverride)
+        protected Node GetOrCreateChildAt(int index, bool allowOverride)
         {
             if (children[index] == null || (allowOverride && children[index].IsLeaf))
             {
-                int[] childAnchorPosition;
-                int[] childRelativeAnchorPosition;
-                GetAnchorPositionForChunkAt(relativePosition, out childAnchorPosition, out childRelativeAnchorPosition);
+                GetAnchorPositionsForChildAtIndex(index, out int[] childAnchorPosition, out int[] childRelativeAnchorPosition);
                 SetNewChildAt(GetNode(index, childAnchorPosition, childRelativeAnchorPosition, sizePower - 1), index);
             }
             return children[index];

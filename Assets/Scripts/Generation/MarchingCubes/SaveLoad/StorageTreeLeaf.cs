@@ -62,5 +62,9 @@ namespace MarchingCubes
                 parent.RemoveMipMapInHirachy();
         }
 
+        protected override void SetValue(StoredChunkEdits value)
+        {
+            leaf = value;
+        }
     }
 }

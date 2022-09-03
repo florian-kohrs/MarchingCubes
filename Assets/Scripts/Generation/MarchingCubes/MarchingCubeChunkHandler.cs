@@ -12,8 +12,6 @@ using UnityEngine.Rendering;
 namespace MarchingCubes
 {
     //TODO: Check to use unity mathematics int2, int3 instead of vector for better performance?
-    //TODO: When creating a chunk while editing, call getnoise with click changes to only generate noise once
-
     [Serializable]
     public class MarchingCubeChunkHandler : SaveableMonoBehaviour
     {

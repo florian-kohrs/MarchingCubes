@@ -31,6 +31,9 @@ namespace MarchingCubes
         [Save]
         protected ParentType parent;
 
+        public T Value { get => leaf; set => SetValue(value); }
+
+        protected abstract void SetValue(T value);
 
         public void RemoveChildFromParent() 
         {
@@ -56,8 +59,6 @@ namespace MarchingCubes
         public bool IsEmpty => leaf != null;
 
         public override int SizePower => sizePower;
-
-        public T Value => leaf;
 
         public override void SetLeafAtLocalPosition(int[] pos, T chunk, bool allowOverride)
         {

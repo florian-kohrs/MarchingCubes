@@ -5,6 +5,6 @@ using UnityEngine;
 public interface IHasValue<T>
 {
 
-    T Value { get; }
+    T Value { get; set; }
 
 }

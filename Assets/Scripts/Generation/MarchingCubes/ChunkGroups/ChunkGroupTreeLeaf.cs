@@ -151,6 +151,13 @@ namespace MarchingCubes
                 Register();
             }
         }
+
+        protected override void SetValue(CompressedMarchingCubeChunk value)
+        {
+            if (value != null)
+                throw new System.Exception("Chunk leafs are not allowed to override their value!");
+            leaf = value;
+        }
     }
 
 }

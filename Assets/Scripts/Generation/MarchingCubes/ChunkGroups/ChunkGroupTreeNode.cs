@@ -92,7 +92,7 @@ namespace MarchingCubes
 
         public Vector3 GetChildCenterPositionAtIndex(int index)
         {
-            return Center + GetDirectionFromIndex(index) * halfSize;
+            return Center + GetDirectionFromIndex(index, halfSize);
         }
 
         public bool TryGetEmptyLeafParentInDirection(ChunkDirectionSearchState searchState, bool allowedToBuildNodes = false)
@@ -212,7 +212,7 @@ namespace MarchingCubes
                 if (child == null)
                     continue;
 
-                if (child is ChunkGroupTreeLeaf l)
+                if (child is ChunkGroupTreeLeaf l && l.leaf != null)
                 {
                     l.leaf.PrepareDestruction();
                     allLeafs.Add(l.leaf);
@@ -329,7 +329,7 @@ namespace MarchingCubes
             for (int i = 0;i < CHILD_COUNT; i++)
             {
                 //TODO: Improve performance here (maybe!)
-                Vector3 position = GetChildCenterPositionForIndex(i);
+                Vector3 position = GetChildCenterPositionAtIndex(i);
                 int lodPower = ChunkUpdateRoutine.GetLodPowerForPosition(position);
                 if (lodPower < RegisterIndex)
                     SplitChildAtIndex(index, newNodes);
