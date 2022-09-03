@@ -67,24 +67,13 @@ namespace MarchingCubes
 
         public int ChildrenWithMipMapReady => CountChildrenWithMipmap();
 
-        public int DirectNonNullChildren => CountNonNullChildren();
-
         public bool HasNoiseMapReady => mipmap != null;
 
         public bool IsMipMapComplete => isMipMapComplete;
 
         protected override StorageTreeNode GetSelf => this;
 
-        protected int CountNonNullChildren()
-        {
-            int result = 0;
-            for (int i = 0; i < 8; i++)
-            {
-                if (children[i] != null)
-                    result++;
-            }
-            return result;
-        }
+        public int DirectNonNullChildren => ChildCount;
 
         protected int CountChildrenWithMipmap()
         {
@@ -189,12 +178,12 @@ namespace MarchingCubes
             }
         }
 
-        public override StorageTreeLeaf GetLeaf(StoredChunkEdits leaf, int index, int[] anchor, int[] relAnchor, int sizePow)
+        protected override StorageTreeLeaf GetLeaf(StoredChunkEdits leaf, int index, int[] anchor, int[] relAnchor, int sizePow)
         {
-            return new StorageTreeLeaf(this,leaf, index, anchor, relAnchor,sizePow);
+            return new StorageTreeLeaf(this, leaf, index, anchor, relAnchor, sizePow);
         }
 
-        public override StorageTreeNode GetNode(int index, int[] anchor, int[] relAnchor, int sizePow)
+        protected override StorageTreeNode GetNode(int index, int[] anchor, int[] relAnchor, int sizePow)
         {
             return new StorageTreeNode(this, anchor, relAnchor, index, sizePow);
         }

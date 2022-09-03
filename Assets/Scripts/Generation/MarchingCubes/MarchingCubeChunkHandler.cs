@@ -710,7 +710,7 @@ namespace MarchingCubes
             chunk.LODPower = GetLodPowerFromSizePower(node.SizePower);
             InitializeNonEmptyChunk(chunk);
 
-            node.Parent.OverrideChildAtLocalIndex(node.Index, chunk);
+            node.Parent.SetLeafAtIndex(chunk, node.Index);
         }
 
         protected void InitializeChunkAtChildIndex(CompressedMarchingCubeChunk chunk, ChunkReadyState readyState)
@@ -724,7 +724,7 @@ namespace MarchingCubes
             chunk.LODPower = GetLodPowerFromSizePower(node.SizePower - 1);
             InitializeNonEmptyChunk(chunk);
 
-            node.SetLeafAtLocalIndex(childIndex, chunk);
+            node.SetLeafAtIndex(chunk, childIndex);
         }
 
         protected CompressedMarchingCubeChunk GetThreadedChunkObjectAt(Vector3Int position, int lodPower, int chunkSizePower, bool allowOverride)

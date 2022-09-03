@@ -73,23 +73,44 @@ namespace MarchingCubes
 
         public bool HasLeafAtIndex(int index) => children[index] is Leaf;
 
-        public abstract Leaf GetLeaf(T leafValue, int index, int[] anchor, int[] relAnchor, int sizePow);
+        protected abstract Leaf GetLeaf(T leafValue, int index, int[] anchor, int[] relAnchor, int sizePow);
 
-        public Leaf GetLeaf(T leafValue, int index)
+        public Leaf SetLeafAtIndex(T leafValue, int index)
         {
-            int[] anchor, relAnchor;
-            GetAnchorPositionsForChildAtIndex(index, out anchor, out relAnchor);
-            return GetLeaf(leafValue, index, anchor, relAnchor, ChildrenSizePower);
+            Leaf result;
+            if(children[index] != null)
+            {
+                result = OverrideWithLeafAtLocalIndex(index, leafValue);
+            }
+            else 
+            {
+                ChildCount++;
+                GetAnchorPositionsForChildAtIndex(index, out int[] anchor, out int[] relAnchor);
+                result = GetLeaf(leafValue, index, anchor, relAnchor, ChildrenSizePower);
+                children[index] = result;
+            }
+            return result;
         }
 
-        public abstract Self GetNode(int index, int[] anchor, int[] relAnchor, int sizePow);
+        protected abstract Self GetNode(int index, int[] anchor, int[] relAnchor, int sizePow);
 
-        public Self GetNode(int index)
+        public Self SetNodeAt(int index)
         {
-            int[] anchor, relAnchor;
-            GetAnchorPositionsForChildAtIndex(index, out anchor, out relAnchor);
-            return GetNode(index, anchor, relAnchor, ChildrenSizePower);
+            Self result;
+            if (children[index] != null)
+            {
+                result = OverrideWithNodeAtLocalIndex(index);
+            }
+            else
+            {
+                ChildCount++;
+                GetAnchorPositionsForChildAtIndex(index, out int[] anchor, out int[] relAnchor);
+                result = GetNode(index, anchor, relAnchor, ChildrenSizePower);
+                children[index] = result;
+            }
+            return result;
         }
+
 
         public override int SizePower
         {
@@ -216,7 +237,7 @@ namespace MarchingCubes
             {
                 if(child == null)
                 {
-                    children[currentChildIndex] = GetLeaf(value, currentChildIndex);
+                    SetLeafAtIndex(value, currentChildIndex);
                     return true;
                 }
                 else if(allowOverrideValue && child is Leaf l)
@@ -228,11 +249,10 @@ namespace MarchingCubes
             }
             else if(child == null)
             {
-                Self node = GetNode(currentChildIndex);
-                children[currentChildIndex] = node;
+                Self node = SetNodeAt(currentChildIndex);
                 return node.SetLeafAtPath(path, value, allowOverrideValue);
             }
-            else if(child is Leaf l)
+            else if(child is Leaf)
             {
                 return false;
             }
@@ -252,7 +272,7 @@ namespace MarchingCubes
 
             if (node.NodeSizePower >= sizePower - 1 && (children[childIndex] == null || allowOverride))
             {
-                children[childIndex] = GetLeaf(node, childIndex);
+                SetLeafAtIndex(node, childIndex);
             }
             else
             {
@@ -261,21 +281,18 @@ namespace MarchingCubes
             }
         }
 
-        public void OverrideChildAtLocalIndex(int index, T chunk)
+        private Leaf OverrideWithLeafAtLocalIndex(int index, T chunk)
         {
-            children[index] = GetLeaf(chunk, index, children[index].GroupAnchorPosition, children[index].GroupRelativeAnchorPosition, sizePower - 1);
+            Leaf l = GetLeaf(chunk, index, children[index].GroupAnchorPosition, children[index].GroupRelativeAnchorPosition, ChildrenSizePower);
+            children[index] = l;
+            return l;
         }
 
-        public void SetLeafAtLocalIndex(int index, T chunk)
+        private Self OverrideWithNodeAtLocalIndex(int index)
         {
-            GetAnchorPositionsForChildAtIndex(index, out int[] anchorPos, out int[] relativePosition);
-            SetNewChildAt(GetLeaf(chunk, index, anchorPos, relativePosition, sizePower - 1), index);
-        }
-
-        protected void SetNewChildAt(Node child, int index)
-        {
-            children[index] = child;
-            ChildCount++;
+            Self l = GetNode(index, children[index].GroupAnchorPosition, children[index].GroupRelativeAnchorPosition, ChildrenSizePower);
+            children[index] = l;
+            return l;
         }
 
         public bool TryFollowPathToLeaf(Stack<int> path, out T leafValue)
@@ -303,8 +320,7 @@ namespace MarchingCubes
         {
             if (children[index] == null || (allowOverride && children[index].IsLeaf))
             {
-                GetAnchorPositionsForChildAtIndex(index, out int[] childAnchorPosition, out int[] childRelativeAnchorPosition);
-                SetNewChildAt(GetNode(index, childAnchorPosition, childRelativeAnchorPosition, sizePower - 1), index);
+                SetNodeAt(index);
             }
             return children[index];
         }

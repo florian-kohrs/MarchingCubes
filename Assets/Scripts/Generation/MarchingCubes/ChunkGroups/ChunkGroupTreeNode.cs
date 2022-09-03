@@ -184,9 +184,7 @@ namespace MarchingCubes
                     {
                         if(allowedToBuildNodes)
                         {
-                            GetAnchorPositionsForChildAtIndex(nextChildIndex, out int[] globalPos, out int[] localPos);
-                            node = GetNode(nextChildIndex, globalPos, localPos, ChildrenSizePower);
-                            SetNewChildAt(node, nextChildIndex);
+                            node = SetNodeAt(nextChildIndex);
                         }
                         else
                         {
@@ -225,12 +223,12 @@ namespace MarchingCubes
             }
         }
 
-        public override ChunkGroupTreeLeaf GetLeaf(CompressedMarchingCubeChunk leaf, int index, int[] anchor, int[] relAnchor, int sizePow)
+        protected override ChunkGroupTreeLeaf GetLeaf(CompressedMarchingCubeChunk leaf, int index, int[] anchor, int[] relAnchor, int sizePow)
         {
             return new ChunkGroupTreeLeaf(this, leaf, index, anchor, relAnchor, sizePow);
         }
 
-        public override ChunkGroupTreeNode GetNode(int index, int[] anchor, int[] relAnchor, int sizePow)
+        protected override ChunkGroupTreeNode GetNode(int index, int[] anchor, int[] relAnchor, int sizePow)
         {
             return new ChunkGroupTreeNode(this, anchor, relAnchor, index, sizePow);
         }
@@ -297,19 +295,7 @@ namespace MarchingCubes
 
         protected void SplitChildAtIndex(int index, List<ChunkGroupTreeNode> newNodes)
         {
-            ChunkGroupTreeNode newNode;
-            var oldLeaf = children[index];
-            if (oldLeaf == null)
-            {
-                GetAnchorPositionsForChildAtIndex(index, out int[] anchorPos, out int[] relativePosition);
-                newNode = new ChunkGroupTreeNode(this, anchorPos, relativePosition, index, SizePower - 1);
-                ChildCount++;
-            }
-            else
-            {
-                newNode = new ChunkGroupTreeNode(this, oldLeaf.GroupAnchorPositionCopy, oldLeaf.GroupRelativeAnchorPosition, index, SizePower-1);
-            }
-            children[index] = newNode;
+            ChunkGroupTreeNode newNode = SetNodeAt(index);
             newNodes.Add(newNode);
             if (newNode.RegisterIndex > 0)
                 newNode.CheckAnyChildrenForSplit(newNodes);
