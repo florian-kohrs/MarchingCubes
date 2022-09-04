@@ -910,7 +910,7 @@ namespace MarchingCubes
             int lodPower = GetLodPowerFromSizePower(node.SizePower);
             ExchangeChunkAsyncParallel(node, (c) =>
             {
-                c.BakeMeshe sIfUsingCollider();
+                //c.BakeMeshe sIfUsingCollider();
                 lock (exchangeLocker)
                 {
                     worldUpdater.readyExchangeChunks.Push(new ReadyChunkExchange(oldChunks, c));
@@ -943,7 +943,7 @@ namespace MarchingCubes
                 {
                     chunks.Add(c);
                 }
-                c.BakeMes hesIfUsingCollider();
+                //c.BakeMes hesIfUsingCollider();
                 if (chunks.Count == newChunks.Count)
                 {
                     lock (exchangeLocker)

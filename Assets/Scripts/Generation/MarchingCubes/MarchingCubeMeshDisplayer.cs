@@ -20,6 +20,8 @@ namespace MarchingCubes
 
         public GameObject g;
 
+        protected int meshId;
+
         public bool HasCollider => collider != null;
 
         public bool HasChunk => hasCube != null && hasCube.chunk != null;
@@ -50,7 +52,7 @@ namespace MarchingCubes
 
         public void BakeMesh()
         {
-            Physics.BakeMesh(collider.sharedMesh.GetInstanceID(), false);
+            Physics.BakeMesh(meshId, false);
         }
 
 
@@ -75,6 +77,7 @@ namespace MarchingCubes
             this.g = g;
             this.collider = collider;
             this.mesh = mesh;
+            meshId = this.mesh.GetInstanceID();
             //this.mesh.Optimize();
             this.renderer = renderer;
             this.filter = filter;
@@ -121,22 +124,20 @@ namespace MarchingCubes
             }
         }
 
-
-
-
-        public void ApplyMesh(Color32[] colorData, Vector3[] vertices, Material mat, bool useCollider = true)
+        public void ApplyMeshWithoutBaking(Color32[] colorData, Vector3[] vertices, Material mat)
         {
             mesh.vertices = vertices;
             mesh.colors32 = colorData;
             int[] meshTriangles = new int[colorData.Length];
             Array.Copy(flatShadedMeshTriangleArray, meshTriangles, meshTriangles.Length);
             mesh.triangles = meshTriangles;
-            renderer.material = mat;
             mesh.RecalculateNormals();
-            if (useCollider)
-            {
-                GetCollider().sharedMesh = mesh;
-            }
+            renderer.material = mat;
+        }
+
+        public void ApplyMeshToCollider()
+        {
+            GetCollider().sharedMesh = mesh;
         }
 
     }

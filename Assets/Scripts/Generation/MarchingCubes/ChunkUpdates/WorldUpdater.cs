@@ -111,8 +111,7 @@ namespace MarchingCubes
             while(chunksToInitialize.Count > 0 && FrameTimer.HasTimeLeftInFrame)
             {
                 ChunkInitializeTask task = chunksToInitialize.Pop();
-                task.chunk.InitializeWithMeshData(task.chunk.MeshData);
-                task.onChunkDone(task.chunk);
+                task.chunk.InitializeWithMeshDataAsync(task.chunk.MeshData, task.onChunkDone);
             }
 
             while (readyExchangeChunks.Count > 0 && FrameTimer.HasTimeLeftInFrame)
@@ -144,6 +143,7 @@ namespace MarchingCubes
                     }
                     else
                     {
+                        chunk[i].ApplyMeshCollider();
                         chunk[i].Leaf.Register();
                         chunk[i].BuildEnvironmentForChunk();
                     }

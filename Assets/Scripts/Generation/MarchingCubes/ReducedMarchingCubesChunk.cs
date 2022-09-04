@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 
 namespace MarchingCubes
@@ -23,6 +24,10 @@ namespace MarchingCubes
 
         public bool HasPoints => points != null;
 
+
+        protected Action<CompressedMarchingCubeChunk> onAsyncGenerationDone;
+
+
         public float[] Points
         {
             get
@@ -37,6 +42,23 @@ namespace MarchingCubes
             {
                 points = value;
             }
+        }
+
+        public override void InitializeWithMeshDataAsync(MeshData meshData, Action<CompressedMarchingCubeChunk> onInitializationDone)
+        {
+            InitializeWithMeshData(meshData, false);
+            onAsyncGenerationDone = onInitializationDone;
+            ThreadPool.QueueUserWorkItem((o) =>
+            {
+                try
+                {
+                    BakeMeshesIfUsingCollider();
+                    onAsyncGenerationDone(this);
+                }
+                catch (Exception x)
+                {
+                }
+            });
         }
 
         protected override void OnChunkReset()

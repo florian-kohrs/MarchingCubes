@@ -217,27 +217,28 @@ namespace MarchingCubes
 
         #endregion
 
-        public virtual void BuildEnvironmentForChunk()
-        {
-            if (ShouldBuildEnvironment)
-            {
-                StartEnvironmentPipeline();
-            }
-        }
 
         public virtual void PrepareInitializationWithMeshData(MeshData meshData)
         {
             this.meshData = meshData;
         }
 
+        public virtual void InitializeWithMeshDataAsync(MeshData meshData, Action<CompressedMarchingCubeChunk> onInitializationDone)
+        {
+            InitializeWithMeshData(meshData, true);
+        }
 
-        public virtual void InitializeWithMeshData(MeshData meshData)
+        public virtual void InitializeWithMeshData(MeshData meshData, bool buildMeshOnMainThread = true)
         {
             this.meshData = meshData;
             if (!meshData.IsEmpty)
             {
                 NumTris = meshData.vertices.Length / 3;
                 RebuildFromMeshData(meshData);
+                if(buildMeshOnMainThread)
+                {
+                    ApplyMeshCollider();
+                }
             }
 
             if(meshData.IsEmpty)
@@ -247,11 +248,20 @@ namespace MarchingCubes
 
             IsReady = true;
 
+            //if (ShouldBuildEnvironment)
+            //{
+            //    StartEnvironmentPipeline();
+            //}
+        }
+
+        public virtual void BuildEnvironmentForChunk()
+        {
             if (ShouldBuildEnvironment)
             {
                 StartEnvironmentPipeline();
             }
         }
+
 
         protected void ReturnMinDegreeBuffer()
         {
@@ -291,6 +301,14 @@ namespace MarchingCubes
             vertices = null;
             FreeAllMeshes();
             OnChunkReset();
+        }
+
+        public void ApplyMeshCollider()
+        {
+            if (!UseCollider)
+                return;
+            foreach (var collider in activeDisplayers)
+                collider.ApplyMeshToCollider();
         }
 
         protected virtual void OnChunkReset() { }
@@ -364,7 +382,7 @@ namespace MarchingCubes
             }
         }
 
-        public void BakeMeshesIfUsingCollider()
+        protected void BakeMeshesIfUsingCollider()
         {
             if (!UseCollider)
                 return;
@@ -421,7 +439,7 @@ namespace MarchingCubes
         protected virtual void SetMeshData(MeshData meshData)
         {
             MarchingCubeMeshDisplayer displayer = GetFittingMeshDisplayer();
-            displayer.ApplyMesh(meshData.colorData, meshData.vertices, Material, meshData.useCollider);
+            displayer.ApplyMeshWithoutBaking(meshData.colorData, meshData.vertices, Material);
         }
 
         #region chunk queries
