@@ -79,7 +79,7 @@ namespace MarchingCubes
             return true;
         }
 
-        public void SplitChildAtIndex(out List<ChunkGroupTreeNode> newNodes)
+        public void SplitChild(out List<ChunkGroupTreeNode> newNodes)
         {
             parent.SplitChildAtIndex(childIndex, out newNodes);
         }

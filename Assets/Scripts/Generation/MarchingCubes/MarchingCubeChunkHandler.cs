@@ -259,6 +259,14 @@ namespace MarchingCubes
             //});
         }
 
+        public void ReactiveRoot(ChunkGroupTreeNode node)
+        {
+            List<ChunkGroupTreeNode> newNodes = new List<ChunkGroupTreeNode>() { node };
+            node.CheckAnyChildrenForSplit(newNodes);
+            SplitChunk(null, newNodes);
+            BuildSpawnersAround(node);
+        }
+
         protected void BuildUpdateValues()
         {
             float distThreshold = 1.1f;
@@ -518,6 +526,7 @@ namespace MarchingCubes
                     float sqrDist = (startPos - readyState.lastParent.GetChildCenterPositionAtIndex(readyState.lastParentsChildIndex)).sqrMagnitude;
                     if(updateValues.ShouldChunkBeDestroyed(sqrDist))
                     {
+                        //TODO: Why does he never enter here? because inactive chunks dont do neighbour search
                         continue;
                     }
                     else if (updateValues.ShouldChunkBeDeactivated(sqrDist))
@@ -532,11 +541,11 @@ namespace MarchingCubes
             }
         }
 
-        public void BuildSpawnersAround(CompressedMarchingCubeChunk chunk)
+        public void BuildSpawnersAround(ChunkGroupTreeNode root)
         {
             for (int i = 0; i < ChunkNeighbourTask.MAX_NEIGHBOUR_CHUNKS; ++i)
             {
-                BuildSpawnerInDirection(chunk, (Direction)i);
+                chunkGroup.CreateEmptyChunkGroupAdjacentTo(root, (Direction)i, out _);
             }
         }
 
@@ -923,14 +932,19 @@ namespace MarchingCubes
             CompressedMarchingCubeChunk oldChunk = exchange.leaf.leaf;
             oldChunk.PrepareDestruction();
 
-            int exchangeCount = exchange.newNodes.Count;
+            SplitChunk(oldChunk, exchange.newNodes);
+        }
+
+        protected void SplitChunk(CompressedMarchingCubeChunk oldChunk, List<ChunkGroupTreeNode> newNodes)
+        {
+            int exchangeCount = newNodes.Count;
             int newLeafs = exchangeCount * 8 - (exchangeCount - 1);
 
             List<CompressedMarchingCubeChunk> newChunks = new List<CompressedMarchingCubeChunk>(newLeafs);
-            
+
             for (int i = 0; i < exchangeCount; i++)
             {
-                AddThreadedChunkObjectsAtEmptyChildPosition(exchange.newNodes[i], newChunks);
+                AddThreadedChunkObjectsAtEmptyChildPosition(newNodes[i], newChunks);
             }
             object listLock = new object();
 
@@ -948,12 +962,17 @@ namespace MarchingCubes
                 {
                     lock (exchangeLocker)
                     {
-                        worldUpdater.readyExchangeChunks.Push(new ReadyChunkExchange(oldChunk, chunks, exchange.newNodes));
+                        worldUpdater.readyExchangeChunks.Push(new ReadyChunkExchange(oldChunk, chunks, newNodes));
                     }
                 }
             };
 
             DispatchMultipleChunksAsync(newChunks, f);
+        }
+
+        protected void CreateAlLChunkNodeChildren()
+        {
+
         }
 
         public MarchingCubeMeshDisplayer GetNextMeshDisplayer()

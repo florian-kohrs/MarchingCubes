@@ -54,7 +54,12 @@ namespace MarchingCubes
         public bool CreateEmptyChunkGroupAdjacentTo(CompressedMarchingCubeChunk chunk, Direction d, out ChunkGroupTreeNode result)
         {
             int[] chunkPos = chunk.Leaf.GroupAnchorPosition;
-            if (CreateInactiveRootNodeInDirection(GetGroupAt(chunkPos), d, out result))
+            return CreateEmptyChunkGroupAdjacentTo(GetGroupAt(chunkPos), d, out result);
+        }
+
+        public bool CreateEmptyChunkGroupAdjacentTo(ChunkGroupTreeNode root, Direction d, out ChunkGroupTreeNode result)
+        {
+            if (CreateInactiveRootNodeInDirection(root, d, out result))
             {
                 return true;
             }

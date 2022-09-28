@@ -32,10 +32,6 @@ namespace MarchingCubes
         {
             updateRoutine.playerPos = player.position;
             updateRoutine.update = true;
-            if(updateRoutine.updateDone)
-            {
-                HandleChunkChanges();
-            }
         }
 
 
@@ -127,13 +123,13 @@ namespace MarchingCubes
 
                 if (olds.Count == 0)
                 {
-                    Debug.LogError("old is 0!");
+                    Debug.LogError("old is empty!" + " is merge: " + change.IsMerge);
                     continue;
                 }
 
                 for (int i = 0; i < olds.Count; i++)
                 {
-                    olds[i].DestroyChunk();
+                    olds[i]?.DestroyChunk();
                 }
                 for (int i = 0; i < chunk.Count; i++)
                 {
@@ -143,17 +139,26 @@ namespace MarchingCubes
                     }
                     else
                     {
+                        if(chunk[i] == null ||chunk[i].Leaf == null)
+                            Debug.LogError("Leaf is null!" + " is merge: " + change.IsMerge);
+
                         chunk[i].ApplyMeshCollider();
                         chunk[i].Leaf.Register();
                         chunk[i].BuildEnvironmentForChunk();
                     }
-                    
                 }
+
                 foreach (var item in change.nodes)
                 {
                     item.Register();
                 }
                
+            }
+
+
+            if (updateRoutine.updateDone)
+            {
+                HandleChunkChanges();
             }
 
             FrameTimer.RestartWatch();
@@ -163,6 +168,7 @@ namespace MarchingCubes
         {
             DestroyOutOfRangeChunks();
             DeactivateOutOfRangeChunks();
+            ReactivateInRangeChunks();
             MergeNode();
             SplitLeafs();
         }
@@ -171,8 +177,17 @@ namespace MarchingCubes
         {
             lock (updateRoutine.mutexLockDestroy)
             {
-                while (destroyRoots.Count > 0)
+                while (destroyRoots.Count > 0 && FrameTimer.HasTimeLeftInFrame)
                     destroyRoots.Pop().DestroyBranch();
+            }
+        }
+
+        protected void ReactivateInRangeChunks()
+        {
+            lock (updateRoutine.mutexLockReactivate)
+            {
+                while (reactivateRoots.Count > 0 && FrameTimer.HasTimeLeftInFrame)
+                    ReactivateRoot(reactivateRoots.Pop());
             }
         }
 
@@ -180,21 +195,16 @@ namespace MarchingCubes
         {
             lock (updateRoutine.mutexLockDeactivate)
             {
-                while (deactivateRoots.Count > 0)
+                while (deactivateRoots.Count > 0 && FrameTimer.HasTimeLeftInFrame)
                     deactivateRoots.Pop().DeactivateBranch();
             }
-        }
-
-        protected void ActivateRoot()
-        {
-
         }
 
         protected void MergeNode()
         {
             lock (updateRoutine.mutexLockMerge)
             {
-                while (mergeSet.Count > 0)
+                while (mergeSet.Count > 0 && FrameTimer.HasTimeLeftInFrame)
                     HandleMerge(mergeSet.Pop());
             }
         }
@@ -203,10 +213,17 @@ namespace MarchingCubes
         {
             lock (updateRoutine.mutexLockSplit)
             {
-                while (splitSet.Count > 0)
+                while (splitSet.Count > 0 && FrameTimer.HasTimeLeftInFrame)
                     HandleSplit(splitSet.Pop());
             }
         }
+
+        protected void ReactivateRoot(ChunkGroupTreeNode node)
+        {
+            chunkHandler.ReactiveRoot(node);
+        }
+
+        
 
         protected void HandleMerge(ChunkGroupTreeNode node)
         {

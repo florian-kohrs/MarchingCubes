@@ -46,14 +46,20 @@ namespace MarchingCubes
         public void SetChannelChunkForDeactivation()
         {
             ChanneledForDeactivation = true;
-            ChunkUpdateRoutine.MoveRootToDeactivation(this);
+            ChunkUpdateRoutine.RemoveActiveChunkRoot(this);
             RemoveChildsFromRegister();
+        }
+
+        public void Reactivate()
+        {
+            ChanneledForDeactivation = false;
+            ChunkUpdateRoutine.RegisterActiveChunkRoot(this);
         }
 
         public void SetChannelChunkForReactivation()
         {
             ChanneledForDeactivation = false;
-            ChunkUpdateRoutine.MoveRootToActivation(this);
+            ChunkUpdateRoutine.RemoveInactiveChunkRoot(this);
         }
 
         public void SetChannelChunkForDestruction()
@@ -65,6 +71,8 @@ namespace MarchingCubes
                 ChunkUpdateRoutine.RemoveActiveChunkRoot(this);
             RemoveChildsFromRegister();
         }
+
+
 
         protected const int CHILD_COUNT = 8;
 
@@ -202,6 +210,7 @@ namespace MarchingCubes
             return result;
         }
 
+
         public void PrepareBranchDestruction(List<CompressedMarchingCubeChunk> allLeafs)
         {
             for (int i = 0; i < 8 ; i++)
@@ -255,6 +264,7 @@ namespace MarchingCubes
         public void DeactivateBranch()
         {
             DestroyChildBranches();
+            Register();
             children = new IChunkGroupDestroyableOrganizer<CompressedMarchingCubeChunk>[CHILD_COUNT];
         }
 

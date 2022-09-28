@@ -226,6 +226,7 @@ namespace MarchingCubes
         public virtual void InitializeWithMeshDataAsync(MeshData meshData, Action<CompressedMarchingCubeChunk> onInitializationDone)
         {
             InitializeWithMeshData(meshData, true);
+            onInitializationDone(this);
         }
 
         public virtual void InitializeWithMeshData(MeshData meshData, bool buildMeshOnMainThread = true)

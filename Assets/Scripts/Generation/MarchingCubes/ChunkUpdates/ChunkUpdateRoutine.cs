@@ -63,18 +63,6 @@ namespace MarchingCubes
             instance.RemoveLockedInHashset(instance.deactivatedChunkRoots, root, instance.mutexLockInactiveRoots);
         }
 
-        public static void MoveRootToDeactivation(ChunkGroupTreeNode root)
-        {
-            instance.RemoveLockedInHashset(instance.activeChunkGroupTreeRoots, root, instance.mutexLockActiveRoots);
-            instance.RegisterLockedInHashset(instance.deactivatedChunkRoots, root, instance.mutexLockInactiveRoots);
-        }
-
-        public static void MoveRootToActivation(ChunkGroupTreeNode root)
-        {
-            instance.RegisterLockedInHashset(instance.activeChunkGroupTreeRoots, root, instance.mutexLockActiveRoots);
-            instance.RemoveLockedInHashset(instance.deactivatedChunkRoots, root, instance.mutexLockInactiveRoots);
-        }
-
         public static void RegisterDeactiveRoot(ChunkGroupTreeNode root)
         {
             instance.RegisterLockedInHashset(instance.deactivatedChunkRoots, root, instance.mutexLockInactiveRoots);
@@ -277,7 +265,7 @@ namespace MarchingCubes
             {
                 if (CheckChunkForReactivation(item.Center))
                 {
-                    item.SetChannelChunkForDeactivation();
+                    item.SetChannelChunkForReactivation();
                     lock (mutexLockReactivate)
                     {
                         reactivateSet.Push(item);
@@ -334,7 +322,7 @@ namespace MarchingCubes
         {
             if (!CheckLeafForSplit(index, leaf.Center))
                 return;
-            leaf.SplitChildAtIndex(out List<ChunkGroupTreeNode> newNodes);
+            leaf.SplitChild(out List<ChunkGroupTreeNode> newNodes);
             ChunkSplitExchange exchange = new ChunkSplitExchange(leaf, newNodes);
             leaf.RemoveChildsFromRegister();
             
@@ -343,7 +331,6 @@ namespace MarchingCubes
                 splitSet.Push(exchange);
             }
         }
-
 
 
         public float SqrDeactivateDistance => SqrMergeDistanceRequirement[MarchingCubeChunkHandler.MAX_CHUNK_EXTRA_SIZE_POWER];
